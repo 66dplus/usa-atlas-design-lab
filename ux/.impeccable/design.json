@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-19T00:00:00+04:00",
+  "title": "Design System: USA Atlas UX",
+  "extensions": {
+    "colorMeta": {
+      "ember-ivory": {
+        "role": "neutral",
+        "displayName": "Ember Ivory",
+        "canonical": "#f6f3ed",
+        "tonalRamp": [
+          "#302931",
+          "#736b70",
+          "#dfd9d2",
+          "#eee5e6",
+          "#f6f3ed",
+          "#fffcf7"
+        ]
+      },
+      "ember-panel": {
+        "role": "neutral",
+        "displayName": "Ember Panel",
+        "canonical": "#fffcf7",
+        "tonalRamp": [
+          "#302931",
+          "#736b70",
+          "#dfd9d2",
+          "#f1ece3",
+          "#f6f3ed",
+          "#fffcf7"
+        ]
+      },
+      "ember-plum": {
+        "role": "primary",
+        "displayName": "Ember Plum",
+        "canonical": "#742e51",
+        "tonalRamp": [
+          "#281c43",
+          "#55213d",
+          "#742e51",
+          "#eee5e6"
+        ]
+      },
+      "ember-ramp-low": {
+        "role": "tertiary",
+        "displayName": "Ember Ramp Low",
+        "canonical": "#fff2b1",
+        "tonalRamp": [
+          "#281c43",
+          "#701e51",
+          "#af2345",
+          "#e55732",
+          "#f4942c",
+          "#f8c34a",
+          "#fff2b1"
+        ]
+      },
+      "stories-charcoal": {
+        "role": "neutral",
+        "displayName": "Stories Charcoal",
+        "canonical": "#181820",
+        "tonalRamp": [
+          "#15151d",
+          "#181820",
+          "#1e1d25",
+          "#3b343f",
+          "#b8b0b7",
+          "#f3eadc"
+        ]
+      },
+      "stories-amber": {
+        "role": "primary",
+        "displayName": "Stories Amber",
+        "canonical": "#ffc575",
+        "tonalRamp": [
+          "#413037",
+          "#e8b272",
+          "#ffc575",
+          "#f8c988"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Manrope body",
+        "purpose": "Interface copy, descriptions, and default controls."
+      },
+      "label": {
+        "displayName": "Barlow labels",
+        "purpose": "Numeric values, legend numbers, and concept tab numerals; interface labels use Manrope."
+      },
+      "heading": {
+        "displayName": "Manrope heading",
+        "purpose": "Map introductions, drawer titles, and inspector headings."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient-drawer",
+        "value": "0 16px 50px #29202920",
+        "purpose": "Floating drawers and status toast."
+      },
+      {
+        "name": "ambient-hover",
+        "value": "0 5px 15px #00000012",
+        "purpose": "Transient geographic hover tooltip."
+      }
+    ],
+    "motion": [
+      {
+        "name": "drawer-in",
+        "value": "180ms ease-out",
+        "purpose": "Drawer enters with a short upward fade."
+      },
+      {
+        "name": "map-state",
+        "value": "fill 250ms, opacity 250ms",
+        "purpose": "Geographic hover and selection feedback."
+      },
+      {
+        "name": "map-camera",
+        "value": "650ms cubic easing",
+        "purpose": "2D fit and 3D camera transitions; disabled under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1600px"
+      },
+      {
+        "name": "compact",
+        "value": "1100px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary inspector action.",
+      "html": "<button class=\"ds-btn-primary\">Choose a state <span aria-hidden=\"true\">\u2192</span></button>",
+      "css": ".ds-btn-primary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;padding:11px 13px;border:0;border-radius:5px;background:#742e51;color:#fff;font:600 12px Manrope,system-ui,sans-serif;cursor:pointer;transition:background .2s,outline .2s}.ds-btn-primary:hover{background:#55213d}.ds-btn-primary:focus-visible{outline:3px solid #ad6323;outline-offset:3px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary or reversible action.",
+      "html": "<button class=\"ds-btn-outline\">Compare two places <span aria-hidden=\"true\">\u2192</span></button>",
+      "css": ".ds-btn-outline{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;padding:11px 13px;border:1px solid #dfd9d2;border-radius:5px;background:transparent;color:#302931;font:600 12px Manrope,system-ui,sans-serif;cursor:pointer;transition:background .2s}.ds-btn-outline:hover{background:#eee5e6}.ds-btn-outline:focus-visible{outline:3px solid #ad6323;outline-offset:3px}"
+    },
+    {
+      "name": "Metric Search",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Search within the metric or place drawer.",
+      "html": "<label class=\"ds-input\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m16 16 4.5 4.5\"/></svg><input type=\"search\" placeholder=\"Search income, rent, homelessness\u2026\" aria-label=\"Search metrics\"></label>",
+      "css": ".ds-input{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #dfd9d2;border-radius:5px;color:#736b70}.ds-input input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:#302931;font:12px Manrope,system-ui,sans-serif}.ds-input:focus-within{outline:3px solid #ad6323;outline-offset:3px}"
+    },
+    {
+      "name": "Header Tabs",
+      "kind": "nav",
+      "refersTo": "navigation-tabs",
+      "description": "Switch among the three shipped structures.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Interface concepts\"><button aria-pressed=\"true\"><span>01</span> Explorer</button><button><span>02</span> Stories</button><button><span>03</span> Compare</button></nav>",
+      "css": ".ds-tabs{display:flex;align-items:stretch;gap:8px;height:76px}.ds-tabs button{position:relative;padding:0 21px;border:0;background:transparent;color:#736b70;font:400 12px Manrope,system-ui,sans-serif;cursor:pointer}.ds-tabs button span{margin-right:9px;font:400 12px Barlow,sans-serif;opacity:.65}.ds-tabs button:hover{background:#eee5e6}.ds-tabs button[aria-pressed=true]{color:#302931;font-weight:700}.ds-tabs button[aria-pressed=true]::after{content:\"\";position:absolute;left:18px;right:18px;bottom:-1px;height:3px;background:#742e51}.ds-tabs button:focus-visible{outline:3px solid #ad6323;outline-offset:3px}"
+    },
+    {
+      "name": "Story Item",
+      "kind": "custom",
+      "refersTo": "story-rail",
+      "description": "Narrative entry used in Stories mode.",
+      "html": "<button class=\"ds-story\"><strong>The cost of calling it home</strong><small>Income, rent and the space between them.</small><span>Explore California \u2192</span></button>",
+      "css": ".ds-story{display:block;width:100%;padding:21px 0;border:0;border-top:1px solid #3b343f;background:transparent;text-align:left;color:#f3eadc;cursor:pointer}.ds-story strong{display:block;font:500 15px Manrope,system-ui,sans-serif}.ds-story small{display:block;margin:7px 0 12px;color:#b8b0b7;font:400 11px/1.6 Manrope,system-ui,sans-serif}.ds-story span{color:#ffc575;font:400 10px Manrope,system-ui,sans-serif}.ds-story:hover{background:#413037}.ds-story:focus-visible{outline:3px solid #ad6323;outline-offset:3px}"
+    },
+    {
+      "name": "Comparison Segmented Control",
+      "kind": "custom",
+      "refersTo": "comparison-toolbar",
+      "description": "Switch between place and metric comparisons.",
+      "html": "<div class=\"ds-segmented\"><button aria-pressed=\"true\">Two places</button><button aria-pressed=\"false\">Two indicators</button></div>",
+      "css": ".ds-segmented{display:flex;gap:5px}.ds-segmented button{padding:9px 15px;border:1px solid #dfd9d2;border-radius:5px;background:transparent;color:#302931;font:400 12px Manrope,system-ui,sans-serif;cursor:pointer}.ds-segmented button:hover{background:#eee5e6}.ds-segmented button[aria-pressed=true]{background:#302931;color:#fffcf7}.ds-segmented button:focus-visible{outline:3px solid #ad6323;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ember Atlas",
+    "overview": "The shipped interface makes geographic exploration feel like a calm working atlas: warm ivory surfaces, precise boundaries, plum selection states, and an amber-to-plum map ramp keep the map as the visual center. English labels, compact controls, and an explicit demo-data voice keep the prototype legible while the user moves from national context to a state or county.\n\nThe same world is expressed through three complete structures. Explorer pairs one dominant map with a place inspector; Stories adds a narrative rail and a charcoal orbital edition; Compare splits the map into two panes and keeps the comparison explanation and data table visible. All three preserve the same metric library, place search, camera controls, legend, and provenance treatment.\n\nThe desktop workspace is held to the viewport above 1100px, with internal inspector and Stories rail scrolling so the map, legend, and footer remain in frame. At mobile widths the app becomes a vertical flow and Compare stacks its panes.",
+    "keyCharacteristics": [
+      "Warm Ember palette with plum emphasis and amber map detail.",
+      "Map-first working surface with compact, bordered controls.",
+      "Manrope for interface copy and Barlow for numeric/label moments.",
+      "Real Census 2017 boundaries with clearly labeled illustrative values."
+    ],
+    "rules": [
+      {
+        "name": "The Honest Index Rule",
+        "body": "Demo values stay visibly identified as illustrative indexes and are never presented as dollars, people, percentages, or measured statistics.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ember Ramp Rule",
+        "body": "Use the warm low-to-dark map ramp for geographic values; reserve plum for selection and actions so the map remains readable.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Voice Rule",
+        "body": "Keep explanatory interface prose in Manrope and use Barlow only for compact data and label moments that benefit from a tighter measure.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal Surface Rule",
+        "body": "Keep the map and inspector visually distinct through warm surfaces and thin separators; use shadow mainly for transient or floating layers.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the map dominant and support it with compact breadcrumbs, controls, legend, and provenance.",
+      "Do use Ember Ivory/Panel surfaces, Ember Plum action emphasis, and the existing amber-to-plum map ramp.",
+      "Do label synthetic values as illustrative demo indexes and expose source, coverage, period, and unit details.",
+      "Do preserve the three shipped structures: Explorer, Stories, and Compare.",
+      "Do retain visible keyboard focus treatment and reduced-motion support."
+    ],
+    "donts": [
+      "Don't describe demo indexes as real measurements or imply causal relationships in comparisons.",
+      "Don't replace the map-first composition with decorative cards or unrelated visual themes.",
+      "Don't promote the Stories charcoal/amber variant into the default Explorer palette; it is a documented structure-specific edition.",
+      "Don't introduce pill-shaped controls, heavy ornamental shadows, or new font families without evidence from the shipped system."
+    ]
+  }
+}

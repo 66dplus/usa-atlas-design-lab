@@ -1,0 +1,372 @@
+{
+  "source": "https://tigerweb.geo.census.gov/arcgis/rest/services/Generalized_ACS2017/State_County/MapServer/5",
+  "vintage": 2017,
+  "scale": "1:500,000",
+  "query": {
+    "where": "STATE = '<state FIPS>'",
+    "outFields": "GEOID,BASENAME",
+    "outSR": 4326,
+    "f": "geojson",
+    "returnGeometry": true,
+    "geometryPrecision": 6
+  },
+  "states": [
+    {
+      "id": "01",
+      "counties": 67,
+      "bytes": 493811,
+      "sha256": "db57d4047357abf9ddf39678b8d0a81876f932e5d712f14c665808563c9ed19b",
+      "sourceSha256": "6b55127b892abf8898285a6c164a8d723da7b2aba75e5106353b017a0075b075"
+    },
+    {
+      "id": "02",
+      "counties": 29,
+      "bytes": 3068733,
+      "sha256": "9dd9632a0544e73ddba11cd3971b24ccf1041e4e5536c4079ff6402e4282bdf8",
+      "sourceSha256": "c00ef369fe6b5d32b65b9f32efc09bc4090fcc9d3bb424dd460c2fa317f38309"
+    },
+    {
+      "id": "04",
+      "counties": 15,
+      "bytes": 248138,
+      "sha256": "34b1f416f6fb510658bc69e95c333a1be024be0267991758bb1de18fb3bef3d8",
+      "sourceSha256": "042939f5d744456e365400f47f11dac79a5548aee06e1b334a51cfb8b8f9d154"
+    },
+    {
+      "id": "05",
+      "counties": 75,
+      "bytes": 556060,
+      "sha256": "8c0280722c0939f7425fae1a03486bf24535d8bbea694cdd5526966563b7f9ee",
+      "sourceSha256": "163506c607f4a6bf04a631784e044df022cd919f3bf44a0c461447a19ce4abf7"
+    },
+    {
+      "id": "06",
+      "counties": 58,
+      "bytes": 938557,
+      "sha256": "e7229bf2a7c864e31eb25169998f01eecea91736aa4a71b59083c60d64d07ca6",
+      "sourceSha256": "04a85d7808efe9d594f7cad8665104959bd5f0524e07c65faf6da54e31c09251"
+    },
+    {
+      "id": "08",
+      "counties": 64,
+      "bytes": 465903,
+      "sha256": "a7c98833aca0b060115f56d7e83528561775f3f07f1165b36a8d04d3a20188a0",
+      "sourceSha256": "936c82fa78fba60ca7461b1f7c879280419eb623f013916e9ba25780f98ff868"
+    },
+    {
+      "id": "09",
+      "counties": 8,
+      "bytes": 60741,
+      "sha256": "131c0dad6c295ae3e42ac32cecd3b8856987766ef5c0c9865b77ee10da295680",
+      "sourceSha256": "bac756581011c1916a07dc92e1600f7ee13458b02ada08eed5b63cfbbf62d14d"
+    },
+    {
+      "id": "10",
+      "counties": 3,
+      "bytes": 23972,
+      "sha256": "642b35ec830bf4cfc46ee2e2cb28b45dac7e6dd22eda5cfc2a859c17fd4f6e5d",
+      "sourceSha256": "d20f6123033ca3fb85a913933a8c4bd12d5426c55b7db603b3d0ef25c4af464a"
+    },
+    {
+      "id": "11",
+      "counties": 1,
+      "bytes": 5091,
+      "sha256": "3f7d0b24c29981417551531a28c170afd3c46200c377448a4a1a59e9fef0b2a6",
+      "sourceSha256": "e6af5232b6f89b6c98062b75e4732e25efc9457208ce6ce3ea15f65dbdee5d52"
+    },
+    {
+      "id": "12",
+      "counties": 67,
+      "bytes": 629237,
+      "sha256": "7627be1d2f253023e81b03d9d9ab926b29edfcfe398a6362d8d42633876d8cb4",
+      "sourceSha256": "78a4ac74e1b3c0f822fe1a68232434e9964d707dcd14f0cdbb2f83f35de7f805"
+    },
+    {
+      "id": "13",
+      "counties": 159,
+      "bytes": 1017278,
+      "sha256": "552b30cc2bce3d1f106bdf0eb21d6e1b1ace71f913532a3361b2aef359d92fee",
+      "sourceSha256": "c5638ed731d460ac490d92bab362b9ab836bf55d054f411e5b5db1e02c79f90f"
+    },
+    {
+      "id": "15",
+      "counties": 5,
+      "bytes": 69231,
+      "sha256": "69b0b942e53c4ac682f10d870913341db5dfb766ce9d2afbdb8c0a6f3476c981",
+      "sourceSha256": "4800044724925a0fc7d85c49f5f3c761cd505beb674be61b5927ea7d9bd61c93"
+    },
+    {
+      "id": "16",
+      "counties": 44,
+      "bytes": 504520,
+      "sha256": "c0989256c02916757387136987ee86da600ccf85f25a348812cca2d8f446e412",
+      "sourceSha256": "78c9695a30f7d26afdaf815e9f411553290dd1a4e0ceb2680060181eb746d414"
+    },
+    {
+      "id": "17",
+      "counties": 102,
+      "bytes": 427926,
+      "sha256": "17e7b8b25074bf9ebcdb1ded8777fd43157adaf8663ce156d409b0d7e1e8a2b2",
+      "sourceSha256": "f34b7f4e0045d0a4b5cb83495e6823729ecd2c5551bf38fb8b2cbf4acd0d8eca"
+    },
+    {
+      "id": "18",
+      "counties": 92,
+      "bytes": 294455,
+      "sha256": "1451221920f41e192d19f55f5dae10b06f4a69eda0c554837c2ea8d0ff74b416",
+      "sourceSha256": "abb43a6a0775cf8f8f5b0fc863d59b44b2557835c224998f34e0cb2fc2d4c336"
+    },
+    {
+      "id": "19",
+      "counties": 99,
+      "bytes": 237361,
+      "sha256": "caa218db91377260afdb921676fd4eaa37391dc79e9a816ac94843fe0153f092",
+      "sourceSha256": "a9d964b3e5a8418939409e9c77f6f8d296f6f2c95bf683702b993e191f270e5f"
+    },
+    {
+      "id": "20",
+      "counties": 105,
+      "bytes": 232547,
+      "sha256": "4e83ab6a2bca19f06724ac6739659ee4b54b5f4eb756e17808280a2a74404a67",
+      "sourceSha256": "819e88fa57b27fa8926035a79a3f56e80ad13d9bb32bfae05a0b61dc231a85e9"
+    },
+    {
+      "id": "21",
+      "counties": 120,
+      "bytes": 977137,
+      "sha256": "f1836af7c9d549df5a811a2b6e72b087e71b5fe8d1c4ecdb374c910bd926cea6",
+      "sourceSha256": "2b6c34033558b6941391b7b74c19916f9b4c4cffb5543e0597d3b2c39381ee84"
+    },
+    {
+      "id": "22",
+      "counties": 64,
+      "bytes": 700890,
+      "sha256": "8a2ce9e2430fd1852b4d266b85e8335defe0bced2ca0f8349a0048f1b16ba16a",
+      "sourceSha256": "f3e5e001963161bd80da35ae8fea0d2e6a4bccc6c1d9be1c4d35da4869b8cc8f"
+    },
+    {
+      "id": "23",
+      "counties": 16,
+      "bytes": 260298,
+      "sha256": "aa5becf2e9230279e6f80f880a0a0e6e9945f9d38772ffe22ae7a4d2429f726f",
+      "sourceSha256": "74c4b05a35eb98a15319fe45dcc5a8cec5f573de23e9205a197773d401608bf9"
+    },
+    {
+      "id": "24",
+      "counties": 24,
+      "bytes": 323979,
+      "sha256": "25769fab2099a230eefced05d6eb8b4d804df3d502f0da0b8a82745726350e9a",
+      "sourceSha256": "9e7737d96f06c23f6a5928d79d67da65f71de13c3ebef45e758c0ca063c7a819"
+    },
+    {
+      "id": "25",
+      "counties": 14,
+      "bytes": 124089,
+      "sha256": "eb3fad37f6b64e1c665e6a14bb121e632d75e711c0c4eee9185eb0688f62784d",
+      "sourceSha256": "7b7eb748e8f4b81f2dd1c8f68fe1b71e510b41b1b863be7100fe4587baa94dbf"
+    },
+    {
+      "id": "26",
+      "counties": 83,
+      "bytes": 463981,
+      "sha256": "cb9ffc44e02647ce416f288def22e88d7cc580666ffe95ed112dd13a896e4b5e",
+      "sourceSha256": "475ce908fdd58f27539845481e32d2eecebf08b62ee19489f31a690e02cd3e01"
+    },
+    {
+      "id": "27",
+      "counties": 87,
+      "bytes": 457615,
+      "sha256": "2ff9130f54eaabfe04d9c514a95e652a8c07b63e8e791fef693efff04f6cdd95",
+      "sourceSha256": "8c0d6aa10161c3cac4499b433c1eb1405b5b90e8b6a986e7c53bc8f0382bba1b"
+    },
+    {
+      "id": "28",
+      "counties": 82,
+      "bytes": 390970,
+      "sha256": "7c2b19acd72c10a5bf7130bc70e317d5dabaedf9f289146e5f89bb5565b54291",
+      "sourceSha256": "38e9e1d19f9f54111c6171f9307b2898eaa9d11ded308fbaf38dd6e28a245d0c"
+    },
+    {
+      "id": "29",
+      "counties": 115,
+      "bytes": 477009,
+      "sha256": "16196d6b0906284ec584d88119393bd59444f46f183e95bdba12b38c90ff3bce",
+      "sourceSha256": "d7ae8b699c44e1d2a403df0d50e7ea284f239ac896e8382ead3e25faaafa2985"
+    },
+    {
+      "id": "30",
+      "counties": 56,
+      "bytes": 640176,
+      "sha256": "6ea8f41fbb5f0bc3743fd3353a15eba188baacef76b0503df00cbec8be8941e5",
+      "sourceSha256": "84004b44e55f8ba2a78b6d8325d31455395763f1131c2b952b889cd48c225705"
+    },
+    {
+      "id": "31",
+      "counties": 93,
+      "bytes": 255701,
+      "sha256": "80849ac65a972c7848a5d34cd5f1d65c5a73d2ccb016f658b0f265da074e5e85",
+      "sourceSha256": "390831405de23c18283e0afbffb83065a94f28b5e25d115179804ac27ce6fd67"
+    },
+    {
+      "id": "32",
+      "counties": 17,
+      "bytes": 94535,
+      "sha256": "a0242c9b405e90103133c4c51ea6e14a8fd47a1dc50bfca03c6e7268cccbe1cf",
+      "sourceSha256": "ba8db23f1862132643cb164f7ca59f5f9d96ae729ef63817a98c7292b4beddcf"
+    },
+    {
+      "id": "33",
+      "counties": 10,
+      "bytes": 67979,
+      "sha256": "2a48565ef00981c9c64bfe2d0353a0f6bca5f30bdbb0d69eb88eda57f24ee9d4",
+      "sourceSha256": "2567b49f75d01dc42bfb43fec63a4dd0edf3f09e1247fd73347753eefc2ec0f8"
+    },
+    {
+      "id": "34",
+      "counties": 21,
+      "bytes": 183481,
+      "sha256": "1cad998b7ea8bf714a84b0f253dffdb345b6befabb054a846059b3b63693354c",
+      "sourceSha256": "3bc142b33aa6bc29e9e3ebaf81738035383485026681c30aa84d9eb1cc852c55"
+    },
+    {
+      "id": "35",
+      "counties": 33,
+      "bytes": 151006,
+      "sha256": "a078c6e8e9730b616bc245a39d98112929f8cc95eb405817ef23ac73054564a0",
+      "sourceSha256": "448748522333264a8bfcd09ed8677fc7e4bde1357ffe611a0c5d727b240ef678"
+    },
+    {
+      "id": "36",
+      "counties": 62,
+      "bytes": 414789,
+      "sha256": "8ef1aa30ff2db64e899b58a7fca2a0f618b72dced777735831b47c5530199fb8",
+      "sourceSha256": "6d6fe1b32b0737607a26e62d121e046b7b98748f91bd3b434efc28fe97f348eb"
+    },
+    {
+      "id": "37",
+      "counties": 100,
+      "bytes": 840990,
+      "sha256": "0635f9132c67ee4731b16ccab5b551c3c8af8ceee2ce4c0a248f8dd5070724ce",
+      "sourceSha256": "60bf08ab9126424562fe47829a817e80fbf3b8304f02e768c5591d88e83f37ab"
+    },
+    {
+      "id": "38",
+      "counties": 53,
+      "bytes": 289263,
+      "sha256": "93af975b5ee5602b12f0f5394657e2bf46f7a51a20a1fe24e81a5a0a86f458db",
+      "sourceSha256": "0cb96881eb93b609dd71c02cadda84655e38006fb0579747cc02dafcdf04359b"
+    },
+    {
+      "id": "39",
+      "counties": 88,
+      "bytes": 287769,
+      "sha256": "20e1e6e8cb43e1e4f48b76c8387940d86415455c96fe27a37cef08b87392942c",
+      "sourceSha256": "6cf616f3127670da759cc65ed77ceb3ed69db83a048c504e554b903afb23de04"
+    },
+    {
+      "id": "40",
+      "counties": 77,
+      "bytes": 380109,
+      "sha256": "343c02aa4e3fdd3936045bb1cf6afc08f6040a73781b222f47d0d004e1be5915",
+      "sourceSha256": "ec66189cc34f752e920aaef43b0f7707c87186b10c040f4581915cea2eac6cce"
+    },
+    {
+      "id": "41",
+      "counties": 36,
+      "bytes": 368898,
+      "sha256": "9fd21ca4ff15c052c7904951299ecf42e74243d916180c7f1a51c0cc2ce51bb1",
+      "sourceSha256": "6aff946acebbe24db5cda605838edcc13c101c6a67fb61c7ed13b339ba41aed0"
+    },
+    {
+      "id": "42",
+      "counties": 67,
+      "bytes": 413866,
+      "sha256": "9286d786045578469ec6105f4b2cd2a6b738f13a455979453aad5e3f744445fe",
+      "sourceSha256": "41a1c094cbdb304f51c9761941c423792d7aa67dc0570250677d6030fea5f02d"
+    },
+    {
+      "id": "44",
+      "counties": 5,
+      "bytes": 35617,
+      "sha256": "96ca607c7c3500fb3eccef1ce32aba79c9acfcd5585e44321453fafeeb6f3d6f",
+      "sourceSha256": "53e40360ac06e6ce151e1efdab6970e6edf5ba147c095efac2552e40e518e7ae"
+    },
+    {
+      "id": "45",
+      "counties": 46,
+      "bytes": 543453,
+      "sha256": "e4c3e971be6e929cec573c809c036b289e65918f970547c597224613864cf5fc",
+      "sourceSha256": "bee96b444b617ed156bf37df5e27bc3bdd586ffc1465af61a89f16d06e0b6504"
+    },
+    {
+      "id": "46",
+      "counties": 66,
+      "bytes": 292029,
+      "sha256": "6d30347ea78d3c2bde6217268ce83d1c365a4f10967c59fcc411ab25a24aa24c",
+      "sourceSha256": "a7cd78d2d9676cd682206160c18d4b1ec48c21791e6717ebd431d05b598dc81b"
+    },
+    {
+      "id": "47",
+      "counties": 95,
+      "bytes": 712163,
+      "sha256": "03676f0ca82aba8208945e8e84066149e6c2b9d7a0292ec4299866f18fb75495",
+      "sourceSha256": "cdc9f6d6a47ead9aa3ac61b68daf14aec9ac9e975415cce4bdc80ec6c12310ca"
+    },
+    {
+      "id": "48",
+      "counties": 254,
+      "bytes": 1651321,
+      "sha256": "c69a17015db2831b3b8615a4bf297274993eb3bff9f8e8a9a42b63598a31a3fe",
+      "sourceSha256": "afe36161b8411c7a74c55c1d3dc3e1c0049594f77b027b056653227fbd3056f6"
+    },
+    {
+      "id": "49",
+      "counties": 29,
+      "bytes": 343422,
+      "sha256": "44674666006c30788083ff694e897d57c95a8c834d39cbc7f3e97c62e3009fd2",
+      "sourceSha256": "929cc0531c25df94280ca139e64b61158020543f60451642c4937f6d5fcdfc71"
+    },
+    {
+      "id": "50",
+      "counties": 14,
+      "bytes": 68107,
+      "sha256": "58542dc54adc5f1b53aaeba4d7af951b64d579b0fcb7aae78d1f8cf1fd6c720e",
+      "sourceSha256": "96b8f837523fc403e2b186437f78711ed02068091b557a6556110947a794cec6"
+    },
+    {
+      "id": "51",
+      "counties": 133,
+      "bytes": 995053,
+      "sha256": "c862b131dc61b5b058743eb9391b95407039a3ddd164ba1cf7c27724587ebac6",
+      "sourceSha256": "55e3dadf18ee05b59443a255cbae9b10e1de784660287c56fcdf0f91090e85af"
+    },
+    {
+      "id": "53",
+      "counties": 39,
+      "bytes": 494570,
+      "sha256": "71e98adf929295544f3148f2ad02f86379290f823ac7e3a14f046b9cfd412e89",
+      "sourceSha256": "dd54a0f39d300c2149948130bc2fdf79796b387708060cb3dd2a48c1f6cf788d"
+    },
+    {
+      "id": "54",
+      "counties": 55,
+      "bytes": 473585,
+      "sha256": "b4957dc549a8de0af5f3dd10725c909265e0f06ba0944e3414701494c1a548b9",
+      "sourceSha256": "590637ad1b0e29691c981b27344ea436dba6812739ea085a18ccf05879de5a8e"
+    },
+    {
+      "id": "55",
+      "counties": 72,
+      "bytes": 321259,
+      "sha256": "0ac12a3cc4d08dc89fa517517480da27f018cfb564ceb208f95bcc3e3d9dc7f5",
+      "sourceSha256": "a81ead70bb1cc77e2c1998120c4034e8407262ca65da89eafd1e620d758aacf7"
+    },
+    {
+      "id": "56",
+      "counties": 23,
+      "bytes": 122611,
+      "sha256": "c608c0500a9aaff4292b477ad53587c1bdd6a16f09687aef7d2ea0d39ee37ddc",
+      "sourceSha256": "5f4806a90aa17364cf845ea34898b788aeb50d83c13ac72c9fc848e1f7ea7c32"
+    }
+  ]
+}

@@ -1,0 +1,380 @@
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {footprints,stateMesh,projectedShapes} from './geometry.js';
+
+export const EMBER = ['#fff2b1','#f8c34a','#f4942c','#e55732','#af2345','#701e51','#281c43'];
+const WIDTH = 1200, HEIGHT = 750;
+const color = value => value == null ? '#aaa49e' : d3.interpolateRgbBasis(EMBER)(value);
+const RELIEF=.28;
+
+export async function loadGeography() {
+  const responses=await Promise.all(['../node_modules/us-atlas/counties-10m.json','../node_modules/world-atlas/countries-110m.json','county-boundary-repair.json','cities.json'].map(url=>fetch(url)));
+  if(responses.some(r=>!r.ok)) throw new Error('Geographic boundaries could not be loaded. Reload to retry.');
+  const [us,world,repair,cities]=await Promise.all(responses.map(r=>r.json()));
+  const states=topojson.feature(us,us.objects.states).features.filter(f=>Number(f.id)<60);
+  const counties=topojson.feature(us,us.objects.counties).features.filter(f=>Number(f.id.slice(0,2))<60);
+  // The simplified source collapses Falls Church to a line; use its verified 2017 polygon.
+  for(const feature of repair.features){const index=counties.findIndex(f=>f.id===feature.id);if(index<0)throw new Error('Unknown county repair');counties[index]=feature;}
+  const collection={type:'FeatureCollection',features:states};
+  // A western central meridian keeps the Aleutians together across the date line.
+  const projection=d3.geoMercator().rotate([100,0]).fitExtent([[55,60],[1145,690]],{type:'FeatureCollection',features:states.filter(f=>!['02','15'].includes(f.id))});
+  const path=d3.geoPath(projection).digits(2);
+  const decorate=f=>{
+    const bounds=path.bounds(f);let focusBounds=bounds,point=path.centroid(f);
+    // Remote tiny islands stay on the map; the main landmass determines the county close-up.
+    if(f.id.length===5&&f.geometry.type==='MultiPolygon'){
+      const parts=f.geometry.coordinates.map(coordinates=>({type:'Polygon',coordinates}));
+      const areas=parts.map(d3.geoArea),largest=areas.indexOf(Math.max(...areas)),b=path.bounds(parts[largest]);
+      if(areas[largest]/d3.sum(areas)>.65&&Math.max(bounds[1][0]-bounds[0][0],bounds[1][1]-bounds[0][1])>1.6*Math.max(b[1][0]-b[0][0],b[1][1]-b[0][1])){focusBounds=b;point=path.centroid(parts[largest]);}
+    }
+    return {id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f,path:path(f),center:d3.geoCentroid(f),bounds,focusBounds,point};
+  };
+  const s=states.map(decorate),c=counties.map(decorate);
+  const context=topojson.feature(world,world.objects.countries);
+  // Only other countries form the backdrop; a coarse US coast would protrude into detailed bays.
+  context.features=context.features.filter(f=>f.id!=='840');
+  const geo={states:s,counties:c,byId:new Map([...s,...c].map(f=>[f.id,f])),projection,path,cities:cities.map(c=>({...c,point:projection([c.lon,c.lat])})),world:context,collection,detailStates:new Set()};
+  const pending=new Map();
+  geo.loadDetail=async id=>{
+    const parent=id?.slice(0,2);if(!parent||geo.detailStates.has(parent))return;
+    if(pending.has(parent))return pending.get(parent);
+    const request=(async()=>{
+      const response=await fetch(`./boundaries/${parent}.json`);
+      if(!response.ok)throw new Error('Detailed boundaries unavailable. Select the place again to retry.');
+      const data=await response.json();
+      const expected=c.filter(f=>f.stateId===parent);
+      if(data.features.length!==expected.length||data.features.some(f=>!geo.byId.has(f.id)||f.id.slice(0,2)!==parent))throw new Error('Incomplete geographic detail');
+      for(const f of data.features)Object.assign(geo.byId.get(f.id),decorate(f));
+      // Shared county edges cancel out, leaving a coastline/state perimeter at the same precision.
+      const edges=new Map();
+      for(const f of data.features){
+        const polygons=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
+        for(const polygon of polygons)for(const ring of polygon)for(let i=1;i<ring.length;i++){
+          const a=ring[i-1],b=ring[i],ka=a.join(','),kb=b.join(','),key=ka<kb?ka+'|'+kb:kb+'|'+ka;
+          const edge=edges.get(key);if(edge)edge.count++;else edges.set(key,{count:1,points:[a,b]});
+        }
+      }
+      const state=geo.byId.get(parent),feature={type:'FeatureCollection',features:data.features};
+      state.path=path({type:'MultiLineString',coordinates:[...edges.values()].filter(e=>e.count===1).map(e=>e.points)});
+      state.feature=feature;state.bounds=path.bounds(feature);state.focusBounds=[[d3.min(expected,f=>f.focusBounds[0][0]),d3.min(expected,f=>f.focusBounds[0][1])],[d3.max(expected,f=>f.focusBounds[1][0]),d3.max(expected,f=>f.focusBounds[1][1])]];state.point=path.centroid(feature);
+      geo.detailStates.add(parent);
+    })().finally(()=>pending.delete(parent));
+    pending.set(parent,request);return request;
+  };
+  return geo;
+}
+
+export class ExplorerMap {
+  constructor(host,geo,{onSelect=()=>{},onError=()=>{},onHover=()=>{}}={}) {
+    Object.assign(this,{host,geo,onSelect,onError,onHover});
+    this.state={mode:'2d',selectedId:null,values:new Map(),dark:false};
+    this.svg=d3.select(host).append('svg').attr('viewBox',`0 0 ${WIDTH} ${HEIGHT}`).attr('class','geo-svg').attr('aria-label','United States interactive map');
+    this.layer=this.svg.append('g');
+    this.worldLayer=this.layer.append('path').attr('d',geo.path(geo.world)).attr('fill','#252c35').attr('stroke','#3d454f').attr('stroke-width',.5).attr('vector-effect','non-scaling-stroke').attr('pointer-events','none');
+    this.countyLayer=this.layer.append('g');
+    this.stateLayer=this.layer.append('g');
+    this.labelLayer=this.svg.append('g').attr('pointer-events','none');
+    this.countyPaths=this.countyLayer.selectAll('path').data(geo.counties).join('path').attr('d',d=>d.path).attr('data-geo',d=>d.id).attr('vector-effect','non-scaling-stroke');
+    this.statePaths=this.stateLayer.selectAll('path').data(geo.states).join('path').attr('d',d=>d.path).attr('fill','none').attr('pointer-events','none').attr('vector-effect','non-scaling-stroke');
+    this.countyPaths.on('click',(event,d)=>{event.stopPropagation();this.pick(d.id);}).on('pointerenter',(e,d)=>this.hover(d.id)).on('pointerleave',()=>this.onHover(null));
+    this.zoomBehavior=d3.zoom().scaleExtent([.15,80]).translateExtent(geo.path.bounds({type:'Sphere'})).clickDistance(6).on('zoom',event=>{this.layer.attr('transform',event.transform);this.renderLabels();this.renderRankMarkers();});
+    this.svg.call(this.zoomBehavior).on('dblclick.zoom',null);
+    this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(host);
+    this.frame=0;this.isDisposed=false;this.dim=0;this.phase='overview';
+  }
+  pick(id) {
+    const selected=this.state.selectedId;
+    const next=selected && selected.slice(0,2)===id.slice(0,2)?id:id.slice(0,2);
+    this.onSelect(next);
+  }
+  hover(id) {
+    const f=this.geo.byId.get(this.state.selectedId?.slice(0,2)===id.slice(0,2)?id:id.slice(0,2));
+    if(f) this.onHover({id:f.id,name:f.name,value:this.state.values.get(f.id)??null});
+  }
+  update(next) {
+    const previous=this.state,oldSettings=this.settings;
+    const changedLayout=previous.layoutKey!==next.layoutKey,changedMode=previous.mode!==next.mode;
+    const changedPlace=previous.selectedId!==next.selectedId,changedRanks=JSON.stringify(previous.ranks||[])!==JSON.stringify(next.ranks||[]);
+    const detailChanges=[...this.geo.detailStates].filter(id=>!this.terrainDetailStates?.has(id));
+    const cameraChanged=['tilt','cameraSide','minZoom','maxZoom'].some(key=>oldSettings?.[key]!==next.settings[key]);
+    this.settings=next.settings;
+    if(changedMode||changedLayout){this.cancelMotion();this.session=null;this.dim=0;}
+    const before=this.renderer&&!changedMode&&!changedLayout?this.snapshotPose():null;
+    this.state={...previous,...next};
+    const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
+    this.host.dataset.mode=mode;this.host.dataset.selected=selectedId||'US';this.host.dataset.metric=this.state.metricKey||'';
+    this.host.dataset.renderMode=mode;
+    this.host.classList.toggle('map-dark',dark);this.svg.style('display',mode==='2d'?null:'none');
+    if(this.renderer)this.renderer.domElement.hidden=mode==='2d';
+    if(this.focusUI)this.focusUI.hidden=true;
+    this.countyPaths.attr('d',f=>f.path).attr('fill',f=>color(this.mappedValue(f))).attr('stroke','#382737').attr('stroke-width',.35)
+      .attr('opacity',f=>parent&&f.stateId!==parent ? .3 : 1).classed('selected-county',f=>selectedId===f.id);
+    this.statePaths.attr('d',f=>f.path).attr('visibility',f=>selectedId?.length===5&&f.id===parent?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
+    this.renderLabels();
+    if(mode==='2d'){
+      if(changedPlace||changedMode||changedLayout||changedRanks||!this.initialized)this.fit2D();
+    }else try{
+      this.ensureWebGL();this.renderer.domElement.hidden=false;
+      const rebuild=!this.stateGroups||previous.values!==this.state.values||previous.countySupported!==this.state.countySupported||oldSettings?.relief!==this.settings.relief;
+      if(rebuild)this.buildTerrain();
+      else {
+        const refresh=new Set(detailChanges);
+        if(changedPlace&&(previous.selectedId?.length===5||selectedId?.length===5)){if(previous.selectedId)refresh.add(previous.selectedId.slice(0,2));if(parent)refresh.add(parent);}
+        if(refresh.size)this.buildTerrain(refresh);
+      }
+      if(selectedId&&!this.session){
+        const overview=before&&!previous.selectedId?before:this.pose(null,mode);
+        this.session={overview,parent};
+      }
+      if(this.session&&selectedId)this.session.parent=parent;
+      const first=!this.initialized||changedMode||changedLayout;
+      if(changedPlace||first||cameraChanged||changedRanks){
+        if(next.ranks?.length)this.animateTo(this.pose(),0,{immediate:first});
+        else if(!selectedId&&this.session){this.animateTo(this.session.overview,0,{restoring:true});}
+        else{
+          if(first){this.applyPose(this.pose(null,mode));}
+          this.animateTo(this.pose(),selectedId?1:0,{immediate:first});
+        }
+      }else{this.configureControls();this.render();}
+      this.resize();
+    }catch(error){this.onError(error.message);}
+    this.renderRankMarkers();
+    this.initialized=true;
+  }
+  mappedValue(feature) {
+    const id=this.state.countySupported===false ? feature.stateId : feature.id;
+    return this.state.values.get(id)??null;
+  }
+  fitScale(){const b=this.bounds();return Math.max(.8,Math.min(400,.82/Math.max((b[1][0]-b[0][0])/WIDTH,(b[1][1]-b[0][1])/HEIGHT)));}
+  bounds() {if(this.state.ranks?.length){const bounds=[[[45,20],[1155,720]],...this.state.ranks.map(row=>this.geo.byId.get(row.id).focusBounds)];return [[Math.min(...bounds.map(b=>b[0][0])),Math.min(...bounds.map(b=>b[0][1]))],[Math.max(...bounds.map(b=>b[1][0])),Math.max(...bounds.map(b=>b[1][1]))]];}return this.state.selectedId?this.geo.byId.get(this.state.selectedId).focusBounds:[[45,20],[1155,720]];}
+  renderLabels() {
+    if(this.state.mode!=='2d'||!this.host.clientWidth)return;
+    const transform=d3.zoomTransform(this.svg.node()),scale=Math.min(this.host.clientWidth/WIDTH,this.host.clientHeight/HEIGHT);
+    const fontSize=12/scale,occupied=[],labels=[];
+    const selected=this.geo.byId.get(this.state.selectedId);
+    const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name));
+    if(selected?.id.length===5)rows.unshift({name:selected.name+' · county',point:selected.point});
+    // Screen-space collision estimates avoid layout reads and hundreds of county labels per zoom tick.
+    for(const row of rows){
+      const [x,y]=transform.apply(row.point),width=(row.name.length*6.5+12)/scale,height=22/scale;
+      const rect={left:x-width/2,right:x+width/2,top:y-height,bottom:y+4/scale};
+      if(rect.left<0||rect.right>WIDTH||rect.top<0||rect.bottom>HEIGHT)continue;
+      if(occupied.some(b=>rect.left<b.right&&rect.right>b.left&&rect.top<b.bottom&&rect.bottom>b.top))continue;
+      occupied.push(rect);labels.push({...row,x,y});
+    }
+    this.labelLayer.selectAll('text').data(labels,d=>d.name).join('text').attr('x',d=>d.x).attr('y',d=>d.y-6/scale)
+      .attr('text-anchor','middle').attr('font-size',fontSize).attr('fill','#fff4dc').attr('paint-order','stroke').attr('stroke','#20242c').attr('stroke-width',3/scale).text(d=>d.name);
+  }
+  fit2D() {
+    const b=this.bounds();
+    const k=this.fitScale();
+    this.zoomBehavior.scaleExtent([.15,Math.max(80,k*2)]);
+    const t=d3.zoomIdentity.translate(WIDTH/2,HEIGHT/2).scale(k).translate(-(b[0][0]+b[1][0])/2,-(b[0][1]+b[1][1])/2);
+    const target=this.reduced()?this.svg:this.svg.transition().duration(650).ease(d3.easeCubicOut);
+    target.call(this.zoomBehavior.transform,t);
+  }
+  reduced(){return matchMedia('(prefers-reduced-motion: reduce)').matches;}
+  ensureWebGL() {
+    if(this.renderer)return;
+    this.scene=new THREE.Scene();this.camera=new THREE.PerspectiveCamera(40,1,.0001,150);
+    this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;
+    const canvas=this.renderer.domElement;canvas.className='geo-canvas';
+    canvas.setAttribute('aria-label','Interactive 3D map. Click a state to focus; scroll to zoom.');this.host.append(canvas);
+    this.controls=new OrbitControls(this.camera,canvas);
+    this.controls.enableDamping=false;this.controls.enablePan=true;this.controls.enableZoom=true;
+    this.controls.screenSpacePanning=true;this.controls.zoomToCursor=true;
+    this.controls.touches.ONE=THREE.TOUCH.PAN;
+    this.controls.addEventListener('start',()=>{cancelAnimationFrame(this.zoomFrame);this.zoomDestination=null;});
+    this.controls.rotateSpeed=.35;this.controls.addEventListener('change',()=>this.render());
+    this.scene.add(new THREE.AmbientLight(0xffffff,2));
+    const light=new THREE.DirectionalLight(0xfff1de,2.2);light.position.set(-4,12,5);this.scene.add(light);
+    this.group=new THREE.Group();this.scene.add(this.group);
+    this.terrain=new THREE.Group();this.group.add(this.terrain);
+    const worldGeometry=new THREE.ShapeGeometry(projectedShapes(this.geo.world,this.geo.projection,d3.geoStream));worldGeometry.rotateX(-Math.PI/2);
+    this.worldMesh=new THREE.Mesh(worldGeometry,new THREE.MeshBasicMaterial({color:'#d3d7dc'}));this.worldMesh.position.y=-.005;this.group.add(this.worldMesh);
+    this.focusUI=document.createElement('div');this.focusUI.className='focus-caption';this.focusUI.hidden=true;
+    this.focusUI.innerHTML='<button type="button" class="focus-back">← United States</button><span></span><small>Click another state to explore · Click the background to return · Esc</small>';
+    this.focusUI.querySelector('button').onclick=()=>this.exitFocus();this.host.append(this.focusUI);
+    canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.onError('3D was interrupted. Switch to 2D to continue.');});
+    canvas.addEventListener('pointerdown',e=>{this.pointerStart=e.button===0?[e.clientX,e.clientY]:null;this.dragging=true;});
+    canvas.addEventListener('pointerup',e=>{
+      const start=this.pointerStart;this.pointerStart=null;this.dragging=false;
+      if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>6)return;
+      const id=this.hit(e);
+      if(!id&&this.session){this.exitFocus();return;}
+      if(id&&!this.transition)this.pick(id);
+    });
+    canvas.addEventListener('pointercancel',()=>{this.pointerStart=null;this.dragging=false;});
+    canvas.addEventListener('pointermove',e=>{
+      if(this.dragging||this.transition){canvas.style.cursor='grabbing';return;}
+      const id=this.hit(e);
+      canvas.style.cursor=id?'pointer':'grab';
+      if(id!==this.hoveredPlace){this.hoveredPlace=id;if(id)this.hover(id);else this.onHover(null);this.highlight(id?.slice(0,2));}
+
+    });
+    canvas.addEventListener('pointerleave',()=>{this.hoveredPlace=null;this.onHover(null);this.highlight(null);});
+    this.onEscape=event=>{if(event.key==='Escape'&&this.state.selectedId&&!this.host.closest('[inert]')&&!document.querySelector('.drawer:not([hidden]),#view-settings-panel:not([hidden])')&&!/INPUT|TEXTAREA/.test(event.target.tagName))this.exitFocus();};
+    document.addEventListener('keydown',this.onEscape);
+  }
+  clearGroup(group) {
+    group?.traverse(o=>{o.geometry?.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material]){m.map?.dispose();m.dispose();}});
+    group?.clear();
+  }
+  clear(){this.clearGroup(this.group);}
+  buildTerrain(only=null) {
+    if(!only){this.clearGroup(this.terrain);this.stateGroups=new Map();}
+    const footprintsByState=d3.group(footprints(this.geo,d3.geoStream),row=>row.feature.stateId);
+    for(const [id,rows] of footprintsByState){
+      if(only&&!only.has(id))continue;
+      const old=this.stateGroups.get(id);if(old){this.terrain.remove(old);this.clearGroup(old);}
+      const state=this.geo.byId.get(id),b=this.state.selectedId?.startsWith(id)?this.geo.byId.get(this.state.selectedId).focusBounds:state.focusBounds;
+      const center=new THREE.Vector3((b[0][0]+b[1][0])/200-6,0,(b[0][1]+b[1][1])/200-3.75);
+      // One national height scale also keeps both comparison panes comparable.
+      const height=RELIEF*this.settings.relief;
+      const {mesh,lines,outline,selection}=stateMesh(rows,f=>this.mappedValue(f),{height,color,center,selectedId:this.state.selectedId});
+      const group=new THREE.Group();group.position.copy(center);group.userData={id,mesh,lines,outline,height};group.add(mesh,lines,outline);if(selection)group.add(selection);
+      this.stateGroups.set(id,group);this.terrain.add(group);
+    }
+    this.terrainDetailStates=new Set(this.geo.detailStates);
+  }
+  renderRankMarkers(){
+    if(!this.rankMarkers){this.rankMarkers=document.createElement('div');this.rankMarkers.className='rank-markers';this.host.append(this.rankMarkers);}
+    const rows=this.state.ranks||[],key=JSON.stringify(rows);
+    if(this.rankKey!==key){this.rankKey=key;this.rankMarkers.replaceChildren(...rows.map(row=>{const button=document.createElement('button');button.className='rank-marker';button.textContent=row.rank+' · '+this.geo.byId.get(row.id).name;button.setAttribute('aria-label','Open '+this.geo.byId.get(row.id).name);button.onclick=()=>this.onSelect(row.id);return button;}));}
+    const occupied=[];
+    rows.forEach((row,i)=>{
+      const f=this.geo.byId.get(row.id),el=this.rankMarkers.children[i],w=this.host.clientWidth,h=this.host.clientHeight;let x,y,visible=true;
+      if(this.state.mode==='3d'&&this.camera){const parent=this.stateGroups?.get(f.stateId);const altitude=(.0015+(this.state.values.get(row.id)??0)*(parent?.userData.height??RELIEF))*(this.heightScale??1);const p=new THREE.Vector3(f.point[0]/100-6,altitude+.002,f.point[1]/100-3.75).project(this.camera);x=(p.x+1)*w/2;y=(1-p.y)*h/2;visible=p.z>=-1&&p.z<=1;}
+      else {const scale=Math.min(w/WIDTH,h/HEIGHT),p=d3.zoomTransform(this.svg.node()).apply(f.point);x=p[0]*scale+(w-WIDTH*scale)/2;y=p[1]*scale+(h-HEIGHT*scale)/2;}
+      el.hidden=!visible||x<0||x>w||y<0||y>h;let offset=0;const width=Math.min(w,el.textContent.length*5.8+20);
+      if(!el.hidden){while(occupied.some(b=>x-width/2<b.right&&x+width/2>b.left&&y-offset-27<b.bottom&&y-offset>b.top))offset+=30;occupied.push({left:x-width/2,right:x+width/2,top:y-offset-27,bottom:y-offset});}
+      el.style.left=x+'px';el.style.top=(y-offset)+'px';el.style.setProperty('--leader',offset+'px');
+    });
+  }
+  pose(selectedId=this.state.selectedId,mode=this.state.mode) {
+    let target,position,distance,extent;
+    {
+      const b=this.state.ranks?.length?this.bounds():selectedId?this.geo.byId.get(selectedId).focusBounds:[[45,20],[1155,720]];
+      const dx=(b[1][0]-b[0][0])/100,dz=(b[1][1]-b[0][1])/100;
+      const aspect=this.host.clientWidth/Math.max(1,this.host.clientHeight),tilt=this.settings.tilt*Math.PI/180;
+      const height=(this.stateGroups?.get(selectedId?.slice(0,2))?.userData.height??RELIEF)*this.reliefScale(selectedId);
+      distance=Math.max(.035,Math.max(dx/Math.max(.25,aspect),dz)*1.65+height*2.5);
+      target=new THREE.Vector3((b[0][0]+b[1][0])/200-6,height*.3,(b[0][1]+b[1][1])/200-3.75);
+      position=target.clone().add(new THREE.Vector3(0,distance*Math.cos(tilt),distance*Math.sin(tilt)*(this.settings.cameraSide==='north'?-1:1)));extent=Math.max(dx,dz);
+    }
+    const min=distance/this.settings.maxZoom;
+    return {mode,position:position.toArray(),target:target.toArray(),up:[0,1,0],zoom:1,minDistance:min,maxDistance:distance/this.settings.minZoom,cursor:target.toArray(),maxTargetRadius:Math.max(30,extent*5),fitDistance:distance};
+  }
+  snapshotPose(){return {mode:this.state.mode,position:this.camera.position.toArray(),target:this.controls.target.toArray(),up:this.camera.up.toArray(),zoom:this.camera.zoom,minDistance:this.controls.minDistance,maxDistance:this.controls.maxDistance,cursor:this.controls.cursor.toArray(),maxTargetRadius:this.controls.maxTargetRadius,fitDistance:this.fitDistance};}
+  reliefScale(id=this.state.selectedId){
+    if(id?.length!==5)return 1;
+    const b=this.geo.byId.get(id).focusBounds;
+    // At street-sized county equivalents, national relief would hide the footprint.
+    // Scale every county equally for this view; colour retains the fixed national index.
+    return Math.min(1,Math.max(b[1][0]-b[0][0],b[1][1]-b[0][1])/100*1.5);
+  }
+  applyPose(pose){
+    this.camera.position.fromArray(pose.position);this.camera.up.fromArray(pose.up);this.camera.zoom=pose.zoom;this.camera.updateProjectionMatrix();
+    this.controls.target.fromArray(pose.target);this.controls.cursor.fromArray(pose.cursor);
+    this.controls.minDistance=pose.minDistance;this.controls.maxDistance=pose.maxDistance;this.controls.maxTargetRadius=pose.maxTargetRadius;
+    this.fitDistance=pose.fitDistance;this.camera.lookAt(this.controls.target);this.controls.update();
+  }
+  configureControls(){
+    this.controls.enableRotate=this.settings.rotation&&!this.transition;
+    this.controls.enableZoom=!this.transition;this.controls.enablePan=!this.transition;
+    this.controls.zoomSpeed=.5+this.settings.sensitivity*3;
+    this.controls.mouseButtons.LEFT=this.settings.rotation?THREE.MOUSE.ROTATE:THREE.MOUSE.PAN;
+    this.controls.mouseButtons.RIGHT=THREE.MOUSE.PAN;
+    this.controls.minPolarAngle=.02;this.controls.maxPolarAngle=Math.PI*.48;
+
+  }
+  animateTo(pose,dim,{restoring=false,immediate=false}={}) {
+    this.cancelMotion();for(const group of this.stateGroups.values())group.rotation.set(0,0,0);
+    const from=this.snapshotPose(),fromDim=this.dim,fromHeight=this.heightScale??1,toHeight=this.reliefScale();
+    this.transition={pose,dim,restoring};this.phase=restoring?'restoring':this.state.selectedId?'focusing':'overview';this.configureControls();
+    const duration=immediate||this.reduced()?0:this.settings.duration,start=performance.now();
+    const finish=()=>{
+      this.applyPose(pose);this.dim=dim;this.heightScale=toHeight;this.transition=null;
+      if(restoring)this.session=null;
+      this.phase=this.state.selectedId?'focused':'overview';this.configureControls();this.render();
+    };
+    this.transition.finish=finish;
+    if(!duration){finish();return;}
+    const a=new THREE.Vector3().fromArray(from.position),b=new THREE.Vector3().fromArray(pose.position),ta=new THREE.Vector3().fromArray(from.target),tb=new THREE.Vector3().fromArray(pose.target);
+    const step=now=>{
+      if(this.isDisposed)return;const t=Math.min(1,(now-start)/duration),e=t*t*(3-2*t);
+      this.camera.position.lerpVectors(a,b,e);this.controls.target.lerpVectors(ta,tb,e);this.camera.lookAt(this.controls.target);
+      this.dim=fromDim+(dim-fromDim)*e;this.heightScale=fromHeight+(toHeight-fromHeight)*e;this.render();
+      if(t<1)this.frame=requestAnimationFrame(step);else finish();
+    };
+    this.frame=requestAnimationFrame(step);
+  }
+  cancelMotion(){cancelAnimationFrame(this.frame);cancelAnimationFrame(this.zoomFrame);this.transition=null;this.zoomDestination=null;}
+  settle(){if(this.transition){const finish=this.transition.finish;this.cancelMotion();finish();}else this.cancelMotion();for(const group of this.stateGroups?.values()||[])group.rotation.set(0,0,0);this.render();}
+  exitFocus(){if(this.state.selectedId)this.onSelect(null);}
+  highlight(id){
+    if(this.hoveredState===id)return;this.hoveredState=id;
+    for(const [key,group] of this.stateGroups||[]){group.userData.outline.material.color.set(key===id?'#ffffff':'#ffe9bc');}
+    this.render();
+  }
+  fit3D(){this.animateTo(this.pose(),this.state.selectedId?1:0);}
+  hit(event) {
+    if(!this.renderer)return null;
+    const r=this.renderer.domElement.getBoundingClientRect(),mouse=new THREE.Vector2((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1);
+    const ray=new THREE.Raycaster();ray.setFromCamera(mouse,this.camera);this.scene.updateMatrixWorld(true);
+    // Dimmed states remain navigation targets; only a miss on every state means background.
+    const parent=this.state.selectedId?.slice(0,2),meshes=[...this.stateGroups.values()].map(g=>g.userData.mesh);
+    const result=ray.intersectObjects(meshes)[0];
+    if(!result)return null;
+    const id=String(result.object.geometry.attributes.county.getX(result.face.a)).padStart(5,'0');
+    return parent===id.slice(0,2)?id:id.slice(0,2);
+  }
+  zoom(factor) {
+    if(this.state.mode==='2d'){this.svg.transition().duration(this.reduced()?0:200).call(this.zoomBehavior.scaleBy,1/factor);return;}
+    if(this.transition)return;
+    cancelAnimationFrame(this.zoomFrame);
+    const delta=this.camera.position.clone().sub(this.controls.target),start=delta.length();
+    const length=THREE.MathUtils.clamp((this.zoomDestination||start)*factor,this.controls.minDistance,this.controls.maxDistance);
+    this.zoomDestination=length;const direction=delta.normalize(),begin=performance.now();
+    const step=now=>{const t=this.reduced()?1:Math.min(1,(now-begin)/240),ease=1-Math.pow(1-t,3);this.camera.position.copy(this.controls.target).addScaledVector(direction,start+(length-start)*ease);this.controls.update();this.render();if(t<1)this.zoomFrame=requestAnimationFrame(step);else this.zoomDestination=null;};
+    this.zoomFrame=requestAnimationFrame(step);
+  }
+  rotate(direction=1){
+    if(this.state.mode==='2d'||!this.settings.rotation||this.transition)return;
+    const delta=this.camera.position.clone().sub(this.controls.target).applyAxisAngle(new THREE.Vector3(0,1,0),.15*direction);
+    this.camera.position.copy(this.controls.target).add(delta);this.controls.update();this.render();
+  }
+  reset(){if(this.state.mode==='2d')this.fit2D();else this.fit3D();}
+  feedbackSnapshot(point){
+    this.settle();this.svg.interrupt();
+    const r=this.host.getBoundingClientRect(),inside=point.x>=r.left&&point.x<=r.right&&point.y>=r.top&&point.y<=r.bottom;
+    let picked=null;
+    if(inside&&this.state.mode!=='2d')picked=this.hit({clientX:point.x,clientY:point.y});
+    if(inside&&this.state.mode==='2d')picked=document.elementsFromPoint(point.x,point.y).find(el=>this.host.contains(el)&&el.dataset.geo)?.dataset.geo||null;
+    const transform=d3.zoomTransform(this.svg.node());
+    return {side:this.host.id,mode:this.state.mode,phase:this.phase,selected:this.state.selectedId,metric:this.state.metricKey,picked:picked?{id:picked,name:this.geo.byId.get(picked)?.name}:null,
+      bounds:{x:r.x,y:r.y,width:r.width,height:r.height},transform2d:{x:transform.x,y:transform.y,k:transform.k},settings:{...this.settings},reliefScale:this.heightScale??1,camera:this.state.mode==='2d'?null:this.snapshotPose()};
+  }
+  resize(){if(this.isDisposed)return;this.renderLabels();if(!this.renderer)return;const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.render();}
+  render(){
+    if(!this.renderer||this.isDisposed||this.state.mode==='2d')return;
+    const parent=this.state.selectedId?.slice(0,2)||this.session?.parent;
+    for(const [id,group] of this.stateGroups||[]){
+      group.scale.y=this.heightScale??1;
+      const shade=parent&&id!==parent?1-this.dim*.88:1;
+      group.visible=true;
+      group.userData.mesh.material.color.setRGB(shade,shade,shade);
+      group.userData.lines.material.opacity=.38*shade;
+      group.userData.outline.visible=!(id===parent&&this.state.selectedId?.length===5);
+      group.userData.outline.material.opacity=(id===parent?1:.8)*shade;
+    }
+    this.renderer.setClearColor('#e7eaed',1);
+    const distance=this.camera.position.distanceTo(this.controls.target);
+    this.camera.near=Math.max(.00001,distance*.01);this.camera.far=Math.max(40,distance*8);this.camera.updateProjectionMatrix();
+    this.host.dataset.phase=this.phase||'overview';
+    if(this.focusUI){this.focusUI.hidden=true;this.focusUI.querySelector('span').textContent=this.geo.byId.get(this.state.selectedId)?.name||'';}
+    this.renderer.render(this.scene,this.camera);this.renderRankMarkers();
+  }
+  dispose(){this.isDisposed=true;this.cancelMotion();this.svg.interrupt().remove();this.rankMarkers?.remove();this.observer.disconnect();document.removeEventListener('keydown',this.onEscape);this.controls?.dispose();this.clear();this.renderer?.dispose();this.renderer?.domElement.remove();this.focusUI?.remove();}
+}

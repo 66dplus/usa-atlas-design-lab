@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "settings": {
+    "rotation": false,
+    "cameraSide": "south",
+    "tilt": 40,
+    "sensitivity": 0.28,
+    "minZoom": 0.5,
+    "maxZoom": 12,
+    "duration": 950,
+    "hover": 0,
+    "relief": 1
+  }
+}

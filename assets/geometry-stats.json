@@ -1,0 +1,7 @@
+{
+  "counties": 3108,
+  "samples": 32892,
+  "source": "us-atlas@3.0.1 / Census 2017; world-atlas@2.0.2 / Natural Earth",
+  "coordinateSystem": "Albers, lower 48",
+  "synthetic": true
+}

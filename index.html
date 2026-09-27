@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#0b151e"><title>USA Atlas — Ten cartographic studies</title>
+ <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='27' fill='%230d2635' stroke='%23d2e6da' stroke-width='2'/%3E%3Cpath d='M5 32h54M32 5v54M12 16h40M12 48h40' stroke='%23d2e6da'/%3E%3C/svg%3E">
+ <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="styles.css">
+ <script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+ <script src="node_modules/d3/dist/d3.min.js"></script>
+</head>
+<body data-theme="orbital">
+<!-- THESIS: the map, not the dashboard, is the product. OWN-WORLD: precise cartographic fieldwork interpreted through the user's eight references; satellites, dense physical peaks, engraved ink and county mosaic. STORY: select a study, change a demo lens, inspect real geography, compare flat and spatial languages. FIRST VIEWPORT: a large Earth with fine radial marks over the United States, quiet tools at the perimeter. FORM: seed 89c20ff9; explicit user-pinned reference directions override the randomized candidates. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md. -->
+<header class="topbar">
+ <a class="brand" href="./" aria-label="USA Atlas home"><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11.5"/><ellipse cx="14" cy="14" rx="5.5" ry="11.5"/><path d="M2.5 14h23M5 7.5h18M5 20.5h18"/></svg><span>USA <b>Atlas</b></span></a>
+ <span class="project-label">A portrait of place.</span>
+ <div class="top-actions"><span class="demo-badge">Design study · synthetic data</span><a id="paper-link" href="https://app.paper.design/file/01M2TR09B215A39JS5WWCCPPXK" target="_blank" rel="noreferrer">Paper studies <span aria-hidden="true">↗</span></a></div>
+</header>
+<main>
+ <section class="viewport" aria-label="Atlas design preview">
+  <div id="scene"></div><div id="flat" hidden role="img" aria-label="Geographic design study"></div>
+  <div class="view-heading"><h1 id="title">Orbital observatory</h1><p id="subtitle">The shape of a nation.<br>The texture of its differences.</p></div>
+  <div class="mode-switch" role="group" aria-label="Map dimension"><button data-mode="3d" aria-pressed="true">3D globe & terrain</button><button data-mode="2d" aria-pressed="false">2D cartography</button></div>
+  <aside class="lens-panel" aria-label="Metric selection"><label for="metric">Explore a layer</label><select id="metric" aria-describedby="demo-note"></select><p id="demo-note">Illustrative field, not measured statistics.</p><div id="study-note"></div></aside>
+  <div class="map-legend"><div class="legend-title"><span id="legend-name">Income</span><span>Demo index</span></div><div id="color-ramp"></div><div class="legend-scale"><span>Low</span><span>High</span></div><p id="encoding">Colour + height = relative intensity</p></div>
+  <div class="view-controls" role="group" aria-label="Camera controls"><button id="rotate" aria-label="Rotate map"><svg viewBox="0 0 24 24"><path d="M5 9a8 8 0 1 1 0 7M5 4v5h5"/></svg></button><button id="zoom-in" aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button><button id="zoom-out" aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><button id="reset" aria-label="Reset camera"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button></div>
+  <div class="viewport-bottom"><span id="view-hint">Drag to orbit · Scroll to zoom</span><span id="attribution">Boundaries: US Census / Natural Earth · Earth imagery: Three.js examples</span></div>
+  <div id="status" role="status">Preparing the atlas…</div>
+ </section>
+ <nav class="study-nav" aria-label="Design directions"><div class="collection-label"><span id="collection-name">Spatial studies</span><span id="collection-count">01 — 05</span></div><div id="directions"></div></nav>
+ <section class="context-strip"><p id="reference-note"></p><span>10 directions / one geographic foundation</span></section>
+</main>
+<script type="module" src="app.js?v=handoff-1"></script>
+</body></html>

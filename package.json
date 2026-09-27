@@ -1,0 +1,22 @@
+{
+  "name": "usa-atlas-design-lab",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 scripts/serve.py",
+    "assets": "node scripts/build-assets.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "dependencies": {
+    "d3": "7.9.0",
+    "html2canvas": "1.4.1",
+    "three": "0.186.0",
+    "topojson-client": "3.1.0",
+    "us-atlas": "3.0.1",
+    "world-atlas": "2.0.2"
+  },
+  "devDependencies": {
+    "sharp": "0.35.4"
+  }
+}

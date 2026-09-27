@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "pathsRelativeTo": "projectRoot",
+  "selected": [
+    {
+      "number": "01",
+      "id": "orbital",
+      "mode": "3d",
+      "name": "Orbital observatory",
+      "url": "http://127.0.0.1:4180/?study=01",
+      "renderer": "scene.js#globe",
+      "primaryReference": "../pinterest-map-design-2026-09-18/942941240754636970.jpg",
+      "dataEncoding": "radial column color and height"
+    },
+    {
+      "number": "02",
+      "id": "ember",
+      "mode": "3d",
+      "name": "Where intensity rises",
+      "url": "http://127.0.0.1:4180/?study=02",
+      "renderer": "scene.js#plane",
+      "primaryReference": "../pinterest-map-design-2026-09-18/942941240754637212.jpg",
+      "secondaryReference": "../pinterest-map-design-2026-09-18/942941240754637160.png",
+      "dataEncoding": "planar peak color and height"
+    },
+    {
+      "number": "06",
+      "id": "blue",
+      "mode": "2d",
+      "name": "A thousand local stories",
+      "url": "http://127.0.0.1:4180/?study=06",
+      "renderer": "maps.js#mapSVG",
+      "primaryReference": "../pinterest-map-design-2026-09-18/942941240754637140.jpg",
+      "paperFile": "https://app.paper.design/file/01M2TR09B215A39JS5WWCCPPXK",
+      "paperExport": "../evidence/paper/06-blue-hour.png",
+      "dataEncoding": "county fill color"
+    }
+  ],
+  "geography": {
+    "scope": "contiguous United States",
+    "countyCount": 3108,
+    "registeredSampleCount": 32892,
+    "coordinateSystem": "Albers",
+    "sources": [
+      "us-atlas@3.0.1 / US Census 2017 boundaries",
+      "world-atlas@2.0.2 / Natural Earth"
+    ]
+  },
+  "dataStatus": "synthetic design field; not publishable statistics"
+}

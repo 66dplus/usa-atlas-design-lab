@@ -1,0 +1,206 @@
+[
+  {
+    "path": "README.md",
+    "sha256": "381899a7e01e4361b7f254cc99e62a0e7b7708eefbd9a268fd8710d1f65c8bd8",
+    "bytes": 2200,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "app.js",
+    "sha256": "3f8b1d6e9ceea9b6057752bee14d5e80bbb4cbd2ac34ea91b10d98241e3cbe8e",
+    "bytes": 8694,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/earth-day.jpg",
+    "sha256": "cd7712d3e891425d9948ea5ac18d3bb1e7e834ea038188587897e689a7b35d0f",
+    "bytes": 473093,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/earth-normal.jpg",
+    "sha256": "3fc43e9639c34e8223c4a871e3bdf5b2d52ee79f7e89ce3f28cba45d4cac031a",
+    "bytes": 336774,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/earth-silver.jpg",
+    "sha256": "b301b19a3a0023a020b9ae85ec41b833b2b83ab6af10c89771cb7f0badf17813",
+    "bytes": 512221,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/geography.json",
+    "sha256": "9d15d99df59baf77154fe04adba02557fab78fad7af61950a6299aa20f46c6e4",
+    "bytes": 6174498,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/geometry-stats.json",
+    "sha256": "bc12e82e3de5afb5b5e4edcdaa32cc88119a6cd54d2b120d8a6bdd7a960747fd",
+    "bytes": 184,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-blue.png",
+    "sha256": "a9e3384b4e418127f31d17c2d1f07d288782325da519af1ebbf2e891a9343bf3",
+    "bytes": 366780,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-blue.svg",
+    "sha256": "f9826a80eb72b1d8b1bdefe68597350bdf77070301eefe55f09393dca1d3f03d",
+    "bytes": 1175881,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-contour.png",
+    "sha256": "4841ebf452a318c2e23201b607416e04b09224587688bb9149367a8287dec0f1",
+    "bytes": 214089,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-contour.svg",
+    "sha256": "d4b60c66881b5866f8492b92ca31205a76ef1a15db192de66cf0e02bc4294b4f",
+    "bytes": 284317,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-dots.png",
+    "sha256": "b49eec9650d1c59fcd6643f2d8abed5186e38f2fac070a8a25de476c424d0446",
+    "bytes": 210113,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-dots.svg",
+    "sha256": "34c40517fee8eba16c9d08f3e7e79bf5bc38f37e91b168df776cf78ea1bebd0a",
+    "bytes": 631133,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-neighborhood.png",
+    "sha256": "d5e07ec01c9214e258d28c6cd28eeb95638465325e5f535acf5dbfe0bd728985",
+    "bytes": 762537,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-neighborhood.svg",
+    "sha256": "dcbb29a411453b683605d201f097a50913b9fe9a1055c3dd63e90754df9f7087",
+    "bytes": 2227315,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-relief.png",
+    "sha256": "5ff7023c8736e0a42fb11b578715544e0d13034283f8586cdb0413820354c854",
+    "bytes": 614265,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/map-relief.svg",
+    "sha256": "1c8ca3b9f4afbf3cb34727707c86a16baf55c94cac4410921797e9851648d94b",
+    "bytes": 1114228,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/paper-blue-v2.png",
+    "sha256": "a9e3384b4e418127f31d17c2d1f07d288782325da519af1ebbf2e891a9343bf3",
+    "bytes": 366780,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/paper-contour-v2.png",
+    "sha256": "4841ebf452a318c2e23201b607416e04b09224587688bb9149367a8287dec0f1",
+    "bytes": 214089,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/paper-dots-v2.png",
+    "sha256": "b49eec9650d1c59fcd6643f2d8abed5186e38f2fac070a8a25de476c424d0446",
+    "bytes": 210113,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/paper-relief-v2.png",
+    "sha256": "5ff7023c8736e0a42fb11b578715544e0d13034283f8586cdb0413820354c854",
+    "bytes": 614265,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/philadelphia-osm.json",
+    "sha256": "63b1d8dd46a5b1b79dd8f8ea88b29fe20553b29d9d779ad252e12592c6d5926d",
+    "bytes": 13881317,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/preview-blue.png",
+    "sha256": "c2980ed9e63356c1c73082d1be7c8a84d1ec293aef735c2fd76c223715321746",
+    "bytes": 134191,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "assets/relief-shade.png",
+    "sha256": "f525a9decdedf1b87770a8797e7ac0bd77857848bfe350c8574234906e2b0dff",
+    "bytes": 621753,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "field.js",
+    "sha256": "1c1f81e696e849c53c32b8aef09729ab0b4ea8e30d2692bf5b7c5b42e1d5a3cd",
+    "bytes": 3014,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "handoff/selected-studies.json",
+    "sha256": "44886ff22b691ae4942a0f447123ca02132fa3a19f035af24f993d482d5f0813",
+    "bytes": 1657,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "index.html",
+    "sha256": "a69d052215953a431cad946ddd2571a07e8b059e22c3defcdc32d30541582abe",
+    "bytes": 4693,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "maps.js",
+    "sha256": "fef7c84cff2ca34353cbd34a1a01a9c758b3c6e10ed4b068f163ec20265c504c",
+    "bytes": 5108,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "package-lock.json",
+    "sha256": "ff83d4075fb6dd18afb34b4946275fb54ac44503f9cb7628d6be2a33c20e695a",
+    "bytes": 38439,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "package.json",
+    "sha256": "6ffa7c8695b9d32402c1259f51c2ba8bff5c62d577d69efcbebf29e36484e12e",
+    "bytes": 466,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "scene.js",
+    "sha256": "ece879061affc85aeda0a6dc966f329d350e9ee218fb1736ce31162ef8c47a94",
+    "bytes": 13185,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "scripts/build-assets.mjs",
+    "sha256": "5b55d85cbafe106c23a2f345d27bb90aec18bb00767c1293f678661262406465",
+    "bytes": 4645,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "scripts/check.mjs",
+    "sha256": "a65c91e826b3ec41990f51869c00abdaacaffa815475da0db54cb695bee01f15",
+    "bytes": 1979,
+    "classification": "pre-existing, no Git repository"
+  },
+  {
+    "path": "styles.css",
+    "sha256": "87fb7089c55f10e0845df9d8447af44ce937f1b2b4ec16bd51214c3dc7975297",
+    "bytes": 9912,
+    "classification": "pre-existing, no Git repository"
+  }
+]
