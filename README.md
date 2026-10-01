@@ -94,7 +94,7 @@ npm run check
 python3 ux/extract-catalog.py /path/to/usa-atlas-data-collection/source/us_map_statistics_catalog.docx --output ux/catalog.json
 ```
 
-The prototype is local. A small loopback Python backend saves comments and view settings; the same backend reads the separately loaded local PostgreSQL database. No external deployment or automatic source collection is included. Historical U1–U7 evidence remains in the wider workspace archive.
+The standard prototype runs locally. A small loopback Python backend saves comments and view settings; the same backend reads the separately loaded local PostgreSQL database. A separate read-only mobile preview is described below. Source collection lives in the data repository. Historical U1–U7 evidence remains in the wider workspace archive.
 
 
 ## Комментарии и настройка 3D
@@ -221,3 +221,10 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_atlas
 Снимок до подключения, исходные SQL-сверки и результаты проверки сохранены в
 архиве рабочей области. Откат к прежним исходникам не требует
 изменять базу, комментарии или сохранённые настройки камеры.
+
+## Временное мобильное превью
+
+Настройка отдельного Docker-превью и Cloudflare Quick Tunnel находится в
+[deploy/mobile-preview/README.md](deploy/mobile-preview/README.md). Оно использует
+реальные данные PostgreSQL в режиме чтения. Карта пока отображает измерения
+штатов и округов; данные tract и block group требуют отдельной интеграции в UI.

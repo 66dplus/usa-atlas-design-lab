@@ -22,7 +22,7 @@ const metric=()=>metricById.get(state.metric);
 const metricB=()=>metricById.get(state.comparison==='metrics'?state.secondMetric:state.metric);
 const layer=m=>dataStore.get(m);
 const values=m=>layer(m).values;
-const needed=()=>[...new Set([state.metric,...(state.concept==='compare'?[metricB().id]:[]),...pinned])].map(id=>metricById.get(id));
+const needed=()=>[...new Set([state.metric,...(state.concept==='compare'?[metricB()?.id]:[]),...pinned])].map(id=>metricById.get(id)).filter(Boolean);
 const place=id=>geo.byId.get(id);
 const selected=()=>place(state.selected);
 const selectedB=()=>place(state.comparison==='metrics'?state.selected:state.second);
@@ -170,8 +170,9 @@ function renderExplorer(){
 }
 function renderQuickStats(){
   const f=selected(),m=metric(),data=layer(m),right=$('#quick-stats');
-  const count=value(metricById.get('unemployment--03-06-unemployment'),f?.id),force=value(metricById.get('unemployment--03-06-labor-force'),f?.id);
-  const canChart=count!=null&&force>0&&layer(metricById.get('unemployment--03-06-unemployment')).period===layer(metricById.get('unemployment--03-06-labor-force')).period;
+  const countMetric=metricById.get('unemployment--03-06-unemployment'),forceMetric=metricById.get('unemployment--03-06-labor-force');
+  const count=countMetric?value(countMetric,f?.id):null,force=forceMetric?value(forceMetric,f?.id):null;
+  const canChart=countMetric&&forceMetric&&count!=null&&force>0&&layer(countMetric).period===layer(forceMetric).period;
   const rows=pinned.map(id=>metricById.get(id));
   right.innerHTML=`<section class="quick-card"><div class="quick-title"><h2>Quick stats</h2><button data-statistics="a" aria-label="Open sources and all statistics">${icon('expand')}</button></div><p class="quick-place">${escapeHTML(f?.name||'United States')}${f?.id.length===5?' · County':''}</p><div class="quick-main"><span>${escapeHTML(m.name)}</span><b>${number(m,f?.id)}</b><small>${escapeHTML(data.unit||'—')} · ${escapeHTML(formatPeriod(data.period)||'No data')} · ${sourceLink(m,f)}</small></div>${rows.map(item=>`<button class="quick-row" data-inspect-metric="${item.id}"><span>${escapeHTML(item.name.replace(' · people',''))}<small>${escapeHTML(formatPeriod(layer(item).period)||'No data')} · ${escapeHTML(layer(item).unit||'—')}</small></span><b>${number(item,f?.id)}</b></button>`).join('')}${canChart?`<div class="labor-chart"><div class="labor-bar"><span style="width:${100*count/force}%"></span></div><span>Unemployed / labor force <b>${formatValue(100*count/force,'%')}</b></span><small>${sourceLink(metricById.get('unemployment'),f)} · ${escapeHTML(formatPeriod(layer(metricById.get('unemployment--03-06-unemployment')).period))} · ratio of published counts</small></div>`:''}<button class="source-button" data-statistics="a">All stats & sources ${icon('arrow')}</button></section><section class="ad-card" aria-label="Advertisement placeholder"><span>Advertisement · preview</span><div>${icon('home')}<h3>Your next chapter,<br>somewhere new.</h3><p>Space for a relevant local partner.</p></div><small>Reserved placement · no live advertiser</small></section>`;
 }
@@ -321,9 +322,9 @@ try {
   viewSettings={...settingsData.record.settings};
   const payload=await response.json();
   if(!response.ok)throw new Error(payload.error||'The indicator catalog could not be loaded.');
-  geo=geography;catalog=payload.metrics;metricById=new Map(catalog.map(m=>[m.id,m]));
+  geo=geography;catalog=payload.metrics;metricById=new Map(catalog.map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
   dataStore=createDataStore(geo,id=>{if(needed().some(m=>m.id===id))render();});
-  $('#catalog-status').textContent=`${payload.catalogCount} catalog indicators · ${payload.availableSeries} loaded map series · ${payload.observationCount.toLocaleString()} observations`;
+  $('#catalog-status').textContent=`${payload.catalogCount} catalog indicators · ${payload.availableSeries} loaded map series${Number.isFinite(payload.observationCount)?` · ${payload.observationCount.toLocaleString()} observations`:''}`;
   if(!['2d','3d'].includes(state.mode))state.mode='3d';
   if(!metricById.has(state.metric))state.metric='unemployment';if(!metricById.has(state.secondMetric))state.secondMetric='obesity-rate';
   if(!geo.byId.has(state.selected))state.selected=null;if(state.second&&!geo.byId.has(state.second))state.second='48';
