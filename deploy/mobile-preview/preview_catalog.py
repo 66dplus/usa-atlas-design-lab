@@ -1,28 +1,23 @@
 """Bounded catalog for the temporary public preview of a large live database."""
 import json
 import re
+import threading
+import time
 
 import atlas_data
 
 
-def catalog():
-    # Probe the existing catalog/geography index for one published estimate at
-    # each level. The prototype's original full-table count is too costly now.
+def _build_catalog():
+    # Three indexed witnesses per field keep the preview responsive as the
+    # observation table grows. Geography coverage here is a sample, not an
+    # exhaustive inventory of the source's native levels.
     records = atlas_data.query("""
       SELECT COALESCE(json_agg(t ORDER BY catalog_field_id), '[]'::json) FROM (
         SELECT c.catalog_field_id,c.catalog_label,c.planned_state,c.contract,
-          ARRAY(
-            SELECT g.geo_type FROM unnest(ARRAY[
-              'nation','state','county','tract','block_group','place','zip',
-              'city','metro','monitor','school_district'
-            ]::text[]) g(geo_type)
-            WHERE EXISTS (
-              SELECT 1 FROM usa_atlas.observation o
-              JOIN usa_atlas.ingest_run i USING (ingest_id)
-              WHERE o.catalog_field_id=c.catalog_field_id
-                AND o.geo_type=g.geo_type AND i.status='pass' LIMIT 1
-            )
-          ) geographies,
+          (SELECT o.geo_type FROM usa_atlas.observation o
+            JOIN usa_atlas.ingest_run i USING (ingest_id)
+            WHERE o.catalog_field_id=c.catalog_field_id AND i.status='pass'
+            ORDER BY o.geo_type LIMIT 1) first_geo,
           (SELECT o.field_id FROM usa_atlas.observation o
             JOIN usa_atlas.ingest_run i USING (ingest_id)
             WHERE o.catalog_field_id=c.catalog_field_id AND o.geo_type='state'
@@ -46,6 +41,10 @@ def catalog():
     for base in original:
         field = fields[base['name']]
         state_field, county_field = field['state_field'], field['county_field']
+        field['geographies'] = list(dict.fromkeys(
+            geography for present, geography in (
+                (state_field, 'state'), (county_field, 'county'),
+                (field['first_geo'], field['first_geo'])) if present))
         choices = []
         for field_id, geography in ((state_field, 'state'), (county_field, 'county')):
             if not field_id:
@@ -84,3 +83,25 @@ def catalog():
     return {'metrics': metrics, 'catalogCount': len(original),
             'availableSeries': sum(metric['fieldId'] is not None for metric in metrics),
             'observationCount': None}
+
+
+_cache_lock = threading.Lock()
+_cached_catalog = None
+_cached_at = 0.0
+
+
+def catalog():
+    global _cached_catalog, _cached_at
+    if _cached_catalog is not None and time.monotonic() - _cached_at < 300:
+        return _cached_catalog
+    with _cache_lock:
+        if _cached_catalog is not None and time.monotonic() - _cached_at < 300:
+            return _cached_catalog
+        try:
+            fresh = _build_catalog()
+        except atlas_data.DatabaseUnavailable:
+            if _cached_catalog is not None:
+                return _cached_catalog
+            raise
+        _cached_catalog, _cached_at = fresh, time.monotonic()
+        return fresh

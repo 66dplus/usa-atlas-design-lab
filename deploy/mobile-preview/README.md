@@ -22,10 +22,12 @@ if the tunnel container restarts. Both services have Docker restart policies.
 The site is read-only: feedback and saved view settings are unavailable.
 
 The prototype map displays state and county measurements. The bounded catalog
-query used for this preview selects representative published series so a large
-observation table does not block page load. It does not list every stored ACS
-variable or display tract and block-group measurements. The underlying
-observation endpoint still reads the selected series from the live database.
+query used for this preview selects representative published series and samples
+geography coverage so a large observation table does not block page load. It
+caches the catalog for five minutes, serving the last successful catalog if a
+refresh times out. It does not list every stored ACS variable or display tract
+and block-group measurements. The underlying observation endpoint still reads
+the selected series from the live database.
 
 `docker compose -f deploy/mobile-preview/compose.yaml -p usa-atlas-mobile-preview down`
 stops only this Compose project. Existing unrelated tunnels are outside it.
