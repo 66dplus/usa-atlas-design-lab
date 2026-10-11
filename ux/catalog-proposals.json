@@ -1,0 +1,41 @@
+{
+  "baseCatalogCount": 81,
+  "metrics": [
+    {
+      "id": "data-centers",
+      "catalogId": "proposed.data-centers",
+      "name": "Data centers",
+      "category": "Infrastructure",
+      "shortCategory": "Infrastructure",
+      "source": "PNNL IM3 Open Source Data Center Atlas (v2026.02.09; OSM-derived)",
+      "sourceUrl": "https://data.msdlive.org/records/p147s-4h760",
+      "coverage": "Mapped existing US facilities; join site geometry to the project's Census 2017 state and county equivalents",
+      "note": "Count each existing physical data-center site once; a multi-building campus is one site. Exclude projected sites and overlapping campus/building records. Locations are OSM-derived and do not form a complete census.",
+      "unitHint": "Sites"
+    },
+    {
+      "id": "residential-water-price",
+      "catalogId": "proposed.residential-water-price",
+      "name": "Residential water tariff",
+      "category": "Prices & consumer life",
+      "shortCategory": "Everyday prices",
+      "source": "Residential drinking-water utility tariffs · source to select",
+      "sourceUrl": null,
+      "coverage": "Utility service area; geographic coverage depends on selected tariff sources",
+      "note": "Measure the volumetric drinking-water tariff, not a monthly bill. Exclude wastewater, fixed service charges and taxes; choose a reference consumption tier for block tariffs before comparing utilities. National coverage is incomplete.",
+      "unitHint": "USD per 1,000 gallons"
+    },
+    {
+      "id": "billion-dollar-companies",
+      "catalogId": "proposed.billion-dollar-companies",
+      "name": "Private companies valued at $1B+",
+      "category": "Business & innovation",
+      "shortCategory": "Business",
+      "source": "Disclosed private financing valuations · source to select",
+      "sourceUrl": null,
+      "coverage": "US-headquartered private companies; state and city counts depend on source coverage",
+      "note": "Count private US-headquartered companies with a source-backed post-money valuation of at least $1B from their latest disclosed priced round as of a stated date; exclude IPO and acquired companies. Undisclosed or stale valuations limit completeness. Valuation source and reuse rights remain to be selected.",
+      "unitHint": "Companies"
+    }
+  ]
+}

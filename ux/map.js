@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {reducedMotion} from './motion.js';
 import {footprints,stateMesh,projectedShapes} from './geometry.js';
 
 export const EMBER = ['#fff2b1','#f8c34a','#f4942c','#e55732','#af2345','#701e51','#281c43'];
@@ -91,9 +92,30 @@ export class ExplorerMap {
     const f=this.geo.byId.get(this.state.selectedId?.slice(0,2)===id.slice(0,2)?id:id.slice(0,2));
     if(f) this.onHover({id:f.id,name:f.name,value:this.state.values.get(f.id)??null});
   }
+  captureView(){return {mode:this.state.mode,transform:d3.zoomTransform(this.svg.node()),pose:this.renderer?this.snapshotPose():null,session:this.session,dim:this.dim,size:[this.host.clientWidth,this.host.clientHeight]};}
+  restoreView(view){
+    if(!view||view.mode!==this.state.mode)return;
+    this.cancelMotion();this.session=view.session;this.dim=view.dim;
+    if(view.mode==='2d')this.svg.call(this.zoomBehavior.transform,view.transform);
+    else if(view.pose){const changedSize=view.size&&(view.size[0]!==this.host.clientWidth||view.size[1]!==this.host.clientHeight);this.applyPose(changedSize?this.resizedPose(view.pose):view.pose);if(changedSize&&this.session)this.session={...this.session,overview:this.resizedPose(this.session.overview,null)};this.configureControls();this.render();}
+  }
+  coverTransition(){
+    if(reducedMotion())return null;
+    const old=this.host.querySelector('.map-transition-cover');
+    if(old){old.getAnimations().forEach(a=>a.cancel());return old;}
+    let cover;
+    if(this.state.mode==='3d'&&this.renderer){cover=document.createElement('canvas');cover.width=this.host.clientWidth;cover.height=this.host.clientHeight;cover.getContext('2d').drawImage(this.renderer.domElement,0,0,cover.width,cover.height);}
+    else {cover=this.svg.node().cloneNode(true);cover.style.display='block';cover.style.background=this.state.background||'#EEF0F3';}
+    cover.classList.add('map-transition-cover');cover.setAttribute('aria-hidden','true');this.host.append(cover);return cover;
+  }
+  mapBackdrop(){
+    if(!this.state.cleanBackdrop&&this.host.ownerDocument.defaultView.innerWidth>760)return this.state.mode==='2d'?'#242B34':'#171A1D';
+    return this.state.background||'#EEF0F3';
+  }
   update(next) {
     const previous=this.state,oldSettings=this.settings;
     const changedLayout=previous.layoutKey!==next.layoutKey,changedMode=previous.mode!==next.mode;
+    const cover=changedMode&&this.initialized?this.coverTransition():null;
     const changedPlace=previous.selectedId!==next.selectedId,changedRanks=JSON.stringify(previous.ranks||[])!==JSON.stringify(next.ranks||[]);
     const detailChanges=[...this.geo.detailStates].filter(id=>!this.terrainDetailStates?.has(id));
     const cameraChanged=['tilt','cameraSide','minZoom','maxZoom'].some(key=>oldSettings?.[key]!==next.settings[key]);
@@ -102,14 +124,17 @@ export class ExplorerMap {
     const before=this.renderer&&!changedMode&&!changedLayout?this.snapshotPose():null;
     this.state={...previous,...next};
     const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
+    const isolated=this.state.cleanBackdrop||this.host.ownerDocument.defaultView.innerWidth<=760;
+    const shown=id=>!isolated||(parent?id===parent:!['02','15'].includes(id));
     this.host.dataset.mode=mode;this.host.dataset.selected=selectedId||'US';this.host.dataset.metric=this.state.metricKey||'';
     this.host.dataset.renderMode=mode;
-    this.host.classList.toggle('map-dark',dark);this.svg.style('display',mode==='2d'?null:'none');
+    this.host.classList.toggle('map-dark',dark);this.svg.style('display',mode==='2d'?null:'none').style('background',this.mapBackdrop());
+    this.worldLayer.attr('fill',dark?'#25292D':this.state.cleanBackdrop?'#FFFFFF':'#EEF0F3').attr('visibility',isolated?'hidden':null);
     if(this.renderer)this.renderer.domElement.hidden=mode==='2d';
     if(this.focusUI)this.focusUI.hidden=true;
     this.countyPaths.attr('d',f=>f.path).attr('fill',f=>color(this.mappedValue(f))).attr('stroke','#382737').attr('stroke-width',.35)
-      .attr('opacity',f=>parent&&f.stateId!==parent ? .3 : 1).classed('selected-county',f=>selectedId===f.id);
-    this.statePaths.attr('d',f=>f.path).attr('visibility',f=>selectedId?.length===5&&f.id===parent?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
+      .attr('visibility',f=>shown(f.stateId)?null:'hidden').attr('opacity',f=>parent&&f.stateId!==parent ? .3 : 1).classed('selected-county',f=>selectedId===f.id);
+    this.statePaths.attr('d',f=>f.path).attr('visibility',f=>!shown(f.id)||(selectedId?.length===5&&f.id===parent)?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
     this.renderLabels();
     if(mode==='2d'){
       if(changedPlace||changedMode||changedLayout||changedRanks||!this.initialized)this.fit2D();
@@ -140,6 +165,7 @@ export class ExplorerMap {
     }catch(error){this.onError(error.message);}
     this.renderRankMarkers();
     this.initialized=true;
+    if(cover){const version=cover.motionVersion=(cover.motionVersion||0)+1;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(cover.motionVersion!==version)return;const a=cover.animate([{opacity:1},{opacity:0}],{duration:320,easing:'ease-out'});a.finished.then(()=>{if(cover.motionVersion===version)cover.remove();}).catch(()=>{});}));}
   }
   mappedValue(feature) {
     const id=this.state.countySupported===false ? feature.stateId : feature.id;
@@ -148,8 +174,10 @@ export class ExplorerMap {
   fitScale(){const b=this.bounds();return Math.max(.8,Math.min(400,.82/Math.max((b[1][0]-b[0][0])/WIDTH,(b[1][1]-b[0][1])/HEIGHT)));}
   bounds() {if(this.state.ranks?.length){const bounds=[[[45,20],[1155,720]],...this.state.ranks.map(row=>this.geo.byId.get(row.id).focusBounds)];return [[Math.min(...bounds.map(b=>b[0][0])),Math.min(...bounds.map(b=>b[0][1]))],[Math.max(...bounds.map(b=>b[1][0])),Math.max(...bounds.map(b=>b[1][1]))]];}return this.state.selectedId?this.geo.byId.get(this.state.selectedId).focusBounds:[[45,20],[1155,720]];}
   renderLabels() {
-    if(this.state.mode!=='2d'||!this.host.clientWidth)return;
-    const transform=d3.zoomTransform(this.svg.node()),scale=Math.min(this.host.clientWidth/WIDTH,this.host.clientHeight/HEIGHT);
+    if(this.state.mode!=='2d'||!this.viewportSize?.[0])return;
+    // Read the cached viewport: the zoom handler has just changed the SVG transform.
+    // A live clientWidth read here would force layout of every detailed county path.
+    const transform=d3.zoomTransform(this.svg.node()),scale=Math.min(this.viewportSize[0]/WIDTH,this.viewportSize[1]/HEIGHT);
     const fontSize=12/scale,occupied=[],labels=[];
     const selected=this.geo.byId.get(this.state.selectedId);
     const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name));
@@ -244,7 +272,7 @@ export class ExplorerMap {
     if(this.rankKey!==key){this.rankKey=key;this.rankMarkers.replaceChildren(...rows.map(row=>{const button=document.createElement('button');button.className='rank-marker';button.textContent=row.rank+' · '+this.geo.byId.get(row.id).name;button.setAttribute('aria-label','Open '+this.geo.byId.get(row.id).name);button.onclick=()=>this.onSelect(row.id);return button;}));}
     const occupied=[];
     rows.forEach((row,i)=>{
-      const f=this.geo.byId.get(row.id),el=this.rankMarkers.children[i],w=this.host.clientWidth,h=this.host.clientHeight;let x,y,visible=true;
+      const f=this.geo.byId.get(row.id),el=this.rankMarkers.children[i],w=this.viewportSize?.[0]||0,h=this.viewportSize?.[1]||0;let x,y,visible=true;
       if(this.state.mode==='3d'&&this.camera){const parent=this.stateGroups?.get(f.stateId);const altitude=(.0015+(this.state.values.get(row.id)??0)*(parent?.userData.height??RELIEF))*(this.heightScale??1);const p=new THREE.Vector3(f.point[0]/100-6,altitude+.002,f.point[1]/100-3.75).project(this.camera);x=(p.x+1)*w/2;y=(1-p.y)*h/2;visible=p.z>=-1&&p.z<=1;}
       else {const scale=Math.min(w/WIDTH,h/HEIGHT),p=d3.zoomTransform(this.svg.node()).apply(f.point);x=p[0]*scale+(w-WIDTH*scale)/2;y=p[1]*scale+(h-HEIGHT*scale)/2;}
       el.hidden=!visible||x<0||x>w||y<0||y>h;let offset=0;const width=Math.min(w,el.textContent.length*5.8+20);
@@ -259,7 +287,10 @@ export class ExplorerMap {
       const dx=(b[1][0]-b[0][0])/100,dz=(b[1][1]-b[0][1])/100;
       const aspect=this.host.clientWidth/Math.max(1,this.host.clientHeight),tilt=this.settings.tilt*Math.PI/180;
       const height=(this.stateGroups?.get(selectedId?.slice(0,2))?.userData.height??RELIEF)*this.reliefScale(selectedId);
-      distance=Math.max(.035,Math.max(dx/Math.max(.25,aspect),dz)*1.65+height*2.5);
+      // Paper's Mobile canvas gives the landmass more of the available width.
+      // Desktop keeps its established fit; resize still preserves relative zoom.
+      const mobile=this.host.ownerDocument?.defaultView.innerWidth<=760&&!this.state.cleanBackdrop;
+      distance=Math.max(.035,Math.max(dx/Math.max(.25,aspect),dz)*(mobile?(selectedId?(this.state.layoutKey==='compare'?1.16:this.host.clientHeight>400?1.1:1.2):1.2):1.65)+height*2.5);
       target=new THREE.Vector3((b[0][0]+b[1][0])/200-6,height*.3,(b[0][1]+b[1][1])/200-3.75);
       position=target.clone().add(new THREE.Vector3(0,distance*Math.cos(tilt),distance*Math.sin(tilt)*(this.settings.cameraSide==='north'?-1:1)));extent=Math.max(dx,dz);
     }
@@ -324,7 +355,7 @@ export class ExplorerMap {
     const r=this.renderer.domElement.getBoundingClientRect(),mouse=new THREE.Vector2((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1);
     const ray=new THREE.Raycaster();ray.setFromCamera(mouse,this.camera);this.scene.updateMatrixWorld(true);
     // Dimmed states remain navigation targets; only a miss on every state means background.
-    const parent=this.state.selectedId?.slice(0,2),meshes=[...this.stateGroups.values()].map(g=>g.userData.mesh);
+    const parent=this.state.selectedId?.slice(0,2),meshes=[...this.stateGroups.values()].filter(g=>g.visible).map(g=>g.userData.mesh);
     const result=ray.intersectObjects(meshes)[0];
     if(!result)return null;
     const id=String(result.object.geometry.attributes.county.getX(result.face.a)).padStart(5,'0');
@@ -356,20 +387,46 @@ export class ExplorerMap {
     return {side:this.host.id,mode:this.state.mode,phase:this.phase,selected:this.state.selectedId,metric:this.state.metricKey,picked:picked?{id:picked,name:this.geo.byId.get(picked)?.name}:null,
       bounds:{x:r.x,y:r.y,width:r.width,height:r.height},transform2d:{x:transform.x,y:transform.y,k:transform.k},settings:{...this.settings},reliefScale:this.heightScale??1,camera:this.state.mode==='2d'?null:this.snapshotPose()};
   }
-  resize(){if(this.isDisposed)return;this.renderLabels();if(!this.renderer)return;const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();this.render();}
+  resizedPose(pose,selectedId=this.state.selectedId){
+    const fitDistance=this.pose(selectedId,'3d').fitDistance,ratio=fitDistance/pose.fitDistance;
+    const target=new THREE.Vector3().fromArray(pose.target),offset=new THREE.Vector3().fromArray(pose.position).sub(target).multiplyScalar(ratio);
+    // Resize changes the fitted distance, preserving the user's relative zoom,
+    // pan target and viewing direction instead of resetting their exploration.
+    return {...pose,position:target.clone().add(offset).toArray(),fitDistance,minDistance:pose.minDistance*ratio,maxDistance:pose.maxDistance*ratio};
+  }
+  resize(){
+    if(this.isDisposed)return;
+    const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;
+    const changed=this.viewportSize&&(this.viewportSize[0]!==w||this.viewportSize[1]!==h);
+    this.viewportSize=[w,h];this.renderLabels();
+    if(this.state.mode==='2d')this.renderRankMarkers();
+    if(!this.renderer)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
+    if(changed&&this.initialized&&this.state.mode==='3d'){
+      this.settle();this.applyPose(this.resizedPose(this.snapshotPose()));
+      if(this.session)this.session={...this.session,overview:this.resizedPose(this.session.overview,null)};
+      this.configureControls();
+    }
+    this.render();
+  }
   render(){
     if(!this.renderer||this.isDisposed||this.state.mode==='2d')return;
     const parent=this.state.selectedId?.slice(0,2)||this.session?.parent;
+    const mobile=this.host.ownerDocument.defaultView.innerWidth<=760;
+    const isolated=this.state.cleanBackdrop||mobile;
     for(const [id,group] of this.stateGroups||[]){
       group.scale.y=this.heightScale??1;
       const shade=parent&&id!==parent?1-this.dim*.88:1;
-      group.visible=true;
+      group.visible=isolated?(parent?id===parent:!['02','15'].includes(id)):true;
       group.userData.mesh.material.color.setRGB(shade,shade,shade);
       group.userData.lines.material.opacity=.38*shade;
       group.userData.outline.visible=!(id===parent&&this.state.selectedId?.length===5);
       group.userData.outline.material.opacity=(id===parent?1:.8)*shade;
     }
-    this.renderer.setClearColor('#e7eaed',1);
+    this.renderer.setClearColor(this.mapBackdrop(),1);
+    // Paper uses the same geographic backdrop across Desktop themes.
+    // The Mobile overview and embedded journal maps use a clean themed canvas.
+    this.worldMesh.visible=!isolated;
+    this.worldMesh.material.color.set('#D3D7DC');
     const distance=this.camera.position.distanceTo(this.controls.target);
     this.camera.near=Math.max(.00001,distance*.01);this.camera.far=Math.max(40,distance*8);this.camera.updateProjectionMatrix();
     this.host.dataset.phase=this.phase||'overview';

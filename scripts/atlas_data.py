@@ -30,29 +30,36 @@ class DatabaseUnavailable(RuntimeError):
     pass
 
 
-def query(sql, variables=None):
+def query(sql, variables=None, *, statement_timeout_ms=8000):
     env = {**os.environ, 'PGCONNECT_TIMEOUT': '3',
            'PGAPPNAME': 'usa_atlas_ui',
-           'PGOPTIONS': '-c default_transaction_read_only=on -c statement_timeout=8000'}
+           'PGOPTIONS': f'-c default_transaction_read_only=on -c statement_timeout={statement_timeout_ms}'}
     args = ['psql', '-X', '-w', '-qAt', '--dbname', 'usa_atlas', '--set', 'ON_ERROR_STOP=1']
     for name, value in (variables or {}).items():
         args.extend(['--set', f'{name}={value}'])
     try:
         result = subprocess.run(args, input='BEGIN READ ONLY;\n' + sql + ';\nCOMMIT;\n',
-                                text=True, capture_output=True, timeout=12, env=env)
+                                text=True, capture_output=True, timeout=statement_timeout_ms / 1000 + 4, env=env)
         if result.returncode:
-            raise DatabaseUnavailable('PostgreSQL is unavailable. Check the local database connection and retry.')
+            raise DatabaseUnavailable('PostgreSQL is unavailable. Check the configured database connection and retry.')
         return json.loads(result.stdout)
     except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
-        raise DatabaseUnavailable('PostgreSQL is unavailable. Check the local database connection and retry.') from error
+        raise DatabaseUnavailable('PostgreSQL is unavailable. Check the configured database connection and retry.') from error
+
+
+ACS_SERIES = json.loads((ROOT / 'ux/acs-series.json').read_text())['variables']
 
 
 def series_label(base, field):
+    variable = field.split(':', 1)[-1]
+    if variable in ACS_SERIES:
+        metadata = ACS_SERIES[variable]
+        return metadata['concept'] + ' · ' + metadata['label']
     if field in USDA:
         return USDA[field][0]
     if field.startswith('03.06:'):
         return {'employment': 'Employment · people', 'labor_force': 'Labor force · people',
-                'unemployment': 'Unemployment · people', 'unemployment_rate': 'Unemployment rate'}[field.split(':')[1]]
+                'unemployment': 'Unemployment · people', 'unemployment_rate': 'Unemployment rate'}.get(field.split(':')[1], base + ' · ' + field.split(':', 1)[1].replace('_', ' '))
     if field.startswith('08.05:sector_'):
         sector = field.split('_')[-1]
         return base + ' · ' + {'ALL': 'All sectors', 'RES': 'Residential', 'COM': 'Commercial',
@@ -63,45 +70,107 @@ def series_label(base, field):
 
 
 def catalog():
-    # Collapse observations before joining ingests: sorting a million raw rows
-    # made catalog reloads time out. The small result still admits only passed runs.
+    # Probe each indexed (catalog, geography) range, skipping large tract/block-group
+    # ranges. All probes still use the reader-granted view and passed ingests only.
+    # Exact all-geography counts require scanning production's large observation view;
+    # null means uncounted, never a fabricated zero or an ingest row_count sum.
     data = query("""
-      WITH counts AS MATERIALIZED (
-        SELECT catalog_field_id,
-          CASE WHEN geo_type IN ('state','county') THEN field_id END field_id,
-          geo_type,ingest_id,count(*) rows
-        FROM usa_atlas.observation GROUP BY 1,2,3,4
-      ), passed AS (
-        SELECT c.catalog_field_id,c.field_id,c.geo_type,c.rows
-        FROM counts c JOIN usa_atlas.ingest_run i USING (ingest_id) WHERE i.status='pass'
-      ), inventory AS (
-        SELECT catalog_field_id,sum(rows) rows,array_agg(DISTINCT geo_type ORDER BY geo_type) geographies
-        FROM passed GROUP BY catalog_field_id
+      WITH RECURSIVE inventory(catalog_field_id,geo_type) AS (
+        SELECT c.catalog_field_id,o.geo_type FROM usa_atlas.catalog_field c
+        CROSS JOIN LATERAL (
+          SELECT o.geo_type FROM usa_atlas.observation o
+          JOIN usa_atlas.ingest_run i USING(ingest_id)
+          WHERE o.catalog_field_id=c.catalog_field_id AND i.status='pass'
+          ORDER BY o.geo_type LIMIT 1
+        ) o
+        UNION ALL
+        SELECT p.catalog_field_id,o.geo_type FROM inventory p
+        CROSS JOIN LATERAL (
+          SELECT o.geo_type FROM usa_atlas.observation o
+          JOIN usa_atlas.ingest_run i USING(ingest_id)
+          WHERE o.catalog_field_id=p.catalog_field_id AND o.geo_type>p.geo_type AND i.status='pass'
+          ORDER BY o.geo_type LIMIT 1
+        ) o
+      ), geographies AS (
+        SELECT catalog_field_id,array_agg(geo_type ORDER BY geo_type) geographies
+        FROM inventory GROUP BY catalog_field_id
       ), series AS (
-        SELECT catalog_field_id,field_id,bool_or(geo_type='state') state_supported,
-          bool_or(geo_type='county') county_supported
-        FROM passed WHERE geo_type IN ('state','county') GROUP BY catalog_field_id,field_id
+        SELECT c.catalog_field_id,o.* FROM usa_atlas.catalog_field c
+        CROSS JOIN LATERAL (
+          SELECT o.field_id,bool_or(o.geo_type='state') state_supported,
+            bool_or(o.geo_type='county') county_supported
+          FROM usa_atlas.observation o JOIN usa_atlas.ingest_run i USING(ingest_id)
+          WHERE o.catalog_field_id=c.catalog_field_id
+            AND o.geo_type IN ('state','county') AND i.status='pass'
+          GROUP BY o.field_id
+        ) o
       )
       SELECT json_build_object(
         'fields',(SELECT json_agg(t ORDER BY catalog_field_id) FROM (
           SELECT c.catalog_field_id,c.catalog_label,c.planned_state,c.contract,
-            COALESCE(i.rows,0) rows,COALESCE(i.geographies,ARRAY[]::text[]) geographies
-          FROM usa_atlas.catalog_field c LEFT JOIN inventory i USING(catalog_field_id)) t),
+            CASE WHEN g.geographies IS NULL THEN 0 ELSE NULL END rows,
+            COALESCE(g.geographies,ARRAY[]::text[]) geographies
+          FROM usa_atlas.catalog_field c LEFT JOIN geographies g USING(catalog_field_id)) t),
         'series',(SELECT COALESCE(json_agg(s ORDER BY field_id),'[]'::json) FROM series s))
-    """)
-    fields = {row['catalog_label']: row for row in data['fields']}
+    """, statement_timeout_ms=20000)
+    field_rows = data['fields']
+    fields = {row['catalog_label']: row for row in field_rows}
     original = json.loads((ROOT / 'ux/catalog.json').read_text())['metrics']
-    if len(fields) != 81 or set(fields) != {m['name'] for m in original}:
+    proposals = json.loads((ROOT / 'ux/catalog-proposals.json').read_text())
+    proposed = proposals['metrics']
+    v2 = json.loads((ROOT / 'ux/catalog-v2.json').read_text())
+    original_names = {m['name'] for m in original}
+    v2_metrics = v2['metrics']
+    v2_by_id = {m['catalogId']: m for m in v2_metrics}
+    row_ids = [row['catalog_field_id'] for row in field_rows]
+    base_ids = [m['id'] for m in original]
+    proposal_ids = [m['id'] for m in proposed]
+    if (len(fields) != len(field_rows) or len(set(row_ids)) != len(row_ids) or
+            len(original_names) != len(original) or len(set(base_ids + proposal_ids)) != len(base_ids) + len(proposal_ids) or
+            proposals['baseCatalogCount'] != len(original) or
+            len(v2_metrics) != 6 or len(v2_by_id) != 6 or
+            len(set(base_ids + [m['id'] for m in v2_metrics])) != len(base_ids) + len(v2_metrics) or
+            v2.get('baseCatalogCount') != len(original) or v2.get('catalogCount') != len(original) + 6):
+        raise DatabaseUnavailable('The database catalog does not match this atlas catalog.')
+    extra_ids = set(v2_by_id)
+    expected_parent_fields = {item['catalogId']: item['catalogLabel'] for item in v2.get('parentFields', [])}
+    expected_parent_ids = set(expected_parent_fields)
+    legacy_parent_ids = expected_parent_ids - extra_ids
+    base_ids_by_label = {row['catalog_label']: row['catalog_field_id'] for row in field_rows}
+    legacy_fields = (set(base_ids_by_label) == original_names and len(field_rows) == len(original) and
+                     set(row_ids) == legacy_parent_ids and
+                     all(expected_parent_fields[row['catalog_field_id']] == row['catalog_label']
+                         for row in field_rows))
+    v2_fields = (len(field_rows) == len(original) + len(v2_metrics) and
+                 len(expected_parent_ids) == len(original) + len(v2_metrics) and
+                 set(row_ids) == expected_parent_ids and
+                 all(expected_parent_fields[row['catalog_field_id']] == row['catalog_label']
+                     for row in field_rows) and
+                 set(base_ids_by_label) == original_names | {m['catalogLabel'] for m in v2_metrics} and
+                 extra_ids == {m['catalogId'] for m in v2_metrics} and
+                 all(base_ids_by_label.get(m['catalogLabel']) == m['catalogId'] for m in v2_metrics))
+    if legacy_fields:
+        version_metrics = proposed
+        published_count = len(original)
+    elif v2_fields:
+        version_metrics = v2_metrics
+        published_count = len(original) + len(v2_metrics)
+    else:
         raise DatabaseUnavailable('The database catalog does not match this atlas catalog.')
     metrics = []
-    for base in original:
-        field = fields[base['name']]
+    base_rows = [(base, fields[base['name']]) for base in original]
+    if v2_fields:
+        fields_by_id = {row['catalog_field_id']: row for row in field_rows}
+        base_rows.extend((metadata, fields_by_id[metadata['catalogId']]) for metadata in v2_metrics)
+    for base, field in base_rows:
         choices = [s for s in data['series'] if s['catalog_field_id'] == field['catalog_field_id']]
         default = DEFAULT_SERIES.get(field['catalog_field_id'], field['catalog_field_id'])
         if choices and default not in {s['field_id'] for s in choices}:
-            default = choices[0]['field_id']
+            default = next((choice['field_id'] for choice in choices
+                            if re.fullmatch(r'[0-9]{2}\.[0-9]{2}:B[0-9]{5}_[0-9]{3}E', choice['field_id'])), choices[0]['field_id'])
         for choice in choices or [None]:
             m = {**base, 'catalogId': field['catalog_field_id'], 'observations': field['rows'],
+                 'hasObservations': bool(field['geographies']),
                  'geographies': field['geographies'], 'plannedState': field['planned_state']}
             m.update(availability='loaded' if choice else 'unavailable',
                      stateSupported=bool(choice and choice['state_supported']),
@@ -112,11 +181,19 @@ def catalog():
                 if choice['field_id'] != default:
                     m['id'] += '--' + re.sub(r'[^a-z0-9]+', '-', choice['field_id'].lower()).strip('-')
             m['coverageNote'] = ('Available from PostgreSQL; select a place for its observation.' if choice else
-                'Collected at ' + ', '.join(field['geographies']) + ' level; no state/county allocation is inferred.' if field['rows'] else
+                'Collected at ' + ', '.join(field['geographies']) + ' level; no state/county allocation is inferred.' if field['geographies'] else
                 'No observations have been loaded for this indicator.')
             metrics.append(m)
-    return {'metrics': metrics, 'catalogCount': len(original),
-            'availableSeries': len(data['series']), 'observationCount': sum(f['rows'] for f in fields.values())}
+    if legacy_fields:
+        for proposal in proposed:
+            metrics.append({**proposal, 'availability': 'unavailable', 'plannedState': 'proposed',
+                            'observations': 0, 'hasObservations': False, 'geographies': [], 'stateSupported': False,
+                            'countySupported': False, 'fieldId': None,
+                            'coverageNote': proposal['note'] + ' No observations have been loaded.'})
+    return {'metrics': metrics, 'catalogCount': len(original) + len(version_metrics),
+            'publishedCatalogCount': published_count,
+            'availableSeries': len(data['series']), 'observationCount': (sum(f['rows'] for f in fields.values())
+                if all(f['rows'] is not None for f in fields.values()) else None)}
 
 
 def canonical_geo(source, kind, identifier):

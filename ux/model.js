@@ -1,4 +1,39 @@
+import {indicatorVisibility} from './indicator-visibility.js';
+
 // Raw observations and the map scale stay separate: normalized values are never statistics.
+
+export function loadedMapMetrics(metrics) {
+  // Native ZIP/monitor/tract data alone cannot be shown on the state/county map.
+  // Observation totals may be null when the production inventory is uncounted.
+  return metrics.filter(metric=>indicatorVisibility[metric.catalogId]===true&&metric.fieldId&&(metric.stateSupported||metric.countySupported));
+}
+
+export function collectedMapIndicators(metrics) {
+  // The adapter keeps the original indicator ID on its default series; variants use --.
+  // Keep variants for existing data cards, but do not turn them into extra picker fields.
+  return loadedMapMetrics(metrics).filter(metric=>!metric.id.includes('--'));
+}
+
+export async function readAtlasJSON(url,request=fetch) {
+  for(let attempt=0;attempt<2;attempt++){
+    let response,data;
+    try{
+      response=await request(url);
+      try{data=await response.json();}
+      catch{throw new Error('The data service returned an unreadable response. Please retry.');}
+    }catch(error){
+      if(attempt===0){await new Promise(resolve=>setTimeout(resolve,600));continue;}
+      throw new Error(response?'The data service returned an unreadable response. Please retry.':'The data service could not be reached. Please retry.');
+    }
+    if(response.ok)return data;
+    // A tunnel or bounded reader can briefly be busy; only idempotent GETs retry.
+    if(attempt===0&&[408,429,502,503,504,530].includes(response.status)){
+      await new Promise(resolve=>setTimeout(resolve,600));continue;
+    }
+    throw new Error(data.error||'The selected data could not be loaded. Please retry.');
+  }
+}
+
 export function prepareLayer(data,geo) {
   const observations=new Map(),excluded=[...data.excludedGeographies];
   for(const row of data.observations){
@@ -29,9 +64,7 @@ export function createDataStore(geo,onChange,request=fetch) {
     const promise=(async()=>{
       await Promise.resolve(); // Install request ownership before callbacks, including synchronous fetch failures.
       try{
-        const response=await request('/api/atlas/observations?field='+encodeURIComponent(metric.fieldId));
-        const data=await response.json();
-        if(!response.ok)throw new Error(data.error||'The selected data could not be loaded.');
+        const data=await readAtlasJSON('/api/atlas/observations?field='+encodeURIComponent(metric.fieldId),request);
         if(data.fieldId!==metric.fieldId)throw new Error('The server returned a different series.');
         layers.set(metric.id,prepareLayer(data,geo));
       }catch(error){layers.set(metric.id,{status:'error',error:error.message,values:new Map(),observations:new Map()});}
