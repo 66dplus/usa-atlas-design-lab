@@ -1,5 +1,9 @@
 # USA Atlas — selected design studies
 
+[Map, UI and statistics backlog — 11 October 2026](docs/map-ui-data-backlog-2026-10-11.md)
+records 17 owner-requested tasks and the verified production snapshot. Implementation
+has not started; the document distinguishes observations, requested behavior and open decisions.
+
 ## Current UI — 20 September, feedback synthesis
 
 The assembled interface is `/ux/`. Current review server: [San Francisco](http://127.0.0.1:4198/ux/?concept=explorer&place=06075&metric=unemployment&view=3d), [California](http://127.0.0.1:4198/ux/?concept=explorer&place=06&metric=unemployment&view=3d), [Compare](http://127.0.0.1:4198/ux/?concept=compare&place=06&other=48&metric=unemployment&view=3d). Normal `npm start` still serves the same code on 4180.
