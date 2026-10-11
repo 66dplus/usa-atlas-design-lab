@@ -1,5 +1,12 @@
 # USA Atlas — selected design studies
 
+## WebGL 2D rendering proposal — 11 October 2026
+
+[Idea and cloud implementation handoff](docs/ideas/webgl-map-rendering.md) records
+the 2D lag investigation, WikiBarrio's rendering approach and a proposed Three.js
+prototype with measurable acceptance. This is documentation only; check the note's
+application-revision prerequisite before starting implementation.
+
 ## Current UI — 20 September, feedback synthesis
 
 The assembled interface is `/ux/`. Current review server: [San Francisco](http://127.0.0.1:4198/ux/?concept=explorer&place=06075&metric=unemployment&view=3d), [California](http://127.0.0.1:4198/ux/?concept=explorer&place=06&metric=unemployment&view=3d), [Compare](http://127.0.0.1:4198/ux/?concept=compare&place=06&other=48&metric=unemployment&view=3d). Normal `npm start` still serves the same code on 4180.
