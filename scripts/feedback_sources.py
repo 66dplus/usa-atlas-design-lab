@@ -27,6 +27,7 @@ SOURCES = {
     'surprise': ('ux/app.js', 'function showSurprise(', 'showSurprise'),
     'legend': ('ux/index.html', '<div class="map-footer">', 'Map legend and provenance'),
     'map-2d': ('ux/map.js', 'this.countyPaths=this.countyLayer', 'ExplorerMap SVG county paths'),
+    'map-webgl-2d': ('ux/flat-map.js', 'export class FlatMapRenderer', 'FlatMapRenderer orthographic county surfaces'),
     'map-3d': ('ux/map.js', '  buildTerrain(', 'ExplorerMap.buildTerrain'),
     'map-globe': ('ux/app.js', "if(!['2d','3d'].includes(state.mode))", 'Legacy Globe link → terrain'),
 }

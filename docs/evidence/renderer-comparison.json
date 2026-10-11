@@ -1,0 +1,495 @@
+{
+  "capturedAt": "2026-10-11T14:21:36.862Z",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "pixelRatio": 1,
+  "browser": "151.0.7922.34",
+  "gpu": "ANGLE SwiftShader (software)",
+  "scope": "Frozen read-only observations; no settings, analytics, feedback or deployment writes",
+  "baseline": "f5cd8bf: October 20261011-collected35 (hashes in docs/october-svg-baseline.json)",
+  "errors": [],
+  "parity": [
+    {
+      "name": "svg: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "svg: frozen Marin value, period and unit",
+      "result": "PASS",
+      "value": "3.7%"
+    },
+    {
+      "name": "svg: Marin fitted camera",
+      "result": "PASS",
+      "transform": {
+        "x": -4111.50368200041,
+        "y": -18534.233561230107,
+        "k": 50.67149372107271
+      }
+    },
+    {
+      "name": "pan: camera responds",
+      "result": "PASS"
+    },
+    {
+      "name": "pan: no geography/data requests",
+      "result": "PASS"
+    },
+    {
+      "name": "zoom: camera responds",
+      "result": "PASS"
+    },
+    {
+      "name": "zoom: no geography/data requests",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: frozen Marin value, period and unit",
+      "result": "PASS",
+      "value": "3.7%"
+    },
+    {
+      "name": "webgl: Marin fitted camera",
+      "result": "PASS",
+      "transform": {
+        "x": -4111.50368200041,
+        "y": -18534.233561230107,
+        "k": 50.67149372107271
+      }
+    },
+    {
+      "name": "pan: camera responds",
+      "result": "PASS"
+    },
+    {
+      "name": "pan: no geography/data requests",
+      "result": "PASS"
+    },
+    {
+      "name": "pan: cached geometry/colors unchanged",
+      "result": "PASS"
+    },
+    {
+      "name": "zoom: camera responds",
+      "result": "PASS"
+    },
+    {
+      "name": "zoom: no geography/data requests",
+      "result": "PASS"
+    },
+    {
+      "name": "zoom: cached geometry/colors unchanged",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL geography reachable: US",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL geography reachable: US",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL geography reachable: 06",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL geography reachable: 06075",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL geography reachable: 02",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL geography reachable: 15",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "Compare: both panes use WebGL",
+      "result": "PASS"
+    },
+    {
+      "name": "Compare: independent cameras",
+      "result": "PASS"
+    },
+    {
+      "name": "resize retains WebGL",
+      "result": "PASS"
+    },
+    {
+      "name": "3D unchanged",
+      "result": "PASS"
+    },
+    {
+      "name": "return to 2D retains renderer choice",
+      "result": "PASS"
+    },
+    {
+      "name": "Share URL retains renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "webgl: requested renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "context loss recovers to SVG",
+      "result": "PASS"
+    },
+    {
+      "name": "context restoration returns to WebGL",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted pointer hover selects Marin",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted wheel keeps geography under cursor",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted drag pans without selection",
+      "result": "PASS"
+    },
+    {
+      "name": "drag retains selection",
+      "result": "PASS"
+    },
+    {
+      "name": "fit restores selected county framing",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted county click preserves exact FIPS",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted pointer hover selects Marin",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted wheel keeps geography under cursor",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted drag pans without selection",
+      "result": "PASS"
+    },
+    {
+      "name": "drag retains selection",
+      "result": "PASS"
+    },
+    {
+      "name": "fit restores selected county framing",
+      "result": "PASS"
+    },
+    {
+      "name": "trusted county click preserves exact FIPS",
+      "result": "PASS"
+    },
+    {
+      "name": "saved exploration stores renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "saved exploration restores renderer",
+      "result": "PASS"
+    },
+    {
+      "name": "WebGL initialization failure recovers SVG with source value",
+      "result": "PASS"
+    }
+  ],
+  "measurements": [
+    {
+      "renderer": "svg",
+      "place": "06041",
+      "metric": "unemployment",
+      "interaction": "pan",
+      "frames": 47,
+      "p50Ms": 2150,
+      "p95Ms": 3683.2,
+      "maxMs": 4866.4,
+      "over33ms": 47,
+      "over50ms": 46,
+      "elapsedMs": 107960.1,
+      "longTasks": [
+        {
+          "duration": 84,
+          "startTime": 27728
+        },
+        {
+          "duration": 247,
+          "startTime": 31723.400000095367
+        },
+        {
+          "duration": 65,
+          "startTime": 74659.70000004768
+        },
+        {
+          "duration": 210,
+          "startTime": 84337.20000004768
+        },
+        {
+          "duration": 85,
+          "startTime": 88809.40000009537
+        },
+        {
+          "duration": 69,
+          "startTime": 102305.5
+        },
+        {
+          "duration": 78,
+          "startTime": 104840.90000009537
+        },
+        {
+          "duration": 61,
+          "startTime": 128420.20000004768
+        }
+      ],
+      "geographicRequests": 0
+    },
+    {
+      "renderer": "svg",
+      "place": "06041",
+      "metric": "unemployment",
+      "interaction": "zoom",
+      "frames": 47,
+      "p50Ms": 2466.5,
+      "p95Ms": 5466.5,
+      "maxMs": 6983.1,
+      "over33ms": 46,
+      "over50ms": 46,
+      "elapsedMs": 126210.9,
+      "longTasks": [
+        {
+          "duration": 53,
+          "startTime": 131988.29999995232
+        },
+        {
+          "duration": 77,
+          "startTime": 134186.79999995232
+        },
+        {
+          "duration": 65,
+          "startTime": 138489.79999995232
+        },
+        {
+          "duration": 324,
+          "startTime": 144972.10000014305
+        },
+        {
+          "duration": 86,
+          "startTime": 149771.5
+        },
+        {
+          "duration": 51,
+          "startTime": 152553.40000009537
+        },
+        {
+          "duration": 129,
+          "startTime": 155230.60000014305
+        },
+        {
+          "duration": 116,
+          "startTime": 156812.40000009537
+        },
+        {
+          "duration": 75,
+          "startTime": 159711.79999995232
+        },
+        {
+          "duration": 63,
+          "startTime": 161914.5
+        },
+        {
+          "duration": 75,
+          "startTime": 164924.10000014305
+        },
+        {
+          "duration": 164,
+          "startTime": 167639.60000014305
+        },
+        {
+          "duration": 80,
+          "startTime": 179656.70000004768
+        },
+        {
+          "duration": 53,
+          "startTime": 180049
+        },
+        {
+          "duration": 293,
+          "startTime": 187325.79999995232
+        },
+        {
+          "duration": 126,
+          "startTime": 204296
+        },
+        {
+          "duration": 94,
+          "startTime": 207178
+        },
+        {
+          "duration": 119,
+          "startTime": 210286
+        },
+        {
+          "duration": 110,
+          "startTime": 212332.10000014305
+        },
+        {
+          "duration": 65,
+          "startTime": 215022.70000004768
+        },
+        {
+          "duration": 217,
+          "startTime": 220334.90000009537
+        },
+        {
+          "duration": 81,
+          "startTime": 223623.70000004768
+        },
+        {
+          "duration": 51,
+          "startTime": 231667.5
+        },
+        {
+          "duration": 295,
+          "startTime": 240791.20000004768
+        },
+        {
+          "duration": 56,
+          "startTime": 245041
+        },
+        {
+          "duration": 79,
+          "startTime": 247956.60000014305
+        },
+        {
+          "duration": 74,
+          "startTime": 253584.90000009537
+        }
+      ],
+      "geographicRequests": 0
+    },
+    {
+      "renderer": "webgl",
+      "place": "06041",
+      "metric": "unemployment",
+      "interaction": "pan",
+      "frames": 47,
+      "p50Ms": 1916.7,
+      "p95Ms": 4349.8,
+      "maxMs": 4916.4,
+      "over33ms": 45,
+      "over50ms": 43,
+      "elapsedMs": 96529,
+      "longTasks": [
+        {
+          "duration": 58,
+          "startTime": 17729.900000095367
+        },
+        {
+          "duration": 66,
+          "startTime": 45668.799999952316
+        },
+        {
+          "duration": 70,
+          "startTime": 91593
+        }
+      ],
+      "geometryBuilds": 51,
+      "colorUpdates": 102,
+      "geographicRequests": 0
+    },
+    {
+      "renderer": "webgl",
+      "place": "06041",
+      "metric": "unemployment",
+      "interaction": "zoom",
+      "frames": 47,
+      "p50Ms": 1483.2,
+      "p95Ms": 3033.1,
+      "maxMs": 3866.6,
+      "over33ms": 45,
+      "over50ms": 44,
+      "elapsedMs": 77968.4,
+      "longTasks": [
+        {
+          "duration": 58,
+          "startTime": 127134.09999990463
+        },
+        {
+          "duration": 122,
+          "startTime": 127193.5
+        },
+        {
+          "duration": 197,
+          "startTime": 131643.29999995232
+        },
+        {
+          "duration": 87,
+          "startTime": 172881.40000009537
+        },
+        {
+          "duration": 59,
+          "startTime": 185841.20000004768
+        }
+      ],
+      "geometryBuilds": 51,
+      "colorUpdates": 102,
+      "geographicRequests": 0
+    }
+  ],
+  "result": "PASS",
+  "functionalRerunAt": "2026-10-11T14:31:37.364Z",
+  "unavailableChecks": [
+    {
+      "name": "US overview screenshot",
+      "result": "NOT RUN",
+      "reason": "Initial software-GPU screenshot exceeded30s; functional checks rerun without optional whole-country captures."
+    }
+  ],
+  "interactionsCapturedAt": "2026-10-11T14:37:14.706111+00:00"
+}
