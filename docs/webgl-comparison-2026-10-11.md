@@ -48,7 +48,30 @@ observation snapshot. `scripts/serve-renderer-review.py --root . --data /path/to
 `snapshot-manifest.json` and its listed observation files. The review used an isolated server with 38 captured
 observation series, GET-only APIs and default settings. It rejects all writes and
 never loads owner camera preferences. Playwright and Chromium are external test
-tools, not new application dependencies:
+tools, not new application dependencies.
+
+The public fixture is included in
+[renderer-snapshots.tar.gz](evidence/renderer-snapshots.tar.gz): 38 series,
+93,016 observation rows and the exact 35-field bindings. Its archive SHA-256 is
+`270619dd66dfb34fff2bc564c1466e08ae40029022176a3ee4320c34b74ada8e`.
+It contains no credentials or owner preferences. The server verifies observation
+and fixture hashes before accepting requests. From the repository root, install
+the pinned dependencies and start the comparison locally:
+
+```sh
+npm ci --ignore-scripts
+(cd docs/evidence && sha256sum -c renderer-snapshots.tar.gz.sha256)
+mkdir -p /tmp/atlas-renderer-snapshots
+tar -xzf docs/evidence/renderer-snapshots.tar.gz -C /tmp/atlas-renderer-snapshots
+python3 scripts/serve-renderer-review.py --root . --data /tmp/atlas-renderer-snapshots --port 4438
+```
+
+Open these two URLs in the same browser:
+
+- `http://127.0.0.1:4438/ux/?view=2d&place=06041&metric=unemployment&renderer=svg`
+- `http://127.0.0.1:4438/ux/?view=2d&place=06041&metric=unemployment&renderer=webgl`
+
+In another terminal, run the automated browser checks:
 
 ```sh
 ATLAS_PLAYWRIGHT_MODULE=/path/to/playwright-core/index.mjs \

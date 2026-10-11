@@ -1,5 +1,6 @@
 """Isolated loopback review server: frozen observations, no writes or credentials."""
 import argparse
+import hashlib
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
@@ -12,6 +13,23 @@ def main():
     parser.add_argument('--data', type=Path, required=True)
     parser.add_argument('--port', type=int, default=4438)
     args = parser.parse_args()
+    manifest = json.loads((args.data / 'snapshot-manifest.json').read_text())
+    allowed = {}
+    for record in manifest['records']:
+        name = record['file']
+        if Path(name).name != name or record['field'] in allowed:
+            raise ValueError('Invalid or duplicate snapshot entry')
+        if hashlib.sha256((args.data / name).read_bytes()).hexdigest() != record['sha256']:
+            raise ValueError('Snapshot hash mismatch: ' + name)
+        allowed[record['field']] = name
+    integrity_path = args.data / 'fixture-integrity.json'
+    if integrity_path.exists():
+        integrity = json.loads(integrity_path.read_text())
+        for name, expected in integrity['files'].items():
+            if Path(name).name != name:
+                raise ValueError('Invalid fixture filename')
+            if hashlib.sha256((args.data / name).read_bytes()).hexdigest() != expected:
+                raise ValueError('Fixture hash mismatch: ' + name)
 
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *handler_args, **kwargs):
@@ -35,8 +53,6 @@ def main():
                 return self.send_json(json.loads((args.data / 'catalog.json').read_text()))
             if url.path == '/api/atlas/observations':
                 field = parse_qs(url.query).get('field', [''])[0]
-                allowed = {record['field']: record['file'] for record in
-                           json.loads((args.data / 'snapshot-manifest.json').read_text())['records']}
                 if field not in allowed:
                     return self.send_json({'error': 'Series not captured in this review snapshot'}, 404)
                 return self.send_json(json.loads((args.data / allowed[field]).read_text()))
