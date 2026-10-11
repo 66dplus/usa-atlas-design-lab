@@ -1,0 +1,456 @@
+{
+  "version": 2,
+  "baseCatalogCount": 81,
+  "catalogCount": 87,
+  "metrics": [
+    {
+      "id": "data-centers",
+      "catalogId": "10.01",
+      "name": "Data centers",
+      "category": "Infrastructure",
+      "shortCategory": "Infrastructure",
+      "source": "PNNL IM3 Open Source Data Center Atlas (v2026.02.09; OSM-derived)",
+      "sourceUrl": "https://data.msdlive.org/records/p147s-4h760",
+      "coverage": "Mapped existing US facilities; join site geometry to the project's Census 2017 state and county equivalents",
+      "note": "Count each existing physical data-center site once; a multi-building campus is one site. Exclude projected sites and overlapping campus/building records. Locations are OSM-derived and do not form a complete census.",
+      "unitHint": "Sites",
+      "catalogLabel": "Physical operating data-center sites",
+      "catalogSource": "Pending review",
+      "catalogNote": "one operating campus is one site; count physical operating sites only; exclude projects and pipeline facilities",
+      "contractUnit": "count",
+      "plannedState": "definition_required"
+    },
+    {
+      "id": "residential-water-price",
+      "catalogId": "10.02",
+      "name": "Residential water tariff",
+      "category": "Prices & consumer life",
+      "shortCategory": "Everyday prices",
+      "source": "Residential drinking-water utility tariffs · source to select",
+      "sourceUrl": null,
+      "coverage": "Utility service area; geographic coverage depends on selected tariff sources",
+      "note": "Measure the volumetric drinking-water tariff, not a monthly bill. Exclude wastewater, fixed service charges and taxes; choose a reference consumption tier for block tariffs before comparing utilities. National coverage is incomplete.",
+      "unitHint": "USD per 1,000 gallons",
+      "catalogLabel": "Residential volumetric drinking water price",
+      "catalogSource": "Pending review",
+      "catalogNote": "residential volumetric drinking-water charge only; exclude sewer, fixed charges, and taxes; tier treatment unresolved",
+      "contractUnit": "USD/1000gallons",
+      "plannedState": "definition_required"
+    },
+    {
+      "id": "billion-dollar-companies",
+      "catalogId": "10.03",
+      "name": "Private companies valued at $1B+",
+      "category": "Business & innovation",
+      "shortCategory": "Business",
+      "source": "Disclosed private financing valuations · source to select",
+      "sourceUrl": null,
+      "coverage": "US-headquartered private companies; state and city counts depend on source coverage",
+      "note": "Count private US-headquartered companies with a source-backed post-money valuation of at least $1B from their latest disclosed priced round as of a stated date; exclude IPO and acquired companies. Undisclosed or stale valuations limit completeness. Valuation source and reuse rights remain to be selected.",
+      "unitHint": "Companies",
+      "catalogLabel": "Known private US-headquartered firms with disclosed post-money valuation at least USD 1 billion",
+      "catalogSource": "Pending review",
+      "catalogNote": "private firms headquartered in the United States with last disclosed post-money valuation >= USD 1 billion; exclude acquired firms and IPOs",
+      "contractUnit": "firms",
+      "plannedState": "source_required"
+    },
+    {
+      "id": "all-cancer-new-cases",
+      "name": "All-cancer new cases",
+      "category": "Mortality, drugs & health",
+      "shortCategory": "Health",
+      "coverage": "State; actual calendar-year count",
+      "note": "actual calendar-year count of new all-cancer cases",
+      "unitHint": "Cases",
+      "catalogId": "11.01",
+      "catalogLabel": "All-cancer new cases",
+      "catalogSource": "Pending review",
+      "catalogNote": "actual calendar-year count of new all-cancer cases",
+      "contractUnit": "cases",
+      "plannedState": "source_required",
+      "source": "Pending review"
+    },
+    {
+      "id": "new-hiv-diagnoses",
+      "name": "New HIV diagnoses",
+      "category": "Mortality, drugs & health",
+      "shortCategory": "Health",
+      "coverage": "State; actual calendar-year count",
+      "note": "actual calendar-year count of new HIV diagnoses",
+      "unitHint": "Diagnoses",
+      "catalogId": "11.02",
+      "catalogLabel": "New HIV diagnoses",
+      "catalogSource": "Pending review",
+      "catalogNote": "actual calendar-year count of new HIV diagnoses",
+      "contractUnit": "diagnoses",
+      "plannedState": "source_required",
+      "source": "Pending review"
+    },
+    {
+      "id": "deaths-under-18",
+      "name": "Deaths among people younger than 18",
+      "category": "Mortality, drugs & health",
+      "shortCategory": "Health",
+      "coverage": "State; actual calendar-year count",
+      "note": "actual calendar-year count of deaths at age <18",
+      "unitHint": "Deaths",
+      "catalogId": "11.03",
+      "catalogLabel": "Deaths among people younger than 18",
+      "catalogSource": "Pending review",
+      "catalogNote": "actual calendar-year count of deaths at age <18",
+      "contractUnit": "deaths",
+      "plannedState": "source_required",
+      "source": "Pending review"
+    }
+  ],
+  "parentFields": [
+    {
+      "catalogId": "01.01",
+      "catalogLabel": "Population"
+    },
+    {
+      "catalogId": "01.02",
+      "catalogLabel": "Age"
+    },
+    {
+      "catalogId": "01.03",
+      "catalogLabel": "Sex"
+    },
+    {
+      "catalogId": "01.04",
+      "catalogLabel": "Race / ethnicity"
+    },
+    {
+      "catalogId": "01.05",
+      "catalogLabel": "Foreign-born population"
+    },
+    {
+      "catalogId": "01.06",
+      "catalogLabel": "Country / region of birth"
+    },
+    {
+      "catalogId": "01.07",
+      "catalogLabel": "Citizenship"
+    },
+    {
+      "catalogId": "01.08",
+      "catalogLabel": "Year / period of immigration"
+    },
+    {
+      "catalogId": "02.01",
+      "catalogLabel": "Median household income"
+    },
+    {
+      "catalogId": "02.02",
+      "catalogLabel": "Per-capita income"
+    },
+    {
+      "catalogId": "02.03",
+      "catalogLabel": "Median rent"
+    },
+    {
+      "catalogId": "02.04",
+      "catalogLabel": "Median home value"
+    },
+    {
+      "catalogId": "02.05",
+      "catalogLabel": "Mortgage / selected monthly owner costs"
+    },
+    {
+      "catalogId": "02.06",
+      "catalogLabel": "Rent as % of income / rent burden"
+    },
+    {
+      "catalogId": "02.07",
+      "catalogLabel": "Owner / renter ratio"
+    },
+    {
+      "catalogId": "02.08",
+      "catalogLabel": "Poverty"
+    },
+    {
+      "catalogId": "02.09",
+      "catalogLabel": "Households earning $200k+"
+    },
+    {
+      "catalogId": "02.10",
+      "catalogLabel": "Cost of living / Regional Price Parities"
+    },
+    {
+      "catalogId": "03.01",
+      "catalogLabel": "Bachelor's degree"
+    },
+    {
+      "catalogId": "03.02",
+      "catalogLabel": "Master's degree"
+    },
+    {
+      "catalogId": "03.03",
+      "catalogLabel": "Doctorate"
+    },
+    {
+      "catalogId": "03.04",
+      "catalogLabel": "High school attainment"
+    },
+    {
+      "catalogId": "03.05",
+      "catalogLabel": "No diploma"
+    },
+    {
+      "catalogId": "03.06",
+      "catalogLabel": "Unemployment"
+    },
+    {
+      "catalogId": "03.07",
+      "catalogLabel": "Average / mean salary"
+    },
+    {
+      "catalogId": "03.08",
+      "catalogLabel": "Employment growth"
+    },
+    {
+      "catalogId": "03.09",
+      "catalogLabel": "Work from home share"
+    },
+    {
+      "catalogId": "04.01",
+      "catalogLabel": "Murders"
+    },
+    {
+      "catalogId": "04.02",
+      "catalogLabel": "Violent crime"
+    },
+    {
+      "catalogId": "04.03",
+      "catalogLabel": "Robbery"
+    },
+    {
+      "catalogId": "04.04",
+      "catalogLabel": "Aggravated assault"
+    },
+    {
+      "catalogId": "04.05",
+      "catalogLabel": "Burglary"
+    },
+    {
+      "catalogId": "04.06",
+      "catalogLabel": "Motor vehicle theft"
+    },
+    {
+      "catalogId": "04.07",
+      "catalogLabel": "Rape"
+    },
+    {
+      "catalogId": "04.08",
+      "catalogLabel": "Homicide"
+    },
+    {
+      "catalogId": "04.09",
+      "catalogLabel": "Crime trends"
+    },
+    {
+      "catalogId": "05.01",
+      "catalogLabel": "Drug overdose deaths"
+    },
+    {
+      "catalogId": "05.02",
+      "catalogLabel": "Opioid deaths"
+    },
+    {
+      "catalogId": "05.03",
+      "catalogLabel": "Fentanyl / synthetic opioid deaths"
+    },
+    {
+      "catalogId": "05.04",
+      "catalogLabel": "Cocaine deaths"
+    },
+    {
+      "catalogId": "05.05",
+      "catalogLabel": "Methamphetamine / psychostimulant deaths"
+    },
+    {
+      "catalogId": "05.06",
+      "catalogLabel": "Heroin deaths"
+    },
+    {
+      "catalogId": "05.07",
+      "catalogLabel": "Alcohol-related deaths"
+    },
+    {
+      "catalogId": "05.08",
+      "catalogLabel": "Suicide"
+    },
+    {
+      "catalogId": "05.09",
+      "catalogLabel": "Homicide mortality"
+    },
+    {
+      "catalogId": "05.10",
+      "catalogLabel": "Heart disease deaths"
+    },
+    {
+      "catalogId": "05.11",
+      "catalogLabel": "Cancer deaths"
+    },
+    {
+      "catalogId": "05.12",
+      "catalogLabel": "Accidental deaths"
+    },
+    {
+      "catalogId": "05.13",
+      "catalogLabel": "Life-expectancy-related indicators"
+    },
+    {
+      "catalogId": "05.14",
+      "catalogLabel": "Obesity rate"
+    },
+    {
+      "catalogId": "05.15",
+      "catalogLabel": "Diabetes rate"
+    },
+    {
+      "catalogId": "05.16",
+      "catalogLabel": "Physical inactivity rate"
+    },
+    {
+      "catalogId": "06.01",
+      "catalogLabel": "Total homeless"
+    },
+    {
+      "catalogId": "06.02",
+      "catalogLabel": "Sheltered homeless"
+    },
+    {
+      "catalogId": "06.03",
+      "catalogLabel": "Unsheltered homeless"
+    },
+    {
+      "catalogId": "06.04",
+      "catalogLabel": "Homeless veterans"
+    },
+    {
+      "catalogId": "06.05",
+      "catalogLabel": "Homeless families"
+    },
+    {
+      "catalogId": "06.06",
+      "catalogLabel": "Chronically homeless"
+    },
+    {
+      "catalogId": "07.01",
+      "catalogLabel": "Adjusted Gross Income (AGI)"
+    },
+    {
+      "catalogId": "07.02",
+      "catalogLabel": "High-income taxpayers / returns"
+    },
+    {
+      "catalogId": "07.03",
+      "catalogLabel": "Capital gains"
+    },
+    {
+      "catalogId": "07.04",
+      "catalogLabel": "Dividends"
+    },
+    {
+      "catalogId": "07.05",
+      "catalogLabel": "Taxes / income tax metrics"
+    },
+    {
+      "catalogId": "07.06",
+      "catalogLabel": "Millionaires"
+    },
+    {
+      "catalogId": "07.07",
+      "catalogLabel": "Billionaires"
+    },
+    {
+      "catalogId": "08.01",
+      "catalogLabel": "Price of a dozen eggs"
+    },
+    {
+      "catalogId": "08.02",
+      "catalogLabel": "Cup of coffee price"
+    },
+    {
+      "catalogId": "08.03",
+      "catalogLabel": "Big Mac / McDonald's meal price"
+    },
+    {
+      "catalogId": "08.04",
+      "catalogLabel": "Gasoline price"
+    },
+    {
+      "catalogId": "08.05",
+      "catalogLabel": "Electricity price"
+    },
+    {
+      "catalogId": "08.06",
+      "catalogLabel": "Beer price"
+    },
+    {
+      "catalogId": "08.07",
+      "catalogLabel": "Average consumer debt"
+    },
+    {
+      "catalogId": "08.08",
+      "catalogLabel": "Student loan debt"
+    },
+    {
+      "catalogId": "08.09",
+      "catalogLabel": "Average health insurance cost"
+    },
+    {
+      "catalogId": "09.01",
+      "catalogLabel": "Fast-food restaurants per 10k residents"
+    },
+    {
+      "catalogId": "09.02",
+      "catalogLabel": "Access to a grocery store"
+    },
+    {
+      "catalogId": "09.03",
+      "catalogLabel": "Farmers' markets per capita"
+    },
+    {
+      "catalogId": "09.04",
+      "catalogLabel": "Fitness / recreation centers per capita"
+    },
+    {
+      "catalogId": "09.05",
+      "catalogLabel": "Parks / recreation facilities"
+    },
+    {
+      "catalogId": "09.06",
+      "catalogLabel": "PM2.5"
+    },
+    {
+      "catalogId": "09.07",
+      "catalogLabel": "Ozone"
+    },
+    {
+      "catalogId": "10.01",
+      "catalogLabel": "Physical operating data-center sites"
+    },
+    {
+      "catalogId": "10.02",
+      "catalogLabel": "Residential volumetric drinking water price"
+    },
+    {
+      "catalogId": "10.03",
+      "catalogLabel": "Known private US-headquartered firms with disclosed post-money valuation at least USD 1 billion"
+    },
+    {
+      "catalogId": "11.01",
+      "catalogLabel": "All-cancer new cases"
+    },
+    {
+      "catalogId": "11.02",
+      "catalogLabel": "New HIV diagnoses"
+    },
+    {
+      "catalogId": "11.03",
+      "catalogLabel": "Deaths among people younger than 18"
+    }
+  ]
+}

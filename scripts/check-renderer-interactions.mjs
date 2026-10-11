@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const {chromium}=await import(process.env.ATLAS_PLAYWRIGHT_MODULE||'playwright-core');
+const output=process.env.ATLAS_EVIDENCE_DIR||'docs/evidence',file=path.join(output,'renderer-comparison.json');
+const report=JSON.parse(fs.readFileSync(file));
+const browser=await chromium.launch({executablePath:process.env.ATLAS_CHROMIUM_PATH,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+const check=(ok,name)=>{console.log((ok?'PASS':'FAIL')+': '+name);report.parity=report.parity.filter(row=>row.name!==name);report.parity.push({name,result:ok?'PASS':'FAIL'});if(!ok)throw new Error(name);};
+const pose=()=>page.locator('#map-a .geo-svg').evaluate(el=>{const t=d3.zoomTransform(el);return{x:t.x,y:t.y,k:t.k};});
+try{
+ page.on('pageerror',error=>report.errors.push(error.message));await page.route('**/api/**',route=>route.request().method()==='GET'?route.continue():route.abort());
+ await page.goto(`${process.env.ATLAS_REVIEW_URL||'http://127.0.0.1:4438'}/ux/?view=2d&renderer=webgl&place=06041&metric=unemployment`);
+ await page.waitForFunction(()=>document.querySelector('#loading')?.hidden&&document.querySelector('#map-a').dataset.renderer==='webgl');
+ const initial=await pose();await page.mouse.move(730,450);await page.waitForTimeout(100);
+ check(await page.locator('.map-hover b').textContent()==='Marin','trusted pointer hover selects Marin');
+ const center={x:730/1.2,y:450/1.2};await page.mouse.wheel(0,-40);await page.waitForTimeout(150);
+ const zoomed=await pose(),invert=t=>[(center.x-t.x)/t.k,(center.y-t.y)/t.k];
+ check(invert(initial).every((v,i)=>Math.abs(v-invert(zoomed)[i])<1e-7),'trusted wheel keeps geography under cursor');
+ await page.mouse.down();await page.mouse.move(810,485,{steps:5});await page.mouse.up();
+ check(JSON.stringify(await pose())!==JSON.stringify(zoomed),'trusted drag pans without selection');
+ check(await page.locator('#map-a').getAttribute('data-selected')==='06041','drag retains selection');
+ await page.locator('[data-camera=reset][data-side=a]').click();await page.waitForTimeout(100);const fitted=await pose();
+ check(Object.keys(initial).every(k=>Math.abs(initial[k]-fitted[k])<1e-7),'fit restores selected county framing');
+ await page.mouse.move(730,450);await page.mouse.click(730,450);await page.waitForTimeout(100);
+ check(await page.locator('#map-a').getAttribute('data-selected')==='06041','trusted county click preserves exact FIPS');
+ await page.locator('#saved-open').click();await page.locator('#save-current').click();await page.waitForTimeout(100);
+ const item=await page.evaluate(()=>JSON.parse(localStorage.getItem('usa-atlas-explorations')||'[]')[0]);
+ check(Boolean(item)&&new URLSearchParams(item.url).get('renderer')==='webgl','saved exploration stores renderer');
+ const id=item.id;await page.locator('[data-close=saved-panel]').click();
+ await page.mouse.move(730,450);await page.mouse.wheel(0,-10);await page.waitForTimeout(50);
+ await page.locator('#saved-open').click();await page.locator(`[data-restore="${id}"]`).click();await page.waitForTimeout(100);
+ check(new URL(page.url()).searchParams.get('renderer')==='webgl'&&await page.locator('#map-a').getAttribute('data-renderer')==='webgl','saved exploration restores renderer');
+ // Initialization failure uses SVG immediately and retains the same source values.
+ const fallback=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+ await fallback.addInitScript(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return type.startsWith('webgl')?null:get.call(this,type,...args);};});
+ await fallback.goto(`${process.env.ATLAS_REVIEW_URL||'http://127.0.0.1:4438'}/ux/?view=2d&renderer=webgl&place=06041&metric=unemployment`);
+ await fallback.waitForFunction(()=>document.querySelector('#loading')?.hidden&&document.querySelector('#map-a').dataset.renderer==='svg');
+ check(await fallback.locator('.quick-main>b').textContent()==='3.7%','WebGL initialization failure recovers SVG with source value');
+ await fallback.close();report.result=report.errors.length||report.parity.some(row=>row.result==='FAIL')?'FAIL':'PASS';report.interactionsCapturedAt=new Date().toISOString();if(report.result==='PASS')delete report.failure;
+}catch(error){report.result='FAIL';report.failure=error.message;}finally{await browser.close();fs.writeFileSync(file,JSON.stringify(report,null,2)+'\n');}
+console.log(JSON.stringify({result:report.result,checks:report.parity.length,failure:report.failure,errors:report.errors}));if(report.result!=='PASS')process.exitCode=1;
