@@ -1,5 +1,18 @@
 # USA Atlas — selected design studies
 
+## 2D renderer — owner decision, 14 October 2026
+
+2D maps use WebGL by default after the owner's local SVG/WebGL comparison.
+Explicit `renderer=svg` links and saved views retain SVG. Links and older saved
+views without a renderer now use WebGL; newly saved/shared URLs include the
+selected renderer. SVG remains the automatic fallback for WebGL initialization,
+drawing or context failures. The existing 3D renderer is unchanged.
+
+The local comparison setup and frozen observation fixture are documented in
+[SVG and WebGL comparison](docs/webgl-comparison-2026-10-11.md).
+This change is staged on `codex/webgl-2d-default-20261014`; it is not merged into
+`main` or deployed. The owner's preference is not a hardware benchmark claim.
+
 ## Current UI — 20 September, feedback synthesis
 
 The assembled interface is `/ux/`. Current review server: [San Francisco](http://127.0.0.1:4198/ux/?concept=explorer&place=06075&metric=unemployment&view=3d), [California](http://127.0.0.1:4198/ux/?concept=explorer&place=06&metric=unemployment&view=3d), [Compare](http://127.0.0.1:4198/ux/?concept=compare&place=06&other=48&metric=unemployment&view=3d). Normal `npm start` still serves the same code on 4180.

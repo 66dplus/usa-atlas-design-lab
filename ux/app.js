@@ -16,12 +16,13 @@ const icon=name=>brandNames[name]?brandIcon(brandNames[name]):`<svg viewBox="0 0
 document.querySelectorAll('[data-brand-icon]').forEach(node=>{node.outerHTML=brandIcon(node.dataset.brandIcon);});
 document.querySelectorAll('[data-ui-icon]').forEach(node=>{node.outerHTML=icon(node.dataset.uiIcon);});
 const params=new URLSearchParams(location.search);
+const renderer2dFrom=query=>query.get('renderer')==='svg'?'svg':'webgl';
 const embedded=params.get('embed')==='1';
 document.body.classList.toggle('embedded-map',embedded);
 window.addEventListener('message',event=>{if(embedded&&event.origin===location.origin&&event.source===parent&&event.data?.type==='atlas-embed-theme'&&['light','dark'].includes(event.data.theme)){document.body.dataset.theme=event.data.theme;if(dataStore)updateMaps();}});
 const concepts=['explorer','stories','compare'];
 const initialConcept=params.get('page')==='map'?'explorer':params.get('page')==='compare'?'compare':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
-const state={renderer2d:params.get('renderer')==='webgl'?'webgl':'svg',concept:initialConcept,mode:params.get('view')||(initialConcept==='compare'?'2d':'3d'),selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
+const state={renderer2d:renderer2dFrom(params),concept:initialConcept,mode:params.get('view')||(initialConcept==='compare'?'2d':'3d'),selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
 const stories=[
  {title:'The cost of calling it home',description:'Where does your dollar go further?',metric:'cost-of-living-regional-price-parities',place:'06',action:'Compare the cost of living'},
  {title:'Where work is changing',description:'Explore employment, place by place.',metric:'unemployment',place:'48',action:'Explore Texas'},
@@ -46,7 +47,7 @@ const compactNumber=(m,id)=>{const v=value(m,id),unit=layer(m).unit;return v!=nu
 function persist() {
   const q=new URLSearchParams({concept:state.concept,view:state.mode,metric:state.metric,metric2:state.secondMetric,comparison:state.comparison,other:state.second||'US'});
   for(const key of ['page','preview','expanded','embed','theme','article']){const v=new URLSearchParams(location.search).get(key);if(v)q.set(key,v);}
-  if(state.renderer2d==='webgl'||params.has('renderer'))q.set('renderer',state.renderer2d);
+  q.set('renderer',state.renderer2d);
   q.set('page',document.body.dataset.page);
   if(state.selected)q.set('place',state.selected);if(state.rank)q.set('rank',state.rank);
   history.replaceState(null,'',`${location.pathname}?${q}`);
@@ -295,7 +296,7 @@ function showSaved(){
 async function restoreSaved(id){
   const item=(savedItems()||[]).find(x=>x.id===id);if(!item)return;const q=new URLSearchParams(item.url);
   if(q.get('concept')==='compare')rememberExploration();else explorationPose=null;
-  state.renderer2d=q.get('renderer')==='webgl'?'webgl':'svg';state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=availableIndicatorId(q.get('metric'),'unemployment');state.secondMetric=availableIndicatorId(q.get('metric2'),catalog.find(m=>m.id!==state.metric)?.id);state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
+  state.renderer2d=renderer2dFrom(q);state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=availableIndicatorId(q.get('metric'),'unemployment');state.secondMetric=availableIndicatorId(q.get('metric2'),catalog.find(m=>m.id!==state.metric)?.id);state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
   closeDrawers(false);try{await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);rememberState(state.selected);render();analytics.action('view_restore');if(state.rank)openRank(state.rank);}catch(error){toast(error.message);}
 }
 function renderMixedTicker(){

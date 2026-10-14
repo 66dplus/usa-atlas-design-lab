@@ -1,10 +1,14 @@
 # SVG and WebGL comparison — 11 October 2026
 
-This branch adds an optional flat WebGL renderer to the exact October collected35
+This branch adds a flat WebGL renderer to the exact October collected35
 application. The source baseline is `f5cd8bf`; its imported asset hashes and original
 Git base are recorded in [october-svg-baseline.json](october-svg-baseline.json).
-SVG remains the default. No metric definitions, adapters, panels or deployment
-configuration are changed.
+Owner decision, 14 October 2026: WebGL is now the default for 2D after local
+comparison. Explicit `renderer=svg` remains supported, with SVG also retained as
+the automatic failure fallback. The default change is staged on
+`codex/webgl-2d-default-20261014` without merging into `main` or deploying.
+No metric definitions, adapters, panels or deployment configuration are changed
+by this renderer follow-up.
 
 Open the same exploration with `view=2d&renderer=svg` or
 `view=2d&renderer=webgl`. For example:
@@ -14,7 +18,9 @@ Open the same exploration with `view=2d&renderer=svg` or
 - `/ux/?concept=compare&view=2d&place=06041&other=06075&metric=unemployment&renderer=webgl`
 
 The renderer choice survives URL updates, Share, saved explorations and 2D/3D
-switches. Old URLs without a renderer parameter continue to use SVG for 2D.
+switches. URLs and older saved views without a renderer parameter now use WebGL for 2D.
+Persisted view URLs always include the chosen renderer, including explicit SVG
+views restored from Saved.
 Three.js retains the existing 3D path.
 
 The new renderer triangulates the same projected county polygons with their holes
@@ -36,6 +42,20 @@ restores its context. Captures render the latest GPU frame and bind the new
 feedback component to `ux/flat-map.js`.
 
 ## Verification
+
+14 October follow-up: the staged `ux/app.js` passes `node --check` and the
+3,142-county flat-renderer suite. The actual shared selection helper passes
+missing, explicit SVG, explicit WebGL and unknown-parameter cases. Browser checks
+on isolated port 4439 pass: entry without a renderer uses WebGL; explicit SVG
+uses SVG; saving an SVG view, entering through an unspecified WebGL URL and
+restoring that view retains `renderer=svg`; SVG survives a 3D/2D round trip;
+Compare without a renderer uses WebGL in both panes with Marin 3.7% and
+San Francisco 3.8%. Owner settings and feedback are not read or written.
+The follow-up reuses the existing fallback and dependencies. Fault injection and
+hardware timing were not repeated; no new benchmark claim is made.
+
+The evidence below describes the original comparison at `de22abc`, before the
+14 October default change. It does not measure the owner's hardware.
 
 Run the flat topology test with `node ux/check-flat-map.mjs`. It checks all 3,142
 county identities, 18 holes and 86 counties with multiple polygons, cap areas,
@@ -130,4 +150,5 @@ model. `npm run check` fails on an existing external handoff asset
 `ux/check.mjs` API sweep assumes an older catalog and is **NOT RUN** against the
 frozen review server. No unavailable tier is counted as a pass.
 
-This is a comparison branch, not a default migration or a production deployment.
+The original commits supplied the comparison; the 14 October follow-up changes
+the local 2D default. No production deployment or `main` merge is included.
