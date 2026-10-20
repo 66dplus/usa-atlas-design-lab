@@ -8,13 +8,14 @@ USA Atlas is an interactive atlas of US statistics. It links indicators to state
 
 ## Screenshots
 
-Real observations from the connected `usa_atlas` database: unemployment rate by county, December 2024 (BLS LAS).
+Real observations from the connected `usa_atlas` database: unemployment rate by county, December 2024 (BLS LAS). Captured from a local run of this repository.
 
 <p align="middle">
-  <img src="docs/screenshots/01-map-2d-webgl.png" width="49%" alt="Explorer: 2D WebGL county map of California">
+  <img src="docs/screenshots/01-map-2d-webgl.png" width="49%" alt="Explorer: 2D WebGL county map of California with the place panel and quick stats">
   <img src="docs/screenshots/02-map-3d-relief.png" width="49%" alt="Explorer: the same indicator on the 3D relief map">
   <img src="docs/screenshots/03-compare-2d.png" width="49%" alt="Compare: California 5.4% versus Texas 4.1% unemployment">
-  <img src="docs/screenshots/04-advertiser-studio.png" width="49%" alt="Advertising studio: composing a sponsored banner over the national map">
+  <img src="docs/screenshots/04-stats.png" width="49%" alt="Stats: the audience view with an explicit unavailable state">
+  <img src="docs/screenshots/05-blog.png" width="49%" alt="Blog: the Atlas journal with live map previews">
 </p>
 
 The same atlas on a phone:
@@ -29,9 +30,17 @@ The same atlas on a phone:
 
 Standard 2D maps render in WebGL; links without a `renderer` parameter serve WebGL. Saved views and links with an explicit `renderer=svg` keep using SVG, and newly saved or shared links always record the selected renderer in the URL. SVG remains the automatic fallback when WebGL is unavailable, a draw fails, or the context is lost. The 3D renderer is unchanged. The local SVG-vs-WebGL comparison over a frozen set of observations is described in [docs/webgl-comparison-2026-10-11.md](docs/webgl-comparison-2026-10-11.md); the preference for WebGL came from the owner after a local comparison and is not a performance claim.
 
-## Current interface — 20 September, feedback synthesis
+## Current interface — Paper runtime, promoted 20 October 2026
 
-The standard overview uses a white-and-graphite palette, Geist, the **Trends / Explorer / Compare** rows, a photo-lead scroll in the left panel of the place profile, quick statistics for the selected place, and a labelled advertising slot on the right. Search and categories are preserved; popular indicators sit under the selector. Highest / Lowest shows five raw values with coverage and matches, aligned with the 3D labels. Saved replaces the left frame with Back and keeps up to 50 views locally. The period of saved views is labelled, but reopening reads the latest available source snapshot. Share confirms in its own button for five seconds. Surprise opens prepared scenarios; the full-width ticker stops on hover/focus and supports reduced motion.
+The runtime shell is the approved Paper design. The header carries the **Map / Compare / Stats / Blog** modes, a Saved panel, Support and About, and a 2D/3D switch; a light and a dark theme apply to the whole interface and are chosen in About → Appearance. Info and Support are their own screens, and leaving them returns to the page you came from.
+
+On Desktop the map is the workspace. The left panel holds the indicator, the place, a place photograph, the headline value with its unit, period and source, Highest 5 and Lowest 5, and a Compare action. The right column shows quick statistics for the selected place, each with its own period and source, above a labelled advertising slot. The bottom ticker surfaces prepared questions and advertising; it stops on hover and focus and respects reduced motion. 3D is the same selected indicator as colour and height on one labelled scale. Compare places two independent cameras side by side and switches to two indicators, with a compare-data drawer for the numbers.
+
+On a phone the map keeps the top of the screen and the place panel becomes a bottom sheet that expands over the map; Compare stacks the two place maps, and a docked bar switches modes. The source and geometry popups, the camera controls and the sheet transitions follow the same rules on both sizes.
+
+The indicator pickers share one set of display switches: 38 collected fields are enabled — the 35 collected map indicators plus the three admitted medical fields. Only the enabled fields whose default series the connected database has admitted appear in a picker, so the number you see depends on that database. A missing observation stays an explicit gap: a state value is never spread over its counties, and no US average is computed from states.
+
+The Blog is the Atlas journal. It shows live map previews and two editorial drafts that are still marked review pending. Stats is the audience view; no public audience data is connected, so its figures read as unavailable rather than zero.
 
 ## What to open
 
@@ -39,9 +48,9 @@ After starting the server:
 
 - **Interactive atlas:** [http://127.0.0.1:4180/ux/](http://127.0.0.1:4180/ux/) — place search, indicators, state and county comparison, the 2D map and the 3D relief.
 - **Concept gallery:** [http://127.0.0.1:4180/](http://127.0.0.1:4180/) — an early design study with synthetic demo values. These values are not statistics.
-- **Advertising studio:** [http://127.0.0.1:4180/ux/advertise.html](http://127.0.0.1:4180/ux/advertise.html) — an experimental editor. Its local preview is built separately from the connected database's data; the generated snapshot and bundle are intentionally not stored in Git. Instructions live in [ux/advertising/DESIGN.md](ux/advertising/DESIGN.md).
+- **Advertising studio:** [http://127.0.0.1:4180/ux/advertise.html](http://127.0.0.1:4180/ux/advertise.html) — an experimental editor with the accepted Creative and Request layout. It keeps drafts in the browser and downloads a review request; delivery is not configured. Its local preview is built separately from the connected database's data, so the generated snapshot and bundle are intentionally not stored in Git. Instructions live in [ux/advertising/DESIGN.md](ux/advertising/DESIGN.md).
 
-The local review panel used to record map feedback is off by default; add `?review=1` to the atlas URL while reviewing designs.
+The local review panel that records map feedback is a development tool: it is off by default, and `?review=1` on the atlas URL opens it while reviewing designs.
 
 In the atlas, a missing observation remains an explicit gap. A state value is not distributed over counties, ZIP-code or monitoring-station values are not converted to counties, and a US average is not computed from states.
 
@@ -83,10 +92,10 @@ The integration goes through <code>GET /api/atlas/catalog</code> and <code>GET /
 
 ## Repository layout
 
-- <code>ux/</code> — the current atlas interface: map, catalogs and geographic assets.
+- <code>ux/</code> — the current atlas interface: map, catalogs, geographic assets and the journal.
 - <code>scripts/serve.py</code> — the local web server and API; <code>scripts/atlas_data.py</code> — the read-only PostgreSQL adapter.
 - <code>assets/</code>, <code>app.js</code>, <code>maps.js</code>, <code>scene.js</code> and <code>field.js</code> — the separate concept gallery.
-- <code>deploy/</code> — examples of local analytics and mobile environments. They are not needed for a basic run.
+- <code>deploy/</code> — examples of local analytics and mobile environments, and the read-only preview packaging. They are not needed for a basic run.
 - <code>ux/assets/SOURCES.md</code> — provenance and attribution for major interface assets.
 - <code>package-lock.json</code> — pinned versions of npm dependencies.
 
@@ -100,7 +109,7 @@ For a quick integrity check of the gallery run:
 npm run check
 ~~~
 
-The command checks files, geographic assets and synthetic fields. It does not require PostgreSQL. Changes to the atlas or the server API call for additional checks of the relevant code in <code>ux/</code> and <code>scripts/</code>; verify them before sending changes.
+The command checks files, geographic assets and synthetic fields. It does not require PostgreSQL. The atlas itself has its own checks in <code>ux/check-*.mjs</code>: the flat topology and picking suite, the volume geometry and detail suites, the motion suite, the data-store suite, the source-metadata suite, the approved-icon suite and the runtime suite. The Python suites in <code>scripts/test_*.py</code> cover the adapter, the catalog contract, the preview cache and the local server. Continuous integration runs all of them; the checks that need a live database are skipped when PostgreSQL is unavailable. Verify the relevant code in <code>ux/</code> and <code>scripts/</code> before sending changes.
 
 When changing data, keep the original values, units, period, source release and exact geography matching. Do not fill gaps with computations and do not change the geography level without changing the contract and the documentation.
 
