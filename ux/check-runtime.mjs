@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import {validateRequest,characterCount} from './advertising/request.js';
+import {isTargeted} from './advertising/creative.js';
+import {showSurface} from './motion.js';
+import {readAtlasJSON,createDataStore} from './model.js';
+
+let reads=0;
+assert.deepEqual(await readAtlasJSON('/api/atlas/catalog',async()=>++reads===1?{ok:false,status:530,json:async()=>{throw new SyntaxError('HTML');}}:{ok:true,json:async()=>({metrics:[]})}),{metrics:[]});
+assert.equal(reads,2,'A transient tunnel response gets one bounded GET retry');
+reads=0;
+await assert.rejects(readAtlasJSON('/api/atlas/catalog',async()=>{reads++;return {ok:false,status:404,json:async()=>({error:'Field is not in the published map catalog'})};}),/published map catalog/);
+assert.equal(reads,1,'A permanent denial must not be retried');
+const failedStore=createDataStore({byId:new Map()},()=>{},async()=>({ok:false,status:503,json:async()=>{throw new SyntaxError('Unexpected token <');}}));
+const failedLayer=await failedStore.load({id:'field',fieldId:'03.06:unemployment_rate'});
+assert.equal(failedLayer.status,'error');
+assert.match(failedLayer.error,/unreadable response.*retry/);
+assert.equal(failedLayer.observations.size,0,'Transport failure never becomes a published observation');
+
+const placement={version:2,kind:'placement',durationDays:7,contact:{channel:'whatsapp',whatsapp:'+1 415 555 0100'},creative:{format:'banner',headline:' A headline ',subtitle:'Supporting text',cta:'Learn more',url:'https://example.com',locations:['06'],indicators:['unemployment'],devices:['desktop','mobile']}};
+assert.deepEqual(validateRequest(placement),[]);
+assert.equal(characterCount('👨‍👩‍👧‍👦 é 🇺🇸'),5,'Combined emoji/accents are visible characters; spaces count');
+assert.deepEqual(validateRequest({...placement,creative:{...placement.creative,format:'ticker',headline:'x'.repeat(100),devices:['desktop']}}),[]);
+assert.deepEqual(validateRequest({...placement,kind:'inquiry',creative:null,idea:'A sponsorship',durationDays:null}),[]);
+assert.equal(isTargeted(placement.creative,'mobile','unemployment','06'),true);
+assert.equal(isTargeted(placement.creative,'mobile','unemployment','06075'),false,'Targets are exact locations, not inherited county allocations');
+assert.equal(isTargeted(placement.creative,'desktop','other','06'),false);
+const ticker={...placement.creative,format:'ticker'};
+assert.equal(isTargeted(ticker,'mobile','unemployment','06'),false);
+assert.ok(validateRequest({...placement,creative:ticker}).some(e=>e.id==='target-mobile'));
+assert.ok(validateRequest({...placement,creative:{...placement.creative,headline:'x'.repeat(40)+' '}}).some(e=>e.id==='ad-headline'),'Spaces count toward copy limits');
+for(const url of ['javascript:alert(1)','data:text/html,test','example.com'])assert.ok(validateRequest({...placement,creative:{...placement.creative,url}}).some(e=>e.id==='ad-url'));
+assert.deepEqual(validateRequest({...placement,kind:'inquiry',creative:null,idea:'An exhibition sponsorship',contact:{channel:'email',email:'person@example.com'}}),[],'An inquiry needs no finished creative');
+for(const durationDays of [0,-1,1.5,NaN])assert.ok(validateRequest({...placement,durationDays}).some(e=>e.id==='custom-days'));
+assert.ok(validateRequest({...placement,contact:{channel:'whatsapp',whatsapp:'not a number'}}).some(e=>e.id==='contact-whatsapp'));
+
+let reduced=false;
+globalThis.matchMedia=()=>({matches:reduced});
+globalThis.getComputedStyle=()=>({opacity:'1',transform:'none'});
+const animations=[];
+const node={hidden:false,inert:false,animate(){let resolve;const finished=new Promise(r=>resolve=r);const animation={finished,cancel(){},resolve};animations.push(animation);return animation;}};
+const closing=showSurface(node,false),opening=showSurface(node,true);
+animations[0].resolve();await closing;assert.equal(node.hidden,false,'A stale exit cannot hide a reopened sheet');
+animations[1].resolve();await opening;assert.equal(node.inert,false);
+reduced=true;await showSurface(node,false);assert.equal(node.hidden,true);assert.equal(node.inert,true);assert.equal(animations.length,2,'Reduced motion creates no new tween');
+console.log('PASS: exact creative targeting, Desktop-only ticker, copy limits including spaces, URL/contact/duration validation, creative-free inquiry, interrupted sheets and reduced motion.');

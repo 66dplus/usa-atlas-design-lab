@@ -16,3 +16,8 @@ ux/advertising/THIRD_PARTY_LICENSES.txt
 
 # Local review comments and screenshot captures.
 /feedback/
+
+# Local runtime state and container build artifacts.
+runtime/
+/ux/build.json
+/preview-assets.json

@@ -40,10 +40,12 @@ assert.deepEqual(changed,['other','rate']);
 
 let attempts=0;
 const recovering=createDataStore(geo,()=>{},()=>{
-  if(++attempts===1)throw new Error('connection lost');
+  if(++attempts<=2)throw new Error('connection lost');
   return Promise.resolve({ok:true,json:async()=>sample()});
 });
 await recovering.load(metric);assert.equal(recovering.get(metric).status,'error');
+assert.equal(attempts,2,'One automatic retry is exhausted before an explicit unavailable state');
 assert.equal(recovering.get(metric).values.size,0,'errors never retain old painted values');
 await recovering.retry(metric);assert.equal(recovering.get(metric).status,'ready');
+assert.equal(attempts,3,'The user can restart a failed read without retaining stale painted values');
 console.log('PASS: raw/normalized separation, zero/missing/signed/constant scales, exact geography, compatible comparison, deduplication, out-of-order completion, failure and retry.');

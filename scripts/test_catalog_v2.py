@@ -89,16 +89,19 @@ class CatalogV2Tests(unittest.TestCase):
         result = self.run_catalog(catalog_payload())
         by_id = {m['id']: m for m in result['metrics']}
         expected = {
-            'all-cancer-new-cases': ('11.01', 'cases', 'actual calendar-year count of new all-cancer cases'),
-            'new-hiv-diagnoses': ('11.02', 'diagnoses', 'actual calendar-year count of new HIV diagnoses'),
-            'deaths-under-18': ('11.03', 'deaths', 'actual calendar-year count of deaths at age <18'),
+            'all-cancer-new-cases': ('11.01', 'cases', 'actual calendar-year count of new all-cancer cases',
+                                     'CDC USCS'),
+            'new-hiv-diagnoses': ('11.02', 'diagnoses', 'actual calendar-year count of new HIV diagnoses',
+                                  'CDC AtlasPlus'),
+            'deaths-under-18': ('11.03', 'deaths', 'actual calendar-year count of deaths at age <18',
+                                'CDC WONDER'),
         }
-        for identifier, (catalog_id, unit, note) in expected.items():
+        for identifier, (catalog_id, unit, note, source) in expected.items():
             metric = by_id[identifier]
             self.assertEqual(metric['catalogId'], catalog_id)
             self.assertEqual(metric['contractUnit'], unit)
             self.assertEqual(metric['note'], note)
-            self.assertEqual(metric['source'], 'Pending review')
+            self.assertEqual(metric['source'], source)
 
     def test_five_07_02_series_use_the_generic_series_label(self):
         result = self.run_catalog(catalog_payload(loaded=True))
@@ -106,6 +109,30 @@ class CatalogV2Tests(unittest.TestCase):
         self.assertEqual(len(metrics), 5)
         self.assertTrue(all(m['name'].startswith('High-income taxpayers / returns · ') for m in metrics))
         self.assertFalse(any('net worth' in m['name'].lower() for m in metrics))
+
+    def test_uncounted_observations_remain_available_without_fake_totals(self):
+        payload = catalog_payload()
+        payload['fields'][0].update(rows=None, geographies=['block_group'])
+        result = self.run_catalog(payload)
+        self.assertIsNone(result['observationCount'])
+        metric = next(m for m in result['metrics'] if m['catalogId'] == payload['fields'][0]['catalog_field_id'])
+        self.assertTrue(metric['hasObservations'])
+        self.assertIsNone(metric['observations'])
+        self.assertIn('block_group', metric['coverageNote'])
+        self.assertIsNone(metric['fieldId'])
+
+    def test_acs_labels_and_estimate_default_do_not_confuse_margins_with_values(self):
+        payload = catalog_payload()
+        payload['series'] = [{'catalog_field_id': '01.01', 'field_id': '01.01:' + variable,
+                              'state_supported': True, 'county_supported': True}
+                             for variable in ('B01003_001M', 'B01003_001E')]
+        result = self.run_catalog(payload)
+        metrics = [m for m in result['metrics'] if m['catalogId'] == '01.01']
+        primary = next(m for m in metrics if m['id'] == 'population')
+        self.assertEqual(primary['fieldId'], '01.01:B01003_001E')
+        self.assertIn('Estimate', primary['name'])
+        margin = next(m for m in metrics if m['fieldId'].endswith('M'))
+        self.assertIn('Margin of Error', margin['name'])
 
 
 if __name__ == '__main__':

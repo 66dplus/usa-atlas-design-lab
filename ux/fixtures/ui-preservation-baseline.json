@@ -193,8 +193,8 @@
   },
   {
     "path": "scripts/check.mjs",
-    "sha256": "a65c91e826b3ec41990f51869c00abdaacaffa815475da0db54cb695bee01f15",
-    "bytes": 1979,
+    "sha256": "5185eee61dbdcebc4bd07f26d87b3b0d2b807c81057444167b428183be0a7d46",
+    "bytes": 1639,
     "classification": "pre-existing, no Git repository"
   },
   {
