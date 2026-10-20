@@ -40,24 +40,24 @@ function identifyTarget(element){
 
 export function initFeedback({getContext,onStart=()=>{}}){
   const root=document.createElement('div');root.id='feedback-root';root.setAttribute('data-html2canvas-ignore','');
-  root.innerHTML=`<div class="feedback-launcher"><button id="feedback-add">${ICON}<span>Комментировать</span></button><button id="feedback-show" aria-label="Сохранённые комментарии">Все <span id="feedback-count">0</span></button></div>
-    <div id="feedback-stage" hidden role="dialog" aria-modal="true" aria-label="Комментарий к прототипу" tabindex="-1">
-      <img id="feedback-frozen" alt="Зафиксированный вид прототипа" hidden>
-      <div id="feedback-pick" tabindex="0" aria-label="Укажите место: мышью или стрелками и Enter"></div>
-      <div id="feedback-hint"><span id="feedback-hint-text">Нажмите на место, которое хотите обсудить</span><button id="feedback-cancel-top">Отмена · Esc</button></div>
+  root.innerHTML=`<div class="feedback-launcher"><button id="feedback-add">${ICON}<span>Comment</span></button><button id="feedback-show" aria-label="Saved comments">All <span id="feedback-count">0</span></button></div>
+    <div id="feedback-stage" hidden role="dialog" aria-modal="true" aria-label="Prototype comment" tabindex="-1">
+      <img id="feedback-frozen" alt="Frozen prototype view" hidden>
+      <div id="feedback-pick" tabindex="0" aria-label="Point at a place: mouse or arrow keys and Enter"></div>
+      <div id="feedback-hint"><span id="feedback-hint-text">Click the place you want to discuss</span><button id="feedback-cancel-top">Cancel · Esc</button></div>
       <div id="feedback-crosshair" aria-hidden="true" hidden></div>
-      <div id="feedback-region" hidden aria-label="Область снимка"><span id="feedback-region-size"></span>${['nw','ne','sw','se'].map(c=>`<span class="feedback-handle" data-corner="${c}" aria-hidden="true"></span>`).join('')}</div>
+      <div id="feedback-region" hidden aria-label="Snapshot area"><span id="feedback-region-size"></span>${['nw','ne','sw','se'].map(c=>`<span class="feedback-handle" data-corner="${c}" aria-hidden="true"></span>`).join('')}</div>
       <div id="feedback-pin" aria-hidden="true" hidden></div>
-      <form id="feedback-editor" hidden><div class="feedback-panel-heading"><h2>Что изменить?</h2><button type="button" id="feedback-cancel" aria-label="Отменить комментарий">${CLOSE}</button></div>
-        <p class="feedback-help">Потяните рамку или её углы. Точка показывает, куда вы указали.</p>
-        <div class="feedback-dimensions"><label>Ширина<input id="feedback-width" type="number" min="80" step="1"></label><label>Высота<input id="feedback-height" type="number" min="80" step="1"></label><button type="button" id="feedback-reset">480 × 320</button></div>
-        <canvas id="feedback-preview" aria-label="Снимок, который будет сохранён"></canvas>
-        <label class="feedback-text-label" for="feedback-text">Комментарий</label><textarea id="feedback-text" rows="3" maxlength="10000" placeholder="Например: здесь неудобно выбирать показатель…" required></textarea>
+      <form id="feedback-editor" hidden><div class="feedback-panel-heading"><h2>What should change?</h2><button type="button" id="feedback-cancel" aria-label="Cancel comment">${CLOSE}</button></div>
+        <p class="feedback-help">Drag the frame or its corners. The point marks where you pointed.</p>
+        <div class="feedback-dimensions"><label>Width<input id="feedback-width" type="number" min="80" step="1"></label><label>Height<input id="feedback-height" type="number" min="80" step="1"></label><button type="button" id="feedback-reset">480 × 320</button></div>
+        <canvas id="feedback-preview" aria-label="Snapshot that will be saved"></canvas>
+        <label class="feedback-text-label" for="feedback-text">Comment</label><textarea id="feedback-text" rows="3" maxlength="10000" placeholder="For example: choosing an indicator is awkward here…" required></textarea>
         <p id="feedback-anchor"></p><p id="feedback-error" role="alert" hidden></p>
-        <div class="feedback-form-actions"><button type="button" id="feedback-repick">Другая точка</button><button id="feedback-save" type="submit">Сохранить</button></div>
+        <div class="feedback-form-actions"><button type="button" id="feedback-repick">Another point</button><button id="feedback-save" type="submit">Save</button></div>
       </form>
     </div>
-    <aside id="feedback-list-panel" hidden aria-label="Сохранённые комментарии"><div class="feedback-panel-heading"><h2>Комментарии <span id="feedback-list-count"></span></h2><button id="feedback-list-close" aria-label="Закрыть комментарии">${CLOSE}</button></div><p class="feedback-help">Сохраняются в папке проекта вместе со снимком и привязкой к коду.</p><div id="feedback-list"></div></aside>
+    <aside id="feedback-list-panel" hidden aria-label="Saved comments"><div class="feedback-panel-heading"><h2>Comments <span id="feedback-list-count"></span></h2><button id="feedback-list-close" aria-label="Close comments">${CLOSE}</button></div><p class="feedback-help">Saved in the project folder with the snapshot and the code anchor.</p><div id="feedback-list"></div></aside>
     <div id="feedback-status" role="status" hidden></div>`;
   document.body.append(root);
   const $=id=>root.querySelector('#'+id);
@@ -87,7 +87,7 @@ export function initFeedback({getContext,onStart=()=>{}}){
     $('feedback-stage').hidden=false;$('feedback-pick').hidden=false;$('feedback-frozen').hidden=true;
     $('feedback-editor').hidden=true;$('feedback-region').hidden=true;$('feedback-pin').hidden=true;
     $('feedback-crosshair').hidden=false;$('feedback-hint').hidden=false;
-    $('feedback-hint-text').textContent='Укажите место мышью или стрелками и Enter';
+    $('feedback-hint-text').textContent='Point with the mouse or arrow keys and Enter';
     $('feedback-text').value=text;moveCrosshair();$('feedback-pick').focus();
   }
   function moveCrosshair(){Object.assign($('feedback-crosshair').style,{left:draft.point.x+'px',top:draft.point.y+'px'});}
@@ -102,7 +102,7 @@ export function initFeedback({getContext,onStart=()=>{}}){
       draft.point=point;draft.target=identifyTarget(element);draft.context={url:location.href,...getContext(point)};
     }finally{inertState.forEach(([el])=>el.inert=true);}
     phase='capturing';const token=++operation;
-    $('feedback-hint-text').textContent='Готовлю снимок…';$('feedback-crosshair').hidden=true;
+    $('feedback-hint-text').textContent='Preparing the snapshot…';$('feedback-crosshair').hidden=true;
     try{
       await document.fonts.ready;
       const captured=await html2canvas(document.body,{logging:false,scale:Math.min(devicePixelRatio,2),x:scrollX,y:scrollY,width:innerWidth,height:innerHeight,windowWidth:innerWidth,windowHeight:innerHeight,scrollX,scrollY,useCORS:true,backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg').trim(),
@@ -112,10 +112,10 @@ export function initFeedback({getContext,onStart=()=>{}}){
       $('feedback-pick').hidden=true;$('feedback-hint').hidden=true;
       $('feedback-editor').hidden=false;$('feedback-region').hidden=false;$('feedback-pin').hidden=false;
       $('feedback-editor').classList.toggle('on-left',point.x>innerWidth/2);
-      $('feedback-anchor').textContent='Привязано: '+(draft.target.label||draft.target.selector).slice(0,90);
+      $('feedback-anchor').textContent='Anchored: '+(draft.target.label||draft.target.selector).slice(0,90);
       $('feedback-width').max=innerWidth;$('feedback-height').max=innerHeight;
       error('');resetRegion();$('feedback-text').focus();
-    }catch(e){if(token!==operation)return;phase='picking';$('feedback-hint-text').textContent='Снимок не получился. Укажите место ещё раз или отмените.';$('feedback-pick').focus();}
+    }catch(e){if(token!==operation)return;phase='picking';$('feedback-hint-text').textContent='The snapshot failed. Point again or cancel.';$('feedback-pick').focus();}
   }
   function constrain(r){
     const v=draft.viewport,p=draft.point;
@@ -143,7 +143,7 @@ export function initFeedback({getContext,onStart=()=>{}}){
   }
   function setBusy(busy){
     $('feedback-editor').querySelectorAll('button,input,textarea').forEach(el=>el.disabled=busy);
-    $('feedback-save').textContent=busy?'Сохраняю…':'Сохранить';
+    $('feedback-save').textContent=busy?'Saving…':'Save';
     $('feedback-region').style.pointerEvents=busy?'none':'';
   }
   async function save(event){
@@ -159,20 +159,20 @@ export function initFeedback({getContext,onStart=()=>{}}){
       if(!response.ok)throw new Error('Save failed');
       const result=await response.json();if(result.comment?.id!==draft.id)throw new Error('Save was not acknowledged');
       phase='editing';setBusy(false);close();
-      status('Комментарий сохранён в проекте.');await showList(result.comment.id);
-    }catch(e){phase='editing';setBusy(false);error('Не удалось сохранить. Текст и снимок остались здесь — попробуйте ещё раз.');}
+      status('Comment saved to the project.');await showList(result.comment.id);
+    }catch(e){phase='editing';setBusy(false);error('Could not save. The text and snapshot stayed here — try again.');}
     finally{clearTimeout(timeout);}
   }
   function node(tag,text,className){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(className)el.className=className;return el;}
   function displayRecords(expanded){
     const list=$('feedback-list');list.replaceChildren();$('feedback-count').textContent=records.length;$('feedback-list-count').textContent=records.length;
-    if(!records.length){list.append(node('p','Здесь будут ваши замечания. Нажмите «Комментировать», укажите место и сохраните текст со снимком.','feedback-empty'));return;}
+    if(!records.length){list.append(node('p','Your notes will appear here. Press Comment, point at a place, then save the text with its snapshot.','feedback-empty'));return;}
     for(const record of records){
       const details=node('details',undefined,'feedback-record');details.open=record.id===expanded;
       const summary=node('summary');summary.append(node('strong',record.text.slice(0,110)),node('small',new Date(record.createdAt).toLocaleString('ru-RU')));details.append(summary);
-      const image=document.createElement('img');image.src='/api/feedback/'+record.id+'/capture.png';image.alt='Область, отмеченная в комментарии';image.loading='lazy';details.append(image,node('p',record.text,'feedback-saved-text'));
-      const link=node('a','Открыть этот вид карты');link.href=record.context.url;details.append(link);
-      const code=node('details',undefined,'feedback-code');code.append(node('summary','Привязка к коду'),node('code',record.target.selector));
+      const image=document.createElement('img');image.src='/api/feedback/'+record.id+'/capture.png';image.alt='Area marked in the comment';image.loading='lazy';details.append(image,node('p',record.text,'feedback-saved-text'));
+      const link=node('a','Open this map view');link.href=record.context.url;details.append(link);
+      const code=node('details',undefined,'feedback-code');code.append(node('summary','Code anchor'),node('code',record.target.selector));
       record.sources.forEach(source=>code.append(node('p',`${source.file}:${source.line}\n${source.symbol}\n${source.sha256.slice(0,12)}`)));
       details.append(code);list.append(details);
     }
@@ -182,8 +182,8 @@ export function initFeedback({getContext,onStart=()=>{}}){
     records=(await response.json()).comments;$('feedback-count').textContent=records.length;
   }
   async function showList(expanded){
-    $('feedback-list-panel').hidden=false;$('feedback-list').textContent='Загружаю комментарии…';
-    try{await refreshRecords();displayRecords(expanded);}catch{$('feedback-list').textContent='Не удалось загрузить комментарии. Закройте панель и попробуйте снова.';}
+    $('feedback-list-panel').hidden=false;$('feedback-list').textContent='Loading comments…';
+    try{await refreshRecords();displayRecords(expanded);}catch{$('feedback-list').textContent='Could not load comments. Close the panel and try again.';}
     $('feedback-list-close').focus();
   }
   root.addEventListener('click',event=>event.stopPropagation());
@@ -225,6 +225,6 @@ export function initFeedback({getContext,onStart=()=>{}}){
       if(event.key.startsWith('Arrow')){event.preventDefault();const step=event.shiftKey?50:10;const p=draft.point;p.x=clamp(p.x+(event.key==='ArrowRight'?step:event.key==='ArrowLeft'?-step:0),0,innerWidth-1);p.y=clamp(p.y+(event.key==='ArrowDown'?step:event.key==='ArrowUp'?-step:0),0,innerHeight-1);moveCrosshair();}
     }
   },true);
-  window.addEventListener('resize',()=>{if(!['idle','saving'].includes(phase)){begin(true);$('feedback-hint-text').textContent='Окно изменилось. Текст сохранён — укажите область заново.';}});
+  window.addEventListener('resize',()=>{if(!['idle','saving'].includes(phase)){begin(true);$('feedback-hint-text').textContent='The window changed. The text is kept — point at the area again.';}});
   refreshRecords().catch(()=>{$('feedback-count').textContent='—';});
 }
