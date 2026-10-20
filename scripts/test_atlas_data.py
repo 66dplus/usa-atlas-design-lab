@@ -16,6 +16,10 @@ from serve import create_server
 class AtlasDataIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        try:
+            atlas_data.query('SELECT 1')
+        except atlas_data.DatabaseUnavailable as error:
+            raise unittest.SkipTest('PostgreSQL usa_atlas is unavailable; integration checks skipped: %s' % error)
         cls.temp = tempfile.TemporaryDirectory(prefix='atlas-data-http-')
         cls.server = create_server(0, Path(cls.temp.name))
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
