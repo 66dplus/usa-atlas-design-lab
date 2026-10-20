@@ -1,0 +1,488 @@
+{
+  "source": "Final Desktop/Mobile masters, 9 October 2026; accepted Interface Thin and Lucide thematic mapping",
+  "nativeSourceSha256": "70028b2df55aff5f28d743cb720de6c5ccb3e1211c945ac7ea3e4142b2dd6059",
+  "mappingSha256": "cba5bf163e2425a407da0f7e4c048563c1cc572ebfbda8518e80308e075eab90",
+  "interfaceCount": 26,
+  "thematicCount": 27,
+  "catalogMappings": 81,
+  "moduleBytes": 18490,
+  "icons": [
+    {
+      "kind": "interface",
+      "name": "search",
+      "source": "brand-o2-thin-20261008/svg/search.svg",
+      "sha256": "2cc5fff30223e577cd196ab477cd4b13c51bb8269014977a5ad6e73c009ef94a",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "location",
+      "source": "paper-master-20261008/assets/icons/map-pin.svg",
+      "sha256": "38131023b08ed9859ddff4c828ab336b63d8256549a07e2f53151a29ef4b4e96",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "map",
+      "source": "brand-o2-thin-20261008/svg/map.svg",
+      "sha256": "0cd0a32cf80273f94724bbebdee191626071b45c6d92642ad12cd2c8a23f7fd8",
+      "viewBox": "0 0 20 20",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "interface",
+      "name": "explorer",
+      "source": "brand-o2-thin-20261008/svg/explorer.svg",
+      "sha256": "32de3fbe79558fc7ce515a612faf34851421ea0616e322d04cd39bccc27dec77",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "cube",
+      "source": "brand-o2-thin-20261008/svg/cube.svg",
+      "sha256": "f351128303f908db0533df844454cd678a6c7f0e61188c8806dd46fc250ced00",
+      "viewBox": "0 0 20 20",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "interface",
+      "name": "compare",
+      "source": "brand-o2-thin-20261008/svg/compare.svg",
+      "sha256": "505fba9fbfd8571d6e16d8974750b7530f654ddff4680e0515d0294d936a760b",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "indicators",
+      "source": "brand-o2-thin-20261008/svg/indicators.svg",
+      "sha256": "14a9109bcba9201c8f78d09e06bd05166bbf681c3a51b63b138275a6d2671510",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "sources",
+      "source": "brand-o2-thin-20261008/svg/sources.svg",
+      "sha256": "8cd8f816c6960da18dae2945165a404a08acaf1cd743d4f75b8004399297ab08",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "saved",
+      "source": "brand-o2-thin-20261008/svg/saved.svg",
+      "sha256": "92c6ef36180e7e3d9a5d30fe29c2f45785f2bb9eb15e9be20d0b41ce8c98ec84",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "share",
+      "source": "brand-o2-thin-20261008/svg/share.svg",
+      "sha256": "03ed54678774ef68633032e2c354d8851b0a6b372f87367f9f5bf8b29e36b85b",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "external",
+      "source": "brand-o2-thin-20261008/svg/external.svg",
+      "sha256": "1590d4dabd6c14a69d6b047685d9dc04f5cdaa802c90bd3538fa05abf9572bcf",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "interface",
+      "name": "shuffle",
+      "source": "brand-o2-thin-20261008/svg/shuffle.svg",
+      "sha256": "087ceffaafdc6283fdf64cbf18b66d5c58a199421f3ac399c361ea5699d25c43",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "interface",
+      "name": "back",
+      "source": "brand-o2-thin-20261008/svg/back.svg",
+      "sha256": "41936f78b8f96c89fe5cf19dff78b6c62ed6d86bc74f02f3c42532086ae0911c",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "forward",
+      "source": "brand-o2-thin-20261008/svg/forward.svg",
+      "sha256": "84fbdb3ae4eb617814b572f195ca5830b608cf975556b772bb723988f4f00d1c",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "chevron-up",
+      "source": "brand-o2-thin-20261008/svg/chevron-up.svg",
+      "sha256": "57377765e960ec41781060b9c84ca28b04389afa628f1434ddc7fa1e14e28d4d",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "interface",
+      "name": "chevron-down",
+      "source": "brand-o2-thin-20261008/svg/chevron-down.svg",
+      "sha256": "594ca11f3571206c89cbb19bb501f34ba257048c36d57f5653dd5e6d891c7a33",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "close",
+      "source": "brand-o2-thin-20261008/svg/close.svg",
+      "sha256": "38e10071bd7e1b8d6b622058ab250edf7099b38a6c750ba7750fd5eec2ee0a69",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "plus",
+      "source": "brand-o2-thin-20261008/svg/plus.svg",
+      "sha256": "d3b5f9719c6e2e66b209bc4ccdbea2f81dbe075d8783720bb98c3d5db0a1969c",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "minus",
+      "source": "brand-o2-thin-20261008/svg/minus.svg",
+      "sha256": "6caabcad62e5593c89be7e02adc223f40ad5acd8a8be2391001d4057f4c453ba",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "check",
+      "source": "brand-o2-thin-20261008/svg/check.svg",
+      "sha256": "1d42aefc6ac174419b84657619ab8da29861b0b0936bf7d4b55bb9b21abe3206",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "uptrend",
+      "source": "brand-o2-thin-20261008/svg/uptrend.svg",
+      "sha256": "0c4870234f66216ad8be148a38e66d9337857b76f6fbf0e231c81940d5f0ecaf",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "downtrend",
+      "source": "brand-o2-thin-20261008/svg/downtrend.svg",
+      "sha256": "a960dad66c0b80c6ade70324861f0c093a2f168b5a21a01036101e1a36327039",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "fit",
+      "source": "brand-o2-thin-20261008/svg/fit.svg",
+      "sha256": "e4b2bd61a78f2bebc02748eebefdf998b2bc33926828ed661a054c854a1ae3dd",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "rotate",
+      "source": "brand-o2-thin-20261008/svg/rotate.svg",
+      "sha256": "dbaa6612595504bc1233f7efa5bb22573095309ea264df0c7ee2341e1f27c1a4",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "interface",
+      "name": "menu",
+      "source": "brand-o2-thin-20261008/svg/menu.svg",
+      "sha256": "f94803a139611669d396155fabb76a3a024e88ea2449063c010cf206e78d501a",
+      "viewBox": "0 0 20 20",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "interface",
+      "name": "house",
+      "source": "paper-master-20261008/assets/icons/house.svg",
+      "sha256": "d55f2a6e816cb9e5d4b2e73d13f7bb4d7ee0a8286e94683739cf2a0eebf8cb6e",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "activity",
+      "source": "paper-master-20261008/assets/icons/activity.svg",
+      "sha256": "ff499d3ab5608eba6cdb3242b74be5d840564586375d6faf9da734e8bea5d3d7",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "thematic",
+      "name": "badge-dollar-sign",
+      "source": "paper-master-20261008/assets/icons/badge-dollar-sign.svg",
+      "sha256": "8d2cc06254ba15c6477194c9b136800ee43d8d21f3b799dea1fd1376fdf25d1f",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "banknote",
+      "source": "paper-master-20261008/assets/icons/banknote.svg",
+      "sha256": "d043ed48170422a7abd67d10003c246fc95caf8cdd72e0fb144ed12086d35d5a",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "beer",
+      "source": "paper-master-20261008/assets/icons/beer.svg",
+      "sha256": "97c0eb206fa896fc4003ceac625de4c3a1a561bab147a067a8c0c35d3d454a8c",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "briefcase",
+      "source": "paper-master-20261008/assets/icons/briefcase.svg",
+      "sha256": "3037c99a23dc880832aa247014d38f99bb4ab7eb887be22433113cb41ca4e037",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "building-2",
+      "source": "paper-master-20261008/assets/icons/building-2.svg",
+      "sha256": "993524e409526d5baa42f655bcf64a17ae966cb65b628599e50b385af0d9394b",
+      "viewBox": "0 0 24 24",
+      "pathCount": 3,
+      "pathsPresentInFinalNative": 3
+    },
+    {
+      "kind": "thematic",
+      "name": "car",
+      "source": "paper-master-20261008/assets/icons/car.svg",
+      "sha256": "75a3b9edc6f500350968660bb729def5a537a36d07bd6f584e35f7e0c8d34e7d",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "droplet",
+      "source": "paper-master-20261008/assets/icons/droplet.svg",
+      "sha256": "ef62a7181e4f3e815bb89f17ab3a4425ea8bca647bc75e37944b82e3415162c7",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "fuel",
+      "source": "paper-master-20261008/assets/icons/fuel.svg",
+      "sha256": "de31fde22607f842aad02de404266669cddcd56f29f63a431860a7a7a57f3017",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "globe",
+      "source": "paper-master-20261008/assets/icons/globe.svg",
+      "sha256": "70ba1c218d652af3cf587264a773bd76f242b7b31346285fb99d617711f208d3",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "graduation-cap",
+      "source": "paper-master-20261008/assets/icons/graduation-cap.svg",
+      "sha256": "3d3193f393fac60b644955d95632edc395d01b1152863f752b7d1ba4f772f002",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "thematic",
+      "name": "hand-coins",
+      "source": "paper-master-20261008/assets/icons/hand-coins.svg",
+      "sha256": "4803da1f5fc8265866380fba239bafb98a8cd1e0603e58ed730180292b170d93",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "heart-pulse",
+      "source": "paper-master-20261008/assets/icons/heart-pulse.svg",
+      "sha256": "b7af49404b8a30b28517403f66933fa1454b0403d7601011af04a51f184904aa",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "hospital",
+      "source": "paper-master-20261008/assets/icons/hospital.svg",
+      "sha256": "af8ef217cbcc56c5eba1e9b13783b22658a26984e67383a71d080fd1707b4868",
+      "viewBox": "0 0 24 24",
+      "pathCount": 3,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "thematic",
+      "name": "house",
+      "source": "paper-master-20261008/assets/icons/house.svg",
+      "sha256": "d55f2a6e816cb9e5d4b2e73d13f7bb4d7ee0a8286e94683739cf2a0eebf8cb6e",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "key-round",
+      "source": "paper-master-20261008/assets/icons/key-round.svg",
+      "sha256": "d92504a32cec279595d1a22013c72dd0017cd0e7bb6d14cd226b6f721a1ee7f2",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 0
+    },
+    {
+      "kind": "thematic",
+      "name": "landmark",
+      "source": "paper-master-20261008/assets/icons/landmark.svg",
+      "sha256": "b4397091f859e5e82c3ef1a7c664f04b1e2d00dc5abf0a08b48438ebedfb0a5a",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "leaf",
+      "source": "paper-master-20261008/assets/icons/leaf.svg",
+      "sha256": "0e53b26ad87d2263fb8b2c3d2698a4ecd43c0e0e4bb35f60964f0c48587192ef",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "percent",
+      "source": "paper-master-20261008/assets/icons/percent.svg",
+      "sha256": "8f5b49fef222a97eeff8c0f38a11a2a224e192b19f94beaf05b4d5a636e8ab18",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "shield-alert",
+      "source": "paper-master-20261008/assets/icons/shield-alert.svg",
+      "sha256": "0c24b71186ef8f3015b6e74037c4effdf09feb8586d17ded3f4f0f4facc910b0",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "shopping-basket",
+      "source": "paper-master-20261008/assets/icons/shopping-basket.svg",
+      "sha256": "4d49105e64135742cbb35ef3e34d152d697c669538d0e595679e1436209d50d1",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "skull",
+      "source": "paper-master-20261008/assets/icons/skull.svg",
+      "sha256": "ac0ae6f4b97b0100ef085d7938d109db3b8d25eea5467005da1c777e5a51193b",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "test-tube-diagonal",
+      "source": "paper-master-20261008/assets/icons/test-tube-diagonal.svg",
+      "sha256": "6c838407ed34e018b6d21d64ad285a779fa3550b3753f0c73ac38713c7b17e89",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "tree-pine",
+      "source": "paper-master-20261008/assets/icons/tree-pine.svg",
+      "sha256": "d0b49adfdb86f8127ed59c65ba5d6b0a5b8f64f2a3df80dfaa9b2a06e9fe7caf",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "trending-up",
+      "source": "paper-master-20261008/assets/icons/trending-up.svg",
+      "sha256": "d266d23316f7d7f640369a25c16951a1bde35f09629a6602405503fb1216ab1b",
+      "viewBox": "0 0 24 24",
+      "pathCount": 2,
+      "pathsPresentInFinalNative": 2
+    },
+    {
+      "kind": "thematic",
+      "name": "users",
+      "source": "paper-master-20261008/assets/icons/users.svg",
+      "sha256": "eb51a9d98f71e16b820b7b6268f904a8011e77b0a5212757df34abe50c25c5dc",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    },
+    {
+      "kind": "thematic",
+      "name": "zap",
+      "source": "paper-master-20261008/assets/icons/zap.svg",
+      "sha256": "e033f07e83a3d1987eb84899bce97ff4932990b050a88cb898a7fef754032e78",
+      "viewBox": "0 0 24 24",
+      "pathCount": 1,
+      "pathsPresentInFinalNative": 1
+    }
+  ]
+}
