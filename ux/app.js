@@ -346,5 +346,6 @@ try {
   render();$('#loading').hidden=true;
   if(state.concept==='stories')openDrawer('story-rail',$('.concept-tabs [data-concept=stories]'));else if(state.rank)openRank(state.rank);
   initViewSettings({...settingsData,onOpen:()=>closeDrawers(false),onChange:next=>{viewSettings=next;render();}});
-  initFeedback({onStart:()=>[mapA,mapB].filter(Boolean).forEach(map=>map.settle()),getContext:point=>({settings:{...viewSettings},view:{concept:state.concept,mode:state.mode,selected:state.selected,second:state.second,metric:state.metric,secondMetric:state.secondMetric,comparison:state.comparison,pinned:[...pinned]},maps:[mapA,mapB].filter(Boolean).map(map=>map.feedbackSnapshot(point))})});
+  const reviewOn=['1','true','yes','on'].includes(String(params.get('review')??'').toLowerCase());
+  if(reviewOn)initFeedback({onStart:()=>[mapA,mapB].filter(Boolean).forEach(map=>map.settle()),getContext:point=>({settings:{...viewSettings},view:{concept:state.concept,mode:state.mode,selected:state.selected,second:state.second,metric:state.metric,secondMetric:state.secondMetric,comparison:state.comparison,pinned:[...pinned]},maps:[mapA,mapB].filter(Boolean).map(map=>map.feedbackSnapshot(point))})});
 } catch(error) {console.error(error);$('#loading').innerHTML=`<p>${escapeHTML(error.message)}</p><button id="retry">Reload atlas</button>`;$('#retry').onclick=()=>location.reload();}
