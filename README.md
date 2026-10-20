@@ -2,31 +2,31 @@
 
 [![CI](https://github.com/66dplus/usa-atlas-design-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/66dplus/usa-atlas-design-lab/actions/workflows/ci.yml)
 
-Интерактивный атлас статистики США. Он связывает показатели с географией штатов и округов, показывает источники и периоды данных и позволяет исследовать карту в 2D и 3D.
+USA Atlas is an interactive atlas of US statistics. It links indicators to state and county geography, shows data sources and periods, and lets you explore the map in 2D and 3D.
 
-> Это прототип для локального запуска. Основной атлас читает данные из отдельной PostgreSQL-базы; база и учётные данные в репозиторий не входят. Авторский код проекта доступен по лицензии MIT.
+> This is a prototype for local runs. The live atlas reads data from a separate PostgreSQL database; the database and its credentials are not part of the repository. Project source code and documentation are available under the MIT license.
 
-## 2D-рендерер: решение владельца, 14 октября 2026
+## 2D renderer: owner decision, 14 October 2026
 
-Стандартные 2D-карты рисуются в WebGL; ссылки без параметра `renderer` отдают WebGL. Ссылки и сохранённые виды с явным `renderer=svg` продолжают использовать SVG; новые сохранённые и поделённые ссылки всегда записывают выбранный рендерер в URL. SVG остаётся автоматическим резервом при недоступности WebGL, ошибке рисования или потере контекста. 3D-рендерер не менялся. Локальное сравнение SVG и WebGL с зафиксированным набором наблюдений описано в [docs/webgl-comparison-2026-10-11.md](docs/webgl-comparison-2026-10-11.md); предпочтение WebGL принадлежало владельцу после локального сравнения и не является заявлением о производительности.
+Standard 2D maps render in WebGL; links without a `renderer` parameter serve WebGL. Saved views and links with an explicit `renderer=svg` keep using SVG, and newly saved or shared links always record the selected renderer in the URL. SVG remains the automatic fallback when WebGL is unavailable, a draw fails, or the context is lost. The 3D renderer is unchanged. The local SVG-vs-WebGL comparison over a frozen set of observations is described in [docs/webgl-comparison-2026-10-11.md](docs/webgl-comparison-2026-10-11.md); the preference for WebGL came from the owner after a local comparison and is not a performance claim.
 
-## Текущий интерфейс — 20 сентября, синтез feedback
+## Current interface — 20 September, feedback synthesis
 
-Стандартный обзор использует бело-графитовую палитру, Geist, строки **Trends / Explorer / Compare**, фотолид-скролл левой панели профиля, быструю статистику выбранного места и размеченную рекламную плашку справа. Поиск и категории сохранены; популярные показатели собраны под выбором. Highest / Lowest показывают пять сырых значений с покрытием и совпадениями и совпадают с ярлыками 3D. Saved заменяет левую рамку на Back и хранит до 50 видов локально. Period сохранённых видов подписывается, но повторное открытие читает последний доступный снапшот источника. Share подтверждается в собственной кнопке пять секунд. Surprise открывает подготовленные сценарии; бегущая строка на всю ширину останавливается по hover/focus и поддерживает reduced-motion.
+The standard overview uses a white-and-graphite palette, Geist, the **Trends / Explorer / Compare** rows, a photo-lead scroll in the left panel of the place profile, quick statistics for the selected place, and a labelled advertising slot on the right. Search and categories are preserved; popular indicators sit under the selector. Highest / Lowest shows five raw values with coverage and matches, aligned with the 3D labels. Saved replaces the left frame with Back and keeps up to 50 views locally. The period of saved views is labelled, but reopening reads the latest available source snapshot. Share confirms in its own button for five seconds. Surprise opens prepared scenarios; the full-width ticker stops on hover/focus and supports reduced motion.
 
-## Что открыть
+## What to open
 
-После запуска сервера:
+After starting the server:
 
-- **Интерактивный атлас:** [http://127.0.0.1:4180/ux/](http://127.0.0.1:4180/ux/) — поиск мест, показатели, сравнение штатов и округов, 2D-карта и 3D-рельеф.
-- **Галерея концепций:** [http://127.0.0.1:4180/](http://127.0.0.1:4180/) — раннее дизайн-исследование с синтетическими демонстрационными значениями. Эти значения не являются статистикой.
-- **Студия рекламы:** [http://127.0.0.1:4180/ux/advertise.html](http://127.0.0.1:4180/ux/advertise.html) — экспериментальный редактор. Его локальный предпросмотр собирается отдельно из данных подключённой базы; сгенерированные снимок и сборка намеренно не хранятся в Git. Инструкции находятся в [ux/advertising/DESIGN.md](ux/advertising/DESIGN.md).
+- **Interactive atlas:** [http://127.0.0.1:4180/ux/](http://127.0.0.1:4180/ux/) — place search, indicators, state and county comparison, the 2D map and the 3D relief.
+- **Concept gallery:** [http://127.0.0.1:4180/](http://127.0.0.1:4180/) — an early design study with synthetic demo values. These values are not statistics.
+- **Advertising studio:** [http://127.0.0.1:4180/ux/advertise.html](http://127.0.0.1:4180/ux/advertise.html) — an experimental editor. Its local preview is built separately from the connected database's data; the generated snapshot and bundle are intentionally not stored in Git. Instructions live in [ux/advertising/DESIGN.md](ux/advertising/DESIGN.md).
 
-В атласе отсутствие наблюдения остаётся явным пропуском. Значение штата не распределяется по округам, значения ZIP-кодов или пунктов мониторинга не переводятся в округа, а среднее по США не вычисляется из штатов.
+In the atlas, a missing observation remains an explicit gap. A state value is not distributed over counties, ZIP-code or monitoring-station values are not converted to counties, and a US average is not computed from states.
 
-## Быстрый запуск
+## Quick start
 
-Нужны Node.js с npm и Python 3. Для реальных данных дополнительно нужны <code>psql</code> и доступ к базе PostgreSQL <code>usa_atlas</code>.
+You need Node.js with npm and Python 3. For real data you also need <code>psql</code> and access to the <code>usa_atlas</code> PostgreSQL database.
 
 ~~~sh
 git clone https://github.com/66dplus/usa-atlas-design-lab.git
@@ -35,61 +35,61 @@ npm ci
 npm start
 ~~~
 
-Сервер выведет адрес и останется работать в терминале. Откройте <code>/ux/</code> для атласа или <code>/</code> для галереи. Локальный сервер привязан к <code>127.0.0.1</code>; это сервер разработки, а не готовая конфигурация публичного хостинга.
+The server prints its address and keeps running in the terminal. Open <code>/ux/</code> for the atlas or <code>/</code> for the gallery. The local server binds to <code>127.0.0.1</code>; it is a development server, not a ready public-hosting configuration.
 
-Галерея <code>/</code> работает без подключения к базе. <code>/ux/</code> также загрузится, но реальные значения будут недоступны, пока не настроено соединение с PostgreSQL.
+The gallery at <code>/</code> runs without a database connection. <code>/ux/</code> also loads, but real values stay unavailable until the PostgreSQL connection is configured.
 
-## Подключение данных
+## Connecting data
 
-Сбор и загрузка данных относятся к отдельному репозиторию [usa-atlas-data-collection](https://github.com/66dplus/usa-atlas-data-collection). Этот интерфейс не запускает сборщик и не получает ключи поставщиков данных. Он читает опубликованные наблюдения через совместимый контракт PostgreSQL в схеме <code>usa_atlas</code>.
+Collection and loading belong to a separate repository, [usa-atlas-data-collection](https://github.com/66dplus/usa-atlas-data-collection). This interface does not run the collector and receives no data-provider keys. It reads published observations through a compatible PostgreSQL contract in the <code>usa_atlas</code> schema.
 
-Чтобы получить данные для карты, выполните сбор, проверку, допуск и загрузку по [инструкции базы данных в репозитории коллектора](https://github.com/66dplus/usa-atlas-data-collection/blob/main/database/README.md). UI и коллектор должны обращаться к одной базе <code>usa_atlas</code>; передавать CSV, JSON или код коллектора в репозиторий UI не нужно. После успешной проверки загрузки откройте страницу атласа заново — каталог и ряды загружаются из базы при обращении.
+To get data for the map, run collection, validation, admission and loading per [the database instructions in the collector repository](https://github.com/66dplus/usa-atlas-data-collection/blob/main/database/README.md). The UI and the collector must point at the same <code>usa_atlas</code> database; there is no need to pass CSV, JSON or collector code into the UI repository. After a successful loading check, reopen the atlas page — the catalog and series load from the database on request.
 
-Для рабочего атласа нужна доступная база <code>usa_atlas</code>, таблицы контракта (<code>catalog_field</code>, <code>observation</code>, <code>ingest_run</code>), завершённые загрузки со статусом <code>pass</code> и установленный клиент <code>psql</code>. Задайте переменные libpq в окружении перед запуском приложения; секреты храните вне репозитория, например в файле паролей PostgreSQL с ограниченными правами:
+The working atlas needs an available <code>usa_atlas</code> database, contract tables (<code>catalog_field</code>, <code>observation</code>, <code>ingest_run</code>), completed loads with status <code>pass</code>, and the <code>psql</code> client installed. Set the libpq variables in the environment before starting the application; keep secrets outside the repository, for example in a PostgreSQL password file with restricted permissions:
 
 ~~~sh
 export PGHOST=127.0.0.1
 export PGPORT=5432
 export PGUSER=usa_atlas_reader
-export PGPASSFILE=/путь/вне/репозитория/pgpass
+export PGPASSFILE=/path/outside/the/repository/pgpass
 psql -X -d usa_atlas -c 'SELECT source, row_count, status FROM usa_atlas.ingest_run'
 npm start
 ~~~
 
-Укажите в <code>PGHOST</code> и <code>PGPORT</code> адрес той же базы, куда коллектор загружает данные. Не открывайте PostgreSQL в интернет ради локального UI. Сервер обращается к базе только в транзакциях чтения. Имя базы фиксировано как <code>usa_atlas</code>; <code>PGDATABASE</code> его не меняет. Пароль не отправляется в браузер. Если соединение не настроено, API атласа сообщает о недоступности данных; галерея концепций продолжает работать.
+Point <code>PGHOST</code> and <code>PGPORT</code> at the same database the collector loads into. Do not expose PostgreSQL to the internet for a local UI. The server touches the database only in read transactions. The database name is fixed as <code>usa_atlas</code>; <code>PGDATABASE</code> does not override it. The password never reaches the browser. If the connection is not configured, the atlas API reports data unavailability; the concept gallery keeps working.
 
-Связь проходит через <code>GET /api/atlas/catalog</code> и <code>GET /api/atlas/observations?field=...</code>. UI отбирает только успешно загруженные записи каталога, отображает наблюдения штатов и округов и сопоставляет округа с геометрией Census 2017 по точному FIPS. Остальные уровни географии и записи коллектора, для которых ещё нет UI-адаптера, остаются в базе и не превращаются в оценки для карты. Адаптер принимает только две известные версии каталога — исходную на 81 показатель и версионированную на 87; неизвестный или частичный формат отклоняется. Изменение формата каталога, ID показателя, типа или ID географии должно сопровождаться совместимым изменением UI и проверкой по обе стороны.
+The integration goes through <code>GET /api/atlas/catalog</code> and <code>GET /api/atlas/observations?field=...</code>. The UI admits only successfully loaded catalog records, displays state and county observations, and matches counties to Census 2017 geometry by exact FIPS. Other geography levels and collector records without a UI adapter stay in the database and do not turn into estimates for the map. The adapter accepts only two known catalog versions — the original with 81 indicators and the versioned one with 87; an unknown or partial format is rejected. Any change to the catalog format, indicator ID, value type or geography ID must come with a compatible UI change and checks on both sides.
 
-## Устройство репозитория
+## Repository layout
 
-- <code>ux/</code> — актуальный интерфейс атласа, карта, каталоги и географические ресурсы.
-- <code>scripts/serve.py</code> — локальный веб-сервер и API; <code>scripts/atlas_data.py</code> — адаптер PostgreSQL только для чтения.
-- <code>assets/</code>, <code>app.js</code>, <code>maps.js</code>, <code>scene.js</code> и <code>field.js</code> — отдельная галерея дизайн-концепций.
-- <code>deploy/</code> — примеры локального аналитического и мобильного окружения. Они не нужны для базового запуска.
-- <code>ux/assets/SOURCES.md</code> — происхождение и атрибуция основных ресурсов интерфейса.
-- <code>package-lock.json</code> — закреплённые версии npm-зависимостей.
+- <code>ux/</code> — the current atlas interface: map, catalogs and geographic assets.
+- <code>scripts/serve.py</code> — the local web server and API; <code>scripts/atlas_data.py</code> — the read-only PostgreSQL adapter.
+- <code>assets/</code>, <code>app.js</code>, <code>maps.js</code>, <code>scene.js</code> and <code>field.js</code> — the separate concept gallery.
+- <code>deploy/</code> — examples of local analytics and mobile environments. They are not needed for a basic run.
+- <code>ux/assets/SOURCES.md</code> — provenance and attribution for major interface assets.
+- <code>package-lock.json</code> — pinned versions of npm dependencies.
 
-Данные, сохранённые комментарии и настройки не должны попадать в публичный репозиторий. Сервер сохраняет локальные отзывы в соседнюю папку <code>feedback/</code>; путь можно переопределить параметром <code>--feedback-dir</code>.
+Data, saved feedback and settings must not end up in the public repository. The server stores local reviews in a sibling <code>feedback/</code> folder; the path can be overridden with <code>--feedback-dir</code>.
 
-## Разработка
+## Development
 
-Для быстрой проверки целостности галереи выполните:
+For a quick integrity check of the gallery run:
 
 ~~~sh
 npm run check
 ~~~
 
-Команда проверяет файлы, географические ресурсы и синтетические поля. Она не требует PostgreSQL. Изменения в атласе или серверном API требуют дополнительных проверок соответствующего кода в <code>ux/</code> и <code>scripts/</code>; проверьте их перед отправкой изменений.
+The command checks files, geographic assets and synthetic fields. It does not require PostgreSQL. Changes to the atlas or the server API call for additional checks of the relevant code in <code>ux/</code> and <code>scripts/</code>; verify them before sending changes.
 
-При изменении данных сохраняйте исходные значения, единицы измерения, период, выпуск источника и точное соответствие географии. Не заполняйте пробелы расчётами и не меняйте уровень географии без изменения контракта и документации.
+When changing data, keep the original values, units, period, source release and exact geography matching. Do not fill gaps with computations and do not change the geography level without changing the contract and the documentation.
 
-## Приватность и внешние службы
+## Privacy and external services
 
-- Аналитика выключена по умолчанию. Локальная настройка и отчёты описаны в [deploy/analytics/README.md](deploy/analytics/README.md).
-- Отправка запросов из рекламной студии недоступна без серверных переменных <code>RESEND_API_KEY</code>, <code>ATLAS_AD_FROM</code> и <code>ATLAS_AD_TO</code>. Не помещайте их в клиентский код или Git.
-- Снимки данных предпросмотра рекламы и собранные бандлы генерируются локально. Они могут содержать записи из вашей базы и пути к файлам на вашем компьютере, поэтому исключены из Git.
-- Форма комментариев сохраняет снимок и описание на локальном сервере. Перед публикацией или отправкой отзыва проверьте, что на изображении нет личных данных.
+- Analytics are off by default. Local setup and reporting are described in [deploy/analytics/README.md](deploy/analytics/README.md).
+- Sending requests from the advertising studio is unavailable without the server variables <code>RESEND_API_KEY</code>, <code>ATLAS_AD_FROM</code> and <code>ATLAS_AD_TO</code>. Do not put them into client code or Git.
+- Advertising preview data snapshots and collected bundles are generated locally. They may contain records from your database and file paths on your machine, so they are excluded from Git.
+- The comment form stores a snapshot and description on the local server. Before publishing or sending a review, check that the image contains no personal data.
 
-## Лицензия
+## License
 
-Авторский код и документация проекта доступны по [лицензии MIT](LICENSE). Copyright © 2026 Dmitrii Rybkin. Сторонние шрифты, фотографии, картографические ресурсы и библиотеки сохраняют собственные условия использования; их происхождение указано в [ux/assets/SOURCES.md](ux/assets/SOURCES.md) и лицензиях npm-зависимостей.
+Project source code and documentation are available under the [MIT license](LICENSE). Copyright © 2026 Dmitrii Rybkin. Third-party fonts, photographs, cartographic assets and libraries keep their own terms of use; their provenance is listed in [ux/assets/SOURCES.md](ux/assets/SOURCES.md) and in the licenses of npm dependencies.
