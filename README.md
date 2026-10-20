@@ -6,6 +6,25 @@ USA Atlas is an interactive atlas of US statistics. It links indicators to state
 
 > This is a prototype for local runs. The live atlas reads data from a separate PostgreSQL database; the database and its credentials are not part of the repository. Project source code and documentation are available under the MIT license.
 
+## Screenshots
+
+Real observations from the connected `usa_atlas` database: unemployment rate by county, December 2024 (BLS LAS).
+
+<p align="middle">
+  <img src="docs/screenshots/01-map-2d-webgl.png" width="49%" alt="Explorer: 2D WebGL county map of California">
+  <img src="docs/screenshots/02-map-3d-relief.png" width="49%" alt="Explorer: the same indicator on the 3D relief map">
+  <img src="docs/screenshots/03-compare-2d.png" width="49%" alt="Compare: California 5.4% versus Texas 4.1% unemployment">
+  <img src="docs/screenshots/04-advertiser-studio.png" width="49%" alt="Advertising studio: composing a sponsored banner over the national map">
+</p>
+
+The same atlas on a phone:
+
+<p align="middle">
+  <img src="docs/screenshots/01-mobile-explorer-2d.png" width="31%" alt="Mobile explorer: 2D map with the bottom-sheet place panel">
+  <img src="docs/screenshots/02-mobile-explorer-3d.png" width="31%" alt="Mobile explorer: 3D relief">
+  <img src="docs/screenshots/03-mobile-compare-2d.png" width="31%" alt="Mobile compare: two stacked place maps">
+</p>
+
 ## 2D renderer: owner decision, 14 October 2026
 
 Standard 2D maps render in WebGL; links without a `renderer` parameter serve WebGL. Saved views and links with an explicit `renderer=svg` keep using SVG, and newly saved or shared links always record the selected renderer in the URL. SVG remains the automatic fallback when WebGL is unavailable, a draw fails, or the context is lost. The 3D renderer is unchanged. The local SVG-vs-WebGL comparison over a frozen set of observations is described in [docs/webgl-comparison-2026-10-11.md](docs/webgl-comparison-2026-10-11.md); the preference for WebGL came from the owner after a local comparison and is not a performance claim.
