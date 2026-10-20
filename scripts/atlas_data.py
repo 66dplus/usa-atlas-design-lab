@@ -52,7 +52,7 @@ def series_label(base, field):
         return USDA[field][0]
     if field.startswith('03.06:'):
         return {'employment': 'Employment · people', 'labor_force': 'Labor force · people',
-                'unemployment': 'Unemployment · people', 'unemployment_rate': 'Unemployment rate'}[field.split(':')[1]]
+                'unemployment': 'Unemployment · people', 'unemployment_rate': 'Unemployment rate'}.get(field.split(':')[1], base + ' · ' + field.split(':', 1)[1].replace('_', ' '))
     if field.startswith('08.05:sector_'):
         sector = field.split('_')[-1]
         return base + ' · ' + {'ALL': 'All sectors', 'RES': 'Residential', 'COM': 'Commercial',
@@ -89,13 +89,56 @@ def catalog():
           FROM usa_atlas.catalog_field c LEFT JOIN inventory i USING(catalog_field_id)) t),
         'series',(SELECT COALESCE(json_agg(s ORDER BY field_id),'[]'::json) FROM series s))
     """)
-    fields = {row['catalog_label']: row for row in data['fields']}
+    field_rows = data['fields']
+    fields = {row['catalog_label']: row for row in field_rows}
     original = json.loads((ROOT / 'ux/catalog.json').read_text())['metrics']
-    if len(fields) != 81 or set(fields) != {m['name'] for m in original}:
+    proposals = json.loads((ROOT / 'ux/catalog-proposals.json').read_text())
+    proposed = proposals['metrics']
+    v2 = json.loads((ROOT / 'ux/catalog-v2.json').read_text())
+    original_names = {m['name'] for m in original}
+    v2_metrics = v2['metrics']
+    v2_by_id = {m['catalogId']: m for m in v2_metrics}
+    row_ids = [row['catalog_field_id'] for row in field_rows]
+    base_ids = [m['id'] for m in original]
+    proposal_ids = [m['id'] for m in proposed]
+    if (len(fields) != len(field_rows) or len(set(row_ids)) != len(row_ids) or
+            len(original_names) != len(original) or len(set(base_ids + proposal_ids)) != len(base_ids) + len(proposal_ids) or
+            proposals['baseCatalogCount'] != len(original) or
+            len(v2_metrics) != 6 or len(v2_by_id) != 6 or
+            len(set(base_ids + [m['id'] for m in v2_metrics])) != len(base_ids) + len(v2_metrics) or
+            v2.get('baseCatalogCount') != len(original) or v2.get('catalogCount') != len(original) + 6):
+        raise DatabaseUnavailable('The database catalog does not match this atlas catalog.')
+    extra_ids = set(v2_by_id)
+    expected_parent_fields = {item['catalogId']: item['catalogLabel'] for item in v2.get('parentFields', [])}
+    expected_parent_ids = set(expected_parent_fields)
+    legacy_parent_ids = expected_parent_ids - extra_ids
+    base_ids_by_label = {row['catalog_label']: row['catalog_field_id'] for row in field_rows}
+    legacy_fields = (set(base_ids_by_label) == original_names and len(field_rows) == len(original) and
+                     set(row_ids) == legacy_parent_ids and
+                     all(expected_parent_fields[row['catalog_field_id']] == row['catalog_label']
+                         for row in field_rows))
+    v2_fields = (len(field_rows) == len(original) + len(v2_metrics) and
+                 len(expected_parent_ids) == len(original) + len(v2_metrics) and
+                 set(row_ids) == expected_parent_ids and
+                 all(expected_parent_fields[row['catalog_field_id']] == row['catalog_label']
+                     for row in field_rows) and
+                 set(base_ids_by_label) == original_names | {m['catalogLabel'] for m in v2_metrics} and
+                 extra_ids == {m['catalogId'] for m in v2_metrics} and
+                 all(base_ids_by_label.get(m['catalogLabel']) == m['catalogId'] for m in v2_metrics))
+    if legacy_fields:
+        version_metrics = proposed
+        published_count = len(original)
+    elif v2_fields:
+        version_metrics = v2_metrics
+        published_count = len(original) + len(v2_metrics)
+    else:
         raise DatabaseUnavailable('The database catalog does not match this atlas catalog.')
     metrics = []
-    for base in original:
-        field = fields[base['name']]
+    base_rows = [(base, fields[base['name']]) for base in original]
+    if v2_fields:
+        fields_by_id = {row['catalog_field_id']: row for row in field_rows}
+        base_rows.extend((metadata, fields_by_id[metadata['catalogId']]) for metadata in v2_metrics)
+    for base, field in base_rows:
         choices = [s for s in data['series'] if s['catalog_field_id'] == field['catalog_field_id']]
         default = DEFAULT_SERIES.get(field['catalog_field_id'], field['catalog_field_id'])
         if choices and default not in {s['field_id'] for s in choices}:
@@ -115,7 +158,14 @@ def catalog():
                 'Collected at ' + ', '.join(field['geographies']) + ' level; no state/county allocation is inferred.' if field['rows'] else
                 'No observations have been loaded for this indicator.')
             metrics.append(m)
-    return {'metrics': metrics, 'catalogCount': len(original),
+    if legacy_fields:
+        for proposal in proposed:
+            metrics.append({**proposal, 'availability': 'unavailable', 'plannedState': 'proposed',
+                            'observations': 0, 'geographies': [], 'stateSupported': False,
+                            'countySupported': False, 'fieldId': None,
+                            'coverageNote': proposal['note'] + ' No observations have been loaded.'})
+    return {'metrics': metrics, 'catalogCount': len(original) + len(version_metrics),
+            'publishedCatalogCount': published_count,
             'availableSeries': len(data['series']), 'observationCount': sum(f['rows'] for f in fields.values())}
 
 

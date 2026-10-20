@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Advertiser studio — USA Atlas</title><meta name="theme-color" content="#171a1d">
+  <link rel="stylesheet" href="assets/fonts.css"><link rel="stylesheet" href="advertising/editor.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="./"><span data-icon="explorer"></span>USA Atlas</a>
+  <h1>Advertiser studio</h1><span class="draft-name">Untitled draft</span>
+  <div class="header-actions"><button id="save-draft" type="button" class="secondary"><span data-icon="saved"></span>Save draft</button><button id="review-request" type="button" class="primary">Review request</button></div>
+</header>
+<main class="studio">
+  <form id="ad-form" class="editor" novalidate>
+    <div class="inspector-heading"><h2>Create your ad</h2><p>Change a field. See it on the map.</p></div>
+    <div class="inspector-tabs segmented" role="tablist" aria-label="Ad settings">
+      <button type="button" id="tab-creative" role="tab" data-tab="creative" aria-controls="panel-creative" aria-selected="true">Creative</button>
+      <button type="button" id="tab-placement" role="tab" data-tab="placement" aria-controls="panel-placement" aria-selected="false" tabindex="-1">Placement</button>
+      <button type="button" id="tab-request" role="tab" data-tab="request" aria-controls="panel-request" aria-selected="false" tabindex="-1">Request</button>
+    </div>
+    <div class="inspector-scroll">
+      <section id="panel-creative" role="tabpanel" aria-labelledby="tab-creative">
+        <fieldset class="format-options"><legend>Format</legend><div class="format-segment"><label><input type="radio" name="format" value="banner" checked><span>Banner</span></label><label><input type="radio" name="format" value="ticker"><span>Scrolling text</span></label></div></fieldset>
+        <div id="image-controls">
+          <label class="upload" for="ad-image"><img id="upload-thumb" src="assets/san-francisco-photo.jpg" alt="Example creative image"><span><b id="upload-name">san-francisco.jpg</b><span id="upload-label">Replace image</span><small>JPG, PNG, WebP · up to 5 MB</small></span></label><input id="ad-image" type="file" accept="image/jpeg,image/png,image/webp" class="visually-hidden"><p id="image-error" class="error" role="alert" hidden></p>
+          <div class="image-sliders"><label>Image area <output id="area-value">50%</output><input id="image-area" type="range" min="20" max="70" value="50"></label><label>Crop / zoom <output id="zoom-value">100%</output><input id="image-zoom" type="range" min="100" max="200" value="100"></label></div>
+          <details class="advanced"><summary>Crop position</summary><label class="slider-label">Horizontal position <output id="crop-value">50%</output><input id="image-position" type="range" min="0" max="100" value="50"></label></details>
+        </div>
+        <label class="field"><span>Headline <small id="headline-count"></small></span><textarea id="ad-headline" maxlength="70" rows="2" required>Your next chapter,
+somewhere new.</textarea></label>
+        <label class="field" id="subtitle-field"><span>Supporting text <small id="subtitle-count"></small></span><input id="ad-subtitle" maxlength="140" value="Explore places that fit your life."></label>
+        <label class="field"><span>Button text</span><input id="ad-cta" maxlength="28" required value="Discover more"></label>
+        <details class="advanced"><summary>Destination and appearance</summary><label class="field"><span>Destination URL</span><input id="ad-url" type="url" value="https://example.com" required maxlength="2000"></label><label class="field"><span>Appearance</span><select id="ad-theme"><option value="graphite">Graphite</option><option value="light">Light</option></select></label></details>
+        <label id="ticker-speed-field" class="field" hidden><span>Scroll speed</span><select id="ticker-speed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option></select></label>
+        <p id="sample-credit" class="credit">Image: <a href="https://commons.wikimedia.org/wiki/File:Golden_Gate_Bridge_and_San_Francisco_skyline_from_Hawk_Hill_at_Blue_Hour_dllu_(cropped).jpg" target="_blank" rel="noreferrer">Daniel L. Lu · CC BY-SA 4.0</a></p>
+      </section>
+      <section id="panel-placement" role="tabpanel" aria-labelledby="tab-placement" hidden>
+        <h3>Choose where it appears</h3><p class="section-note">Select indicators and devices. Preview an excluded one to see where your ad stays hidden.</p>
+        <div id="selected-fields" class="selected-fields"></div>
+        <label class="search"><span data-icon="search"></span><input id="field-search" type="search" placeholder="Search indicators" aria-label="Search indicators"></label>
+        <div id="field-list" class="field-list"><p>Loading indicators…</p></div><p id="catalog-error" class="error" role="alert" hidden></p><button id="retry-catalog" type="button" class="text-button" hidden>Retry indicators</button><p id="field-count" class="hint"></p>
+        <fieldset class="devices"><legend>Show on</legend><label><input id="target-desktop" type="checkbox" checked>Desktop</label><label><input id="target-mobile" type="checkbox" checked>Mobile</label></fieldset>
+      </section>
+      <section id="panel-request" role="tabpanel" aria-labelledby="tab-request" hidden>
+        <h3>Review your request</h3><p class="section-note">Send your creative for review. It becomes a request, never an automatically published ad.</p><div id="request-summary" class="request-summary"></div>
+        <label class="field"><span>Your name</span><input id="contact-name" autocomplete="name" required maxlength="100" placeholder="Your name"></label><label class="field"><span>Company <small>Optional</small></span><input id="contact-company" autocomplete="organization" maxlength="120" placeholder="Company name"></label><label class="field"><span>Email</span><input id="contact-email" type="email" autocomplete="email" required maxlength="254" placeholder="you@company.com"></label><label class="field"><span>Message <small>Optional</small></span><textarea id="contact-message" rows="2" maxlength="2000" placeholder="Preferred dates or a question"></textarea></label>
+        <p id="delivery-note" class="hint">Checking email delivery…</p><button id="submit-request" type="submit" class="primary" disabled>Send ad request <span data-icon="forward"></span></button><button id="download-request" type="button" class="text-button">Download your draft</button><p id="request-status" role="status" aria-live="polite" hidden></p>
+      </section>
+    </div>
+    <button id="placement-shortcut" type="button" class="inspector-footer"><span id="target-summary">2 indicators · Desktop + Mobile</span><span data-icon="chevron-down"></span></button>
+  </form>
+  <section class="preview-panel" aria-label="Live preview">
+    <div class="preview-stage"><iframe id="map-preview" src="ad-preview.html" title="Interactive map with your advertisement"></iframe></div>
+    <div class="preview-context"><label>Preview indicator<select id="preview-metric" aria-label="Preview indicator"><option>Loading…</option></select></label><label>Place<select id="preview-place" aria-label="Preview place"><option value="06">California</option><option value="48">Texas</option><option value="36">New York</option><option value="US">United States</option></select></label></div>
+    <div class="preview-toolbar"><span class="toolbar-label">Preview</span><div class="segmented" aria-label="Preview device"><button type="button" data-device="desktop" aria-pressed="true">Desktop</button><button type="button" data-device="mobile" aria-pressed="false">Mobile</button></div><div class="segmented" aria-label="Preview map view"><button type="button" data-mode="2d" aria-pressed="true">2D</button><button type="button" data-mode="3d" aria-pressed="false">3D</button></div><button id="pause-preview" class="secondary" type="button" hidden aria-pressed="false" aria-label="Pause or resume scrolling">Pause</button></div>
+    <div class="preview-caption"><span id="placement-status" role="status" aria-live="polite">Loading the map…</span><button id="retry-map" type="button" class="text-button" hidden>Retry map</button></div>
+  </section>
+</main>
+<div id="studio-status" role="status" aria-live="polite" hidden></div>
+<script type="module" src="advertising/editor.js"></script>
+</body></html>

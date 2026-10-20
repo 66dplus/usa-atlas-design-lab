@@ -1,0 +1,3 @@
+// Owner-approved Brand 02 Thin paths, from design/brand-o2-thin-20261008/kit.py.
+const paths = {"explorer": "<circle cx=\"10\" cy=\"10\" r=\"7.5\"/><ellipse cx=\"10\" cy=\"10\" rx=\"3.3\" ry=\"7.5\"/><path d=\"M2.5 10h15\"/>", "saved": "<path d=\"M5 2.5h10v15l-5-3.4-5 3.4Z\"/>", "search": "<circle cx=\"8.2\" cy=\"8.2\" r=\"5.6\"/><path d=\"m12.3 12.3 5.1 5.1\"/>", "chevron-down": "<path d=\"m3.5 6.5 6.5 7 6.5-7\"/>", "forward": "<path d=\"M3 10h14m-5-5 5 5-5 5\"/>", "close": "<path d=\"m4.5 4.5 11 11m0-11-11 11\"/>"};
+export function studioIcon(name) { return `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.explorer}</svg>`; }

@@ -46,8 +46,9 @@ class AtlasDataIntegration(unittest.TestCase):
         code, body, _ = self.request('/api/atlas/catalog')
         self.assertEqual(code, 200, body)
         data = json.loads(body)
-        self.assertEqual(data['catalogCount'], 81)
-        self.assertEqual(len({m['catalogId'] for m in data['metrics']}), 81)
+        self.assertEqual(data['catalogCount'], 84)
+        self.assertEqual(data['publishedCatalogCount'], 81)
+        self.assertEqual(len({m['catalogId'] for m in data['metrics']}), 84)
         self.assertEqual(len({m['id'] for m in data['metrics']}), len(data['metrics']))
         by_id = {m['id']: m for m in data['metrics']}
         self.assertEqual(by_id['unemployment']['fieldId'], '03.06:unemployment_rate')
@@ -57,6 +58,11 @@ class AtlasDataIntegration(unittest.TestCase):
         self.assertIsNone(by_id['median-household-income']['fieldId'])
         self.assertTrue(by_id['unemployment']['countySupported'])
         self.assertFalse(by_id['murders']['countySupported'])
+        for identifier in ('data-centers', 'residential-water-price', 'billion-dollar-companies'):
+            self.assertEqual(by_id[identifier]['plannedState'], 'proposed')
+            self.assertIsNone(by_id[identifier]['fieldId'])
+            self.assertEqual(by_id[identifier]['observations'], 0)
+        self.assertIsNotNone(by_id['electricity-price']['fieldId'])
 
     def test_real_source_samples_and_parameter_changes(self):
         cases = [('03.06:unemployment_rate', '06', 5.4),

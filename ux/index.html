@@ -15,13 +15,13 @@
 <!-- The map is the workspace. Each map owns its controls; tools slide over it without changing its size. -->
 <header class="app-header">
   <div class="navigation-cluster">
-    <a class="brand" href="./" aria-label="USA Atlas home"><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11"/><ellipse cx="14" cy="14" rx="5" ry="11"/><path d="M3 14h22"/></svg><span>USA <b>Atlas</b></span></a>
-    <button id="saved-open" class="saved-trigger" aria-expanded="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3h10v15l-5-3-5 3Z"/></svg>Saved</button><nav class="concept-tabs" aria-label="Explore modes"><button data-concept="stories">Trends</button><button data-concept="explorer">Explorer</button><button data-concept="compare">Compare</button></nav>
+    <a class="brand" href="./" aria-label="USA Atlas home"><svg data-brand-icon="explorer" aria-hidden="true"></svg><span>USA <b>Atlas</b></span></a>
+    <button id="saved-open" class="saved-trigger" aria-expanded="false"><svg data-brand-icon="saved" aria-hidden="true"></svg>Saved</button><nav class="concept-tabs" aria-label="Explore modes"><button data-concept="stories">Trends</button><button data-concept="explorer">Explorer</button><button data-concept="compare">Compare</button></nav>
   </div>
   <div class="workspace-bar">
     <div class="dimension-control" aria-label="Map view"><button data-mode="2d">2D</button><button data-mode="3d">3D</button></div>
-    <button id="view-settings-open" class="icon-button" aria-label="Настройки 3D" title="Настройки 3D" aria-expanded="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 15h14M7 2v6M13 12v6"/></svg></button>
-    <button id="share" class="share-button" aria-label="Share" title="Copy view link"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 12 4-4M7 14l-1 1a3 3 0 0 1-4-4l4-4a3 3 0 0 1 4 0M13 6l1-1a3 3 0 0 1 4 4l-4 4a3 3 0 0 1-4 0"/></svg><span>Share</span></button>
+    <button id="view-settings-open" class="icon-button" aria-label="Настройки 3D" title="Настройки 3D" aria-expanded="false"><svg data-brand-icon="indicators" aria-hidden="true"></svg></button>
+    <button id="share" class="share-button" aria-label="Share" title="Copy view link"><svg data-brand-icon="share" aria-hidden="true"></svg><span>Share</span></button>
   </div>
 </header>
 <aside id="explore-panel" class="explore-panel" aria-label="Explore this place"></aside>
@@ -61,12 +61,12 @@
 <section id="compare-results" class="drawer comparison-drawer" aria-label="Comparison data" hidden></section>
 <section id="metric-library" class="drawer" aria-label="Choose an indicator" hidden>
   <div class="drawer-top"><div><p id="metric-library-context" class="panel-context"></p><h2>Choose an indicator</h2></div><button data-close="metric-library" aria-label="Close metric library" class="icon-button">×</button></div>
-  <label class="search-field"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><input id="metric-search" type="search" placeholder="Income, rent, homelessness…" aria-label="Search 81 metrics"></label>
+  <label class="search-field"><svg data-brand-icon="search" aria-hidden="true"></svg><input id="metric-search" type="search" placeholder="Income, rent, homelessness…" aria-label="Search indicators"></label>
   <div id="category-list" class="category-list" aria-label="Metric categories"></div><p id="catalog-status" class="library-note">Loading the database catalog…</p><div id="metric-list" class="metric-list"></div><div id="popular-metrics"></div>
 </section>
 <section id="place-library" class="drawer place-drawer" aria-label="Choose a place" hidden>
   <div class="drawer-top"><div><p id="place-library-context" class="panel-context"></p><h2 id="place-library-title">Find your place</h2></div><button data-close="place-library" aria-label="Close place search" class="icon-button">×</button></div>
-  <label class="search-field"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/></svg><input id="place-search" type="search" placeholder="State or county name…" aria-label="Search places"></label><p id="place-list-caption" class="library-note"></p><div id="place-list" class="place-list"></div>
+  <label class="search-field"><svg data-brand-icon="search" aria-hidden="true"></svg><input id="place-search" type="search" placeholder="State or county name…" aria-label="Search places"></label><p id="place-list-caption" class="library-note"></p><div id="place-list" class="place-list"></div>
 </section>
 <aside id="saved-panel" class="drawer" aria-label="Saved explorations" hidden></aside>
 <aside id="ranking-panel" class="drawer" aria-label="Highest and lowest" hidden></aside>

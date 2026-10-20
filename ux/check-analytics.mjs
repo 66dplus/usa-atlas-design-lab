@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict';
+import {AttentionClock, atlasContext, placeContext} from './analytics.js';
+const clock = new AttentionClock(0);
+clock.settle(15000,true);assert.equal(clock.take(),15000);
+clock.settle(75000,true);assert.equal(clock.take(),45000);
+clock.settle(90000,false);assert.equal(clock.take(),0);
+clock.touch(95000,false);clock.settle(100000,true);assert.equal(clock.take(),5000);
+assert.throws(()=>placeContext('Austin'));
+const a={concept:'compare',comparison:'places',selected:'06075',second:'36',metric:'unemployment'};
+assert.equal(atlasContext(a).pair_key,atlasContext({...a,selected:'36',second:'06075'}).pair_key);
+assert.equal(atlasContext(a).place_type,'county');assert.equal(atlasContext(a).state_id,'06');
+assert.equal(atlasContext({...a,comparison:'metrics',secondMetric:'obesity-rate'}).other_place_id,'06075');
+console.log('PASS attention cutoff, background, resumed activity, typed geography and canonical pairs');
+
+// Exercise the integration owner without loading a remote tracker in Node.
+const {createAtlasAnalytics}=await import('./analytics.js');
+const savedGlobals={document:globalThis.document,window:globalThis.window,fetch:globalThis.fetch,performance:globalThis.performance,setInterval:globalThis.setInterval};
+let time=0,interval;
+const documentEvents=new Map(),windowEvents=new Map(),sent=[];
+globalThis.performance={now:()=>time};
+globalThis.setInterval=callback=>{interval=callback;return 1;};
+globalThis.window={addEventListener:(name,callback)=>windowEvents.set(name,callback),umami:{track:async callback=>sent.push(callback({url:'/raw?private=1',title:'Private text',referrer:'private'}))}};
+globalThis.document={visibilityState:'visible',hasFocus:()=>true,addEventListener:(name,callback)=>documentEvents.set(name,callback),createElement:()=>({dataset:{}}),head:{append:script=>script.onload()}};
+globalThis.fetch=async()=>({ok:true,json:async()=>({enabled:true,scriptUrl:'http://localhost/script.js',websiteId:'11111111-1111-4111-8111-111111111111'})});
+try {
+  const analytics=createAtlasAnalytics();
+  const state={concept:'explorer',metric:'unemployment',selected:'06075'};
+  analytics.observe(atlasContext(state),false);
+  analytics.observe(atlasContext(state),true);
+  await new Promise(setImmediate);
+  assert.equal(sent.filter(e=>e.name==='atlas_initial_view').length,1);
+  assert.equal(sent.filter(e=>!e.name).length,1);
+  for(let i=0;i<20;i++)analytics.observe(atlasContext(state),true);
+  assert.equal(sent.filter(e=>e.name==='atlas_indicator_select').length,0);
+  time=1000;
+  const comparison=atlasContext({...state,concept:'compare',comparison:'places',second:'48'});
+  analytics.observe(comparison,true);analytics.action('view_select');
+  for(let i=0;i<20;i++)analytics.observe(comparison,true);
+  assert.equal(sent.filter(e=>e.name==='atlas_compare_view').length,1);
+  time=2000;
+  windowEvents.get('blur')(); // hasFocus remains true during blur: the event must win.
+  const before=sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0);
+  time=30000;interval();
+  assert.equal(sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0),before);
+  time=40000;windowEvents.get('focus')();
+  time=45000;interval();
+  time=110000;interval();
+  const after=sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0);
+  assert.equal(after-before,60000);
+  time=130000;interval();
+  assert.equal(sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0),after);
+  globalThis.document.visibilityState='hidden';
+  time=135000;documentEvents.get('visibilitychange')();
+  time=140000;windowEvents.get('focus')();
+  time=150000;documentEvents.get('pointerdown')();interval();
+  assert.equal(sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0),after);
+  globalThis.document.visibilityState='visible';
+  time=155000;documentEvents.get('visibilitychange')();
+  time=160000;interval();
+  assert.equal(sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0),after+5000);
+  assert.ok(sent.every(e=>!e.url.includes('?')&&e.referrer===''&&e.title==='USA Atlas'));
+  const count=sent.length;
+  globalThis.fetch=async()=>({ok:true,json:async()=>({enabled:false})});
+  const disabled=createAtlasAnalytics();disabled.observe(atlasContext(state),true);disabled.action('indicator_select');
+  await new Promise(setImmediate);time=170000;interval();
+  assert.equal(sent.length,count);
+  console.log('PASS initial/action separation, render deduplication, comparison opening, hidden/focus gating, blur race, idle cutoff, private URL removal and disabled collection');
+} finally {Object.assign(globalThis,savedGlobals);}

@@ -18,10 +18,19 @@ assert.equal(geo.counties.filter(f=>f.stateId==='15').length,5);
 assert.equal(new Set(geo.counties.map(f=>f.id)).size,3142);
 for(const f of [...geo.states,...geo.counties]){assert.ok(f.path&&!/NaN/.test(f.path),f.id+' has invalid path');assert.ok(f.bounds.flat().every(Number.isFinite),f.id+' has invalid bounds');}
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json'))).metrics;
+const proposals=JSON.parse(fs.readFileSync(path.join(root,'catalog-proposals.json')));
 assert.equal(catalog.length,81);assert.equal(new Set(catalog.map(m=>m.id)).size,81);assert.equal(new Set(catalog.map(m=>m.category)).size,9);
+assert.equal(proposals.baseCatalogCount,catalog.length);
+assert.equal(proposals.metrics.length,3);
+assert.equal(new Set([...catalog,...proposals.metrics].map(m=>m.id)).size,84);
 const api=await (await fetch('/api/atlas/catalog')).json();
-assert.equal(api.catalogCount,81);
-assert.equal(new Set(api.metrics.map(m=>m.catalogId)).size,81);
+assert.equal(api.catalogCount,84);assert.equal(api.publishedCatalogCount,81);
+assert.equal(new Set(api.metrics.map(m=>m.catalogId)).size,84);
+for(const item of proposals.metrics){
+  const metric=api.metrics.find(m=>m.id===item.id);
+  assert.equal(metric?.plannedState,'proposed');assert.equal(metric.fieldId,null);
+  assert.match(metric.coverageNote,/No observations have been loaded/);
+}
 const loaded=api.metrics.filter(m=>m.fieldId),reports=[];
 for(const m of loaded){
   const response=await fetch('/api/atlas/observations?field='+encodeURIComponent(m.fieldId));
@@ -43,4 +52,4 @@ for(const f of baseline){if(packageChanges.has(f.path))continue;let bytes=fs.rea
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'../package.json'))),lock=JSON.parse(fs.readFileSync(path.join(root,'../package-lock.json')));
 for(const [name,version] of Object.entries({three:'0.186.0',d3:'7.9.0','topojson-client':'3.1.0','us-atlas':'3.0.1','world-atlas':'2.0.2',html2canvas:'1.4.1'})){assert.equal(pkg.dependencies[name],version);assert.equal(lock.packages['node_modules/'+name].version,version);}
 assert.equal(pkg.scripts.start,'python3 scripts/serve.py');
-console.log(`PASS: live geography, 81 catalog indicators, ${loaded.length} PostgreSQL map series, explicit gaps and preserved gallery assets/dependency pins.`);
+console.log(`PASS: live geography, 81 published and 3 proposed indicators, ${loaded.length} PostgreSQL map series, explicit gaps and preserved gallery assets/dependency pins.`);

@@ -7,10 +7,22 @@ const WIDTH = 1200, HEIGHT = 750;
 const color = value => value == null ? '#aaa49e' : d3.interpolateRgbBasis(EMBER)(value);
 const RELIEF=.28;
 
+async function fetchJson(url){
+  let error;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const response=await fetch(url,{cache:'no-store'});
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    }catch(cause){error=cause;if(attempt<2)await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));}
+  }
+  throw error;
+}
+
 export async function loadGeography() {
-  const responses=await Promise.all(['../node_modules/us-atlas/counties-10m.json','../node_modules/world-atlas/countries-110m.json','county-boundary-repair.json','cities.json'].map(url=>fetch(url)));
-  if(responses.some(r=>!r.ok)) throw new Error('Geographic boundaries could not be loaded. Reload to retry.');
-  const [us,world,repair,cities]=await Promise.all(responses.map(r=>r.json()));
+  let us,world,repair,cities;
+  try{[us,world,repair,cities]=await Promise.all(['../node_modules/us-atlas/counties-10m.json','../node_modules/world-atlas/countries-110m.json','county-boundary-repair.json','cities.json'].map(fetchJson));}
+  catch{throw new Error('Geographic boundaries could not be loaded. Reload to retry.');}
   const states=topojson.feature(us,us.objects.states).features.filter(f=>Number(f.id)<60);
   const counties=topojson.feature(us,us.objects.counties).features.filter(f=>Number(f.id.slice(0,2))<60);
   // The simplified source collapses Falls Church to a line; use its verified 2017 polygon.
@@ -369,7 +381,7 @@ export class ExplorerMap {
       group.userData.outline.visible=!(id===parent&&this.state.selectedId?.length===5);
       group.userData.outline.material.opacity=(id===parent?1:.8)*shade;
     }
-    this.renderer.setClearColor('#e7eaed',1);
+    this.renderer.setClearColor(this.state.background || '#e7eaed',1);
     const distance=this.camera.position.distanceTo(this.controls.target);
     this.camera.near=Math.max(.00001,distance*.01);this.camera.far=Math.max(40,distance*8);this.camera.updateProjectionMatrix();
     this.host.dataset.phase=this.phase||'overview';

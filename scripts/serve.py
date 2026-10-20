@@ -20,6 +20,8 @@ from uuid import UUID
 from feedback_sources import ROOT, resolve_sources
 from view_settings import read_settings, save_settings
 import atlas_data
+import advertising
+import analytics_config
 
 MAX_BODY = 16 * 1024 * 1024
 
@@ -173,6 +175,13 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.allowed_host():
             return self.respond(403, {'error': 'Loopback Host required'})
         path = urlsplit(self.path).path
+        if path == '/api/analytics/config':
+            try:
+                return self.respond(200, analytics_config.public_config())
+            except ValueError:
+                return self.respond(503, {'error': 'Analytics configuration is invalid'})
+        if path == '/api/advertising/config':
+            return self.respond(200, {'enabled': advertising.configured()})
         if path in ('/api/atlas/catalog', '/api/atlas/observations'):
             try:
                 params = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
@@ -238,19 +247,24 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.allowed_host() or self.headers.get('Origin') != 'http://' + self.headers.get('Host', ''):
             return self.respond(403, {'error': 'Same-origin requests only'})
         path = urlsplit(self.path).path
-        if path not in ('/api/feedback', '/api/view-settings'):
+        if path not in ('/api/feedback', '/api/view-settings', '/api/advertising/request'):
             return self.respond(404, {'error': 'Unknown endpoint'})
         if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
             return self.respond(415, {'error': 'JSON required'})
         try:
             length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= (4096 if path == '/api/view-settings' else MAX_BODY):
+            limit = 4096 if path == '/api/view-settings' else advertising.MAX_REQUEST if path == '/api/advertising/request' else MAX_BODY
+            if not 0 < length <= limit:
                 return self.respond(413, {'error': 'Comment exceeds size limit'})
             self.connection.settimeout(15)
             body = self.rfile.read(length)
             if len(body) != length:
                 raise ValueError('Incomplete request')
             data = json.loads(body, parse_constant=invalid_constant)
+            if path == '/api/advertising/request':
+                if not advertising.configured():
+                    return self.respond(503, {'error': 'Email delivery is not configured. Download your draft instead.'})
+                return self.respond(200, advertising.send_request(data, atlas_data.catalog()['metrics']))
             if path == '/api/view-settings':
                 return self.respond(200, save_settings(self.server.feedback_dir, data))
             png, sources = validate_payload(data)
@@ -258,15 +272,24 @@ class Handler(SimpleHTTPRequestHandler):
             self.respond(201 if created else 200, {'comment': record})
         except FileExistsError as error:
             self.respond(409, {'error': str(error)})
+        except advertising.DeliveryUnavailable as error:
+            self.respond(503, {'error': str(error)})
+        except atlas_data.DatabaseUnavailable:
+            self.respond(503, {'error': 'Indicators could not be validated. Keep the draft and retry.'})
         except (ValueError, KeyError, TypeError, AttributeError, binascii.Error) as error:
             self.respond(400, {'error': str(error)})
         except (OSError, TimeoutError) as error:
             self.respond(500, {'error': 'Save failed; keep the draft and retry'})
 
 
+class AtlasHTTPServer(ThreadingHTTPServer):
+    request_queue_size = 128
+    daemon_threads = True
+
+
 def create_server(port, feedback_dir):
     feedback_dir.mkdir(parents=True, exist_ok=True)
-    server = ThreadingHTTPServer(('127.0.0.1', port), Handler)
+    server = AtlasHTTPServer(('127.0.0.1', port), Handler)
     server.feedback_dir = feedback_dir.resolve()
     return server
 

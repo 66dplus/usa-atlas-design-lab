@@ -6,14 +6,26 @@ const definitions=[
   ['duration','Длительность перехода',200,2000,50,' мс'],
   ['relief','Высота округов',0,2,.05,'×']
 ];
+const bundledDefaults={version:1,settings:{rotation:false,cameraSide:'south',tilt:40,sensitivity:.28,minZoom:.5,maxZoom:12,duration:950,hover:0,relief:1}};
 
 export async function loadViewSettings(){
-  const defaults=await fetch('./view-settings.json').then(r=>{if(!r.ok)throw new Error('View defaults unavailable');return r.json();});
+  let defaults;
+  try{
+    const response=await fetch('/ux/view-settings.json',{cache:'no-store'});
+    if(response.ok)defaults=await response.json();
+  }catch{}
   try{
     const response=await fetch('/api/view-settings',{cache:'no-store'});
     if(!response.ok)throw new Error('Settings unavailable');
-    const record=await response.json();record.settings.hover=0;return {defaults,record,error:null};
-  }catch{return {defaults,record:{...defaults,savedAt:null},error:'Не удалось прочитать настройки. Пока показаны значения по умолчанию.'};}
+    const record=await response.json();record.settings.hover=0;
+    defaults ||= {version:1,settings:{...record.settings}};
+    return {defaults,record,error:null};
+  }catch{
+    const usedFallback=!defaults;
+    defaults ||= bundledDefaults;
+    if(usedFallback)return {defaults,record:{...defaults,savedAt:null},error:'Настройки камеры не загрузились. Пока показаны встроенные значения по умолчанию.'};
+    return {defaults,record:{...defaults,savedAt:null},error:'Не удалось прочитать настройки. Пока показаны значения по умолчанию.'};
+  }
 }
 
 export function initViewSettings({defaults,record,error,onChange,onOpen=()=>{}}){

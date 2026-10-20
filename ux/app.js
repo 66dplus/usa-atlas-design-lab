@@ -2,11 +2,16 @@ import {ExplorerMap,loadGeography} from './map.js';
 import {createDataStore,formatValue,formatPeriod,missingReason,comparable} from './model.js?v=postgres-1';
 import {initFeedback} from './feedback.js';
 import {loadViewSettings,initViewSettings} from './settings.js';
+import {brandIcon} from './icons.js';
+import {createAtlasAnalytics,atlasContext,placeContext} from './analytics.js';
+const analytics=createAtlasAnalytics();
 const $=s=>document.querySelector(s);
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const icon=(name)=>`<svg viewBox="0 0 20 20" aria-hidden="true">${{
- search:'<circle cx="8" cy="8" r="5"/><path d="m12 12 5 5"/>',back:'<path d="M17 10H3l5-5m-5 5 5 5"/>',bookmark:'<path d="M5 3h10v15l-5-3-5 3Z"/>',check:'<path d="m4 10 4 4 8-8"/>',expand:'<path d="M4 8V4h4M12 4h4v4M16 12v4h-4M8 16H4v-4"/>',compare:'<path d="M2 6h15l-3-3M18 14H3l3 3"/>',uptrend:'<path d="m3 15 5-5 4 2 5-8M12 4h5v5"/>',downtrend:'<path d="m3 5 5 5 4-2 5 8M12 16h5v-5"/>',home:'<path d="m3 9 7-6 7 6v8H3ZM8 17v-5h4v5"/>',shuffle:'<path d="M3 5h3l8 10h3l-2-3m0 6 2-3M3 15h3l8-10h3l-2-3m0 6 2-3"/>',close:'<path d="m5 5 10 10M15 5 5 15"/>',plus:'<path d="M4 10h12M10 4v12"/>',minus:'<path d="M4 10h12"/>',rotate:'<path d="M4 8a6 6 0 1 1 0 5M4 3v5h5"/>',left:'<path d="M16 8a6 6 0 1 0 0 5M16 3v5h-5"/>',reset:'<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/>',down:'<path d="m5 8 5 5 5-5"/>',pin:'<path d="M10 18s6-6 6-11a6 6 0 1 0-12 0c0 5 6 11 6 11Z"/><circle cx="10" cy="7" r="2"/>',arrow:'<path d="M3 10h14m-5-5 5 5-5 5"/>'
-}[name]}</svg>`;
+const brandNames={search:'search',back:'back',bookmark:'saved',check:'check',compare:'compare',home:'house',shuffle:'shuffle',close:'close',plus:'plus',minus:'minus',down:'chevron-down',pin:'location',arrow:'forward'};
+// shortcut: keep directional camera/rank glyphs until the approved library has exact equivalents.
+const directionalPaths={expand:'<path d="M4 8V4h4M12 4h4v4M16 12v4h-4M8 16H4v-4"/>',uptrend:'<path d="m3 15 5-5 4 2 5-8M12 4h5v5"/>',downtrend:'<path d="m3 5 5 5 4-2 5 8M12 16h5v-5"/>',rotate:'<path d="M4 8a6 6 0 1 1 0 5M4 3v5h5"/>',left:'<path d="M16 8a6 6 0 1 0 0 5M16 3v5h-5"/>',reset:'<path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/>'};
+const icon=name=>brandNames[name]?brandIcon(brandNames[name]):`<svg viewBox="0 0 20 20" aria-hidden="true">${directionalPaths[name]}</svg>`;
+document.querySelectorAll('[data-brand-icon]').forEach(node=>{node.outerHTML=brandIcon(node.dataset.brandIcon);});
 const params=new URLSearchParams(location.search);
 const concepts=['explorer','stories','compare'];
 const initialConcept=concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
@@ -55,16 +60,18 @@ function openDrawer(id,trigger=document.activeElement,side='a',edge=side==='b'?'
   (id==='compare-results'?$('.map-workspace'):$('#pane-'+side)).append(panel);
   if(id!=='inspector'&&id!=='compare-results'){leftScroll=$('#explore-panel').scrollTop;document.body.classList.add('left-replaced');$('#explore-panel').inert=true;}
   panel.hidden=false;trigger?.setAttribute('aria-expanded','true');
+  if(id==='inspector'||id==='compare-results')analytics.action('sources_open',{side});
   (panel.querySelector('input')||panel.querySelector('button'))?.focus();
 }
 let selectionRequest=0;
 async function choosePlace(id,side='a') {
   const request=++selectionRequest;closeDrawers();
   try{await geo.loadDetail(id);}catch(error){toast(error.message);return;}
-  if(request!==selectionRequest)return;
+  if(request!==selectionRequest)return false;
+  const previous=side==='b'&&state.concept==='compare'&&state.comparison==='places'?state.second:state.selected;
   if(side==='b'&&state.concept==='compare'&&state.comparison==='places')state.second=id;
   else state.selected=id;
-  closeDrawers();render();
+  closeDrawers();render();if(previous!==id){const place=placeContext(id);analytics.action('place_select',{selected_place_id:place.place_id,selected_place_type:place.place_type,selected_state_id:place.state_id});}return true;
 }
 function showMetricLibrary(side='a',cardMode=false){
   state.metricTarget=state.concept==='compare'&&state.comparison==='metrics'?side:'a';state.cardMode=cardMode;state.category='All';
@@ -84,7 +91,7 @@ function renderCategories(){
 function renderMetrics(){
   const query=$('#metric-search').value.trim().toLowerCase();
   const list=catalog.filter(m=>(state.category==='All'||m.shortCategory===state.category)&&`${m.name} ${m.shortCategory} ${m.source}`.toLowerCase().includes(query)).sort((a,b)=>Number(Boolean(b.fieldId))-Number(Boolean(a.fieldId)));
-  $('#metric-list').innerHTML=list.length?list.map(m=>`<button class="metric-item" data-metric="${m.id}" aria-pressed="${state.cardMode?pinned.includes(m.id):m.id===(state.metricTarget==='b'?state.secondMetric:state.metric)}"><span><strong>${escapeHTML(m.name)}</strong><small>${escapeHTML(m.shortCategory)} · ${escapeHTML(m.source)}</small></span><span>${state.cardMode?'Add to card':!m.fieldId?(m.observations?'Other geography':'Not loaded'):m.countySupported?(m.stateSupported?'State / county data':'County data'):'State data'}</span></button>`).join(''):'<p class="library-note">No indicators match. Try a shorter word or choose another category.</p>';
+  $('#metric-list').innerHTML=list.length?list.map(m=>`<button class="metric-item" data-metric="${m.id}" aria-pressed="${state.cardMode?pinned.includes(m.id):m.id===(state.metricTarget==='b'?state.secondMetric:state.metric)}"><span><strong>${escapeHTML(m.name)}</strong><small>${escapeHTML(m.shortCategory)} · ${escapeHTML(m.source)}</small></span><span>${m.plannedState==='proposed'?'Planned':state.cardMode?'Add to card':!m.fieldId?(m.observations?'Other geography':'Not loaded'):m.countySupported?(m.stateSupported?'State / county data':'County data'):'State data'}</span></button>`).join(''):'<p class="library-note">No indicators match. Try a shorter word or choose another category.</p>';
 }
 function renderPlaces(){
   const query=$('#place-search').value.trim().toLowerCase(),parent=(state.placeTarget==='b'?selectedB()?.id:state.selected)?.slice(0,2);
@@ -104,7 +111,7 @@ function renderBreadcrumbs(){
 function renderInspector(){
   const right=state.inspectorSide==='b'&&state.concept==='compare',f=right?selectedB():selected(),m=right?metricB():metric(),data=layer(m),row=observation(m,f?.id),v=row?.value,isCounty=f?.id.length===5;
   const loading=['idle','loading'].includes(data.status),rows=pinned.map(id=>metricById.get(id));
-  const stat=v==null?`<h3 class="empty-stat">${loading?'Loading data…':data.status==='error'?'Data unavailable':'No data here'}</h3><p class="no-data-detail">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button class="outline-button" data-retry="${m.id}">Retry data</button>`:''}`:`<div class="value-line"><strong title="${v}">${formatValue(v,data.unit)}</strong><span>${escapeHTML(data.unit==='%'?'':data.unit)}</span></div><span class="demo-tag">${escapeHTML(formatPeriod(data.period))} · ${escapeHTML(data.source)}</span><p class="explanation">Published observation from the loaded source snapshot.</p>`;
+  const stat=v==null?`<h3 class="empty-stat">${loading?'Loading data…':data.status==='error'?'Data unavailable':m.plannedState==='proposed'?'Planned indicator':'No data here'}</h3><p class="no-data-detail">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button class="outline-button" data-retry="${m.id}">Retry data</button>`:''}`:`<div class="value-line"><strong title="${v}">${formatValue(v,data.unit)}</strong><span>${escapeHTML(data.unit==='%'?'':data.unit)}</span></div><span class="demo-tag">${escapeHTML(formatPeriod(data.period))} · ${escapeHTML(data.source)}</span><p class="explanation">Published observation from the loaded source snapshot.</p>`;
   const sourceUrl=row?.sourceUrl||data.observations.values().next().value?.sourceUrl||m.sourceUrl;
   $('#inspector').innerHTML=`<div class="drawer-top"><div><p class="panel-context">${state.concept==='compare'?(right?'Right map':'Left map')+' · ':''}Place statistics</p><h2>${escapeHTML(f?.name||'United States')}</h2></div><button data-close="inspector" aria-label="Close statistics" class="icon-button">×</button></div><p class="place-type">${f?(isCounty?escapeHTML(place(f.stateId).name)+' · County equivalent':'State profile'):'50 states + Washington, DC'}${f?' · '+f.id:''}</p>
     <p class="metric-caption">${escapeHTML(m.name)}</p>${stat}
@@ -164,7 +171,7 @@ function photoMarkup(f){
 function renderExplorer(){
   const panel=$('#explore-panel'),scroll=panel.scrollTop,f=selected(),m=metric(),data=layer(m),v=value(m,f?.id),isSF=f?.id==='06075';
   const crumbs=`${f?.id.length===5?`<button data-breadcrumb="${f.stateId}">${escapeHTML(place(f.stateId).name)}</button><span>·</span>`:''}<button data-breadcrumb="US">United States</button>${f?`<span>·</span><span>${f.id.length===2?'State':isSF?'City & county':'County'}</span>`:''}`;
-  panel.innerHTML=`<div class="profile-heading"><button class="place-chooser" data-pane-place="a" aria-expanded="false">${icon('search')}<strong>${escapeHTML(f?.name||'Find your state')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span><small>Indicator</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong>${v==null?['idle','loading'].includes(data.status)?'Loading…':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div><p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||'Not loaded')}</p>${v==null?`<p class="missing-note">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">Compare ${icon('compare')}</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div><button class="source-button" data-statistics="a">Sources & details ${icon('arrow')}</button></div>`;
+  panel.innerHTML=`<div class="profile-heading"><button class="place-chooser" data-pane-place="a" aria-expanded="false">${icon('search')}<strong>${escapeHTML(f?.name||'Find your state')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span><small>Indicator</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong>${v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div><p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}</p>${v==null?`<p class="missing-note">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">Compare ${icon('compare')}</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div><button class="source-button" data-statistics="a">Sources & details ${icon('arrow')}</button></div>`;
   panel.scrollTop=scroll;
   renderQuickStats();
 }
@@ -174,7 +181,7 @@ function renderQuickStats(){
   const count=countMetric?value(countMetric,f?.id):null,force=forceMetric?value(forceMetric,f?.id):null;
   const canChart=countMetric&&forceMetric&&count!=null&&force>0&&layer(countMetric).period===layer(forceMetric).period;
   const rows=pinned.map(id=>metricById.get(id));
-  right.innerHTML=`<section class="quick-card"><div class="quick-title"><h2>Quick stats</h2><button data-statistics="a" aria-label="Open sources and all statistics">${icon('expand')}</button></div><p class="quick-place">${escapeHTML(f?.name||'United States')}${f?.id.length===5?' · County':''}</p><div class="quick-main"><span>${escapeHTML(m.name)}</span><b>${number(m,f?.id)}</b><small>${escapeHTML(data.unit||'—')} · ${escapeHTML(formatPeriod(data.period)||'No data')} · ${sourceLink(m,f)}</small></div>${rows.map(item=>`<button class="quick-row" data-inspect-metric="${item.id}"><span>${escapeHTML(item.name.replace(' · people',''))}<small>${escapeHTML(formatPeriod(layer(item).period)||'No data')} · ${escapeHTML(layer(item).unit||'—')}</small></span><b>${number(item,f?.id)}</b></button>`).join('')}${canChart?`<div class="labor-chart"><div class="labor-bar"><span style="width:${100*count/force}%"></span></div><span>Unemployed / labor force <b>${formatValue(100*count/force,'%')}</b></span><small>${sourceLink(metricById.get('unemployment'),f)} · ${escapeHTML(formatPeriod(layer(metricById.get('unemployment--03-06-unemployment')).period))} · ratio of published counts</small></div>`:''}<button class="source-button" data-statistics="a">All stats & sources ${icon('arrow')}</button></section><section class="ad-card" aria-label="Advertisement placeholder"><span>Advertisement · preview</span><div>${icon('home')}<h3>Your next chapter,<br>somewhere new.</h3><p>Space for a relevant local partner.</p></div><small>Reserved placement · no live advertiser</small></section>`;
+  right.innerHTML=`<section class="quick-card"><div class="quick-title"><h2>Quick stats</h2><button data-statistics="a" aria-label="Open sources and all statistics">${icon('expand')}</button></div><p class="quick-place">${escapeHTML(f?.name||'United States')}${f?.id.length===5?' · County':''}</p><div class="quick-main"><span>${escapeHTML(m.name)}</span><b>${m.plannedState==='proposed'?'Planned':number(m,f?.id)}</b><small>${m.plannedState==='proposed'?'No published observation · ':escapeHTML(data.unit||'—')+' · '+escapeHTML(formatPeriod(data.period)||'No data')+' · '}${sourceLink(m,f)}</small></div>${rows.map(item=>`<button class="quick-row" data-inspect-metric="${item.id}"><span>${escapeHTML(item.name.replace(' · people',''))}<small>${escapeHTML(formatPeriod(layer(item).period)||'No data')} · ${escapeHTML(layer(item).unit||'—')}</small></span><b>${number(item,f?.id)}</b></button>`).join('')}${canChart?`<div class="labor-chart"><div class="labor-bar"><span style="width:${100*count/force}%"></span></div><span>Unemployed / labor force <b>${formatValue(100*count/force,'%')}</b></span><small>${sourceLink(metricById.get('unemployment'),f)} · ${escapeHTML(formatPeriod(layer(metricById.get('unemployment--03-06-unemployment')).period))} · ratio of published counts</small></div>`:''}<button class="source-button" data-statistics="a">All stats & sources ${icon('arrow')}</button></section><section class="ad-card" aria-label="Advertisement placeholder"><span>Advertisement · preview</span><div>${icon('home')}<h3>Your next chapter,<br>somewhere new.</h3><p>Space for a relevant local partner.</p></div><small><a href="advertise.html">Advertise here</a> · no live advertiser</small></section>`;
 }
 function renderPopular(){
   $('#popular-metrics').innerHTML=`<h3>Popular indicators</h3><p>Curated shortcuts</p><div>${popular.map(id=>`<button data-metric="${id}">${escapeHTML(metricById.get(id).name)} ${icon('arrow')}</button>`).join('')}</div>`;
@@ -185,7 +192,7 @@ function savedItems(){
 }
 function saveView(){
   const items=savedItems();if(!items)return;const url=location.search,item={id:String(Date.now()),url,title:(selected()?.name||'United States')+(state.concept==='compare'?' + '+(selectedB()?.name||'United States'):''),metric:metric().name,period:formatPeriod(layer(metric()).period),savedAt:new Date().toISOString()};
-  try{localStorage.setItem('usa-atlas-explorations',JSON.stringify([item,...items.filter(x=>x.url!==url)].slice(0,50)));clearTimeout(saveTimer);const button=$('#save-view');if(button){button.innerHTML=icon('check');button.setAttribute('aria-label','Exploration saved');saveTimer=setTimeout(()=>{if(button.isConnected){button.innerHTML=icon('bookmark');button.setAttribute('aria-label','Save this exploration');}},2500);}else toast('Exploration saved.');}
+  try{localStorage.setItem('usa-atlas-explorations',JSON.stringify([item,...items.filter(x=>x.url!==url)].slice(0,50)));analytics.action('save_success');clearTimeout(saveTimer);const button=$('#save-view');if(button){button.innerHTML=icon('check');button.setAttribute('aria-label','Exploration saved');saveTimer=setTimeout(()=>{if(button.isConnected){button.innerHTML=icon('bookmark');button.setAttribute('aria-label','Save this exploration');}},2500);}else toast('Exploration saved.');}
   catch{toast('Could not save in this browser. Use Share to keep the view link.');}
 }
 function showSaved(){
@@ -194,14 +201,14 @@ function showSaved(){
 async function restoreSaved(id){
   const item=(savedItems()||[]).find(x=>x.id===id);if(!item)return;const q=new URLSearchParams(item.url);
   state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=metricById.has(q.get('metric'))?q.get('metric'):'unemployment';state.secondMetric=metricById.has(q.get('metric2'))?q.get('metric2'):'obesity-rate';state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
-  closeDrawers(false);try{await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);render();if(state.rank)openRank(state.rank);}catch(error){toast(error.message);}
+  closeDrawers(false);try{await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);render();analytics.action('view_restore');if(state.rank)openRank(state.rank);}catch(error){toast(error.message);}
 }
 function showSurprise(){
   $('#surprise-panel').innerHTML=`<button class="panel-back" data-close="surprise-panel">${icon('back')} Back to map</button><h2>Follow your curiosity.</h2><p class="library-note">A few questions to take you somewhere new.</p><button class="primary-button" id="random-prompt">Surprise me ${icon('shuffle')}</button><div class="prompt-list">${prompts.map((p,i)=>`<button data-open-prompt="${i}">${icon('arrow')}<span>${p.title}</span></button>`).join('')}</div><p class="library-note">Prepared explorations, using the available source snapshots.</p>`;openDrawer('surprise-panel',$('#surprise-open'));
 }
 async function openPrompt(index){
-  const p=prompts[index];lastSurprise=index;closeDrawers(false);state.concept=p.compare?'compare':'explorer';state.comparison='places';state.metric=p.metric;state.mode='3d';state.rank=null;if(p.other)state.second=p.other;
-  await choosePlace(p.place);if(p.compare){await geo.loadDetail(state.second);render();}if(p.rank)openRank(p.rank);
+  const previousMetric=state.metric,p=prompts[index];lastSurprise=index;closeDrawers(false);state.concept=p.compare?'compare':'explorer';state.comparison='places';state.metric=p.metric;state.mode='3d';state.rank=null;if(p.other)state.second=p.other;
+  if(!await choosePlace(p.place))return;if(previousMetric!==state.metric)analytics.action('indicator_select');if(p.compare){await geo.loadDetail(state.second);render();}analytics.action('view_select',{entry:'prompt'});if(p.rank)openRank(p.rank);
   $('#surprise-open').innerHTML='Try another '+icon('shuffle');$('#surprise-open').dataset.another='true';
 }
 function randomPrompt(){const indexes=prompts.map((_,i)=>i).filter(i=>i!==lastSurprise);openPrompt(indexes[Math.floor(Math.random()*indexes.length)]);}
@@ -253,21 +260,22 @@ function render(){
   renderMapHeads();renderBreadcrumbs();renderInspector();renderExplorer();if(compare)renderCompare();if(!$('#ranking-panel').hidden){const scroll=$('#ranking-panel').scrollTop;$('#ranking-panel').innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p>`;$('#ranking-panel').scrollTop=scroll;}persist();updateMaps();
   if($('.drawer:not([hidden])')&&returnFocusSelector)$(returnFocusSelector)?.setAttribute('aria-expanded','true');
   if(focusSelector&&!focused.isConnected)$(focusSelector)?.focus();
+  analytics.observe(atlasContext(state),![data, ...(compare?[other]:[])].some(d=>['idle','loading'].includes(d.status)));
 }
-async function changeConcept(concept){
-  if(state.concept===concept){if(concept==='stories')openDrawer('story-rail',$('[data-concept=stories]'));return;}
+async function changeConcept(concept,{refresh=false}={}){
+  if(state.concept===concept&&!refresh){if(concept==='stories')openDrawer('story-rail',$('[data-concept=stories]'));return;}
   closeDrawers(false);state.concept=concept;
   if(concept==='compare'){if(!state.selected)state.selected='06';if(state.second===state.selected)state.second=state.selected==='06'?'48':'06';}
   else if(concept==='stories')state.mode='3d';
   try{await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);}catch(error){toast(error.message);}
-  render();if(concept==='stories')openDrawer('story-rail',$('#stories-open'));
+  render();analytics.action('view_select');if(concept==='stories')openDrawer('story-rail',$('#stories-open'));
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button||!catalog)return;
   if(button.dataset.openRank){openRank(button.dataset.openRank);return;}
   if(button.dataset.rank){state.rank=button.dataset.rank;persist();const scroll=$('#ranking-panel').scrollTop;$('#ranking-panel').querySelector('.rank-tabs').parentElement.innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to map</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p>`;$('#ranking-panel').scrollTop=scroll;updateMaps();return;}
   if(button.dataset.rankPlace){state.rank=null;choosePlace(button.dataset.rankPlace);return;}
-  if(button.dataset.rankCompare){const id=button.dataset.rankCompare;state.second=id;state.comparison='places';state.rank=null;if(!state.selected||state.selected===id)state.selected=rankData().rows.find(x=>x.id!==id)?.id||(id==='06'?'48':'06');changeConcept('compare');return;}
+  if(button.dataset.rankCompare){const id=button.dataset.rankCompare;state.second=id;state.comparison='places';state.rank=null;if(!state.selected||state.selected===id)state.selected=rankData().rows.find(x=>x.id!==id)?.id||(id==='06'?'48':'06');changeConcept('compare',{refresh:true});return;}
   if(button.dataset.openPlace){state.rank=null;choosePlace(button.dataset.openPlace);return;}
   if(button.dataset.photo){state.photoExpanded=!state.photoExpanded;renderExplorer();return;}
   if(button.dataset.openPrompt!==undefined){openPrompt(+button.dataset.openPrompt);return;}
@@ -283,13 +291,14 @@ document.addEventListener('click',event=>{
   if(button.dataset.metric){
     const id=button.dataset.metric;
     if(state.cardMode){dataStore.load(metricById.get(id));if(pinned.includes(id)){if(pinned.length>1)pinned=pinned.filter(p=>p!==id);else toast('Keep at least one field in the card.');}else if(pinned.length<5)pinned.push(id);else toast('Your card can show up to 5 fields. Remove one first.');renderMetrics();renderInspector();return;}
-    if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;closeDrawers();render();return;
+    const previous=state.metricTarget==='b'?state.secondMetric:state.metric;
+    if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;closeDrawers();render();if(previous!==id)analytics.action('indicator_select',{selected_indicator_id:id});return;
   }
   if(button.dataset.retry){dataStore.retry(metricById.get(button.dataset.retry));render();return;}
   if(button.dataset.place){choosePlace(button.dataset.place,state.placeTarget);return;}
-  if(button.dataset.inspectMetric){if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();return;}
-  if(button.dataset.story){const s=stories[+button.dataset.story];state.metric=s.metric;state.rank=null;state.concept='explorer';choosePlace(s.place);return;}
-  if(button.dataset.compare){closeDrawers(false);state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();return;}
+  if(button.dataset.inspectMetric){const previous=state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics'?state.secondMetric:state.metric;if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();if(previous!==button.dataset.inspectMetric)analytics.action('indicator_select',{selected_indicator_id:button.dataset.inspectMetric});return;}
+  if(button.dataset.story){const previous=state.metric,s=stories[+button.dataset.story];state.metric=s.metric;state.rank=null;state.concept='explorer';choosePlace(s.place).then(ok=>{if(ok){if(previous!==s.metric)analytics.action('indicator_select');analytics.action('view_select',{entry:'story'});}});return;}
+  if(button.dataset.compare){const previous=state.comparison;closeDrawers(false);state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();if(previous!==state.comparison)analytics.action('comparison_mode_select');return;}
   if(button.dataset.panePlace){showPlaceLibrary(button.dataset.panePlace);return;}
   if(button.dataset.paneMetric){showMetricLibrary(button.dataset.paneMetric);return;}
   if(button.dataset.statistics){state.inspectorSide=button.dataset.statistics;renderInspector();openDrawer('inspector',button,state.inspectorSide,state.concept==='compare'&&state.inspectorSide==='a'?'left':'right');return;}
@@ -316,15 +325,16 @@ $('#metric-search').addEventListener('input',renderMetrics);$('#place-search').a
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&$('.drawer:not([hidden])')){event.stopImmediatePropagation();closeDrawers();}
 });
-async function copyLink(){const button=$('#share');clearTimeout(shareTimer);try{await navigator.clipboard.writeText(location.href);button.querySelector('span').textContent='Link copied';button.setAttribute('aria-label','Link copied');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}catch{button.querySelector('span').textContent='Copy failed';button.setAttribute('aria-label','Copy failed. Copy the browser address.');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}}
+async function copyLink(){const button=$('#share');clearTimeout(shareTimer);try{await navigator.clipboard.writeText(location.href);analytics.action('share_success');button.querySelector('span').textContent='Link copied';button.setAttribute('aria-label','Link copied');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}catch{button.querySelector('span').textContent='Copy failed';button.setAttribute('aria-label','Copy failed. Copy the browser address.');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}}
 try {
   const [geography,response,settingsData]=await Promise.all([loadGeography(),fetch('/api/atlas/catalog'),loadViewSettings()]);
   viewSettings={...settingsData.record.settings};
   const payload=await response.json();
   if(!response.ok)throw new Error(payload.error||'The indicator catalog could not be loaded.');
-  geo=geography;catalog=payload.metrics;metricById=new Map(catalog.map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
+  geo=geography;catalog=payload.metrics.filter(m=>m.plannedState!=='proposed'&&m.fieldId);metricById=new Map(catalog.map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
   dataStore=createDataStore(geo,id=>{if(needed().some(m=>m.id===id))render();});
-  $('#catalog-status').textContent=`${payload.catalogCount} catalog indicators · ${payload.availableSeries} loaded map series${Number.isFinite(payload.observationCount)?` · ${payload.observationCount.toLocaleString()} observations`:''}`;
+  const mapIndicators=new Set(catalog.map(m=>m.catalogId)).size;
+  $('#catalog-status').textContent=`${mapIndicators} indicators with map data in this preview's local database`;
   if(!['2d','3d'].includes(state.mode))state.mode='3d';
   if(!metricById.has(state.metric))state.metric='unemployment';if(!metricById.has(state.secondMetric))state.secondMetric='obesity-rate';
   if(!geo.byId.has(state.selected))state.selected=null;if(state.second&&!geo.byId.has(state.second))state.second='48';

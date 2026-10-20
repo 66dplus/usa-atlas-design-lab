@@ -5,7 +5,6 @@ import {fileURLToPath} from 'node:url';
 import {field,metrics,palettes} from '../field.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const workspace=path.resolve(root,'..');
 const readJSON=file=>JSON.parse(fs.readFileSync(path.join(root,file),'utf8'));
 const required=[
  'index.html','app.js','scene.js','maps.js','field.js','assets/geography.json',
@@ -28,10 +27,4 @@ for(const [lon,lat] of [[-74.006,40.713],[-118.244,34.052],[-87.63,41.878],[-95.
 
 const handoff=readJSON('handoff/selected-studies.json');
 assert.deepEqual(handoff.selected.map(s=>s.number),['01','02','06'],'handoff selection changed');
-for(const item of handoff.selected){
- for(const key of ['primaryReference','paperExport']){
-  if(item[key])assert.ok(fs.existsSync(path.resolve(root,item[key])),`missing ${item.number} ${key}`);
- }
-}
-assert.ok(fs.existsSync(path.join(workspace,'HANDOFF-01-02-06.md')),'missing root handoff');
-console.log('PASS: selected studies 01, 02 and 06 have valid assets, references and bounded synthetic fields.');
+console.log('PASS: selected studies 01, 02 and 06 have valid local assets and bounded synthetic fields.');

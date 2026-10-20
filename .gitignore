@@ -6,3 +6,13 @@ __pycache__/
 .env
 .env.*
 *.env
+
+# Generated from the local read-only database for the advertiser preview.
+# The capture contains observation rows; build metadata can contain machine paths.
+ux/advertising/snapshot/
+ux/advertising/preview.bundle.js
+ux/advertising/preview.bundle.js.LEGAL.txt
+ux/advertising/THIRD_PARTY_LICENSES.txt
+
+# Local review comments and screenshot captures.
+/feedback/
