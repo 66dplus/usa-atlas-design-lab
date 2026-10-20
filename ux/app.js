@@ -14,8 +14,9 @@ const icon=name=>brandNames[name]?brandIcon(brandNames[name]):`<svg viewBox="0 0
 document.querySelectorAll('[data-brand-icon]').forEach(node=>{node.outerHTML=brandIcon(node.dataset.brandIcon);});
 const params=new URLSearchParams(location.search);
 const concepts=['explorer','stories','compare'];
+const renderer2dFrom=query=>query.get('renderer')==='svg'?'svg':'webgl';
 const initialConcept=concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
-const state={concept:initialConcept,mode:params.get('view')||(initialConcept==='compare'?'2d':'3d'),selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'obesity-rate',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
+const state={renderer2d:renderer2dFrom(params),concept:initialConcept,mode:params.get('view')||(initialConcept==='compare'?'2d':'3d'),selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'obesity-rate',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
 const stories=[
  {title:'The cost of calling it home',description:'Where does your dollar go further?',metric:'cost-of-living-regional-price-parities',place:'06',action:'Compare the cost of living'},
  {title:'Where work is changing',description:'Explore employment, place by place.',metric:'unemployment',place:'48',action:'Explore Texas'},
@@ -36,6 +37,7 @@ const value=(m,id)=>observation(m,id)?.value??null;
 const number=(m,id)=>formatValue(value(m,id),layer(m).unit);
 function persist() {
   const q=new URLSearchParams({concept:state.concept,view:state.mode,metric:state.metric,metric2:state.secondMetric,comparison:state.comparison,other:state.second||'US'});
+  q.set('renderer',state.renderer2d);
   if(state.selected)q.set('place',state.selected);if(state.rank)q.set('rank',state.rank);
   history.replaceState(null,'',`${location.pathname}?${q}`);
 }
@@ -200,7 +202,7 @@ function showSaved(){
 }
 async function restoreSaved(id){
   const item=(savedItems()||[]).find(x=>x.id===id);if(!item)return;const q=new URLSearchParams(item.url);
-  state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=metricById.has(q.get('metric'))?q.get('metric'):'unemployment';state.secondMetric=metricById.has(q.get('metric2'))?q.get('metric2'):'obesity-rate';state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
+  state.renderer2d=renderer2dFrom(q);state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=metricById.has(q.get('metric'))?q.get('metric'):'unemployment';state.secondMetric=metricById.has(q.get('metric2'))?q.get('metric2'):'obesity-rate';state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
   closeDrawers(false);try{await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);render();analytics.action('view_restore');if(state.rank)openRank(state.rank);}catch(error){toast(error.message);}
 }
 function showSurprise(){
@@ -223,10 +225,10 @@ function updateMaps(){
   const dark=false;
   const handleError=message=>{toast(message);state.mode='2d';render();};
   if(!mapA)mapA=new ExplorerMap($('#map-a'),geo,{onSelect:id=>choosePlace(id),onError:handleError,onHover:info=>hover('a',info)});
-  mapA.update({layoutKey:state.concept,mode:state.mode,selectedId:!$('#ranking-panel').hidden&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),countySupported:metric().countySupported,dark,settings:viewSettings,ranks:!$('#ranking-panel').hidden&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
+  mapA.update({renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:!$('#ranking-panel').hidden&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),countySupported:metric().countySupported,dark,settings:viewSettings,ranks:!$('#ranking-panel').hidden&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
   if(state.concept==='compare'){
     if(!mapB)mapB=new ExplorerMap($('#map-b'),geo,{onSelect:id=>choosePlace(id,'b'),onError:handleError,onHover:info=>hover('b',info)});
-    mapB.update({layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),countySupported:metricB().countySupported,dark:false,settings:viewSettings,ranks:[]});
+    mapB.update({renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),countySupported:metricB().countySupported,dark:false,settings:viewSettings,ranks:[]});
   }else if(mapB){mapB.dispose();mapB=null;}
 }
 function hover(side,info){
