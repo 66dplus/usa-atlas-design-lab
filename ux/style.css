@@ -118,5 +118,5 @@ body:has(#ranking-panel:not([hidden])):not([data-concept=compare]) .camera-tools
 
 /* Paper O2 shape tokens; the approved live layout and palette retain their sizes and positions. */
 .concept-tabs button,.segmented button,.rank-tabs button{border-radius:var(--radius-pill)}
-.brand-icon{stroke:none}
+.brand-icon{stroke:currentColor}
 .brand-icon image{pointer-events:none}

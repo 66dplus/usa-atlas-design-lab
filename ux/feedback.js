@@ -32,7 +32,7 @@ function elementSelector(element){
 function identifyTarget(element){
   const target=element.closest('button,a,input,summary,[data-geo]')||element;
   const map=target.closest('.map-host');
-  const owner=map?[map.dataset.mode==='2d'?'.geo-svg':'.geo-canvas','map-'+(map.dataset.renderMode||map.dataset.mode)]:OWNERS.find(([selector])=>target.closest(selector))||['body','shell'];
+  const owner=map?[map.dataset.renderer==='webgl'?'.geo-flat-canvas':map.dataset.mode==='2d'?'.geo-svg':'.geo-canvas',map.dataset.renderer==='webgl'?'map-webgl-2d':'map-'+(map.dataset.renderMode||map.dataset.mode)]:OWNERS.find(([selector])=>target.closest(selector))||['body','shell'];
   return {component:owner[1],styleSelector:owner[0],selector:elementSelector(target),tag:target.localName,
     label:(target.getAttribute('aria-label')||target.innerText||target.textContent||'').trim().slice(0,300),
     bounds:rectJSON(target.getBoundingClientRect()),geo:target.closest('[data-geo]')?.dataset.geo||null};

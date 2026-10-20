@@ -23,31 +23,65 @@ USDA = {
 }
 SOURCE_NAMES = {'bls_laus': 'BLS LAUS', 'bea_rpp': 'BEA Regional Price Parities',
                 'fbi_cde': 'FBI Crime Data Explorer', 'cdc_places': 'CDC PLACES',
-                'eia': 'EIA Electricity', 'usda_fea': 'USDA Food Environment Atlas'}
+                'census_acs': 'Census ACS', 'irs_soi': 'IRS Statistics of Income',
+                'eia': 'EIA Electricity', 'usda_fea': 'USDA Food Environment Atlas',
+                'cdc_uscs': 'CDC USCS', 'cdc_atlasplus': 'CDC AtlasPlus',
+                'cdc_wonder': 'CDC WONDER'}
 
 
 class DatabaseUnavailable(RuntimeError):
     pass
 
 
-def query(sql, variables=None):
+def query(sql, variables=None, *, statement_timeout_ms=8000):
     env = {**os.environ, 'PGCONNECT_TIMEOUT': '3',
            'PGAPPNAME': 'usa_atlas_ui',
-           'PGOPTIONS': '-c default_transaction_read_only=on -c statement_timeout=8000'}
+           'PGOPTIONS': f'-c default_transaction_read_only=on -c statement_timeout={statement_timeout_ms}'}
     args = ['psql', '-X', '-w', '-qAt', '--dbname', 'usa_atlas', '--set', 'ON_ERROR_STOP=1']
     for name, value in (variables or {}).items():
         args.extend(['--set', f'{name}={value}'])
     try:
         result = subprocess.run(args, input='BEGIN READ ONLY;\n' + sql + ';\nCOMMIT;\n',
-                                text=True, capture_output=True, timeout=12, env=env)
+                                text=True, capture_output=True, timeout=statement_timeout_ms / 1000 + 4, env=env)
         if result.returncode:
-            raise DatabaseUnavailable('PostgreSQL is unavailable. Check the local database connection and retry.')
+            raise DatabaseUnavailable('PostgreSQL is unavailable. Check the configured database connection and retry.')
         return json.loads(result.stdout)
     except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
-        raise DatabaseUnavailable('PostgreSQL is unavailable. Check the local database connection and retry.') from error
+        raise DatabaseUnavailable('PostgreSQL is unavailable. Check the configured database connection and retry.') from error
+
+
+ACS_METADATA = json.loads((ROOT / 'ux/acs-series.json').read_text())
+ACS_SERIES = ACS_METADATA['variables']
+
+
+def presentation_metadata(field_id, source, unit, period, release):
+    """Resolve native table units and the ACS five-year label without changing values."""
+    display_unit = USDA[field_id][1] if field_id in USDA else {
+        'index_us_100': 'index · US = 100', 'persons': 'people',
+        'thousand_USD': 'thousand USD',
+    }.get(unit, unit)
+    metadata = {'unit': display_unit, 'displayPeriod': None, 'unitDefinition': None}
+    variable = field_id.split(':', 1)[-1]
+    if (source == 'census_acs' and variable in ACS_SERIES and
+            re.fullmatch(r'[0-9]{4}', period) and
+            ACS_METADATA['release'] == period + '-acs5' and
+            release == period + '-acs-acs5'):
+        table = variable.split('_', 1)[0]
+        if unit == 'source_defined' and table in ACS_METADATA['tableUnits']:
+            metadata['unit'] = ACS_METADATA['tableUnits'][table]
+            metadata['unitDefinition'] = {
+                'variable': variable, 'table': table,
+                'url': f'https://data.census.gov/table/ACSDT5Y{period}.{table}',
+            }
+        metadata['displayPeriod'] = f'{int(period) - 4}–{period}'
+    return metadata
 
 
 def series_label(base, field):
+    variable = field.split(':', 1)[-1]
+    if variable in ACS_SERIES:
+        metadata = ACS_SERIES[variable]
+        return metadata['concept'] + ' · ' + metadata['label']
     if field in USDA:
         return USDA[field][0]
     if field.startswith('03.06:'):
@@ -63,32 +97,49 @@ def series_label(base, field):
 
 
 def catalog():
-    # Collapse observations before joining ingests: sorting a million raw rows
-    # made catalog reloads time out. The small result still admits only passed runs.
+    # Probe each indexed (catalog, geography) range, skipping large tract/block-group
+    # ranges. All probes still use the reader-granted view and passed ingests only.
+    # Exact all-geography counts require scanning production's large observation view;
+    # null means uncounted, never a fabricated zero or an ingest row_count sum.
     data = query("""
-      WITH counts AS MATERIALIZED (
-        SELECT catalog_field_id,
-          CASE WHEN geo_type IN ('state','county') THEN field_id END field_id,
-          geo_type,ingest_id,count(*) rows
-        FROM usa_atlas.observation GROUP BY 1,2,3,4
-      ), passed AS (
-        SELECT c.catalog_field_id,c.field_id,c.geo_type,c.rows
-        FROM counts c JOIN usa_atlas.ingest_run i USING (ingest_id) WHERE i.status='pass'
-      ), inventory AS (
-        SELECT catalog_field_id,sum(rows) rows,array_agg(DISTINCT geo_type ORDER BY geo_type) geographies
-        FROM passed GROUP BY catalog_field_id
+      WITH RECURSIVE inventory(catalog_field_id,geo_type) AS (
+        SELECT c.catalog_field_id,o.geo_type FROM usa_atlas.catalog_field c
+        CROSS JOIN LATERAL (
+          SELECT o.geo_type FROM usa_atlas.observation o
+          JOIN usa_atlas.ingest_run i USING(ingest_id)
+          WHERE o.catalog_field_id=c.catalog_field_id AND i.status='pass'
+          ORDER BY o.geo_type LIMIT 1
+        ) o
+        UNION ALL
+        SELECT p.catalog_field_id,o.geo_type FROM inventory p
+        CROSS JOIN LATERAL (
+          SELECT o.geo_type FROM usa_atlas.observation o
+          JOIN usa_atlas.ingest_run i USING(ingest_id)
+          WHERE o.catalog_field_id=p.catalog_field_id AND o.geo_type>p.geo_type AND i.status='pass'
+          ORDER BY o.geo_type LIMIT 1
+        ) o
+      ), geographies AS (
+        SELECT catalog_field_id,array_agg(geo_type ORDER BY geo_type) geographies
+        FROM inventory GROUP BY catalog_field_id
       ), series AS (
-        SELECT catalog_field_id,field_id,bool_or(geo_type='state') state_supported,
-          bool_or(geo_type='county') county_supported
-        FROM passed WHERE geo_type IN ('state','county') GROUP BY catalog_field_id,field_id
+        SELECT c.catalog_field_id,o.* FROM usa_atlas.catalog_field c
+        CROSS JOIN LATERAL (
+          SELECT o.field_id,bool_or(o.geo_type='state') state_supported,
+            bool_or(o.geo_type='county') county_supported
+          FROM usa_atlas.observation o JOIN usa_atlas.ingest_run i USING(ingest_id)
+          WHERE o.catalog_field_id=c.catalog_field_id
+            AND o.geo_type IN ('state','county') AND i.status='pass'
+          GROUP BY o.field_id
+        ) o
       )
       SELECT json_build_object(
         'fields',(SELECT json_agg(t ORDER BY catalog_field_id) FROM (
           SELECT c.catalog_field_id,c.catalog_label,c.planned_state,c.contract,
-            COALESCE(i.rows,0) rows,COALESCE(i.geographies,ARRAY[]::text[]) geographies
-          FROM usa_atlas.catalog_field c LEFT JOIN inventory i USING(catalog_field_id)) t),
+            CASE WHEN g.geographies IS NULL THEN 0 ELSE NULL END rows,
+            COALESCE(g.geographies,ARRAY[]::text[]) geographies
+          FROM usa_atlas.catalog_field c LEFT JOIN geographies g USING(catalog_field_id)) t),
         'series',(SELECT COALESCE(json_agg(s ORDER BY field_id),'[]'::json) FROM series s))
-    """)
+    """, statement_timeout_ms=20000)
     field_rows = data['fields']
     fields = {row['catalog_label']: row for row in field_rows}
     original = json.loads((ROOT / 'ux/catalog.json').read_text())['metrics']
@@ -142,9 +193,11 @@ def catalog():
         choices = [s for s in data['series'] if s['catalog_field_id'] == field['catalog_field_id']]
         default = DEFAULT_SERIES.get(field['catalog_field_id'], field['catalog_field_id'])
         if choices and default not in {s['field_id'] for s in choices}:
-            default = choices[0]['field_id']
+            default = next((choice['field_id'] for choice in choices
+                            if re.fullmatch(r'[0-9]{2}\.[0-9]{2}:B[0-9]{5}_[0-9]{3}E', choice['field_id'])), choices[0]['field_id'])
         for choice in choices or [None]:
             m = {**base, 'catalogId': field['catalog_field_id'], 'observations': field['rows'],
+                 'hasObservations': bool(field['geographies']),
                  'geographies': field['geographies'], 'plannedState': field['planned_state']}
             m.update(availability='loaded' if choice else 'unavailable',
                      stateSupported=bool(choice and choice['state_supported']),
@@ -155,21 +208,24 @@ def catalog():
                 if choice['field_id'] != default:
                     m['id'] += '--' + re.sub(r'[^a-z0-9]+', '-', choice['field_id'].lower()).strip('-')
             m['coverageNote'] = ('Available from PostgreSQL; select a place for its observation.' if choice else
-                'Collected at ' + ', '.join(field['geographies']) + ' level; no state/county allocation is inferred.' if field['rows'] else
+                'Collected at ' + ', '.join(field['geographies']) + ' level; no state/county allocation is inferred.' if field['geographies'] else
                 'No observations have been loaded for this indicator.')
             metrics.append(m)
     if legacy_fields:
         for proposal in proposed:
             metrics.append({**proposal, 'availability': 'unavailable', 'plannedState': 'proposed',
-                            'observations': 0, 'geographies': [], 'stateSupported': False,
+                            'observations': 0, 'hasObservations': False, 'geographies': [], 'stateSupported': False,
                             'countySupported': False, 'fieldId': None,
                             'coverageNote': proposal['note'] + ' No observations have been loaded.'})
     return {'metrics': metrics, 'catalogCount': len(original) + len(version_metrics),
             'publishedCatalogCount': published_count,
-            'availableSeries': len(data['series']), 'observationCount': sum(f['rows'] for f in fields.values())}
+            'availableSeries': len(data['series']), 'observationCount': (sum(f['rows'] for f in fields.values())
+                if all(f['rows'] is not None for f in fields.values()) else None)}
 
 
 def canonical_geo(source, kind, identifier):
+    if kind == 'nation':
+        return 'US' if identifier == 'US' else None
     if kind == 'county':
         return identifier if re.fullmatch(r'[0-9]{5}', identifier) else None
     if kind != 'state':
@@ -200,7 +256,7 @@ def observations(field_id):
         FROM usa_atlas.observation o JOIN chosen c USING(period,source_release)
         JOIN usa_atlas.ingest_run i USING(ingest_id)
         WHERE o.catalog_field_id=:'catalog_id' AND o.field_id=:'field_id'
-          AND o.geo_type IN ('state','county') AND i.status='pass'
+          AND o.geo_type IN ('state','county','nation') AND i.status='pass'
       ) t
     """, {'catalog_id': field_id[:5], 'field_id': field_id})
     if not rows:
@@ -222,8 +278,7 @@ def observations(field_id):
                        'value': row['value'], 'sourceUrl': row['source_url'],
                        'methodologyNote': row['methodology_note'], 'retrievedAt': row['retrieved_at']})
     return {'fieldId': field_id, 'period': period, 'sourceUnit': unit,
-            'unit': USDA[field_id][1] if field_id in USDA else
-                    {'index_us_100': 'index · US = 100', 'persons': 'people'}.get(unit, unit),
-            'source': SOURCE_NAMES.get(source, source), 'sourceRelease': release,
+            **presentation_metadata(field_id, source, unit, period, release),
+            'source': SOURCE_NAMES.get(source, source), 'sourceCode': source, 'sourceRelease': release,
             'observations': result, 'excludedGeographies': excluded,
             'selection': 'Latest single period and release in the loaded database; no older-place fallback.'}

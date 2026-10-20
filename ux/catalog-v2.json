@@ -68,7 +68,8 @@
       "catalogNote": "actual calendar-year count of new all-cancer cases",
       "contractUnit": "cases",
       "plannedState": "source_required",
-      "source": "Pending review"
+      "source": "CDC USCS",
+      "sourceUrl": "https://gis.cdc.gov/Cancer/USCS/"
     },
     {
       "id": "new-hiv-diagnoses",
@@ -84,7 +85,8 @@
       "catalogNote": "actual calendar-year count of new HIV diagnoses",
       "contractUnit": "diagnoses",
       "plannedState": "source_required",
-      "source": "Pending review"
+      "source": "CDC AtlasPlus",
+      "sourceUrl": "https://gis.cdc.gov/api/AtlasPlus/qtOutputData"
     },
     {
       "id": "deaths-under-18",
@@ -100,7 +102,8 @@
       "catalogNote": "actual calendar-year count of deaths at age <18",
       "contractUnit": "deaths",
       "plannedState": "source_required",
-      "source": "Pending review"
+      "source": "CDC WONDER",
+      "sourceUrl": "https://wonder.cdc.gov/controller/saved/D158/D473F417"
     }
   ],
   "parentFields": [

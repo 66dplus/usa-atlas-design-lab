@@ -1,4 +1,6 @@
-// Original Brand 02 PNGs, cropped with the approved Paper ink bounds.
+import {interfaceIcons,thematicIcons,indicatorIcons as byIndicator,additionalIndicatorIcons as byLabel} from './approved-icons.js';
+
+// Original bitmap descriptors remain only as compatibility/recovery fallback.
 const assets = {
   "search": {
     "file": "search.png",
@@ -98,12 +100,25 @@ const assets = {
   }
 };
 
+const vector=(definition,className)=>`<svg class="${className}" viewBox="${definition.viewBox}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${definition.body}</svg>`;
 let renderId = 0;
 export function brandIcon(name) {
+  if(interfaceIcons[name])return vector(interfaceIcons[name],'brand-icon');
   const asset = assets[name];
   if (!asset) throw new Error(`Unknown Brand 02 icon: ${name}`);
   const filterId = `brand-ink-${++renderId}`;
   // Render the original black-on-white bitmap in currentColor, with white transparent.
   // Each placement owns its filter so light and dark controls inherit their own ink.
-  return `<svg class="brand-icon" viewBox="${asset.viewBox}" aria-hidden="true"><defs><filter id="${filterId}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -.2126 -.7152 -.0722 0 1" result="cutout"/><feFlood flood-color="currentColor"/><feComposite in2="cutout" operator="in"/></filter></defs><image href="${new URL(`./assets/brand-icons/${asset.file}`, import.meta.url)}" width="${asset.width}" height="${asset.height}" filter="url(#${filterId})" /></svg>`;
+  return `<svg class="brand-icon" viewBox="${asset.viewBox}" aria-hidden="true"><defs><filter id="${filterId}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -.2126 -.7152 -.0722 0 1" result="cutout"/><feComposite in="cutout" in2="SourceAlpha" operator="in" result="opaque-cutout"/><feFlood flood-color="currentColor"/><feComposite in2="opaque-cutout" operator="in"/></filter></defs><image href="${new URL(`./assets/brand-icons/${asset.file}`, import.meta.url)}" width="${asset.width}" height="${asset.height}" filter="url(#${filterId})" /></svg>`;
+}
+
+export function indicatorIcon(metric) {
+  const id=String(metric.id||'').split('--')[0],name=byIndicator[id]||byLabel[metric.name];
+  if(name&&thematicIcons[name])return `<span class="indicator-icon">${vector(thematicIcons[name],'thematic-icon')}</span>`;
+  // Employment glyph from the final Mobile indicator picker (Paper 1Y69-1).
+  // Other catalog topics keep the approved Brand 02 indicator symbol.
+  const employment=metric.catalogId?.startsWith('03.06')||metric.id.startsWith('unemployment');
+  const health=metric.shortCategory==='Health'||metric.id==='obesity-rate';
+  const glyph=employment?'<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>':health?'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path d="M4 12h4l2-4 4 8 2-4h4"/>':null;
+  return `<span class="indicator-icon">${glyph?`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${glyph}</svg>`:brandIcon('indicators')}</span>`;
 }

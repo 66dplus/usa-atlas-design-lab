@@ -1,0 +1,3697 @@
+{
+  "release": "2024-acs5",
+  "sources": [
+    {
+      "group": "B01001",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B01001.json"
+    },
+    {
+      "group": "B01002",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B01002.json"
+    },
+    {
+      "group": "B01003",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B01003.json"
+    },
+    {
+      "group": "B03002",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B03002.json"
+    },
+    {
+      "group": "B05001",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B05001.json"
+    },
+    {
+      "group": "B05002",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B05002.json"
+    },
+    {
+      "group": "B05005",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B05005.json"
+    },
+    {
+      "group": "B05006",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B05006.json"
+    },
+    {
+      "group": "B08301",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B08301.json"
+    },
+    {
+      "group": "B15003",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B15003.json"
+    },
+    {
+      "group": "B17001",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B17001.json"
+    },
+    {
+      "group": "B19001",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B19001.json"
+    },
+    {
+      "group": "B19013",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B19013.json"
+    },
+    {
+      "group": "B19301",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B19301.json"
+    },
+    {
+      "group": "B25003",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B25003.json"
+    },
+    {
+      "group": "B25064",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B25064.json"
+    },
+    {
+      "group": "B25070",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B25070.json"
+    },
+    {
+      "group": "B25077",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B25077.json"
+    },
+    {
+      "group": "B25088",
+      "url": "https://api.census.gov/data/2024/acs/acs5/groups/B25088.json"
+    }
+  ],
+  "variables": {
+    "B01001_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 30 to 34 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 30 to 34 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 25 to 29 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 25 to 29 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 40 to 44 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 40 to 44 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 35 to 39 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 35 to 39 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 50 to 54 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 50 to 54 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 45 to 49 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 45 to 49 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 60 and 61 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 62 to 64 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 55 to 59 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 55 to 59 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 60 and 61 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 62 to 64 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 65 and 66 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 65 and 66 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_022E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 70 to 74 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_022M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 70 to 74 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 67 to 69 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 67 to 69 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_024E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 80 to 84 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_024M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 80 to 84 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_023E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 75 to 79 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_023M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 75 to 79 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_026E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female:",
+      "concept": "Sex by Age"
+    },
+    "B01001_026M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female:",
+      "concept": "Sex by Age"
+    },
+    "B01001_025E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 85 years and over",
+      "concept": "Sex by Age"
+    },
+    "B01001_025M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 85 years and over",
+      "concept": "Sex by Age"
+    },
+    "B01001_028E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 5 to 9 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_028M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 5 to 9 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_029E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 10 to 14 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_027E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 Under 5 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_027M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 Under 5 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_029M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 10 to 14 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_030E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 15 to 17 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_030M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 15 to 17 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_032E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 20 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_032M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 20 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_031E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 18 and 19 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_031M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 18 and 19 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_034E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 22 to 24 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_034M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 22 to 24 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_033E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 21 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_033M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 21 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_036E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 30 to 34 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_036M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 30 to 34 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_035E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 25 to 29 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_035M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 25 to 29 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_038E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 40 to 44 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_038M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 40 to 44 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_037E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 35 to 39 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_037M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 35 to 39 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_039E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 45 to 49 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_039M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 45 to 49 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_040E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 50 to 54 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_040M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 50 to 54 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_042E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 60 and 61 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_042M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 60 and 61 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_041E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 55 to 59 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_041M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 55 to 59 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_044E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 65 and 66 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_044M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 65 and 66 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_043E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 62 to 64 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_043M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 62 to 64 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_046E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 70 to 74 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_046M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 70 to 74 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_045E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 67 to 69 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_045M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 67 to 69 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_048E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 80 to 84 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_048M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 80 to 84 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_047E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 75 to 79 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_047M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 75 to 79 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_049E": {
+      "label": "Estimate \u00b7 Total \u00b7 Female \u00b7 85 years and over",
+      "concept": "Sex by Age"
+    },
+    "B01001_049M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Female \u00b7 85 years and over",
+      "concept": "Sex by Age"
+    },
+    "B01001_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male:",
+      "concept": "Sex by Age"
+    },
+    "B01001_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male:",
+      "concept": "Sex by Age"
+    },
+    "B01001_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Sex by Age"
+    },
+    "B01001_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Sex by Age"
+    },
+    "B01001_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 5 to 9 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 5 to 9 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 Under 5 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 Under 5 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 15 to 17 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 15 to 17 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 18 and 19 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 10 to 14 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 10 to 14 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 20 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 21 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 18 and 19 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 20 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 21 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Male \u00b7 22 to 24 years",
+      "concept": "Sex by Age"
+    },
+    "B01001_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Male \u00b7 22 to 24 years",
+      "concept": "Sex by Age"
+    },
+    "B01002_002M": {
+      "label": "Margin of Error \u00b7 Median age -- \u00b7 Male",
+      "concept": "Median Age by Sex"
+    },
+    "B01002_002E": {
+      "label": "Estimate \u00b7 Median age -- \u00b7 Male",
+      "concept": "Median Age by Sex"
+    },
+    "B01002_003M": {
+      "label": "Margin of Error \u00b7 Median age -- \u00b7 Female",
+      "concept": "Median Age by Sex"
+    },
+    "B01002_003E": {
+      "label": "Estimate \u00b7 Median age -- \u00b7 Female",
+      "concept": "Median Age by Sex"
+    },
+    "B01002_001M": {
+      "label": "Margin of Error \u00b7 Median age -- \u00b7 Total:",
+      "concept": "Median Age by Sex"
+    },
+    "B01002_001E": {
+      "label": "Estimate \u00b7 Median age -- \u00b7 Total:",
+      "concept": "Median Age by Sex"
+    },
+    "B01003_001E": {
+      "label": "Estimate \u00b7 Total",
+      "concept": "Total Population"
+    },
+    "B01003_001M": {
+      "label": "Margin of Error \u00b7 Total",
+      "concept": "Total Population"
+    },
+    "B03002_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Two or more races \u00b7 Two races excluding Some other race, and three or more races",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Two or more races \u00b7 Two races excluding Some other race, and three or more races",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Two or more races \u00b7 Two races including Some other race",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Two or more races \u00b7 Two races including Some other race",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 American Indian and Alaska Native alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 American Indian and Alaska Native alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Black or African American alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Black or African American alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 White alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 White alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Two or more races:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Some other race alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Two or more races:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Native Hawaiian and Other Pacific Islander alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Native Hawaiian and Other Pacific Islander alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Some other race alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Asian alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Asian alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 White alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 White alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Two or more races \u00b7 Two races excluding Some other race, and three or more races",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Two or more races \u00b7 Two races excluding Some other race, and three or more races",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Two or more races \u00b7 Two races including Some other race",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not Hispanic or Latino \u00b7 Two or more races \u00b7 Two races including Some other race",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Native Hawaiian and Other Pacific Islander alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Native Hawaiian and Other Pacific Islander alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Asian alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Asian alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 American Indian and Alaska Native alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 American Indian and Alaska Native alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Black or African American alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Black or African American alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Two or more races:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Some other race alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Some other race alone",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B03002_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Hispanic or Latino \u00b7 Two or more races:",
+      "concept": "Hispanic or Latino Origin by Race"
+    },
+    "B05001_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 U.S. citizen, born in the United States",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 U.S. citizen, born in the United States",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 U.S. citizen, born abroad of American parent(s)",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 U.S. citizen, born abroad of American parent(s)",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 U.S. citizen, born in Puerto Rico or U.S. Island Areas",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 U.S. citizen, born in Puerto Rico or U.S. Island Areas",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not a U.S. citizen",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not a U.S. citizen",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 U.S. citizen by naturalization",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05001_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 U.S. citizen by naturalization",
+      "concept": "Nativity and Citizenship Status in the United States"
+    },
+    "B05002_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born outside the United States:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born outside the United States:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 West",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 West",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 South",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 South",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 Midwest",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 Midwest",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 Northeast",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States \u00b7 Northeast",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born in other state in the United States:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born in state of residence",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born in state of residence",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born:",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born outside the United States \u00b7 Born abroad of American parent(s)",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born outside the United States \u00b7 Born abroad of American parent(s)",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born outside the United States \u00b7 U.S. Island Areas",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born outside the United States \u00b7 U.S. Island Areas",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Native \u00b7 Born outside the United States \u00b7 Puerto Rico",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Native \u00b7 Born outside the United States \u00b7 Puerto Rico",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Latin America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Latin America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Oceania",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Oceania",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Africa",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Africa",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Asia",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Asia",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Europe",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Europe",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_025M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Oceania",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_025E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Oceania",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_024M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Africa",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_024E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Africa",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_023E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Asia",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_023M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Asia",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_022E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Europe",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_022M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Europe",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Northern America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen \u00b7 Northern America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_027M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Northern America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_027E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Northern America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_026M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Latin America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05002_026E": {
+      "label": "Estimate \u00b7 Total \u00b7 Foreign-born \u00b7 Not a U.S. citizen \u00b7 Latin America",
+      "concept": "Place of Birth by Nativity and Citizenship Status"
+    },
+    "B05005_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2010 or later:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2010 or later:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2010 or later \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2000 to 2009:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2000 to 2009:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 2000 to 2009 \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 1990 to 1999:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 1990 to 1999:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered 1990 to 1999 \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered before 1990:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered before 1990:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered before 1990 \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered before 1990 \u00b7 Native",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered before 1990 \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered before 1990 \u00b7 Foreign-born:",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered before 1990 \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered before 1990 \u00b7 Foreign-born \u00b7 Naturalized U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Entered before 1990 \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05005_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Entered before 1990 \u00b7 Foreign-born \u00b7 Not a U.S. citizen",
+      "concept": "Period of Entry by Nativity and Citizenship Status in the United States"
+    },
+    "B05006_084E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Israel",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_084M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Israel",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_085E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Jordan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_085M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Jordan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_082E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Georgia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_082M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Georgia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_083E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Iraq",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_083M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Iraq",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_080E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Armenia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_080M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Armenia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_081E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Azerbaijan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_081M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Azerbaijan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_088E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Saudi Arabia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_088M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Saudi Arabia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_089E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Syria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_089M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Syria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_086E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Kuwait",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_086M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Kuwait",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_087E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Lebanon",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_087M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Lebanon",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_096E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_096M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_097E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Eritrea",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_097M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Eritrea",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_094E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Asia, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_094M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Asia, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_095E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_095M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_092E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Yemen",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_092M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Yemen",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_093E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Other Western Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_093M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Other Western Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_090E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Turkey",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_090M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 Turkey",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_091E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 United Arab Emirates",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_091M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia \u00b7 United Arab Emirates",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_098E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Ethiopia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_098M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Ethiopia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_099E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Kenya",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_099M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Kenya",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Netherlands",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Switzerland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Switzerland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_028M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_029E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Albania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_029M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Albania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_026E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Spain",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_026M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Spain",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_027E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Other Southern Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_027M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Other Southern Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_028E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_024E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Portugal",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_024M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Portugal",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_025E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Portugal \u00b7 Azores Islands",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_025M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Portugal \u00b7 Azores Islands",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_022E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Greece",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_022M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Greece",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_023E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Italy",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_023M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe \u00b7 Italy",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Other Western Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Other Western Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Southern Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Southern Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_038E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Moldova",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_038M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Moldova",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_039E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 North Macedonia (Macedonia)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_039M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 North Macedonia (Macedonia)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_036E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Latvia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_036M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Latvia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_037E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Lithuania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_037M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Lithuania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_034E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Czechoslovakia (includes Czech Republic and Slovakia)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_034M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Czechoslovakia (includes Czech Republic and Slovakia)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_035E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Hungary",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_035M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Hungary",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_032E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Bulgaria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_032M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Bulgaria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_033E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Croatia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_033M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Croatia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_030E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Belarus",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_030M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Belarus",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_031E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Bosnia and Herzegovina",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_031M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Bosnia and Herzegovina",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Denmark",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Denmark",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Ireland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Ireland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Norway",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies):",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies) \u00b7 United Kingdom, excluding England and Scotland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies) \u00b7 United Kingdom, excluding England and Scotland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Norway",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Sweden",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Sweden",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies):",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 France",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 France",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Germany",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Germany",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Netherlands",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Austria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Austria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Belgium",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe \u00b7 Belgium",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Other Northern Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 Other Northern Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Western Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Western Europe:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies) \u00b7 England",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies) \u00b7 England",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies) \u00b7 Scotland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Northern Europe \u00b7 United Kingdom (inc. Crown Dependencies) \u00b7 Scotland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_060E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 India",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_060M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 India",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_061E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Iran",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_061M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Iran",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_068E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_068M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_069E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Burma (Myanmar)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_069M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Burma (Myanmar)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_066E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Uzbekistan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_066M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Uzbekistan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_067E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Other South Central Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_067M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Other South Central Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_064E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Pakistan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_064M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Pakistan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_065E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Sri Lanka",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_065M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Sri Lanka",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_062E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Kazakhstan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_062M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Kazakhstan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_063E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Nepal",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_063M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Nepal",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_072E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Laos",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_072M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Laos",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_073E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Malaysia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_073M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Malaysia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_070E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Cambodia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_070M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Cambodia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_071E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Indonesia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_071M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Indonesia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_078E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Other South Eastern Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_078M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Other South Eastern Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_079E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Western Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_079M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Western Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_076E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Thailand",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_076M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Thailand",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_077E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Vietnam",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_077M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Vietnam",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_074E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Philippines",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_074M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Philippines",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_075E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Singapore",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_075M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Eastern Asia \u00b7 Singapore",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_048E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_048M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_049E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_049M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_046E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Europe, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_046M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Europe, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_047E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_047M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_044E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Ukraine",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_044M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Ukraine",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_045E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Other Eastern Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_045M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Other Eastern Europe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_042E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Russia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_042M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Russia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_043E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Serbia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_043M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Serbia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_040E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Poland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_040M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Poland",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_041E": {
+      "label": "Estimate \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Romania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_041M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Europe \u00b7 Eastern Europe \u00b7 Romania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_058E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Bangladesh",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_058M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Bangladesh",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_059E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Bhutan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_059M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Bhutan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_056E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_056M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_057E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Afghanistan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_057M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 South Central Asia \u00b7 Afghanistan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_054E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 Korea",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_054M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 Korea",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_055E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 Other Eastern Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_055M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 Other Eastern Asia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_052E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China \u00b7 Taiwan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_052M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China \u00b7 Taiwan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_053E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 Japan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_053M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 Japan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_050E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China \u00b7 China, excluding Hong Kong and Taiwan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_050M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China \u00b7 China, excluding Hong Kong and Taiwan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_051E": {
+      "label": "Estimate \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China \u00b7 Hong Kong",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_051M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Asia \u00b7 Eastern Asia \u00b7 China \u00b7 Hong Kong",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_109M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Other Middle Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_107M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Congo",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_108E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Democratic Republic of Congo (Zaire)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_108M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Democratic Republic of Congo (Zaire)",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_109E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Other Middle Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_105M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Middle Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_106E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Cameroon",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_106M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Cameroon",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_107E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Middle Africa \u00b7 Congo",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_103E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Zimbabwe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_103M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Zimbabwe",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_104E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Other Eastern Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_104M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Other Eastern Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_105E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Middle Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_113E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Morocco",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_113M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Morocco",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_114E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Sudan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_114M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Sudan",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_111E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Algeria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_111M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Algeria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_112E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Egypt",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_112M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Egypt",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_110E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Northern Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_110M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Northern Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_119M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_117M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Southern Africa \u00b7 South Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_118E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Southern Africa \u00b7 Other Southern Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_118M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Southern Africa \u00b7 Other Southern Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_119E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_115E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Other Northern Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_115M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Northern Africa \u00b7 Other Northern Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_116E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Southern Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_116M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Southern Africa:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_117E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Southern Africa \u00b7 South Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_125E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Senegal",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_125M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Senegal",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_126E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Sierra Leone",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_126M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Sierra Leone",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_127E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Togo",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_123E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Liberia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_123M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Liberia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_124E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Nigeria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_124M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Nigeria",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_121E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Ghana",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_121M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Ghana",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_122E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Ivory Coast",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_122M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Ivory Coast",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_120E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Cabo Verde",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_120M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Cabo Verde",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_101E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Tanzania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_101M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Tanzania",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_102E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Uganda",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_102M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Uganda",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_100E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Somalia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_100M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Eastern Africa \u00b7 Somalia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_159E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Honduras",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_159M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Honduras",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_157E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 El Salvador",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_157M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 El Salvador",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_158E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Guatemala",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_158M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Guatemala",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_155E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Belize",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_155M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Belize",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_156E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Costa Rica",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_156M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Costa Rica",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_153E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Other Caribbean",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_153M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Other Caribbean",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_154E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_154M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_151E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Trinidad and Tobago",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_151M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Trinidad and Tobago",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_152E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 West Indies",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_152M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 West Indies",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_150E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 St. Vincent and the Grenadines",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_150M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 St. Vincent and the Grenadines",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_169E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Colombia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_169M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Colombia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_167E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Brazil",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_167M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Brazil",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_168E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Chile",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_168M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Chile",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_165E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Argentina",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_165M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Argentina",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_166E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Bolivia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_166M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Bolivia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_163E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Other Central America",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_163M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Other Central America",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_164E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_164M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_161E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Nicaragua",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_161M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Nicaragua",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_162E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Panama",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_162M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Panama",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_160E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Mexico",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_160M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Central America \u00b7 Mexico",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_129M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Africa, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_127M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Togo",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_128E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Other Western Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_128M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Africa \u00b7 Western Africa \u00b7 Other Western Africa",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_129E": {
+      "label": "Estimate \u00b7 Total \u00b7 Africa \u00b7 Africa, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_137E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Oceania, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_137M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Oceania, n.e.c.",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_138E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_138M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_139E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_135E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Marshall Islands",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_135M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Marshall Islands",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_136E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Micronesia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_136M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Micronesia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_133E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Australia and New Zealand Subregion \u00b7 Other Australian and New Zealand Subregion",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_133M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Australia and New Zealand Subregion \u00b7 Other Australian and New Zealand Subregion",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_134E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Fiji",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_134M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Fiji",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_131E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Australia and New Zealand Subregion:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_131M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Australia and New Zealand Subregion:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_132E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania \u00b7 Australia and New Zealand Subregion \u00b7 Australia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_132M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania \u00b7 Australia and New Zealand Subregion \u00b7 Australia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_130E": {
+      "label": "Estimate \u00b7 Total \u00b7 Oceania:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_130M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Oceania:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_139M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_149M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 St. Lucia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_147E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Haiti",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_147M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Haiti",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_148E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Jamaica",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_148M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Jamaica",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_149E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 St. Lucia",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_145E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Dominican Republic",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_145M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Dominican Republic",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_146E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Grenada",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_146M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Grenada",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_143E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Cuba",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_143M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Cuba",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_144E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Dominica",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_144M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Dominica",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_141E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Bahamas",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_141M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Bahamas",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_142E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Barbados",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_142M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean \u00b7 Barbados",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_140E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_140M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 Caribbean:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_170E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Ecuador",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_170M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Ecuador",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_177E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Northern America \u00b7 Canada",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_177M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Northern America \u00b7 Canada",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_178E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Northern America \u00b7 Other Northern America",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_178M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Northern America \u00b7 Other Northern America",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_175E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Other South America",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_175M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Other South America",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_176E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Northern America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_176M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Northern America:",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_173E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Uruguay",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_173M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Uruguay",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_174E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Venezuela",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_174M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Venezuela",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_171E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Guyana",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_171M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Guyana",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_172E": {
+      "label": "Estimate \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Peru",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B05006_172M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Americas \u00b7 Latin America \u00b7 South America \u00b7 Peru",
+      "concept": "Place of Birth for the Foreign-Born Population in the United States"
+    },
+    "B08301_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 4-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 4-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 3-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 3-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 7-or-more-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 7-or-more-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 5- or 6-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 5- or 6-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Drove alone",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Drove alone",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 2-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled \u00b7 In 2-person carpool",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Car, truck, or van \u00b7 Carpooled:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Public transportation \u00b7 Bus",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Public transportation \u00b7 Bus",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Public transportation:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Public transportation:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Public transportation \u00b7 Long-distance train or commuter rail",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Public transportation \u00b7 Long-distance train or commuter rail",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Public transportation \u00b7 Subway or elevated rail",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Public transportation \u00b7 Subway or elevated rail",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Walked",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Walked",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Bicycle",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Bicycle",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Public transportation \u00b7 Ferryboat",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Public transportation \u00b7 Ferryboat",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Public transportation \u00b7 Light rail, streetcar or trolley (carro p\u00fablico in Puerto Rico)",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Public transportation \u00b7 Light rail, streetcar or trolley (carro p\u00fablico in Puerto Rico)",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Motorcycle",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Motorcycle",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Taxi or ride-hailing services",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Taxi or ride-hailing services",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Worked from home",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Worked from home",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Other means",
+      "concept": "Means of Transportation to Work"
+    },
+    "B08301_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Other means",
+      "concept": "Means of Transportation to Work"
+    },
+    "B15003_025M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Doctorate degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_025E": {
+      "label": "Estimate \u00b7 Total \u00b7 Doctorate degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_024M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Professional school degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_024E": {
+      "label": "Estimate \u00b7 Total \u00b7 Professional school degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_023M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Master's degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_023E": {
+      "label": "Estimate \u00b7 Total \u00b7 Master's degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_022M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Bachelor's degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_022E": {
+      "label": "Estimate \u00b7 Total \u00b7 Bachelor's degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Associate's degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Associate's degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Some college, 1 or more years, no degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Some college, 1 or more years, no degree",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Nursery school",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Nursery school",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 No schooling completed",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 No schooling completed",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 5th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 4th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 5th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 3rd grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 3rd grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 4th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 2nd grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 2nd grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 1st grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 1st grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Kindergarten",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Kindergarten",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 11th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 11th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 10th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 10th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 9th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 9th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 8th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 8th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 7th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 7th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 6th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 6th grade",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Some college, less than 1 year",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 GED or alternative credential",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 GED or alternative credential",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Some college, less than 1 year",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Regular high school diploma",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Regular high school diploma",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 12th grade, no diploma",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B15003_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 12th grade, no diploma",
+      "concept": "Educational Attainment for the Population 25 Years and Over"
+    },
+    "B17001_050M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_050E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_051E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_051M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_052E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_052M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_053E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_053M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_054E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_054M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_055E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_055M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_056E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_056M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_057E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_057M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_058E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_058M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_059M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_059E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_040E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_040M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_041E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_041M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_042E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_042M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_043E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_043M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_044E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_044M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_045E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_045M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_046E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_046M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_047E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_047M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_048M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_048E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_049M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_049E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Female \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_030E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_030M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_031E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_031M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_032E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_032M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_033E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_033M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_034E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_034M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_035E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_035M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_036E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_036M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_037M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_037E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_038M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_038E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_039M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_039E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months at or above poverty level \u00b7 Male \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_020E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_020M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_021E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_021M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_022E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_022M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_023E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_023M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_024E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_024M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_025E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_025M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_026M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_026E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_027M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_027E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_028M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_028E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_029M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_029E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_018M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_018E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_019M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_019E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 18 to 24 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 25 to 34 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 35 to 44 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 45 to 54 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 55 to 64 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 65 to 74 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 75 years and over",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Female:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 6 to 11 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 12 to 14 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 15 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 16 and 17 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male:",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 Under 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B17001_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 Income in the past 12 months below poverty level \u00b7 Male \u00b7 5 years",
+      "concept": "Poverty Status in the Past 12 Months by Sex by Age"
+    },
+    "B19001_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 $25,000 to $29,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $25,000 to $29,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 $30,000 to $34,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $30,000 to $34,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 $35,000 to $39,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $35,000 to $39,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 $40,000 to $44,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $40,000 to $44,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Less than $10,000",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Less than $10,000",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $10,000 to $14,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 $10,000 to $14,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $15,000 to $19,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 $15,000 to $19,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $20,000 to $24,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 $20,000 to $24,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_014M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $100,000 to $124,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_014E": {
+      "label": "Estimate \u00b7 Total \u00b7 $100,000 to $124,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_015M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $125,000 to $149,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_015E": {
+      "label": "Estimate \u00b7 Total \u00b7 $125,000 to $149,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_016M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $150,000 to $199,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_016E": {
+      "label": "Estimate \u00b7 Total \u00b7 $150,000 to $199,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_017E": {
+      "label": "Estimate \u00b7 Total \u00b7 $200,000 or more",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_017M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $200,000 or more",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $45,000 to $49,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 $45,000 to $49,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $50,000 to $59,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 $50,000 to $59,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_012M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $60,000 to $74,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_012E": {
+      "label": "Estimate \u00b7 Total \u00b7 $60,000 to $74,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_013M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 $75,000 to $99,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19001_013E": {
+      "label": "Estimate \u00b7 Total \u00b7 $75,000 to $99,999",
+      "concept": "Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19013_001E": {
+      "label": "Estimate \u00b7 Median household income in the past 12 months (in 2024 inflation-adjusted dollars)",
+      "concept": "Median Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19013_001M": {
+      "label": "Margin of Error \u00b7 Median household income in the past 12 months (in 2024 inflation-adjusted dollars)",
+      "concept": "Median Household Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19301_001M": {
+      "label": "Margin of Error \u00b7 Per capita income in the past 12 months (in 2024 inflation-adjusted dollars)",
+      "concept": "Per Capita Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B19301_001E": {
+      "label": "Estimate \u00b7 Per capita income in the past 12 months (in 2024 inflation-adjusted dollars)",
+      "concept": "Per Capita Income in the Past 12 Months (in 2024 Inflation-Adjusted Dollars)"
+    },
+    "B25003_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 Renter occupied",
+      "concept": "Tenure"
+    },
+    "B25003_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Renter occupied",
+      "concept": "Tenure"
+    },
+    "B25003_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Owner occupied",
+      "concept": "Tenure"
+    },
+    "B25003_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Owner occupied",
+      "concept": "Tenure"
+    },
+    "B25003_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Tenure"
+    },
+    "B25003_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Tenure"
+    },
+    "B25064_001E": {
+      "label": "Estimate \u00b7 Median gross rent",
+      "concept": "Median Gross Rent (Dollars)"
+    },
+    "B25064_001M": {
+      "label": "Margin of Error \u00b7 Median gross rent",
+      "concept": "Median Gross Rent (Dollars)"
+    },
+    "B25070_003E": {
+      "label": "Estimate \u00b7 Total \u00b7 10.0 to 14.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_003M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 10.0 to 14.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_002E": {
+      "label": "Estimate \u00b7 Total \u00b7 Less than 10.0 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_002M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Less than 10.0 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_001E": {
+      "label": "Estimate \u00b7 Total:",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_001M": {
+      "label": "Margin of Error \u00b7 Total:",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_007E": {
+      "label": "Estimate \u00b7 Total \u00b7 30.0 to 34.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_007M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 30.0 to 34.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_006E": {
+      "label": "Estimate \u00b7 Total \u00b7 25.0 to 29.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_006M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 25.0 to 29.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_005E": {
+      "label": "Estimate \u00b7 Total \u00b7 20.0 to 24.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_005M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 20.0 to 24.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_004E": {
+      "label": "Estimate \u00b7 Total \u00b7 15.0 to 19.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_004M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 15.0 to 19.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_009E": {
+      "label": "Estimate \u00b7 Total \u00b7 40.0 to 49.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_009M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 40.0 to 49.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_008E": {
+      "label": "Estimate \u00b7 Total \u00b7 35.0 to 39.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_008M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 35.0 to 39.9 percent",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_011E": {
+      "label": "Estimate \u00b7 Total \u00b7 Not computed",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_011M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 Not computed",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_010E": {
+      "label": "Estimate \u00b7 Total \u00b7 50.0 percent or more",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25070_010M": {
+      "label": "Margin of Error \u00b7 Total \u00b7 50.0 percent or more",
+      "concept": "Gross Rent as a Percentage of Household Income in the Past 12 Months"
+    },
+    "B25077_001M": {
+      "label": "Margin of Error \u00b7 Median value (dollars)",
+      "concept": "Median Value (Dollars)"
+    },
+    "B25077_001E": {
+      "label": "Estimate \u00b7 Median value (dollars)",
+      "concept": "Median Value (Dollars)"
+    },
+    "B25088_001E": {
+      "label": "Estimate \u00b7 Median selected monthly owner costs (dollars) -- \u00b7 Total:",
+      "concept": "Median Selected Monthly Owner Costs (Dollars) by Mortgage Status"
+    },
+    "B25088_001M": {
+      "label": "Margin of Error \u00b7 Median selected monthly owner costs (dollars) -- \u00b7 Total:",
+      "concept": "Median Selected Monthly Owner Costs (Dollars) by Mortgage Status"
+    },
+    "B25088_003M": {
+      "label": "Margin of Error \u00b7 Median selected monthly owner costs (dollars) -- \u00b7 Housing units without a mortgage (dollars)",
+      "concept": "Median Selected Monthly Owner Costs (Dollars) by Mortgage Status"
+    },
+    "B25088_003E": {
+      "label": "Estimate \u00b7 Median selected monthly owner costs (dollars) -- \u00b7 Housing units without a mortgage (dollars)",
+      "concept": "Median Selected Monthly Owner Costs (Dollars) by Mortgage Status"
+    },
+    "B25088_002M": {
+      "label": "Margin of Error \u00b7 Median selected monthly owner costs (dollars) -- \u00b7 Housing units with a mortgage (dollars)",
+      "concept": "Median Selected Monthly Owner Costs (Dollars) by Mortgage Status"
+    },
+    "B25088_002E": {
+      "label": "Estimate \u00b7 Median selected monthly owner costs (dollars) -- \u00b7 Housing units with a mortgage (dollars)",
+      "concept": "Median Selected Monthly Owner Costs (Dollars) by Mortgage Status"
+    }
+  },
+  "tableUnits": {
+    "B01001": "people",
+    "B01002": "years",
+    "B01003": "people",
+    "B03002": "people",
+    "B05001": "people",
+    "B05002": "people",
+    "B05005": "people",
+    "B05006": "people",
+    "B08301": "people",
+    "B15003": "people",
+    "B17001": "people",
+    "B19001": "households",
+    "B19013": "USD",
+    "B19301": "USD",
+    "B25003": "occupied housing units",
+    "B25064": "USD",
+    "B25070": "renter-occupied housing units",
+    "B25077": "USD",
+    "B25088": "USD"
+  },
+  "periodDefinitionUrl": "https://www.census.gov/programs-surveys/acs/guidance/estimates.html"
+}

@@ -9,22 +9,10 @@ const WIDTH = 1200, HEIGHT = 750;
 const color = value => value == null ? '#aaa49e' : d3.interpolateRgbBasis(EMBER)(value);
 const RELIEF=.28;
 
-async function fetchJson(url){
-  let error;
-  for(let attempt=0;attempt<3;attempt++){
-    try{
-      const response=await fetch(url,{cache:'no-store'});
-      if(!response.ok)throw new Error(`HTTP ${response.status}`);
-      return await response.json();
-    }catch(cause){error=cause;if(attempt<2)await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));}
-  }
-  throw error;
-}
-
 export async function loadGeography() {
-  let us,world,repair,cities;
-  try{[us,world,repair,cities]=await Promise.all(['../node_modules/us-atlas/counties-10m.json','../node_modules/world-atlas/countries-110m.json','county-boundary-repair.json','cities.json'].map(fetchJson));}
-  catch{throw new Error('Geographic boundaries could not be loaded. Reload to retry.');}
+  const responses=await Promise.all(['../node_modules/us-atlas/counties-10m.json','../node_modules/world-atlas/countries-110m.json','county-boundary-repair.json','cities.json'].map(url=>fetch(url)));
+  if(responses.some(r=>!r.ok)) throw new Error('Geographic boundaries could not be loaded. Reload to retry.');
+  const [us,world,repair,cities]=await Promise.all(responses.map(r=>r.json()));
   const states=topojson.feature(us,us.objects.states).features.filter(f=>Number(f.id)<60);
   const counties=topojson.feature(us,us.objects.counties).features.filter(f=>Number(f.id.slice(0,2))<60);
   // The simplified source collapses Falls Church to a line; use its verified 2017 polygon.
@@ -93,7 +81,8 @@ export class ExplorerMap {
     this.countyPaths.on('click',(event,d)=>{event.stopPropagation();this.pick(d.id);}).on('pointerenter',(e,d)=>this.hover(d.id)).on('pointerleave',()=>this.onHover(null));
     this.zoomBehavior=d3.zoom().scaleExtent([.15,80]).translateExtent(geo.path.bounds({type:'Sphere'})).clickDistance(6).on('zoom',event=>{if(this.flatActive)this.flat.setTransform(event.transform);else this.layer.attr('transform',event.transform);this.renderLabels();this.renderRankMarkers();});
     this.svg.call(this.zoomBehavior).on('dblclick.zoom',null);
-    this.svg.on('click.flat',event=>{if(!this.flatActive)return;const id=this.flat.hit(event);if(id)this.pick(id);});
+    this.svg.on('click.flat',event=>{if(!this.flatActive)return;const id=this.flat.hit(event);if(id)this.pick(id);else this.exitFocus();});
+    this.svg.on('click.background',event=>{if(!this.flatActive&&event.target===this.svg.node())this.exitFocus();});
     this.svg.on('pointermove.flat',event=>{
       if(!this.flatActive||event.buttons)return;
       this.hoverEvent={clientX:event.clientX,clientY:event.clientY};if(this.hoverFrame)return;
@@ -101,6 +90,8 @@ export class ExplorerMap {
     }).on('pointerleave.flat',()=>{if(this.flatActive){this.flatHovered=null;this.flat.hover(null);this.onHover(null);}});
     this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(host);
     this.frame=0;this.isDisposed=false;this.dim=0;this.phase='overview';
+    this.onEscape=event=>{if(event.key==='Escape'&&this.state.selectedId&&!this.host.closest('[inert]')&&!document.querySelector('.drawer:not([hidden]):not([inert]),#view-settings-panel:not([hidden]):not([inert])')&&!/INPUT|TEXTAREA/.test(event.target.tagName))this.exitFocus();};
+    document.addEventListener('keydown',this.onEscape);
   }
   pick(id) {
     const selected=this.state.selectedId;
@@ -144,7 +135,7 @@ export class ExplorerMap {
     const cameraChanged=['tilt','cameraSide','minZoom','maxZoom'].some(key=>oldSettings?.[key]!==next.settings[key]);
     this.settings=next.settings;
     if(changedMode||changedLayout){this.cancelMotion();this.session=null;this.dim=0;}
-    const before=this.renderer&&!changedMode&&!changedLayout?this.snapshotPose():null;
+    const before=this.renderer&&!changedMode?this.snapshotPose():null;
     this.state={...previous,...next};
     const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
     this.setFlatMode(mode==='2d'&&this.state.renderer2d==='webgl');
@@ -178,15 +169,16 @@ export class ExplorerMap {
       }
       if(this.session&&selectedId)this.session.parent=parent;
       const first=!this.initialized||changedMode||changedLayout;
+      this.layoutEntry=Boolean(next.animateEntry);
       if(changedPlace||first||cameraChanged||changedRanks){
         if(next.ranks?.length)this.animateTo(this.pose(),0,{immediate:first});
         else if(!selectedId&&this.session){this.animateTo(this.session.overview,0,{restoring:true});}
         else{
-          if(first){this.applyPose(this.pose(null,mode));}
-          this.animateTo(this.pose(),selectedId?1:0,{immediate:first});
+          if(first){this.applyPose(next.animateEntry&&before?this.resizedPose(before,previous.selectedId):this.pose(null,mode));}
+          this.animateTo(this.pose(),selectedId?1:0,{immediate:first&&!next.animateEntry});
         }
       }else{this.configureControls();this.render();}
-      this.resize();
+      this.resize();this.layoutEntry=false;
     }catch(error){this.onError(error.message);}
     this.renderRankMarkers();
     this.initialized=true;
@@ -280,8 +272,6 @@ export class ExplorerMap {
 
     });
     canvas.addEventListener('pointerleave',()=>{this.hoveredPlace=null;this.onHover(null);this.highlight(null);});
-    this.onEscape=event=>{if(event.key==='Escape'&&this.state.selectedId&&!this.host.closest('[inert]')&&!document.querySelector('.drawer:not([hidden]),#view-settings-panel:not([hidden])')&&!/INPUT|TEXTAREA/.test(event.target.tagName))this.exitFocus();};
-    document.addEventListener('keydown',this.onEscape);
   }
   clearGroup(group) {
     group?.traverse(o=>{o.geometry?.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material]){m.map?.dispose();m.dispose();}});
@@ -372,7 +362,7 @@ export class ExplorerMap {
     if(!duration){finish();return;}
     const a=new THREE.Vector3().fromArray(from.position),b=new THREE.Vector3().fromArray(pose.position),ta=new THREE.Vector3().fromArray(from.target),tb=new THREE.Vector3().fromArray(pose.target);
     const step=now=>{
-      if(this.isDisposed)return;const t=Math.min(1,(now-start)/duration),e=t*t*(3-2*t);
+      if(this.isDisposed)return;const t=Math.max(0,Math.min(1,(now-start)/duration)),e=t*t*(3-2*t);
       this.camera.position.lerpVectors(a,b,e);this.controls.target.lerpVectors(ta,tb,e);this.camera.lookAt(this.controls.target);
       this.dim=fromDim+(dim-fromDim)*e;this.heightScale=fromHeight+(toHeight-fromHeight)*e;this.render();
       if(t<1)this.frame=requestAnimationFrame(step);else finish();
@@ -381,7 +371,7 @@ export class ExplorerMap {
   }
   cancelMotion(){cancelAnimationFrame(this.frame);cancelAnimationFrame(this.zoomFrame);this.transition=null;this.zoomDestination=null;}
   settle(){if(this.transition){const finish=this.transition.finish;this.cancelMotion();finish();}else this.cancelMotion();for(const group of this.stateGroups?.values()||[])group.rotation.set(0,0,0);this.svg?.interrupt();this.flat?.renderNow();this.render();}
-  exitFocus(){if(this.state.selectedId)this.onSelect(null);}
+  exitFocus(){const id=this.state.selectedId;if(id)this.onSelect(id.length===5?id.slice(0,2):null);}
   highlight(id){
     if(this.hoveredState===id)return;this.hoveredState=id;
     for(const [key,group] of this.stateGroups||[]){group.userData.outline.material.color.set(key===id?'#ffffff':'#ffe9bc');}
@@ -406,7 +396,7 @@ export class ExplorerMap {
     const delta=this.camera.position.clone().sub(this.controls.target),start=delta.length();
     const length=THREE.MathUtils.clamp((this.zoomDestination||start)*factor,this.controls.minDistance,this.controls.maxDistance);
     this.zoomDestination=length;const direction=delta.normalize(),begin=performance.now();
-    const step=now=>{const t=this.reduced()?1:Math.min(1,(now-begin)/240),ease=1-Math.pow(1-t,3);this.camera.position.copy(this.controls.target).addScaledVector(direction,start+(length-start)*ease);this.controls.update();this.render();if(t<1)this.zoomFrame=requestAnimationFrame(step);else this.zoomDestination=null;};
+    const step=now=>{const t=this.reduced()?1:Math.max(0,Math.min(1,(now-begin)/240)),ease=1-Math.pow(1-t,3);this.camera.position.copy(this.controls.target).addScaledVector(direction,start+(length-start)*ease);this.controls.update();this.render();if(t<1)this.zoomFrame=requestAnimationFrame(step);else this.zoomDestination=null;};
     this.zoomFrame=requestAnimationFrame(step);
   }
   rotate(direction=1){
@@ -441,6 +431,7 @@ export class ExplorerMap {
     if(this.state.mode==='2d')this.renderRankMarkers();
     if(!this.renderer)return;this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
     if(changed&&this.initialized&&this.state.mode==='3d'){
+      if(this.layoutEntry){this.layoutEntry=false;this.configureControls();this.render();return;}
       this.settle();this.applyPose(this.resizedPose(this.snapshotPose()));
       if(this.session)this.session={...this.session,overview:this.resizedPose(this.session.overview,null)};
       this.configureControls();

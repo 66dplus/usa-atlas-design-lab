@@ -27,3 +27,37 @@ export function animateReplacement(node, change) {
   running.set(node,animation);
   animation.finished.then(()=>{if(running.get(node)===animation)running.delete(node);}).catch(()=>{});
 }
+
+const layouts=new WeakMap();
+export function captureMapLayout(container,maps) {
+  const old=layouts.get(container);old?.animations.forEach(animation=>animation.cancel());old?.overlay.remove();layouts.delete(container);
+  if(reducedMotion())return null;
+  const bounds=container.getBoundingClientRect(),overlay=document.createElement('div');
+  overlay.className='map-layout-transition';overlay.setAttribute('aria-hidden','true');
+  Object.assign(overlay.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'3',overflow:'hidden'});
+  for(const map of maps.filter(Boolean)){
+    const rect=map.host.getBoundingClientRect();if(!rect.width||!rect.height||!map.initialized)continue;
+    const surface=map.coverTransition();if(!surface)continue;
+    const holder=document.createElement('div');
+    Object.assign(holder.style,{position:'absolute',left:(rect.left-bounds.left)+'px',top:(rect.top-bounds.top)+'px',width:rect.width+'px',height:rect.height+'px',overflow:'hidden'});
+    holder.append(surface);overlay.append(holder);
+  }
+  if(!overlay.childElementCount)return null;
+  container.append(overlay);layouts.set(container,{overlay,animations:[]});return overlay;
+}
+export function animateMapLayout(container,overlay,{entering=false,pane}={}) {
+  const owner=layouts.get(container);if(!overlay||owner?.overlay!==overlay)return Promise.resolve();
+  const options={duration:entering?650:320,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'};
+  owner.animations.push(overlay.animate(entering?[
+    {opacity:1,clipPath:'inset(0 0 0 0)'},
+    {opacity:.8,clipPath:'inset(0 50% 0 0)',offset:.6},
+    {opacity:0,clipPath:'inset(0 50% 0 0)'},
+  ]:[{opacity:1},{opacity:0}],options));
+  if(entering&&pane)owner.animations.push(pane.animate([
+    {opacity:0,transform:'translateX(48px)'},{opacity:1,transform:'translateX(0)'},
+  ],options));
+  return Promise.all(owner.animations.map(animation=>animation.finished.catch(()=>{}))).then(()=>{
+    if(layouts.get(container)!==owner)return;
+    owner.animations.forEach(animation=>animation.cancel());overlay.remove();layouts.delete(container);
+  });
+}
