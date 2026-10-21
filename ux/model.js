@@ -47,25 +47,26 @@ export function prepareLayer(data,geo) {
     if(!Number.isFinite(row.value)||observations.has(row.id))throw new Error('The series has invalid or ambiguous observations.');
     observations.set(row.id,row);
   }
-  const numbers=[...observations].filter(([id])=>id!=='US').map(([,row])=>row.value);
+  // County values define the colour domain when the series maps counties.
+  // State totals stay in the store for the state cards but never compress a county map.
+  const countyNumbers=[...observations].filter(([id])=>id.length===5).map(([,row])=>row.value);
+  const stateNumbers=[...observations].filter(([id])=>id!=='US').map(([,row])=>row.value);
+  const numbers=countyNumbers.length?countyNumbers:stateNumbers;
   const min=numbers.length?Math.min(...numbers):null,max=numbers.length?Math.max(...numbers):null;
-  const scale=data.scale==='diverging'?'diverging':data.scale==='quantile5'?'quantile5':'quantile7';
-  const bins=scale==='quantile5'?5:7,breaks=[];
-  if(numbers.length){
-    const sorted=[...numbers].sort((a,b)=>a-b);
-    const at=position=>{const spot=(sorted.length-1)*position,low=Math.floor(spot),high=Math.ceil(spot);return sorted[low]+(sorted[high]-sorted[low])*(spot-low);};
-    for(let index=0;index<=bins;index++)breaks.push(at(index/bins));
-  }
+  const requested=data.scale==='log'?'log':data.scale==='diverging'?'diverging':'linear';
+  const scale=requested==='log'&&!(min>0)?'linear':requested;
+  const domain=scale==='diverging'?[85,115]:[min,max];
   const normalize=value=>{
     if(value==null)return null;
-    if(scale==='diverging')return Math.min(1,Math.max(0,(value-85)/30));
-    let bin=0;while(bin<bins-1&&value>breaks[bin+1])bin++;
-    return (bin+.5)/bins;
+    const [low,high]=domain;
+    if(!(high>low))return .5;
+    if(scale==='log')return Math.min(1,Math.max(0,(Math.log(value)-Math.log(low))/(Math.log(high)-Math.log(low))));
+    return Math.min(1,Math.max(0,(value-low)/(high-low)));
   };
   const height=value=>value==null?null:max===min?.5:(value-min)/(max-min);
   const values=new Map([...geo.byId.keys()].map(id=>[id,normalize(observations.get(id)?.value)]));
   const heightValues=new Map([...geo.byId.keys()].map(id=>[id,height(observations.get(id)?.value)]));
-  return {...data,status:'ready',observations,values,heightValues,breaks,bins,scale,min,max,suppressed,excludedGeographies:excluded};
+  return {...data,status:'ready',observations,values,heightValues,scale,domain,min,max,suppressed,excludedGeographies:excluded};
 }
 
 export function createDataStore(geo,onChange,request=fetch) {

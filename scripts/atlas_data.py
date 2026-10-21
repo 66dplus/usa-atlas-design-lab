@@ -57,6 +57,10 @@ NORMALIZATION = json.loads((ROOT / 'ux/metric-definitions.json').read_text())
 NORMALIZED_BY_ID = {metric['id']: metric for metric in NORMALIZATION['metrics']}
 NORMALIZED_BY_FIELD = {metric['fieldId']: metric for metric in NORMALIZATION['metrics'] if metric.get('fieldId')}
 NORMALIZED_VARIANTS = NORMALIZATION['variants']
+NORMALIZED_DERIVED = NORMALIZATION.get('derivedMetrics', [])
+HIDDEN_METRICS = set(NORMALIZATION.get('hiddenMetrics', []))
+for _definition in NORMALIZED_DERIVED:
+    NORMALIZED_BY_FIELD[_definition['fieldId']] = _definition
 
 
 def presentation_metadata(field_id, source, unit, period, release):
@@ -280,6 +284,26 @@ def catalog():
                              formula=variant['formula'])
             additions.append(clone)
     metrics.extend(additions)
+    if NORMALIZED_DERIVED:
+        bases = {metric['catalogId']: metric for metric in metrics
+                 if metric.get('catalogId') in {definition['catalogId'] for definition in NORMALIZED_DERIVED}
+                 and metric['id'] in HIDDEN_METRICS}
+        for definition in NORMALIZED_DERIVED:
+            base = bases.get(definition['catalogId'])
+            if not base:
+                continue
+            metric = {**base, 'id': definition['id'], 'fieldId': definition['fieldId'],
+                      'observations': None, 'hasObservations': True,
+                      'coverage': 'State / county',
+                      'note': 'All housing units, including vacant and seasonal units',
+                      'unitHint': 'Percent',
+                      'geographies': ['county', 'state', 'nation']}
+            for key in ('switchGroup', 'switchLabel', 'switchOptions'):
+                metric.pop(key, None)
+            apply_definition(metric, definition, definition['fieldId'], definition['label'],
+                             definition['unit'], definition['geography'])
+            metrics.append(metric)
+        metrics = [metric for metric in metrics if metric['id'] not in HIDDEN_METRICS]
     if legacy_fields:
         for proposal in proposed:
             metrics.append({**proposal, 'availability': 'unavailable', 'plannedState': 'proposed',

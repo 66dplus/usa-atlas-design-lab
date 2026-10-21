@@ -1,7 +1,7 @@
 import {initPages} from './pages.js';
 import {showSurface,slidePill,isSurfaceOpen,captureMapLayout,animateMapLayout} from './motion.js';
 import {renderCreative,isTargeted} from './advertising/creative.js';
-import {ExplorerMap,loadGeography,EMBER,DIVERGING} from './map.js';
+import {ExplorerMap,loadGeography,EMBER,DIVERGING,rampColor} from './map.js';
 import {createDataStore,readAtlasJSON,loadedMapMetrics,collectedMapIndicators,displayLayer,formatValue,formatPeriod,missingReason,comparable} from './model.js?v=postgres-1';
 import {loadViewSettings,initViewSettings} from './settings.js';
 import {brandIcon,indicatorIcon} from './icons.js';
@@ -386,19 +386,17 @@ function render(){
   $('#mobile-compare-metric').textContent=metric().name.replace(/ rate$/,'');
   const comparisonSource=$('#mobile-comparison-source');comparisonSource.innerHTML=`${sourceLink(metric(),selected())} · ${escapeHTML(formatPeriod(layer(metric()).period)||'No observation')} <button data-source="a" aria-label="Open comparison indicator source"> · Source ${icon('info')}</button>`;
   const data=layer(metric()),other=layer(metricB());
-  const range=d=>d.status==='ready'?`${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}${d.unit==='%'?'':' '+d.unit}`:'No data';
-  const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'Diverging scale · 85 – 100 – 115':`${d.bins||7} quantile bins · ${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}`;
-  $('#legend-title').textContent=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
+  const range=d=>{if(d.status!=='ready')return 'No data';if(d.scale==='diverging')return '85 – 100 – 115';return `${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}${d.unit==='%'?'':' '+d.unit}`;};
+  const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'Diverging scale · 85 – 100 – 115':`${d.scale==='log'?'Logarithmic':'Linear'} scale · ${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}`;
+  const scaleSuffix=d=>d.status==='ready'&&d.scale==='log'?' · log':'';
+  $('#legend-title').textContent=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${scaleSuffix(data)}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
   $('.legend-labels').innerHTML=`<span>${escapeHTML(compare&&state.comparison==='metrics'?'Left: '+scaleNote(data):range(data))}</span>${compare&&state.comparison==='metrics'?`<span>${escapeHTML('Right: '+scaleNote(other))}</span>`:''}<span class="no-data-key">No data</span>`;
   const legend=$('.legend'),ramp=$('.color-ramp');
-  let breaksLine=legend.querySelector('.legend-breaks');
-  if(!breaksLine){breaksLine=document.createElement('div');breaksLine.className='legend-breaks';legend.querySelector('.legend-labels').after(breaksLine);}
-  const single=data.status==='ready'&&!(compare&&state.comparison==='metrics');
-  breaksLine.hidden=!single||!data.breaks?.length;
-  breaksLine.innerHTML=single&&data.breaks?.length?data.breaks.map((value,index)=>`<span>${escapeHTML(formatValue(value,data.unit))}</span>`).join(''):'';
-  const palette=data.scale==='diverging'?DIVERGING:EMBER;
-  ramp.style.background=`linear-gradient(90deg,${palette.map((colour,index)=>`${colour} ${Math.round(index*100/palette.length)}% ${Math.round((index+1)*100/palette.length)}%`).join(',')})`;
-  ramp.title=data.breaks?.length?data.breaks.map(value=>formatValue(value,data.unit)).join(' · '):'';
+  const breaksLine=legend.querySelector('.legend-breaks');
+  if(breaksLine)breaksLine.remove();
+  const sample=rampColor(data.scale);
+  ramp.style.background=`linear-gradient(90deg,${Array.from({length:25},(_,index)=>`${sample(index/24)} ${(index*100/24).toFixed(2)}%`).join(',')})`;
+  ramp.title=data.scale==='log'?'Logarithmic colour scale':data.scale==='diverging'?'Diverging colour scale':'Linear colour scale';
   const provenance=d=>d.status==='ready'?d.source+' · '+formatPeriod(d.period):d.status==='error'?'Database unavailable':'No loaded observations';
   $('.map-provenance').textContent=`Census 2017 boundaries · ${compare&&state.comparison==='metrics'?'Left: '+provenance(data)+' · Right: '+provenance(other):provenance(data)}`;
   $('#pane-b').hidden=!compare;$('#compare-toolbar').hidden=!compare;$('#stories-open').hidden=!story;$('#compare-data-open').hidden=!compare;
@@ -552,7 +550,7 @@ function showStatSource(side='a'){
  const unit=data.unit==='%'?'Percent (%)':data.unit||m.unit||'—';
  const explanation=row?.methodologyNote||(row?(m.fieldId==='03.06:unemployment_rate'?'Share of the labor force that is unemployed. Original units and reporting period are retained.':'Original units and reference period are retained.'):missingReason(m,f,data));
  const coverage=m.fieldId?(m.countySupported?(m.stateSupported?'State and county':'County'):'State'):m.coverageNote;
- const desktop=`<div class="source-observation"><p>${escapeHTML(f?.name||'United States')} · ${escapeHTML(m.name)}</p><strong>${number(m,f?.id)}</strong></div><dl><dt>Source</dt><dd>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source)}</dd><dt>Period</dt><dd>${escapeHTML(formatPeriod(data.period)||'No published observation')}</dd><dt>Unit</dt><dd>${escapeHTML(data.unit||'—')}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd><dt>Coverage</dt><dd>${escapeHTML(coverage)}</dd></dl><div class="source-method"><h3>Method & data gaps</h3><p>${escapeHTML(row?.methodologyNote||'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.')}</p>${current.definition?.formula?`<p>Formula: ${escapeHTML(current.definition.formula)}${current.definition.minDenominator?` · minimum denominator ${escapeHTML(String(current.definition.minDenominator))}`:''}.</p>`:''}<p>Census 2017 boundaries. ${data.excludedGeographies?.length||0} source geographies are outside this map.${current.suppressed?.size?` ${current.suppressed.size} places are suppressed below the minimum denominator.`:''} ${escapeHTML(data.selection||'The latest single period and release are used, with no older-place fallback.')}</p>${data.status==='ready'?`<p>${data.scale==='diverging'?'Colour and 3D height use a diverging 85–100–115 scale':`Colour and 3D height use ${data.bins||7} quantile bins`} across mapped places, from ${formatValue(data.min,data.unit)} to ${formatValue(data.max,data.unit)}. Both maps share the same scale for this indicator.</p>`:''}</div>`;
+ const desktop=`<div class="source-observation"><p>${escapeHTML(f?.name||'United States')} · ${escapeHTML(m.name)}</p><strong>${number(m,f?.id)}</strong></div><dl><dt>Source</dt><dd>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source)}</dd><dt>Period</dt><dd>${escapeHTML(formatPeriod(data.period)||'No published observation')}</dd><dt>Unit</dt><dd>${escapeHTML(data.unit||'—')}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd><dt>Coverage</dt><dd>${escapeHTML(coverage)}</dd></dl><div class="source-method"><h3>Method & data gaps</h3><p>${escapeHTML(row?.methodologyNote||'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.')}</p>${current.definition?.formula?`<p>Formula: ${escapeHTML(current.definition.formula)}${current.definition.minDenominator?` · minimum denominator ${escapeHTML(String(current.definition.minDenominator))}`:''}.</p>`:''}<p>Census 2017 boundaries. ${data.excludedGeographies?.length||0} source geographies are outside this map.${current.suppressed?.size?` ${current.suppressed.size} places are suppressed below the minimum denominator.`:''} ${escapeHTML(data.selection||'The latest single period and release are used, with no older-place fallback.')}</p>${data.status==='ready'?`<p>${data.scale==='diverging'?'Colour uses a diverging 85–100–115 scale':'Colour uses a '+(data.scale==='log'?'logarithmic':'linear')+' scale'} across mapped places, from ${formatValue(data.min,data.unit)} to ${formatValue(data.max,data.unit)}. 3D height is linear between the same minimum and maximum. Both maps share the same scale for this indicator.</p>`:''}</div>`;
  pages.showSource(`<div class="source-desktop">${desktop}</div><div class="source-mobile"><h3>${escapeHTML(m.name)}</h3><dl><dt>Source</dt><dd>${escapeHTML(sourceName)}</dd><dt>Period</dt><dd>${escapeHTML(period||'No published observation')}</dd><dt>Unit / area</dt><dd>${escapeHTML(unit)} · ${f?.id.length===5?'County equivalent':f?'State level':'US'}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd></dl><p>${escapeHTML(explanation)}</p>${url?`<a class="primary-button" href="${escapeHTML(url)}" target="_blank" rel="noreferrer">Open original source</a>`:''}</div>`,{variant:'indicator'});
 }
 function renderAdPreview(){

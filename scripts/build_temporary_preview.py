@@ -52,13 +52,15 @@ def build(destination, release):
     manifest['/ux/'] = 'ux/index.html'
     flags = dict(re.findall(r"'([0-9.]+)': (true|false)",
                             (destination / 'ux/indicator-visibility.js').read_text()))
+    contract = json.loads((destination / 'ux/metric-definitions.json').read_text())
+    visible = contract['visibleCount']
     metadata = {
         'release': release,
         'builtAt': datetime.now(timezone.utc).isoformat(),
         'sourceBaseCommit': subprocess.check_output(
             ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip(),
         'renderer2dDefault': 'webgl',
-        'visibleFieldCount': sum(value == 'true' for value in flags.values()),
+        'visibleFieldCount': visible,
         'medicalFields': [key for key in ('11.01', '11.02', '11.03')
                           if flags.get(key) == 'true'],
         'sourceSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
@@ -70,8 +72,8 @@ def build(destination, release):
                               for name in ('scripts/atlas_data.py', 'scripts/preview_server.py', 'ux/acs-series.json',
                                            'ux/catalog-v2.json', 'ux/metric-definitions.json')},
     }
-    if metadata['visibleFieldCount'] != 39 or len(metadata['medicalFields']) != 3:
-        raise ValueError('This release must retain all 39 admitted display fields')
+    if metadata['visibleFieldCount'] != 41 or len(metadata['medicalFields']) != 3:
+        raise ValueError('This release must retain all 41 admitted display fields')
     (destination / 'ux/build.json').write_text(json.dumps(metadata, indent=2) + '\n')
     manifest['/ux/build.json'] = 'ux/build.json'
     (destination / 'preview-assets.json').write_text(json.dumps(manifest, indent=2) + '\n')

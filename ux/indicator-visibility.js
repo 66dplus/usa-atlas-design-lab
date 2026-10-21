@@ -1,6 +1,6 @@
 // Display switches shared by Map, Compare, data cards and advertiser choices.
 // true enables a collected field; false hides it. Unknown fields stay hidden.
-// Enabled IDs follow the 2026-10-20 normalization plan: 39 map indicators.
+// Enabled IDs follow the 2026-10-20 normalization plan: 41 map indicators after replacing the owner/renter ratio with three all-housing-unit shares.
 // 01.06 and 01.08 remain loaded but move to the Data library, not the map.
 export const indicatorVisibility=Object.freeze({
   '01.01': true, // Population
@@ -17,7 +17,7 @@ export const indicatorVisibility=Object.freeze({
   '02.04': true, // Median home value
   '02.05': true, // Mortgage / selected monthly owner costs
   '02.06': true, // Rent as % of income / rent burden
-  '02.07': true, // Owner / renter ratio
+  '02.07': true, // Owner-occupied, renter-occupied and vacant shares (all housing units)
   '02.08': true, // Poverty
   '02.09': true, // Households earning $200k+
   '02.10': true, // Cost of living / Regional Price Parities

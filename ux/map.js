@@ -7,7 +7,8 @@ import {FlatMapRenderer} from './flat-map.js';
 export const EMBER = ['#fff2b1','#f8c34a','#f4942c','#e55732','#af2345','#701e51','#281c43'];
 export const DIVERGING = ['#2166ac','#67a9cf','#d1e5f0','#f7f7f7','#fddbc7','#ef8a62','#b2182b'];
 const WIDTH = 1200, HEIGHT = 750;
-const color = (value,scale) => value == null ? '#aaa49e' : d3.interpolateRgbBasis(scale==='diverging'?DIVERGING:EMBER)(value);
+export const rampColor = scale => d3.interpolateRgbBasis(scale==='diverging'?DIVERGING:EMBER);
+const color = (value,scale) => value == null ? '#aaa49e' : rampColor(scale)(value);
 const RELIEF=.28;
 
 export async function loadGeography() {
