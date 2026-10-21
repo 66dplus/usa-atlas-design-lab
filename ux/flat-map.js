@@ -85,7 +85,7 @@ export class FlatMapRenderer {
   }
   update(state,mappedValue,color,background){
     this.state=state;this.renderer.setClearColor(background,1);
-    const parent=state.selectedId?.slice(0,2),isolated=state.cleanBackdrop||this.host.ownerDocument.defaultView.innerWidth<=760;
+    const parent=state.selectedId?.slice(0,2),isolated=state.cleanBackdrop;
     for(const id of this.geo.states.map(f=>f.id)){
       let group=this.groups.get(id);
       const rows=this.geo.counties.filter(f=>f.stateId===id);
@@ -126,7 +126,12 @@ export class FlatMapRenderer {
     const dx=w/scale/t.k/200,dy=h/scale/t.k/200;
     Object.assign(this.camera,{left:x-dx,right:x+dx,top:y+dy,bottom:y-dy});this.camera.updateProjectionMatrix();this.requestRender();
   }
-  resize(w,h){if(!w||!h)return;this.size=[w,h];this.renderer.setSize(w,h);if(this.transform)this.setTransform(this.transform);this.requestRender();}
+  resize(w,h){
+    if(!w||!h)return;this.size=[w,h];this.renderer.setSize(w,h);if(this.transform)this.setTransform(this.transform);
+    // setSize empties the drawing buffer. Repaint it in the same tick, otherwise
+    // the page shows an empty canvas between the resize and the next frame.
+    this.renderNow();
+  }
   hit(event){
     const r=this.host.getBoundingClientRect(),[w,h]=this.size||[r.width,r.height],scale=Math.min(w/1200,h/750),t=this.transform;
     if(!t)return null;

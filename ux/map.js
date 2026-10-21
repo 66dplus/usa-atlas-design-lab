@@ -124,7 +124,9 @@ export class ExplorerMap {
     cover.classList.add('map-transition-cover');cover.setAttribute('aria-hidden','true');this.host.append(cover);return cover;
   }
   mapBackdrop(){
-    if(!this.state.cleanBackdrop&&this.host.ownerDocument.defaultView.innerWidth>760)return this.state.mode==='2d'?'#242B34':'#171A1D';
+    // The map keeps the same geographic backdrop on every screen size. Only the
+    // embedded journal map asks for a clean, themed canvas.
+    if(!this.state.cleanBackdrop)return this.state.mode==='2d'?'#242B34':'#171A1D';
     return this.state.background||'#EEF0F3';
   }
   update(next) {
@@ -141,7 +143,7 @@ export class ExplorerMap {
     this.tint=value=>color(value,this.state.palette||this.state.scale);
     const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
     this.setFlatMode(mode==='2d'&&this.state.renderer2d==='webgl');
-    const isolated=this.state.cleanBackdrop||this.host.ownerDocument.defaultView.innerWidth<=760;
+    const isolated=this.state.cleanBackdrop;
     const shown=id=>!isolated||(parent?id===parent:!['02','15'].includes(id));
     this.host.dataset.mode=mode;this.host.dataset.selected=selectedId||'US';this.host.dataset.metric=this.state.metricKey||'';
     this.host.dataset.renderMode=mode;
@@ -447,8 +449,7 @@ export class ExplorerMap {
   render(){
     if(!this.renderer||this.isDisposed||this.state.mode==='2d')return;
     const parent=this.state.selectedId?.slice(0,2)||this.session?.parent;
-    const mobile=this.host.ownerDocument.defaultView.innerWidth<=760;
-    const isolated=this.state.cleanBackdrop||mobile;
+    const isolated=this.state.cleanBackdrop;
     for(const [id,group] of this.stateGroups||[]){
       group.scale.y=this.heightScale??1;
       const shade=parent&&id!==parent?1-this.dim*.88:1;
