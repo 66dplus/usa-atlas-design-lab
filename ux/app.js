@@ -1,7 +1,7 @@
 import {initPages} from './pages.js';
 import {showSurface,slidePill,isSurfaceOpen,captureMapLayout,animateMapLayout} from './motion.js';
 import {renderCreative,isTargeted} from './advertising/creative.js';
-import {ExplorerMap,loadGeography,EMBER,DIVERGING} from './map.js';
+import {ExplorerMap,loadGeography,rampColor,EMBER,DIVERGING} from './map.js';
 import {createDataStore,readAtlasJSON,loadedMapMetrics,collectedMapIndicators,displayLayer,formatValue,formatPeriod,missingReason,comparable} from './model.js?v=postgres-1';
 
 // The legend and the map read the same palette array, so they can never disagree.
@@ -377,20 +377,20 @@ function hover(side,info){
 // break labels and the painted counties always describe one scale.
 function renderLegend(compare,data,other){
   const provenance=d=>d.status==='ready'?d.source+' · '+formatPeriod(d.period):d.status==='error'?'Database unavailable':'No loaded observations';
-  const range=d=>d.status!=='ready'?'No data':d.scale==='diverging'?`${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}${d.unit==='%'?'':' '+d.unit}`:`${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}${d.unit==='%'?'':' '+d.unit}`;
-  const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?`Diverging scale · ${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}`:`${d.bins||7} quantile bins · ${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}`;
-  const title=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
+  const range=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'85 – 100 – 115':`${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}${d.unit==='%'?'':' '+d.unit}`;
+  const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'Diverging scale · 85 – 100 – 115':`${d.scale==='log'?'Logarithmic':'Linear'} scale · ${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}`;
+  const title=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${data.status==='ready'&&data.scale==='log'?' · log':''}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
   const labelsHTML=`<span>${escapeHTML(compare&&state.comparison==='metrics'?'Left: '+scaleNote(data):range(data))}</span>${compare&&state.comparison==='metrics'?`<span>${escapeHTML('Right: '+scaleNote(other))}</span>`:''}<span class="no-data-key">No data</span>`;
-  const single=data.status==='ready'&&!(compare&&state.comparison==='metrics');
   const palette=paletteFor(data);
   for(const legend of document.querySelectorAll('.legend')){
     legend.querySelector('.legend-title').textContent=title;
     legend.querySelector('.legend-labels').innerHTML=labelsHTML;
     const breaksLine=legend.querySelector('.legend-breaks');
-    if(breaksLine)breaksLine.hidden=true;
+    if(breaksLine)breaksLine.remove();
     const ramp=legend.querySelector('.color-ramp');
-    ramp.style.background=`linear-gradient(90deg,${palette.map((colour,index)=>`${colour} ${Math.round(index*100/palette.length)}% ${Math.round((index+1)*100/palette.length)}%`).join(',')})`;
-    ramp.title=data.breaks?.length?data.breaks.map(value=>formatValue(value,data.unit)).join(' · '):'';
+    const sample=rampColor(palette);
+    ramp.style.background=`linear-gradient(90deg,${Array.from({length:25},(_,index)=>`${sample(index/24)} ${(index*100/24).toFixed(2)}%`).join(',')})`;
+    ramp.title=data.scale==='log'?'Logarithmic colour scale':data.scale==='diverging'?'Diverging colour scale':'Linear colour scale';
   }
   for(const line of document.querySelectorAll('.indicator-legend-source')){
     line.textContent=compare&&state.comparison==='metrics'?`Census 2017 boundaries · ${provenance(data)} · ${provenance(other)}`:'Census 2017 boundaries';
@@ -564,7 +564,7 @@ function showStatSource(side='a'){
  const unit=data.unit==='%'?'Percent (%)':data.unit||m.unit||'—';
  const explanation=row?.methodologyNote||(row?(m.fieldId==='03.06:unemployment_rate'?'Share of the labor force that is unemployed. Original units and reporting period are retained.':'Original units and reference period are retained.'):missingReason(m,f,data));
  const coverage=m.fieldId?(m.countySupported?(m.stateSupported?'State and county':'County'):'State'):m.coverageNote;
- const desktop=`<div class="source-observation"><p>${escapeHTML(f?.name||'United States')} · ${escapeHTML(m.name)}</p><strong>${number(m,f?.id)}</strong></div><dl><dt>Source</dt><dd>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source)}</dd><dt>Period</dt><dd>${escapeHTML(formatPeriod(data.period)||'No published observation')}</dd><dt>Unit</dt><dd>${escapeHTML(data.unit||'—')}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd><dt>Coverage</dt><dd>${escapeHTML(coverage)}</dd></dl><div class="source-method"><h3>Method & data gaps</h3><p>${escapeHTML(row?.methodologyNote||'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.')}</p>${current.definition?.formula?`<p>Formula: ${escapeHTML(current.definition.formula)}${current.definition.minDenominator?` · minimum denominator ${escapeHTML(String(current.definition.minDenominator))}`:''}.</p>`:''}<p>Census 2017 boundaries. ${data.excludedGeographies?.length||0} source geographies are outside this map.${current.suppressed?.size?` ${current.suppressed.size} places are suppressed below the minimum denominator.`:''} ${escapeHTML(data.selection||'The latest single period and release are used, with no older-place fallback.')}</p>${data.status==='ready'?`<p>${data.scale==='diverging'?`Colour and 3D height use a diverging ${formatValue(data.domain[0],data.unit)} – ${formatValue(data.domain[1],data.unit)} scale`:`Colour and 3D height use ${data.bins||7} quantile bins`} across mapped places, from ${formatValue(data.min,data.unit)} to ${formatValue(data.max,data.unit)}. Both maps share the same scale for this indicator.</p>`:''}</div>`;
+ const desktop=`<div class="source-observation"><p>${escapeHTML(f?.name||'United States')} · ${escapeHTML(m.name)}</p><strong>${number(m,f?.id)}</strong></div><dl><dt>Source</dt><dd>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source)}</dd><dt>Period</dt><dd>${escapeHTML(formatPeriod(data.period)||'No published observation')}</dd><dt>Unit</dt><dd>${escapeHTML(data.unit||'—')}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd><dt>Coverage</dt><dd>${escapeHTML(coverage)}</dd></dl><div class="source-method"><h3>Method & data gaps</h3><p>${escapeHTML(row?.methodologyNote||'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.')}</p>${current.definition?.formula?`<p>Formula: ${escapeHTML(current.definition.formula)}${current.definition.minDenominator?` · minimum denominator ${escapeHTML(String(current.definition.minDenominator))}`:''}.</p>`:''}<p>Census 2017 boundaries. ${data.excludedGeographies?.length||0} source geographies are outside this map.${current.suppressed?.size?` ${current.suppressed.size} places are suppressed below the minimum denominator.`:''} ${escapeHTML(data.selection||'The latest single period and release are used, with no older-place fallback.')}</p>${data.status==='ready'?`<p>${data.scale==='diverging'?'Colour uses a diverging 85 – 100 – 115 scale':`Colour uses a ${data.scale==='log'?'logarithmic':'linear'} scale`} across mapped places, from ${formatValue(data.min,data.unit)} to ${formatValue(data.max,data.unit)}. 3D height is linear between the same minimum and maximum. Both maps share the same scale for this indicator.</p>`:''}</div>`;
  pages.showSource(`<div class="source-desktop">${desktop}</div><div class="source-mobile"><h3>${escapeHTML(m.name)}</h3><dl><dt>Source</dt><dd>${escapeHTML(sourceName)}</dd><dt>Period</dt><dd>${escapeHTML(period||'No published observation')}</dd><dt>Unit / area</dt><dd>${escapeHTML(unit)} · ${f?.id.length===5?'County equivalent':f?'State level':'US'}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd></dl><p>${escapeHTML(explanation)}</p>${url?`<a class="primary-button" href="${escapeHTML(url)}" target="_blank" rel="noreferrer">Open original source</a>`:''}</div>`,{variant:'indicator'});
 }
 function renderAdPreview(){

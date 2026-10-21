@@ -1,6 +1,6 @@
 {
   "release": "20261020-normalized39",
-  "visibleCount": 39,
+  "visibleCount": 41,
   "metrics": [
     {
       "id": "population",
@@ -13,7 +13,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.01:B01003_001E",
@@ -32,7 +32,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.02:B01002_001E",
@@ -51,7 +51,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.03:derived",
@@ -91,7 +91,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.04:derived:hispanic",
@@ -131,7 +131,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.05:derived",
@@ -171,7 +171,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.06:derived",
@@ -190,7 +190,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.07:derived",
@@ -230,7 +230,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "01.08:derived",
@@ -249,7 +249,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.01:B19013_001E",
@@ -268,7 +268,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.02:B19301_001E",
@@ -287,7 +287,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.03:B25064_001E",
@@ -306,7 +306,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.04:B25077_001E",
@@ -325,7 +325,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.05:B25088_001E",
@@ -344,7 +344,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.06:derived",
@@ -394,51 +394,6 @@
       "sourceRelease": "Census ACS 2024"
     },
     {
-      "id": "owner-renter-ratio",
-      "catalogId": "02.07",
-      "label": "Homeownership rate",
-      "unit": "%",
-      "geography": [
-        "county",
-        "state"
-      ],
-      "period": "2024",
-      "displayPeriod": "2020–2024",
-      "scale": "quantile7",
-      "source": "Census ACS",
-      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
-      "fieldId": "02.07:derived",
-      "formula": "B25003_002E / (B25003_002E+B25003_003E) * 100",
-      "minDenominator": 100,
-      "method": "Owner-occupied households divided by owner- and renter-occupied households, multiplied by 100.",
-      "derived": {
-        "operation": "ratio",
-        "numerator": [
-          {
-            "field": "02.07:B25003_002E",
-            "period": "2024",
-            "multiplier": 1
-          }
-        ],
-        "denominator": [
-          {
-            "field": "02.07:B25003_002E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "02.07:B25003_003E",
-            "period": "2024",
-            "multiplier": 1
-          }
-        ],
-        "multiplier": 100,
-        "aggregateState": false,
-        "aggregateUS": true
-      },
-      "sourceRelease": "Census ACS 2024"
-    },
-    {
       "id": "poverty",
       "catalogId": "02.08",
       "label": "Poverty rate",
@@ -449,7 +404,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.08:derived",
@@ -489,7 +444,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "02.09:derived",
@@ -547,7 +502,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "03.01:derived",
@@ -587,7 +542,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "03.02:derived",
@@ -627,7 +582,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "03.03:derived",
@@ -667,7 +622,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "03.04:derived",
@@ -747,7 +702,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "03.05:derived",
@@ -857,7 +812,7 @@
       ],
       "period": "2024-M12",
       "displayPeriod": null,
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "BLS LAUS",
       "sourceUrl": "https://www.bls.gov/lau/",
       "fieldId": "03.06:unemployment_rate",
@@ -876,7 +831,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "Census ACS",
       "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
       "fieldId": "03.09:derived",
@@ -915,7 +870,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.01:derived",
@@ -954,7 +909,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.02:derived",
@@ -993,7 +948,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.03:derived",
@@ -1032,7 +987,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.04:derived",
@@ -1071,7 +1026,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.05:derived",
@@ -1110,7 +1065,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.06:derived",
@@ -1149,7 +1104,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "FBI CDE + Census ACS",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.07:derived",
@@ -1188,7 +1143,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "CDC PLACES",
       "sourceUrl": "https://www.cdc.gov/places/",
       "fieldId": "05.14",
@@ -1206,7 +1161,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "CDC PLACES",
       "sourceUrl": "https://www.cdc.gov/places/",
       "fieldId": "05.15",
@@ -1224,7 +1179,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "CDC PLACES",
       "sourceUrl": "https://www.cdc.gov/places/",
       "fieldId": "05.16",
@@ -1243,7 +1198,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023 tax year",
-      "scale": "quantile7",
+      "scale": "log",
       "source": "IRS SOI + Census ACS",
       "sourceUrl": "https://www.irs.gov/statistics/soi-tax-stats-data-by-geographic-area",
       "fieldId": "07.01:derived:total",
@@ -1276,7 +1231,7 @@
       ],
       "period": "2024",
       "displayPeriod": null,
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "EIA Electricity",
       "sourceUrl": "https://www.eia.gov/electricity/data.php",
       "fieldId": "08.05:sector_ALL",
@@ -1294,7 +1249,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile7",
+      "scale": "linear",
       "source": "USDA Food Environment Atlas",
       "sourceUrl": "https://www.ers.usda.gov/data-products/food-environment-atlas/",
       "fieldId": "09.04:cbp_fitness_per1000_published",
@@ -1312,7 +1267,7 @@
       ],
       "period": "2023",
       "displayPeriod": "2023",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "CDC USCS + Census ACS",
       "sourceUrl": "https://gis.cdc.gov/Cancer/USCS/",
       "fieldId": "11.01:derived",
@@ -1351,7 +1306,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "CDC AtlasPlus + Census ACS",
       "sourceUrl": "https://gis.cdc.gov/api/AtlasPlus/qtOutputData",
       "fieldId": "11.02:derived",
@@ -1390,7 +1345,7 @@
       ],
       "period": "2024",
       "displayPeriod": "2020–2024",
-      "scale": "quantile5",
+      "scale": "linear",
       "source": "CDC WONDER + Census ACS",
       "sourceUrl": "https://wonder.cdc.gov/controller/saved/D158/D473F417",
       "fieldId": "11.03:derived",
@@ -1577,6 +1532,19 @@
       ],
       "formula": "County maximum complete-monitor mean",
       "reason": "Only 1,209 counties have monitoring coverage; not a national map."
+    },
+    {
+      "id": "owner-renter-ratio",
+      "catalogId": "02.07",
+      "label": "Homeownership rate (occupied households)",
+      "unit": "%",
+      "period": "2024",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "formula": "B25003_002E / (B25003_002E+B25003_003E) * 100",
+      "reason": "Retired from the map: its denominator is occupied households, so vacant and seasonal homes are excluded. Kept for review."
     }
   ],
   "variants": {
@@ -1645,5 +1613,130 @@
         "multiplier": 1000
       }
     ]
-  }
+  },
+  "derivedMetrics": [
+    {
+      "id": "owner-occupied-homes",
+      "catalogId": "02.07",
+      "label": "Owner-occupied homes",
+      "unit": "% of all housing units",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2017-2021",
+      "displayPeriod": "2017–2021",
+      "scale": "linear",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.07:owner_occupied_share_all_units",
+      "formula": "B25003_002E / B25001_001E * 100",
+      "minDenominator": 1,
+      "method": "Owner-occupied housing units divided by all housing units, times 100. Chugach Census Area (02063) and Copper River Census Area (02066) are combined into the 2017 Valdez-Cordova Census Area (02261) boundary; the union differs from the 2017 boundary by 0.004% of area (a coastal/glacier sliver). Counts are summed; the share is computed from the summed numerator and denominator.",
+      "sourceRelease": "Census ACS 2021",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.07:B25003_002E",
+            "period": "2017-2021",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.07:B25001_001E",
+            "period": "2017-2021",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      }
+    },
+    {
+      "id": "renter-occupied-homes",
+      "catalogId": "02.07",
+      "label": "Renter-occupied homes",
+      "unit": "% of all housing units",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2017-2021",
+      "displayPeriod": "2017–2021",
+      "scale": "linear",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.07:renter_occupied_share_all_units",
+      "formula": "B25003_003E / B25001_001E * 100",
+      "minDenominator": 1,
+      "method": "Renter-occupied housing units divided by all housing units, times 100. Chugach Census Area (02063) and Copper River Census Area (02066) are combined into the 2017 Valdez-Cordova Census Area (02261) boundary; the union differs from the 2017 boundary by 0.004% of area (a coastal/glacier sliver). Counts are summed; the share is computed from the summed numerator and denominator.",
+      "sourceRelease": "Census ACS 2021",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.07:B25003_003E",
+            "period": "2017-2021",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.07:B25001_001E",
+            "period": "2017-2021",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      }
+    },
+    {
+      "id": "vacant-homes",
+      "catalogId": "02.07",
+      "label": "Vacant homes",
+      "unit": "% of all housing units",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2017-2021",
+      "displayPeriod": "2017–2021",
+      "scale": "linear",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.07:vacant_share_all_units",
+      "formula": "B25002_003E / B25001_001E * 100",
+      "minDenominator": 1,
+      "method": "Vacant housing units divided by all housing units, times 100. Vacant includes seasonal, recreational and occasional-use units. Chugach Census Area (02063) and Copper River Census Area (02066) are combined into the 2017 Valdez-Cordova Census Area (02261) boundary; the union differs from the 2017 boundary by 0.004% of area (a coastal/glacier sliver). Counts are summed; the share is computed from the summed numerator and denominator.",
+      "sourceRelease": "Census ACS 2021",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.07:B25002_003E",
+            "period": "2017-2021",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.07:B25001_001E",
+            "period": "2017-2021",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      }
+    }
+  ],
+  "hiddenMetrics": [
+    "owner-renter-ratio"
+  ]
 }
