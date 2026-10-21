@@ -93,8 +93,9 @@ The integration goes through <code>GET /api/atlas/catalog</code> and <code>GET /
 ## Public deployment
 
 The published atlas is **https://usa-xray.online** (and `https://www.usa-xray.online`).
-This repository is the single source of that site; the `trycloudflare.com` review
-tunnels are temporary preview addresses and are not the public URL.
+This repository is the single source of that site. The `trycloudflare.com` review
+tunnel was retired on 21 October 2026 and is no longer a public address for the
+atlas.
 
 The server is `62.171.154.202` (Ubuntu 24.04) and the chain is:
 
