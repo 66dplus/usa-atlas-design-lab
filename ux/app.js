@@ -3,6 +3,9 @@ import {showSurface,slidePill,isSurfaceOpen,captureMapLayout,animateMapLayout} f
 import {renderCreative,isTargeted} from './advertising/creative.js';
 import {ExplorerMap,loadGeography,EMBER,DIVERGING} from './map.js';
 import {createDataStore,readAtlasJSON,loadedMapMetrics,collectedMapIndicators,displayLayer,formatValue,formatPeriod,missingReason,comparable} from './model.js?v=postgres-1';
+
+// The legend and the map read the same palette array, so they can never disagree.
+const paletteFor=layer=>layer.scale==='diverging'?DIVERGING:EMBER;
 import {loadViewSettings,initViewSettings} from './settings.js';
 import {brandIcon,indicatorIcon} from './icons.js';
 import {createAtlasAnalytics,atlasContext,placeContext} from './analytics.js';
@@ -23,8 +26,8 @@ document.body.classList.toggle('embedded-map',embedded);
 window.addEventListener('message',event=>{if(embedded&&event.origin===location.origin&&event.source===parent&&event.data?.type==='atlas-embed-theme'&&['light','dark'].includes(event.data.theme)){document.body.dataset.theme=event.data.theme;if(dataStore)updateMaps();}});
 const concepts=['explorer','stories','compare'];
 const initialConcept=params.get('page')==='map'?'explorer':params.get('page')==='compare'?'compare':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
-const state={renderer2d:renderer2dFrom(params),concept:initialConcept,mode:params.get('view')||(initialConcept==='compare'?'2d':'3d'),selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
-if(!['2d','3d'].includes(state.mode))state.mode='3d';
+const state={renderer2d:renderer2dFrom(params),concept:initialConcept,mode:params.get('view')||'2d',selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
+if(!['2d','3d'].includes(state.mode))state.mode='2d';
 document.body.dataset.view=state.mode;
 document.querySelectorAll('.dimension-control>[data-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===state.mode)));
 slidePill($('.dimension-control'),$(`.dimension-control [data-mode="${state.mode}"]`));
@@ -237,9 +240,6 @@ function renderInspector(){
 function adPlaceholder(symbol='house'){
   return `<section class="ad-card" aria-label="Advertisement placeholder"><span>Ad space · not sold</span><div>${symbol==='info'?icon('info'):brandIcon('house')}<h3>Your brand could<br>be here.</h3><p>Reach people exploring this place.</p></div><small><button data-page="stats">See Stats</button></small></section>`;
 }
-function cameraTools(side){
-  return [['left','Rotate left','left'],['rotate','Rotate right','right'],['plus','Zoom in','in'],['minus','Zoom out','out'],['reset','Fit selected place','reset']].filter(([, ,action])=>!['left','right'].includes(action)||(state.mode==='3d'&&viewSettings.rotation)).map(([image,label,action])=>`<button data-camera="${action}" data-side="${side}" aria-label="${label}${side==='b'?' · second map':''}">${icon(image)}</button>`).join('');
-}
 function renderMapHeads(){
   const compare=state.concept==='compare';
   for(const side of ['a','b']){
@@ -274,8 +274,8 @@ function rankingMarkup(){
   return `<div class="rank-tabs"><button data-rank="highest" aria-pressed="${state.rank==='highest'}">Highest 5</button><button data-rank="lowest" aria-pressed="${state.rank==='lowest'}">Lowest 5</button></div><p class="rank-context">${escapeHTML(r.group)} · ${r.count}/${r.total} with data</p>${r.rows.length?`<ol class="rank-list">${r.rows.map(row=>`<li><button data-rank-place="${row.id}"><span class="rank-number">${row.rank}${row.tied?'=':''}</span><span class="rank-name">${escapeHTML(row.name)}<span class="rank-bar" style="width:${range?12+88*(row.value-r.min)/range:100}%"></span></span><b>${formatValue(row.value,r.data.unit)}</b></button><button class="rank-compare" data-rank-compare="${row.id}" aria-label="Compare ${escapeHTML(row.name)}" title="Add to comparison">${icon('plus')}</button></li>`).join('')}</ol>`:`<p class="empty-note">${['loading','idle'].includes(r.data.status)?'Loading this indicator…':'No comparable observations in this group.'}</p>`}<p class="rank-foot">${escapeHTML(formatPeriod(r.data.period)||'No loaded period')} · ${escapeHTML(r.data.unit||'—')} · Shared range ${formatValue(r.min,r.data.unit)}–${formatValue(r.max,r.data.unit)}${r.cutoffTie?' · More places share the cutoff value.':''}${r.rows.some(x=>x.tied)?' = tied rank.':''}</p>`;
 }
 function openRank(direction){
-  state.rank=direction;persist();$('#ranking-panel').innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. One source period. Missing values are excluded; both lists use the same scale.</p>`;
-  openDrawer('ranking-panel',document.activeElement);updateMaps();
+  state.rank=direction;persist();$('#ranking-panel').innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. One source period. Missing values are excluded; both lists use the same scale.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;
+  openDrawer('ranking-panel',document.activeElement);renderLegend(state.concept==='compare',layer(metric()),layer(metricB()));updateMaps();
 }
 function photoMarkup(f){
   if(!f?.id.startsWith('06'))return '';
@@ -285,7 +285,7 @@ function photoMarkup(f){
 function renderExplorer(){
   const panel=$('#explore-panel'),scroll=panel.scrollTop,f=selected(),m=metric(),data=layer(m),v=value(m,f?.id),isSF=f?.id==='06075';
   const crumbs=`<button data-breadcrumb="US"${!f?' aria-current="location"':''}>United States</button>${f?`<span aria-hidden="true">/</span><button data-breadcrumb="${f.stateId}"${f.id.length===2?' aria-current="location"':''}>${escapeHTML(place(f.stateId).name)}</button>${f.id.length===5?`<span aria-hidden="true">/</span><span aria-current="location">${escapeHTML(f.name)}</span>`:''}`:''}`;
-  panel.innerHTML=`<div class="profile-heading"><button class="place-sheet-back" data-dismiss-place="true" aria-label="Dismiss place card">${icon('back')}</button><button class="place-chooser" data-pane-place="a" aria-expanded="false">${brandIcon('location')}<strong>${escapeHTML(f?.name||'Find a place')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span><small>Indicator</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong>${v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div>${metricSwitchMarkup(m)}<p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}<button class="inline-source" data-source="a" aria-label="Open indicator source"> · Source ${icon('info')}</button></p>${v==null?`<p class="missing-note">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">${icon('compare')} Compare</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div><button class="source-button" data-source="a">Sources & details ${icon('info')}</button></div>`;
+  panel.innerHTML=`<div class="profile-heading"><button class="place-sheet-back" data-dismiss-place="true" aria-label="Dismiss place card">${icon('back')}</button><button class="place-chooser" data-pane-place="a" aria-expanded="false">${brandIcon('location')}<strong>${escapeHTML(f?.name||'Find a place')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span><small>Indicator</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong>${v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div>${metricSwitchMarkup(m)}<p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}</p>${v==null?`<p class="missing-note">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">${icon('compare')} Compare</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div></div><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;
   const handle=document.createElement('button');handle.className='sheet-handle';handle.type='button';handle.setAttribute('aria-label','Dismiss place sheet');
   let drag,suppressClick=false;
   handle.onclick=event=>{if(suppressClick&&event.detail>0){suppressClick=false;return;}suppressClick=false;setPlaceSheet('dismissed');};
@@ -306,6 +306,9 @@ function renderExplorer(){
 }
 function renderQuickStats(){
   const f=selected(),m=metric(),data=layer(m),right=$('#quick-stats');
+  // First open: no side fields. The column appears with the first selected place.
+  right.hidden=!f;
+  if(!f){right.innerHTML='';return;}
   const countMetric=metricById.get('unemployment--03-06-unemployment'),forceMetric=metricById.get('unemployment--03-06-labor-force');
   const count=countMetric?value(countMetric,f?.id):null,force=forceMetric?value(forceMetric,f?.id):null;
   const canChart=countMetric&&forceMetric&&count!=null&&count>=0&&force>0&&count<=force&&layer(countMetric).status==='ready'&&layer(forceMetric).status==='ready'&&layer(countMetric).period===layer(forceMetric).period&&layer(countMetric).sourceRelease===layer(forceMetric).sourceRelease&&layer(countMetric).source===layer(forceMetric).source&&layer(countMetric).unit==='people'&&layer(forceMetric).unit==='people';
@@ -325,7 +328,7 @@ function saveView(){
   catch{toast('Could not save in this browser. Use Share to keep the view link.');}
 }
 function showSaved(){
-  const items=savedItems()||[];$('#saved-panel').innerHTML=`<button class="panel-back" data-close="saved-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><div class="collection-title"><h2>Saved</h2><span>${items.length}</span></div><button class="outline-button" id="save-current">${icon('plus')} Save current exploration</button>${items.length?`<div class="saved-list">${items.map(item=>`<article><button data-restore="${escapeHTML(item.id)}"><small>${escapeHTML(item.period||'No loaded period')}</small><h3>${escapeHTML(item.title)}</h3><p>${escapeHTML(item.metric||'Exploration')}</p><span>Open exploration ${icon('arrow')}</span></button><button data-remove-saved="${escapeHTML(item.id)}" aria-label="Remove ${escapeHTML(item.title)}" class="remove-saved">${icon('close')}</button></article>`).join('')}</div>`:`<div class="saved-empty">${icon('bookmark')}<h3>A place for your discoveries.</h3><p>Save a place, indicator or comparison and return to the same view.</p></div>`}<p class="saved-note">Stored in this browser. Views reopen with the latest available source snapshot; the saved period is shown above.</p>`;openDrawer('saved-panel',$('#saved-open'));
+  const items=savedItems()||[];$('#saved-panel').innerHTML=`<button class="panel-back" data-close="saved-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><div class="collection-title"><h2>Saved</h2><span>${items.length}</span></div><button class="outline-button" id="save-current">${icon('plus')} Save current exploration</button>${items.length?`<div class="saved-list">${items.map(item=>`<article><button data-restore="${escapeHTML(item.id)}"><small>${escapeHTML(item.period||'No loaded period')}</small><h3>${escapeHTML(item.title)}</h3><p>${escapeHTML(item.metric||'Exploration')}</p><span>Open exploration ${icon('arrow')}</span></button><button data-remove-saved="${escapeHTML(item.id)}" aria-label="Remove ${escapeHTML(item.title)}" class="remove-saved">${icon('close')}</button></article>`).join('')}</div>`:`<div class="saved-empty">${icon('bookmark')}<h3>A place for your discoveries.</h3><p>Save a place, indicator or comparison and return to the same view.</p></div>`}<p class="saved-note">Stored in this browser. Views reopen with the latest available source snapshot; the saved period is shown above.</p>`;openDrawer('saved-panel',$('#saved-open')||undefined);
 }
 async function restoreSaved(id){
   const item=(savedItems()||[]).find(x=>x.id===id);if(!item)return;const q=new URLSearchParams(item.url);
@@ -338,7 +341,7 @@ function renderMixedTicker(){
   $('#surprise-track').innerHTML=[0,1].map(copy=>`<div class="surprise-copy" ${copy?'aria-hidden="true"':''}>${prompts.map((p,i)=>`${i===1||i===4?`<button data-page="stats" class="ticker-ad-entry" ${copy?'tabindex="-1"':''}><small>Ad space</small>${i===1?'Your brand could be here':'Advertise here'}</button>`:''}<button data-open-prompt="${i}" ${copy?'tabindex="-1"':''}>${icon('search')} ${escapeHTML(p.title)}</button>`).join('')}</div>`).join('');
 }
 async function openPrompt(index){
-  const previousMetric=state.metric,p=prompts[index];if(p.compare)rememberExploration();else explorationPose=null;closeDrawers(false);state.concept=p.compare?'compare':'explorer';state.comparison='places';state.metric=p.metric;state.mode='3d';state.rank=null;if(p.other){state.second=p.other;secondExplicit=true;comparisonPrepared=true;}
+  const previousMetric=state.metric,p=prompts[index];if(p.compare)rememberExploration();else explorationPose=null;closeDrawers(false);state.concept=p.compare?'compare':'explorer';state.comparison='places';state.metric=p.metric;state.rank=null;if(p.other){state.second=p.other;secondExplicit=true;comparisonPrepared=true;}
   if(!await choosePlace(p.place))return;if(previousMetric!==state.metric)analytics.action('indicator_select');if(p.compare){await geo.loadDetail(state.second);render();}analytics.action('view_select',{entry:'prompt'});if(p.rank)openRank(p.rank);
 }
 
@@ -354,10 +357,10 @@ function updateMaps(){
   const handleError=message=>{toast(message);state.mode='2d';render();};
   const entry={animateEntry:mapSplitEntry};
   if(!mapA)mapA=new ExplorerMap($('#map-a'),geo,{onSelect:id=>choosePlace(id),onError:handleError,onHover:info=>hover('a',info)});
-  const updateA=()=>mapA.update({...entry,renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:isSurfaceOpen($('#ranking-panel'))&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),heightValues:heights(metric()),countySupported:metric().countySupported,dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:isSurfaceOpen($('#ranking-panel'))&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
+  const updateA=()=>mapA.update({...entry,renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:isSurfaceOpen($('#ranking-panel'))&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),heightValues:heights(metric()),countySupported:metric().countySupported,palette:paletteFor(layer(metric())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:isSurfaceOpen($('#ranking-panel'))&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
   if(state.concept==='compare'){
     if(!mapB)mapB=new ExplorerMap($('#map-b'),geo,{onSelect:id=>choosePlace(id,'b'),onError:handleError,onHover:info=>hover('b',info)});
-    const updateB=()=>mapB.update({...entry,renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),heightValues:heights(metricB()),countySupported:metricB().countySupported,dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:[]});
+    const updateB=()=>mapB.update({...entry,renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),heightValues:heights(metricB()),countySupported:metricB().countySupported,palette:paletteFor(layer(metricB())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:[]});
     // Initialize the new pane before starting the existing pane's camera tween.
     if(mapSplitEntry){updateB();updateA();}else{updateA();updateB();}
   }else updateA();
@@ -368,6 +371,30 @@ function hover(side,info){
   if(!tooltip){tooltip=document.createElement('div');tooltip.className='map-hover';host.append(tooltip);}
   const m=side==='b'?metricB():metric(),data=layer(m),v=value(m,info.id);
   tooltip.innerHTML=`<b>${escapeHTML(info.name)}</b>${formatValue(v,data.unit)} ${escapeHTML(v==null?'No data':data.unit==='%'?'':data.unit)} <span>· ${escapeHTML(formatPeriod(data.period)||'No observation')} · Click to explore</span>`;
+}
+
+// The legend and the map are written from the same layer, so the ramp, the domain, the
+// break labels and the painted counties always describe one scale.
+function renderLegend(compare,data,other){
+  const provenance=d=>d.status==='ready'?d.source+' · '+formatPeriod(d.period):d.status==='error'?'Database unavailable':'No loaded observations';
+  const range=d=>d.status!=='ready'?'No data':d.scale==='diverging'?`${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}${d.unit==='%'?'':' '+d.unit}`:`${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}${d.unit==='%'?'':' '+d.unit}`;
+  const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?`Diverging scale · ${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}`:`${d.bins||7} quantile bins · ${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}`;
+  const title=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
+  const labelsHTML=`<span>${escapeHTML(compare&&state.comparison==='metrics'?'Left: '+scaleNote(data):range(data))}</span>${compare&&state.comparison==='metrics'?`<span>${escapeHTML('Right: '+scaleNote(other))}</span>`:''}<span class="no-data-key">No data</span>`;
+  const single=data.status==='ready'&&!(compare&&state.comparison==='metrics');
+  const palette=paletteFor(data);
+  for(const legend of document.querySelectorAll('.legend')){
+    legend.querySelector('.legend-title').textContent=title;
+    legend.querySelector('.legend-labels').innerHTML=labelsHTML;
+    const breaksLine=legend.querySelector('.legend-breaks');
+    if(breaksLine)breaksLine.hidden=true;
+    const ramp=legend.querySelector('.color-ramp');
+    ramp.style.background=`linear-gradient(90deg,${palette.map((colour,index)=>`${colour} ${Math.round(index*100/palette.length)}% ${Math.round((index+1)*100/palette.length)}%`).join(',')})`;
+    ramp.title=data.breaks?.length?data.breaks.map(value=>formatValue(value,data.unit)).join(' · '):'';
+  }
+  for(const line of document.querySelectorAll('.indicator-legend-source')){
+    line.textContent=compare&&state.comparison==='metrics'?`Census 2017 boundaries · ${provenance(data)} · ${provenance(other)}`:'Census 2017 boundaries';
+  }
 }
 function render(){
   if(conceptLoading)return;
@@ -381,36 +408,22 @@ function render(){
   if(!document.body.classList.contains('reading')){document.querySelectorAll('.concept-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===(state.concept==='compare'?'compare':'map'))));slidePill($('.concept-tabs'),$('.concept-tabs button[aria-pressed=true]'));}
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
   if(!$('#compare-toolbar .segment-pill'))$('#compare-toolbar .segmented').insertAdjacentHTML('afterbegin','<span class="segment-pill" aria-hidden="true"></span>');
-  document.body.dataset.view=state.mode;const mobileView=$('#mobile-view-toggle');mobileView.innerHTML=$(`.dimension-control [data-mode="${state.mode}"]`).innerHTML;mobileView.setAttribute('aria-label',`Switch to ${state.mode==='3d'?'2D':'3D'}`);slidePill($('.dimension-control'),$(`.dimension-control [data-mode="${state.mode}"]`));
+  document.body.dataset.view=state.mode;const mobileView=$('#mobile-view-toggle');const mobileTarget=state.mode==='2d'?'3d':'2d';mobileView.innerHTML=$(`.dimension-control [data-mode="${mobileTarget}"]`).innerHTML;mobileView.setAttribute('aria-label',`Switch to ${mobileTarget.toUpperCase()}`);slidePill($('.dimension-control'),$(`.dimension-control [data-mode="${state.mode}"]`));
   syncPlaceChrome();
   $('#mobile-compare-metric').textContent=metric().name.replace(/ rate$/,'');
   const comparisonSource=$('#mobile-comparison-source');comparisonSource.innerHTML=`${sourceLink(metric(),selected())} · ${escapeHTML(formatPeriod(layer(metric()).period)||'No observation')} <button data-source="a" aria-label="Open comparison indicator source"> · Source ${icon('info')}</button>`;
   const data=layer(metric()),other=layer(metricB());
-  const range=d=>d.status==='ready'?`${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}${d.unit==='%'?'':' '+d.unit}`:'No data';
-  const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'Diverging scale · 85 – 100 – 115':`${d.bins||7} quantile bins · ${formatValue(d.min,d.unit)} – ${formatValue(d.max,d.unit)}`;
-  $('#legend-title').textContent=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
-  $('.legend-labels').innerHTML=`<span>${escapeHTML(compare&&state.comparison==='metrics'?'Left: '+scaleNote(data):range(data))}</span>${compare&&state.comparison==='metrics'?`<span>${escapeHTML('Right: '+scaleNote(other))}</span>`:''}<span class="no-data-key">No data</span>`;
-  const legend=$('.legend'),ramp=$('.color-ramp');
-  let breaksLine=legend.querySelector('.legend-breaks');
-  if(!breaksLine){breaksLine=document.createElement('div');breaksLine.className='legend-breaks';legend.querySelector('.legend-labels').after(breaksLine);}
-  const single=data.status==='ready'&&!(compare&&state.comparison==='metrics');
-  breaksLine.hidden=!single||!data.breaks?.length;
-  breaksLine.innerHTML=single&&data.breaks?.length?data.breaks.map((value,index)=>`<span>${escapeHTML(formatValue(value,data.unit))}</span>`).join(''):'';
-  const palette=data.scale==='diverging'?DIVERGING:EMBER;
-  ramp.style.background=`linear-gradient(90deg,${palette.map((colour,index)=>`${colour} ${Math.round(index*100/palette.length)}% ${Math.round((index+1)*100/palette.length)}%`).join(',')})`;
-  ramp.title=data.breaks?.length?data.breaks.map(value=>formatValue(value,data.unit)).join(' · '):'';
-  const provenance=d=>d.status==='ready'?d.source+' · '+formatPeriod(d.period):d.status==='error'?'Database unavailable':'No loaded observations';
-  $('.map-provenance').textContent=`Census 2017 boundaries · ${compare&&state.comparison==='metrics'?'Left: '+provenance(data)+' · Right: '+provenance(other):provenance(data)}`;
   $('#pane-b').hidden=!compare;$('#compare-toolbar').hidden=!compare;$('#stories-open').hidden=!story;$('#compare-data-open').hidden=!compare;
   $('#breadcrumbs').hidden=compare;$('#region-jumps').hidden=compare;
   $('#map-intro').hidden=Boolean(state.selected)||compare||story;
   $('#map-hint').textContent=state.mode==='2d'?'Click a place · Drag to pan':!state.selected?'Drag to pan · Scroll to zoom':!metric().countySupported?'State layer · county values unavailable':'Click another state · Click the background to return';
-  $('#camera-a').innerHTML=cameraTools('a');$('#camera-b').innerHTML=cameraTools('b');
-  $('#view-settings-open').hidden=state.mode==='2d';
-  if(state.mode==='2d'&&$('#view-settings-panel')&&isSurfaceOpen($('#view-settings-panel'))){showSurface($('#view-settings-panel'),false);$('#view-settings-open').setAttribute('aria-expanded','false');}
+  const settingsTrigger=$('#view-settings-open');
+  if(settingsTrigger)settingsTrigger.hidden=state.mode==='2d';
+  if(state.mode==='2d'&&$('#view-settings-panel')&&isSurfaceOpen($('#view-settings-panel'))){showSurface($('#view-settings-panel'),false);settingsTrigger?.setAttribute('aria-expanded','false');}
   $('.dimension-control').dataset.ready='true';
   $('#story-list').innerHTML=stories.map((s,i)=>`<button class="story-item" data-story="${i}" aria-pressed="${s.metric===state.metric&&s.place===state.selected?.slice(0,2)}"><strong>${s.title}</strong><small>${s.description}</small><span class="story-action">${s.action} →</span></button>`).join('');
-  renderMapHeads();renderBreadcrumbs();renderInspector();renderExplorer();if(compare)renderCompare();if(isSurfaceOpen($('#ranking-panel'))){const scroll=$('#ranking-panel').scrollTop;$('#ranking-panel').innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p>`;$('#ranking-panel').scrollTop=scroll;}persist();updateMaps();
+  renderMapHeads();renderBreadcrumbs();renderInspector();renderExplorer();if(compare)renderCompare();if(isSurfaceOpen($('#ranking-panel'))){const scroll=$('#ranking-panel').scrollTop;$('#ranking-panel').innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;$('#ranking-panel').scrollTop=scroll;}persist();updateMaps();
+  renderLegend(compare,data,other);
   if($('.drawer:not([hidden]):not([inert])')&&returnFocusSelector)$(returnFocusSelector)?.setAttribute('aria-expanded','true');
   if(focusSelector&&!focused.isConnected)$(focusSelector)?.focus();
   renderAdPreview();pages?.refreshSources();
@@ -447,7 +460,7 @@ document.addEventListener('click',event=>{
    if(button.dataset.comparisonPlace){comparisonDraft.second=button.dataset.comparisonPlace;comparisonDraft.explicit=true;comparisonDraft.choosing=false;renderComparisonDraft();return;}
    if(button.hasAttribute('data-comparison-confirm')){state.second=comparisonDraft.second;secondExplicit=secondExplicit||Boolean(comparisonDraft.explicit);comparisonPrepared=true;comparisonDefaultFor=comparisonDraft.first;state.comparison='places';comparisonDraft=null;document.body.classList.remove('comparison-setup');closeDrawers(false);pages.navigate('compare');return;}
   if(button.dataset.openRank){openRank(button.dataset.openRank);return;}
-  if(button.dataset.rank){state.rank=button.dataset.rank;persist();const scroll=$('#ranking-panel').scrollTop;$('#ranking-panel').querySelector('.rank-tabs').parentElement.innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to map</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p>`;$('#ranking-panel').scrollTop=scroll;updateMaps();return;}
+  if(button.dataset.rank){state.rank=button.dataset.rank;persist();const scroll=$('#ranking-panel').scrollTop;$('#ranking-panel').querySelector('.rank-tabs').parentElement.innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to map</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;$('#ranking-panel').scrollTop=scroll;renderLegend(state.concept==='compare',layer(metric()),layer(metricB()));updateMaps();return;}
   if(button.dataset.rankPlace){state.rank=null;choosePlace(button.dataset.rankPlace);return;}
    if(button.dataset.rankCompare){rememberExploration();const id=button.dataset.rankCompare;state.second=id;secondExplicit=true;comparisonPrepared=true;state.comparison='places';state.rank=null;if(!state.selected||state.selected===id)state.selected=rankData().rows.find(x=>x.id!==id)?.id||(id==='06'?'48':'06');changeConcept('compare',{refresh:true});return;}
   if(button.dataset.openPlace){state.rank=null;choosePlace(button.dataset.openPlace);return;}
@@ -496,7 +509,6 @@ document.addEventListener('click',event=>{
     case 'edit-card':showMetricLibrary(state.inspectorSide||'a',true);break;
     case 'stories-open':openDrawer('story-rail',button);break;
     case 'compare-data-open':openDrawer('compare-results',button);break;
-    case 'share':copyLink();break;
     case 'saved-open':showSaved();break;
     case 'save-view':saveView();break;
     case 'save-current':saveView();closeDrawers(false);showSaved();break;
@@ -512,7 +524,7 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&$('.drawer:not([hidden]):not([inert])')){event.stopImmediatePropagation();closeDrawers();}
   else if(event.key==='Escape'&&!document.body.classList.contains('reading')&&!isSurfaceOpen($('#source-popup'))&&matchMedia('(max-width:760px)').matches&&!document.body.classList.contains('panel-collapsed')){event.stopImmediatePropagation();setPlaceSheet(document.body.classList.contains('place-expanded')?'half':'dismissed');}
 });
-async function copyLink(){const button=$('#share');clearTimeout(shareTimer);try{await navigator.clipboard.writeText(location.href);analytics.action('share_success');button.querySelector('span').textContent='Link copied';button.setAttribute('aria-label','Link copied');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}catch{button.querySelector('span').textContent='Copy failed';button.setAttribute('aria-label','Copy failed. Copy the browser address.');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}}
+async function copyLink(){const button=$('#share');if(!button)return;clearTimeout(shareTimer);try{await navigator.clipboard.writeText(location.href);analytics.action('share_success');button.querySelector('span').textContent='Link copied';button.setAttribute('aria-label','Link copied');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}catch{button.querySelector('span').textContent='Copy failed';button.setAttribute('aria-label','Copy failed. Copy the browser address.');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}}
 pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept});
 // The local review panel is a development tool: it is enabled only on request.
 const reviewOn=['1','true','yes','on'].includes(String(params.get('review')??'').toLowerCase());
@@ -527,7 +539,7 @@ try {
   metricById=new Map(loadedMapMetrics(payload.metrics).map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
   dataStore=createDataStore(geo,id=>{if(needed().some(m=>m.id===id))render();});
   $('#catalog-status').textContent=`${catalog.length} indicators`;
-  if(!['2d','3d'].includes(state.mode))state.mode='3d';
+  if(!['2d','3d'].includes(state.mode))state.mode='2d';
   state.metric=availableIndicatorId(state.metric,'unemployment');
   state.secondMetric=availableIndicatorId(state.secondMetric,catalog.find(m=>m.id!==state.metric)?.id);
   if(!geo.byId.has(state.selected))state.selected=null;if(state.second&&!geo.byId.has(state.second))state.second='48';
@@ -552,7 +564,7 @@ function showStatSource(side='a'){
  const unit=data.unit==='%'?'Percent (%)':data.unit||m.unit||'—';
  const explanation=row?.methodologyNote||(row?(m.fieldId==='03.06:unemployment_rate'?'Share of the labor force that is unemployed. Original units and reporting period are retained.':'Original units and reference period are retained.'):missingReason(m,f,data));
  const coverage=m.fieldId?(m.countySupported?(m.stateSupported?'State and county':'County'):'State'):m.coverageNote;
- const desktop=`<div class="source-observation"><p>${escapeHTML(f?.name||'United States')} · ${escapeHTML(m.name)}</p><strong>${number(m,f?.id)}</strong></div><dl><dt>Source</dt><dd>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source)}</dd><dt>Period</dt><dd>${escapeHTML(formatPeriod(data.period)||'No published observation')}</dd><dt>Unit</dt><dd>${escapeHTML(data.unit||'—')}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd><dt>Coverage</dt><dd>${escapeHTML(coverage)}</dd></dl><div class="source-method"><h3>Method & data gaps</h3><p>${escapeHTML(row?.methodologyNote||'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.')}</p>${current.definition?.formula?`<p>Formula: ${escapeHTML(current.definition.formula)}${current.definition.minDenominator?` · minimum denominator ${escapeHTML(String(current.definition.minDenominator))}`:''}.</p>`:''}<p>Census 2017 boundaries. ${data.excludedGeographies?.length||0} source geographies are outside this map.${current.suppressed?.size?` ${current.suppressed.size} places are suppressed below the minimum denominator.`:''} ${escapeHTML(data.selection||'The latest single period and release are used, with no older-place fallback.')}</p>${data.status==='ready'?`<p>${data.scale==='diverging'?'Colour and 3D height use a diverging 85–100–115 scale':`Colour and 3D height use ${data.bins||7} quantile bins`} across mapped places, from ${formatValue(data.min,data.unit)} to ${formatValue(data.max,data.unit)}. Both maps share the same scale for this indicator.</p>`:''}</div>`;
+ const desktop=`<div class="source-observation"><p>${escapeHTML(f?.name||'United States')} · ${escapeHTML(m.name)}</p><strong>${number(m,f?.id)}</strong></div><dl><dt>Source</dt><dd>${url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source)}</dd><dt>Period</dt><dd>${escapeHTML(formatPeriod(data.period)||'No published observation')}</dd><dt>Unit</dt><dd>${escapeHTML(data.unit||'—')}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd><dt>Coverage</dt><dd>${escapeHTML(coverage)}</dd></dl><div class="source-method"><h3>Method & data gaps</h3><p>${escapeHTML(row?.methodologyNote||'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.')}</p>${current.definition?.formula?`<p>Formula: ${escapeHTML(current.definition.formula)}${current.definition.minDenominator?` · minimum denominator ${escapeHTML(String(current.definition.minDenominator))}`:''}.</p>`:''}<p>Census 2017 boundaries. ${data.excludedGeographies?.length||0} source geographies are outside this map.${current.suppressed?.size?` ${current.suppressed.size} places are suppressed below the minimum denominator.`:''} ${escapeHTML(data.selection||'The latest single period and release are used, with no older-place fallback.')}</p>${data.status==='ready'?`<p>${data.scale==='diverging'?`Colour and 3D height use a diverging ${formatValue(data.domain[0],data.unit)} – ${formatValue(data.domain[1],data.unit)} scale`:`Colour and 3D height use ${data.bins||7} quantile bins`} across mapped places, from ${formatValue(data.min,data.unit)} to ${formatValue(data.max,data.unit)}. Both maps share the same scale for this indicator.</p>`:''}</div>`;
  pages.showSource(`<div class="source-desktop">${desktop}</div><div class="source-mobile"><h3>${escapeHTML(m.name)}</h3><dl><dt>Source</dt><dd>${escapeHTML(sourceName)}</dd><dt>Period</dt><dd>${escapeHTML(period||'No published observation')}</dd><dt>Unit / area</dt><dd>${escapeHTML(unit)} · ${f?.id.length===5?'County equivalent':f?'State level':'US'}</dd><dt>Release</dt><dd>${escapeHTML(data.sourceRelease||'—')}</dd></dl><p>${escapeHTML(explanation)}</p>${url?`<a class="primary-button" href="${escapeHTML(url)}" target="_blank" rel="noreferrer">Open original source</a>`:''}</div>`,{variant:'indicator'});
 }
 function renderAdPreview(){

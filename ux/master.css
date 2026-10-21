@@ -434,3 +434,16 @@ body[data-theme=light] .creative.banner .creative-body .creative-cta{color:var(-
 .library-list li{display:grid;gap:4px;padding:14px 0;border-bottom:1px solid var(--line)}
 .library-list strong{font-weight:600}
 .library-list small,.library-list span{font-size:12px;line-height:18px;color:var(--muted)}
+
+/* The chosen-indicator frame carries the colour scale, so the map keeps the full
+   viewport and no side field is exposed next to it. */
+.explore-panel{display:flex;flex-direction:column;overflow:hidden}
+.explore-panel .profile-content{flex:1 1 auto;min-height:0;overflow:auto}
+.indicator-legend{flex-shrink:0;margin-top:0;padding:12px 17px 14px;background:var(--panel);border-top:1px solid var(--line)}
+.indicator-legend .legend{width:auto}
+.indicator-legend .legend-title{display:block;font-size:9px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.indicator-legend .color-ramp{height:4px;margin:0 0 4px}
+.indicator-legend .legend-labels{font-size:9px}
+.indicator-legend-source{display:inline-block;margin-top:7px;padding:2px 7px;border:1px solid var(--line);border-radius:7px;font-size:9px;color:var(--muted);text-decoration:none}
+.indicator-legend-source:hover{color:var(--ink);border-color:var(--muted)}
+body:not([data-concept=compare]) .map-footer{display:none}

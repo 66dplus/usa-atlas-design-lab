@@ -39,6 +39,7 @@ export function initViewSettings({defaults,record,error,onChange,onOpen=()=>{}})
     <p id="settings-status" role="status"></p><div class="settings-actions"><button id="settings-default">Reset defaults</button><button id="settings-save">Save settings</button></div>`;
   document.body.append(panel);
   const trigger=document.querySelector('#view-settings-open'),$=id=>panel.querySelector('#'+id);
+  if(!trigger)return;
   let draft={...record.settings},saved=JSON.stringify(draft),busy=false;
   function message(text,isError=false){$('settings-status').textContent=text;$('settings-status').classList.toggle('settings-error',isError);}
   function sync(){

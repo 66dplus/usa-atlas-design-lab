@@ -107,9 +107,9 @@ body[data-concept=compare] .maps{grid-template-columns:1fr 1fr}body[data-concept
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.surprise-window{overflow-x:auto}#surprise-track{transform:none}}
 @media(max-width:760px){body:not([data-concept=compare]) .maps{top:95px;bottom:53svh}body:not([data-concept=compare]) .camera-tools{bottom:12px}.panel-collapsed:not([data-concept=compare]) .maps{bottom:46px}.panel-collapsed:not([data-concept=compare]) .camera-tools{bottom:12px}}
 
-body:has(#ranking-panel:not([hidden])):not([data-concept=compare]) .maps{left:calc(var(--left) + 34px);right:calc(var(--right) + 34px)}
-body:has(#ranking-panel:not([hidden])):not([data-concept=compare]) .camera-tools{right:8px}
-@media(max-width:760px){body:has(#ranking-panel:not([hidden])):not([data-concept=compare]) .maps{left:0;right:0}.feedback-launcher{top:103px;bottom:auto;right:12px}}
+/* The map keeps the full viewport. Drawers and side cards float over it, so the page
+   background is never exposed as a band between the map and a side card. */
+@media(max-width:760px){.feedback-launcher{top:103px;bottom:auto;right:12px}}
 
 .rank-marker:before{content:"";position:absolute;left:50%;top:100%;height:var(--leader,0px);width:1px;background:#343940;pointer-events:none}.rank-marker:after{top:calc(100% + var(--leader,0px))}
 

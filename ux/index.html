@@ -16,12 +16,10 @@
 <header class="app-header">
   <div class="navigation-cluster">
     <a class="brand" href="./" aria-label="USA Atlas home"><svg data-brand-icon="explorer" aria-hidden="true"></svg><span>USA <b>Atlas</b></span></a>
-    <button id="saved-open" class="saved-trigger" aria-expanded="false"><svg data-brand-icon="saved" aria-hidden="true"></svg>Saved</button><nav class="concept-tabs" aria-label="Explore modes"><span class="nav-pill" aria-hidden="true"></span><button data-page="map" data-concept="explorer">Map</button><button data-page="compare" data-concept="compare">Compare</button><button data-page="stats">Stats</button><button data-page="blog">Blog</button></nav>
+    <nav class="concept-tabs" aria-label="Explore modes"><span class="nav-pill" aria-hidden="true"></span><button data-page="map" data-concept="explorer">Map</button><button data-page="compare" data-concept="compare">Compare</button><button data-page="stats">Stats</button><button data-page="blog">Blog</button></nav>
   </div>
   <button id="mobile-search" class="chrome-circle" aria-label="Search places and indicators"><svg data-brand-icon="search" aria-hidden="true"></svg></button><button id="mobile-compare-metric" class="mobile-compare-metric" data-pane-metric="a"></button><button id="support-open" class="support-trigger" aria-label="Support"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>Support</span></button><button id="info-open" class="chrome-circle" aria-label="About USA Atlas"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg></button><div class="workspace-bar">
     <div class="dimension-control sliding-control" aria-label="Map view"><span class="segment-pill" aria-hidden="true"></span><button data-mode="2d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m2 5 5-2 6 2 5-2v12l-5 2-6-2-5 2V5ZM7 3v12M13 5v12"/></svg><span>2D</span></button><button data-mode="3d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 4v8l-7 4-7-4V6l7-4ZM3 6l7 4 7-4M10 10v8"/></svg><span>3D</span></button><button id="mobile-view-toggle" data-pill="skip" class="mobile-view-toggle" aria-label="Switch to 2D"></button></div>
-    <button id="view-settings-open" class="icon-button" aria-label="Map settings" title="Map settings" aria-expanded="false"><svg data-brand-icon="indicators" aria-hidden="true"></svg></button>
-    <button id="share" class="share-button" aria-label="Share" title="Copy view link"><svg data-brand-icon="share" aria-hidden="true"></svg><span>Share</span></button>
   </div>
 </header>
 <aside id="explore-panel" class="explore-panel" aria-label="Explore this place"></aside>
@@ -36,17 +34,15 @@
         <div class="pane-heading" id="heading-a"></div>
         <nav id="breadcrumbs" aria-label="Geographic location"></nav>
         <div class="map-intro" id="map-intro"><h1>Every place<br>has a story.</h1><p>Choose a state. See what changes.</p></div>
-        <div class="camera-tools" id="camera-a" aria-label="Primary camera"></div>
         <button class="map-summary" id="summary-a" data-statistics="a" aria-expanded="false"></button>
       </section>
       <section class="map-pane" id="pane-b" aria-label="Comparison map" hidden>
         <div id="map-b" class="map-host"></div><div class="pane-heading" id="heading-b"></div>
-        <div class="camera-tools" id="camera-b" aria-label="Comparison camera"></div>
         <button class="map-summary" id="summary-b" data-statistics="b" aria-expanded="false"></button>
       </section>
     </div>
     <div class="map-actions"><button id="stories-open" hidden aria-expanded="false">Browse stories <span aria-hidden="true">↗</span></button><button id="compare-data-open" hidden aria-expanded="false">Compare data <span aria-hidden="true">↑</span></button></div>
-    <div class="map-footer"><div class="legend"><strong id="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button id="map-sources" class="map-provenance" aria-label="Open map geometry sources">Census 2017 boundaries · Sources</button></div>
+    <div class="map-footer"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button id="map-sources" class="map-provenance" aria-label="Open map geometry sources">Census 2017 boundaries · Sources</button></div>
     <div id="region-jumps" class="region-jumps"><button data-jump="02">Alaska</button><button data-jump="15">Hawaii</button></div>
     <span id="map-hint" class="map-hint"></span>
   </section>
