@@ -53,6 +53,11 @@ def query(sql, variables=None, *, statement_timeout_ms=8000):
 ACS_METADATA = json.loads((ROOT / 'ux/acs-series.json').read_text())
 ACS_SERIES = ACS_METADATA['variables']
 
+NORMALIZATION = json.loads((ROOT / 'ux/metric-definitions.json').read_text())
+NORMALIZED_BY_ID = {metric['id']: metric for metric in NORMALIZATION['metrics']}
+NORMALIZED_BY_FIELD = {metric['fieldId']: metric for metric in NORMALIZATION['metrics'] if metric.get('fieldId')}
+NORMALIZED_VARIANTS = NORMALIZATION['variants']
+
 
 def presentation_metadata(field_id, source, unit, period, release):
     """Resolve native table units and the ACS five-year label without changing values."""
@@ -94,6 +99,44 @@ def series_label(base, field):
     if field.startswith('04.09:'):
         return 'Crime trends · ' + field.split(':')[1].replace('-', ' ') + ' · year over year'
     return base if ':' not in field else base + ' · ' + field.split(':', 1)[1].replace('_', ' ')
+
+
+def public_definition(definition):
+    return {key: definition.get(key) for key in
+            ('formula', 'period', 'displayPeriod', 'unit', 'geography', 'scale',
+             'minDenominator', 'source', 'method', 'sourceRelease')
+            if definition.get(key) is not None}
+
+
+def apply_definition(metric, definition, field_id, label, unit, geography, formula=None):
+    metric.update({
+        'name': label, 'unit': unit, 'fieldId': field_id,
+        'stateSupported': 'state' in geography, 'countySupported': 'county' in geography,
+        'availability': 'loaded', 'plannedState': 'loaded',
+        'source': definition['source'], 'sourceUrl': definition['sourceUrl'],
+        'definition': public_definition({**definition, 'unit': unit,
+                                         'formula': formula or definition['formula']}),
+        'coverageNote': ('State and county observations; select a place.' if
+                         {'state', 'county'} <= set(geography) else
+                         'State observations only; no county value is inferred.' if 'state' in geography else
+                         'County observations only; no state value is inferred.'),
+    })
+
+
+def variant_definition(base, variant):
+    definition = {**base, 'label': variant['label'], 'fieldId': variant['fieldId'],
+                  'formula': variant['formula'], 'unit': variant.get('unit', base['unit']),
+                  'variants': None}
+    derived = {**base['derived'], 'numerator': variant['numerator']}
+    if 'denominator' in variant:
+        derived.update(operation='ratio', denominator=variant['denominator'])
+    definition['derived'] = derived
+    return definition
+
+
+for _base in NORMALIZATION['metrics']:
+    for _variant in NORMALIZATION['variants'].get(_base['id'], []):
+        NORMALIZED_BY_FIELD.setdefault(_variant['fieldId'], variant_definition(_base, _variant))
 
 
 def catalog():
@@ -211,6 +254,32 @@ def catalog():
                 'Collected at ' + ', '.join(field['geographies']) + ' level; no state/county allocation is inferred.' if field['geographies'] else
                 'No observations have been loaded for this indicator.')
             metrics.append(m)
+    switch_labels = {'01.04': 'Race / ethnicity', '07.01': 'Income measure'}
+    additions = []
+    for metric in metrics:
+        definition = NORMALIZED_BY_ID.get(metric['id'])
+        if not definition or metric['catalogId'] != definition['catalogId'] or metric['id'] != definition['id']:
+            continue
+        apply_definition(metric, definition, definition['fieldId'], definition['label'],
+                         definition['unit'], definition['geography'])
+        variants = NORMALIZED_VARIANTS.get(definition['id'], [])
+        if not variants:
+            continue
+        group = definition['id']
+        options = [{'id': definition['id'], 'label': definition['label']}]
+        options.extend({'id': variant['id'], 'label': variant['label']} for variant in variants)
+        metric['switchGroup'] = group
+        metric['switchLabel'] = switch_labels.get(definition['catalogId'], 'Measure')
+        metric['switchOptions'] = options
+        for variant in variants:
+            variant_definition_data = variant_definition(definition, variant)
+            clone = {**metric, 'id': variant['id'], 'switchGroup': group,
+                     'switchLabel': metric['switchLabel'], 'switchOptions': options}
+            apply_definition(clone, variant_definition_data, variant['fieldId'], variant['label'],
+                             variant.get('unit', definition['unit']), definition['geography'],
+                             formula=variant['formula'])
+            additions.append(clone)
+    metrics.extend(additions)
     if legacy_fields:
         for proposal in proposed:
             metrics.append({**proposal, 'availability': 'unavailable', 'plannedState': 'proposed',
@@ -219,6 +288,8 @@ def catalog():
                             'coverageNote': proposal['note'] + ' No observations have been loaded.'})
     return {'metrics': metrics, 'catalogCount': len(original) + len(version_metrics),
             'publishedCatalogCount': published_count,
+            'visibleFieldCount': NORMALIZATION['visibleCount'],
+            'library': NORMALIZATION['library'],
             'availableSeries': len(data['series']), 'observationCount': (sum(f['rows'] for f in fields.values())
                 if all(f['rows'] is not None for f in fields.values()) else None)}
 
@@ -239,9 +310,156 @@ def canonical_geo(source, kind, identifier):
     return identifier if identifier in STATE_CODES.values() else None
 
 
+def _component_query(num_components, den_components):
+    components = [('n', component) for component in num_components] + [('d', component) for component in den_components]
+    variables = {
+        'catalogs': ','.join(sorted({component['field'][:5] for _, component in components})),
+        'fields': ','.join(component['field'] for _, component in components),
+        'periods': ','.join(sorted({component['period'] for _, component in components})),
+    }
+    aggregates = []
+    for index, (_, component) in enumerate(components):
+        multiplier = component.get('multiplier', 1)
+        aggregates.append(f"SUM(value * {multiplier}) FILTER (WHERE field_id=:'f{index}') AS c{index}")
+        aggregates.append(f"MIN(source) FILTER (WHERE field_id=:'f{index}') AS s{index}")
+        aggregates.append(f"MAX(source_release) FILTER (WHERE field_id=:'f{index}') AS r{index}")
+        variables[f'f{index}'] = component['field']
+    sql = f"""SELECT COALESCE(json_agg(t ORDER BY geo_type,geo_id),'[]'::json) FROM (
+      SELECT geo_id,geo_type,MIN(unit) AS unit,MIN(source_url) AS source_url,
+        MIN(methodology_note) AS methodology_note,MAX(source_release) AS source_release,{','.join(aggregates)}
+      FROM (
+        SELECT DISTINCT ON (o.field_id,o.geo_id,o.geo_type) o.field_id,o.geo_id,o.geo_type,o.value,o.source_release,
+          o.unit,o.source,o.source_url,o.methodology_note
+        FROM usa_atlas.observation o JOIN usa_atlas.ingest_run i USING(ingest_id)
+        WHERE o.catalog_field_id=ANY(string_to_array(:'catalogs',',')::text[])
+          AND o.field_id=ANY(string_to_array(:'fields',',')::text[])
+          AND o.period=ANY(string_to_array(:'periods',',')::text[])
+          AND o.geo_type IN ('state','county','nation') AND i.status='pass'
+        ORDER BY field_id,geo_id,geo_type,source_release DESC
+      ) s GROUP BY geo_id,geo_type
+    ) t"""
+    return query(sql, variables, statement_timeout_ms=20000)
+
+
+def derived_observations(definition):
+    spec = definition['derived']
+    numerator, denominator = spec['numerator'], spec['denominator']
+    components = [('n', component) for component in numerator] + [('d', component) for component in denominator]
+    rows = _component_query(numerator, denominator)
+    values, sources, excluded, releases = {}, {}, [], {}
+    for row in rows:
+        for index, (side, component) in enumerate(components):
+            raw_value, source, release = row.get(f'c{index}'), row.get(f's{index}'), row.get(f'r{index}')
+            if raw_value is None:
+                continue
+            identifier = canonical_geo(source, row['geo_type'], row['geo_id'])
+            if identifier is None:
+                excluded.append(row['geo_id'])
+                continue
+            values.setdefault(index, {})[identifier] = raw_value
+            sources.setdefault(index, row)
+            releases.setdefault(index, set()).add(release)
+    if any(len(found) > 1 for found in releases.values()):
+        raise DatabaseUnavailable('The selected components span more than one release.')
+    def total(side, identifier):
+        indexes = [index for index, (component_side, _) in enumerate(components) if component_side == side]
+        found = []
+        for index in indexes:
+            value = values.get(index, {}).get(identifier)
+            if value is None:
+                return None
+            found.append(value)
+        return sum(found)
+    geography = definition['geography']
+    minimum = definition.get('minDenominator')
+    result_rows, suppressed, seen = [], [], set()
+    def emit(identifier, value, numerator_total, denominator_total):
+        if identifier in seen or not isinstance(value, (int, float)):
+            return
+        if minimum and denominator_total is not None and denominator_total < minimum:
+            suppressed.append(identifier)
+            return
+        seen.add(identifier)
+        result_rows.append({'id': identifier, 'value': value,
+                            'geoType': 'nation' if identifier == 'US' else ('county' if len(identifier) == 5 else 'state'),
+                            'sourceGeoId': identifier})
+    def identifiers(*sides):
+        found = set()
+        for side in sides:
+            for index, (component_side, _) in enumerate(components):
+                if component_side == side:
+                    found.update(values.get(index, {}))
+        return found
+    if spec['operation'] == 'sum':
+        multiplier = spec.get('multiplier', 1)
+        for identifier in identifiers('n'):
+            if identifier == 'US' or (identifier in STATE_CODES.values() and set(geography) == {'county'}):
+                continue
+            value = total('n', identifier)
+            if value is not None:
+                emit(identifier, value * multiplier, value, None)
+        if spec.get('aggregateState'):
+            states = {}
+            for identifier in identifiers('n'):
+                if len(identifier) == 5:
+                    states.setdefault(identifier[:2], []).append(identifier)
+            for state, counties in states.items():
+                emit(state, sum(total('n', county) or 0 for county in counties) * multiplier, None, None)
+        if spec.get('aggregateUS'):
+            counties = [identifier for identifier in identifiers('n') if len(identifier) == 5]
+            emit('US', sum(total('n', county) or 0 for county in counties) * multiplier, None, None)
+    else:
+        for identifier in identifiers('n', 'd'):
+            if identifier == 'US':
+                continue
+            numerator_total, denominator_total = total('n', identifier), total('d', identifier)
+            if numerator_total is None or denominator_total in (None, 0):
+                continue
+            emit(identifier, numerator_total / denominator_total * spec['multiplier'], numerator_total, denominator_total)
+        if spec.get('aggregateState'):
+            states = {}
+            for identifier in identifiers('n', 'd'):
+                if len(identifier) == 5:
+                    states.setdefault(identifier[:2], []).append(identifier)
+            for state, geos in states.items():
+                numerator_total = sum(total('n', geo) or 0 for geo in geos)
+                denominator_total = sum(total('d', geo) or 0 for geo in geos)
+                if denominator_total:
+                    emit(state, numerator_total / denominator_total * spec['multiplier'], numerator_total, denominator_total)
+        if spec.get('aggregateUS'):
+            numerator_total, denominator_total = total('n', 'US'), total('d', 'US')
+            if numerator_total is None:
+                numerator_ids = identifiers('n')
+                geos = [identifier for identifier in numerator_ids if len(identifier) == 5] or \
+                       [identifier for identifier in numerator_ids if len(identifier) == 2]
+                found = [value for value in (total('n', geo) for geo in geos) if value is not None]
+                numerator_total = sum(found) if found else None
+                if numerator_total is not None and denominator:
+                    denominator_total = sum(
+                        value for value in (total('d', geo) for geo in geos) if value is not None)
+            if numerator_total is not None and denominator_total:
+                emit('US', numerator_total / denominator_total * spec['multiplier'], numerator_total, denominator_total)
+    result_rows.sort(key=lambda row: (row['geoType'], row['id']))
+    primary = sources.get(0) or sources.get(len(numerator)) or {}
+    return {'fieldId': definition['fieldId'], 'period': definition['period'],
+            'displayPeriod': definition.get('displayPeriod'),
+            'sourceUnit': primary.get('unit', definition['unit']), 'unit': definition['unit'],
+            'source': definition['source'], 'sourceCode': primary.get('source'),
+            'sourceRelease': definition.get('sourceRelease') or primary.get('source_release'),
+            'definition': public_definition(definition),
+            'scale': definition.get('scale'), 'geoLevel': 'county' if 'county' in definition['geography'] else 'state',
+            'methodologyNote': definition['method'],
+            'observations': result_rows, 'excludedGeographies': excluded,
+            'suppressedGeographies': suppressed,
+            'selection': 'Derived from published components in one latest release; no allocation or older-place fallback.'}
+
+
 def observations(field_id):
     if not re.fullmatch(r'[0-9]{2}\.[0-9]{2}(?::[a-zA-Z0-9_:-]{1,80})?', field_id):
         raise ValueError('Invalid field identifier')
+    definition = NORMALIZED_BY_FIELD.get(field_id)
+    if definition and definition.get('derived'):
+        return derived_observations(definition)
     rows = query("""
       WITH chosen AS (
         SELECT o.period,o.source_release FROM usa_atlas.observation o
@@ -277,8 +495,23 @@ def observations(field_id):
         result.append({'id': identifier, 'geoType': row['geo_type'], 'sourceGeoId': row['geo_id'],
                        'value': row['value'], 'sourceUrl': row['source_url'],
                        'methodologyNote': row['methodology_note'], 'retrievedAt': row['retrieved_at']})
-    return {'fieldId': field_id, 'period': period, 'sourceUnit': unit,
-            **presentation_metadata(field_id, source, unit, period, release),
-            'source': SOURCE_NAMES.get(source, source), 'sourceCode': source, 'sourceRelease': release,
-            'observations': result, 'excludedGeographies': excluded,
-            'selection': 'Latest single period and release in the loaded database; no older-place fallback.'}
+    if definition:
+        unit = definition['unit']
+        source = definition['source']
+        release = definition.get('sourceRelease') or release
+        for row in result:
+            row['sourceUrl'] = definition['sourceUrl']
+            row['methodologyNote'] = definition['method']
+    metadata = presentation_metadata(field_id, source, unit, period, release)
+    display_period = definition.get('displayPeriod') if definition and definition.get('displayPeriod') else metadata['displayPeriod']
+    result_data = {'fieldId': field_id, 'period': period, 'sourceUnit': unit,
+            **{**metadata, 'displayPeriod': display_period},
+            'source': source, 'sourceCode': source, 'sourceRelease': release,
+            'observations': result, 'excludedGeographies': excluded}
+    if definition:
+        result_data.update({'unit': definition['unit'], 'definition': public_definition(definition),
+                            'scale': definition.get('scale'),
+                            'geoLevel': 'county' if 'county' in definition['geography'] else 'state',
+                            'suppressedGeographies': []})
+    result_data['selection'] = 'Latest single period and release in the loaded database; no older-place fallback.'
+    return result_data

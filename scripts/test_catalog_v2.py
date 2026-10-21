@@ -10,6 +10,8 @@ import atlas_data
 ROOT = Path(atlas_data.ROOT)
 LEGACY = json.loads((ROOT / 'ux/catalog.json').read_text())['metrics']
 V2 = json.loads((ROOT / 'ux/catalog-v2.json').read_text())
+NORMALIZATION = json.loads((ROOT / 'ux/metric-definitions.json').read_text())
+NORMALIZED_BY_ID = {metric['id']: metric for metric in NORMALIZATION['metrics']}
 
 
 def catalog_payload(extra_count=6, *, unknown=False, loaded=False):
@@ -59,7 +61,8 @@ class CatalogV2Tests(unittest.TestCase):
         result = self.run_catalog(catalog_payload())
         self.assertEqual((result['catalogCount'], result['publishedCatalogCount']), (87, 87))
         by_id = {metric['id']: metric for metric in result['metrics']}
-        self.assertEqual(len(result['metrics']), 87)
+        # 87 catalog rows plus the normalized variant clones of the measure switches.
+        self.assertEqual(len(result['metrics']), 91)
         for identifier in ('data-centers', 'residential-water-price', 'billion-dollar-companies'):
             self.assertEqual(by_id[identifier]['catalogId'], next(
                 m['catalogId'] for m in V2['metrics'] if m['id'] == identifier))
@@ -78,30 +81,34 @@ class CatalogV2Tests(unittest.TestCase):
         loaded = [m for m in result['metrics'] if m['catalogId'] == '11.01']
         self.assertEqual(len(loaded), 5)
         self.assertTrue(all(m['availability'] == 'loaded' for m in loaded))
-        first = next(m for m in loaded if m['fieldId'] == '11.01:all-cancer')
+        first = next(m for m in loaded if m['id'] == 'all-cancer-new-cases')
         definition = next(m for m in V2['metrics'] if m['catalogId'] == '11.01')
         self.assertEqual(first['catalogLabel'], definition['catalogLabel'])
         self.assertEqual(first['catalogSource'], definition['catalogSource'])
         self.assertEqual(first['catalogNote'], definition['catalogNote'])
         self.assertEqual(first['contractUnit'], 'cases')
+        # The normalized contract replaces the raw series with one derived rate.
+        self.assertEqual(first['fieldId'], NORMALIZED_BY_ID['all-cancer-new-cases']['fieldId'])
+        self.assertEqual(first['unit'], NORMALIZED_BY_ID['all-cancer-new-cases']['unit'])
 
     def test_medical_placeholders_match_the_v2_contract_metadata(self):
         result = self.run_catalog(catalog_payload())
         by_id = {m['id']: m for m in result['metrics']}
         expected = {
-            'all-cancer-new-cases': ('11.01', 'cases', 'actual calendar-year count of new all-cancer cases',
-                                     'CDC USCS'),
-            'new-hiv-diagnoses': ('11.02', 'diagnoses', 'actual calendar-year count of new HIV diagnoses',
-                                  'CDC AtlasPlus'),
-            'deaths-under-18': ('11.03', 'deaths', 'actual calendar-year count of deaths at age <18',
-                                'CDC WONDER'),
+            'all-cancer-new-cases': ('11.01', 'per 100,000', 'cases'),
+            'new-hiv-diagnoses': ('11.02', 'per 100,000', 'diagnoses'),
+            'deaths-under-18': ('11.03', 'per 100,000', 'deaths'),
         }
-        for identifier, (catalog_id, unit, note, source) in expected.items():
+        for identifier, (catalog_id, unit, contract_unit) in expected.items():
             metric = by_id[identifier]
+            definition = NORMALIZED_BY_ID[identifier]
             self.assertEqual(metric['catalogId'], catalog_id)
-            self.assertEqual(metric['contractUnit'], unit)
-            self.assertEqual(metric['note'], note)
-            self.assertEqual(metric['source'], source)
+            self.assertEqual(metric['contractUnit'], contract_unit)
+            self.assertEqual(metric['unit'], unit)
+            self.assertEqual(metric['note'], definition.get('note', metric['note']))
+            self.assertEqual(metric['source'], definition['source'])
+            self.assertEqual(metric['fieldId'], definition['fieldId'])
+            self.assertEqual(metric['definition']['geography'], definition['geography'])
 
     def test_five_07_02_series_use_the_generic_series_label(self):
         result = self.run_catalog(catalog_payload(loaded=True))
@@ -112,10 +119,12 @@ class CatalogV2Tests(unittest.TestCase):
 
     def test_uncounted_observations_remain_available_without_fake_totals(self):
         payload = catalog_payload()
-        payload['fields'][0].update(rows=None, geographies=['block_group'])
+        # A field outside the normalized contract keeps the database geography in its note.
+        uncounted = next(field for field in payload['fields'] if field['catalog_field_id'] == '04.09')
+        uncounted.update(rows=None, geographies=['block_group'])
         result = self.run_catalog(payload)
         self.assertIsNone(result['observationCount'])
-        metric = next(m for m in result['metrics'] if m['catalogId'] == payload['fields'][0]['catalog_field_id'])
+        metric = next(m for m in result['metrics'] if m['catalogId'] == '04.09')
         self.assertTrue(metric['hasObservations'])
         self.assertIsNone(metric['observations'])
         self.assertIn('block_group', metric['coverageNote'])
@@ -130,9 +139,10 @@ class CatalogV2Tests(unittest.TestCase):
         metrics = [m for m in result['metrics'] if m['catalogId'] == '01.01']
         primary = next(m for m in metrics if m['id'] == 'population')
         self.assertEqual(primary['fieldId'], '01.01:B01003_001E')
-        self.assertIn('Estimate', primary['name'])
+        self.assertEqual(primary['name'], NORMALIZED_BY_ID['population']['label'])
         margin = next(m for m in metrics if m['fieldId'].endswith('M'))
         self.assertIn('Margin of Error', margin['name'])
+        self.assertNotEqual(margin['id'], primary['id'])
 
 
 if __name__ == '__main__':

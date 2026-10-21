@@ -59,7 +59,8 @@ class AtlasDataIntegration(unittest.TestCase):
         self.assertEqual(by_id['adjusted-gross-income-agi']['geographies'], ['zip'])
         self.assertEqual(by_id['pm2-5']['geographies'], ['monitor'])
         self.assertIsNone(by_id['pm2-5']['fieldId'])
-        self.assertIsNone(by_id['median-household-income']['fieldId'])
+        # The normalized contract binds a canonical field to the income indicator.
+        self.assertEqual(by_id['median-household-income']['fieldId'], '02.01:B19013_001E')
         self.assertTrue(by_id['unemployment']['countySupported'])
         self.assertFalse(by_id['murders']['countySupported'])
         for identifier in ('data-centers', 'residential-water-price', 'billion-dollar-companies'):

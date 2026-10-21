@@ -1,16 +1,16 @@
 // Display switches shared by Map, Compare, data cards and advertiser choices.
 // true enables a collected field; false hides it. Unknown fields stay hidden.
-// Initial 35 enabled IDs: COLLECTED-20261007.md, rows with 51/51 state presence.
-// 11.01–11.03 added after exact production import/readback on 11 October 2026.
+// Enabled IDs follow the 2026-10-20 normalization plan: 39 map indicators.
+// 01.06 and 01.08 remain loaded but move to the Data library, not the map.
 export const indicatorVisibility=Object.freeze({
   '01.01': true, // Population
   '01.02': true, // Age
   '01.03': true, // Sex
   '01.04': true, // Race / ethnicity
   '01.05': true, // Foreign-born population
-  '01.06': true, // Country / region of birth
+  '01.06': false, // Country / region of birth
   '01.07': true, // Citizenship
-  '01.08': true, // Year / period of immigration
+  '01.08': false, // Year / period of immigration
   '02.01': true, // Median household income
   '02.02': true, // Per-capita income
   '02.03': true, // Median rent
@@ -52,16 +52,16 @@ export const indicatorVisibility=Object.freeze({
   '05.11': false, // Cancer deaths
   '05.12': false, // Accidental deaths
   '05.13': false, // Life-expectancy-related indicators
-  '05.14': false, // Obesity rate
-  '05.15': false, // Diabetes rate
-  '05.16': false, // Physical inactivity rate
+  '05.14': true, // Obesity rate
+  '05.15': true, // Diabetes rate
+  '05.16': true, // Physical inactivity rate
   '06.01': false, // Total homeless
   '06.02': false, // Sheltered homeless
   '06.03': false, // Unsheltered homeless
   '06.04': false, // Homeless veterans
   '06.05': false, // Homeless families
   '06.06': false, // Chronically homeless
-  '07.01': true, // Adjusted Gross Income (AGI)
+  '07.01': true, // Income before deductions
   '07.02': false, // High-income taxpayers / returns
   '07.03': false, // Capital gains
   '07.04': false, // Dividends

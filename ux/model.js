@@ -41,6 +41,7 @@ export async function readAtlasJSON(url,request=fetch) {
 
 export function prepareLayer(data,geo) {
   const observations=new Map(),excluded=[...data.excludedGeographies];
+  const suppressed=new Set(data.suppressedGeographies||[]);
   for(const row of data.observations){
     if(row.id!=='US'&&!geo.byId.has(row.id)){excluded.push(row.sourceGeoId);continue;}
     if(!Number.isFinite(row.value)||observations.has(row.id))throw new Error('The series has invalid or ambiguous observations.');
@@ -48,11 +49,23 @@ export function prepareLayer(data,geo) {
   }
   const numbers=[...observations].filter(([id])=>id!=='US').map(([,row])=>row.value);
   const min=numbers.length?Math.min(...numbers):null,max=numbers.length?Math.max(...numbers):null;
-  const values=new Map([...geo.byId.keys()].map(id=>{
-    const v=observations.get(id)?.value;
-    return [id,v==null?null:max===min ? .5 :(v-min)/(max-min)];
-  }));
-  return {...data,status:'ready',observations,values,min,max,excludedGeographies:excluded};
+  const scale=data.scale==='diverging'?'diverging':data.scale==='quantile5'?'quantile5':'quantile7';
+  const bins=scale==='quantile5'?5:7,breaks=[];
+  if(numbers.length){
+    const sorted=[...numbers].sort((a,b)=>a-b);
+    const at=position=>{const spot=(sorted.length-1)*position,low=Math.floor(spot),high=Math.ceil(spot);return sorted[low]+(sorted[high]-sorted[low])*(spot-low);};
+    for(let index=0;index<=bins;index++)breaks.push(at(index/bins));
+  }
+  const normalize=value=>{
+    if(value==null)return null;
+    if(scale==='diverging')return Math.min(1,Math.max(0,(value-85)/30));
+    let bin=0;while(bin<bins-1&&value>breaks[bin+1])bin++;
+    return (bin+.5)/bins;
+  };
+  const height=value=>value==null?null:max===min?.5:(value-min)/(max-min);
+  const values=new Map([...geo.byId.keys()].map(id=>[id,normalize(observations.get(id)?.value)]));
+  const heightValues=new Map([...geo.byId.keys()].map(id=>[id,height(observations.get(id)?.value)]));
+  return {...data,status:'ready',observations,values,heightValues,breaks,bins,scale,min,max,suppressed,excludedGeographies:excluded};
 }
 
 export function createDataStore(geo,onChange,request=fetch) {
@@ -89,10 +102,14 @@ export function missingReason(metric,feature,layer) {
   if(!feature)return 'No published US observation in this snapshot. Choose a state or county; no average is substituted.';
   if(feature.id.length===5&&!metric.countySupported)return 'This is a state-level series. No county value is inferred from the state value.';
   if(feature.id.length===2&&!metric.stateSupported)return 'This series contains county observations. Choose a county; no state value is inferred.';
+  if(layer.suppressed?.has(feature.id))return 'Insufficient sample: the denominator is below the minimum for this indicator.';
   return `No observation for this FIPS in the ${formatPeriod(layer.period)} snapshot. The map uses Census 2017 boundaries; unmatched or missing places remain empty.`;
 }
 export function formatValue(value,unit='') {
   if(value==null)return '—';
+  if(unit.startsWith('USD')&&Math.abs(value)>=1e6){
+    return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2}).format(value);
+  }
   const number=new Intl.NumberFormat('en-US',{maximumFractionDigits:unit==='per 1,000 people'?6:2}).format(value);
   return unit==='%'?number+'%':number;
 }

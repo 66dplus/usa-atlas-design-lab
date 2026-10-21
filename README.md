@@ -90,6 +90,43 @@ Point <code>PGHOST</code> and <code>PGPORT</code> at the same database the colle
 
 The integration goes through <code>GET /api/atlas/catalog</code> and <code>GET /api/atlas/observations?field=...</code>. The UI admits only successfully loaded catalog records, displays state and county observations, and matches counties to Census 2017 geometry by exact FIPS. Other geography levels and collector records without a UI adapter stay in the database and do not turn into estimates for the map. The adapter accepts only two known catalog versions — the original with 81 indicators and the versioned one with 87; an unknown or partial format is rejected. Any change to the catalog format, indicator ID, value type or geography ID must come with a compatible UI change and checks on both sides.
 
+## Public deployment
+
+The published atlas is **https://usa-xray.online** (and `https://www.usa-xray.online`).
+This repository is the single source of that site; the `trycloudflare.com` review
+tunnels are temporary preview addresses and are not the public URL.
+
+The server is `62.171.154.202` (Ubuntu 24.04) and the chain is:
+
+```text
+public DNS (Spaceship: launch1/launch2.spaceship.net, A -> 62.171.154.202)
+  -> nginx :80 / :443, TLS from Let's Encrypt, HTTP redirects to HTTPS
+  -> 127.0.0.1:8099 host-header rewriting origin proxy
+  -> 172.19.0.4:4429 read-only preview container
+  -> read-only PostgreSQL `usa_atlas`
+```
+
+A release is built from this repository with the read-only packaging script, which
+also records the binding in `ux/build.json`:
+
+~~~sh
+python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release-id>
+~~~
+
+`ux/build.json` carries the `release` identifier, the `sourceBaseCommit` the build
+came from, and the SHA-256 of every shipped source and contract file. The live file
+is at `https://usa-xray.online/ux/build.json`, so the published site always names
+the commit it was built from. The current live release is `20261020-normalized39-v2`;
+it was packaged before the commit field existed, so its `sourceSha256` and
+`dataContractSha256` lists identify the exact bytes instead. The repository carries
+those bytes: a build from this tree reproduces the live release file for file,
+except the two local review-tooling lines that the public build strips on purpose.
+
+The public runtime is read-only. It serves the same admitted observations as a local
+run, reads them from the `usa_atlas` database through the read-only adapter, and
+never ships collector code or credentials. The local review panel
+(<code>?review=1</code>) is removed from the public build by the packaging script.
+
 ## Repository layout
 
 - <code>ux/</code> — the current atlas interface: map, catalogs, geographic assets and the journal.

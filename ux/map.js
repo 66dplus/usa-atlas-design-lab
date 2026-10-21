@@ -5,8 +5,9 @@ import {footprints,stateMesh,projectedShapes} from './geometry.js';
 import {FlatMapRenderer} from './flat-map.js';
 
 export const EMBER = ['#fff2b1','#f8c34a','#f4942c','#e55732','#af2345','#701e51','#281c43'];
+export const DIVERGING = ['#2166ac','#67a9cf','#d1e5f0','#f7f7f7','#fddbc7','#ef8a62','#b2182b'];
 const WIDTH = 1200, HEIGHT = 750;
-const color = value => value == null ? '#aaa49e' : d3.interpolateRgbBasis(EMBER)(value);
+const color = (value,scale) => value == null ? '#aaa49e' : d3.interpolateRgbBasis(scale==='diverging'?DIVERGING:EMBER)(value);
 const RELIEF=.28;
 
 export async function loadGeography() {
@@ -137,6 +138,7 @@ export class ExplorerMap {
     if(changedMode||changedLayout){this.cancelMotion();this.session=null;this.dim=0;}
     const before=this.renderer&&!changedMode?this.snapshotPose():null;
     this.state={...previous,...next};
+    this.tint=value=>color(value,this.state.scale);
     const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
     this.setFlatMode(mode==='2d'&&this.state.renderer2d==='webgl');
     const isolated=this.state.cleanBackdrop||this.host.ownerDocument.defaultView.innerWidth<=760;
@@ -147,10 +149,10 @@ export class ExplorerMap {
     this.worldLayer.attr('fill',dark?'#25292D':this.state.cleanBackdrop?'#FFFFFF':'#EEF0F3').attr('visibility',isolated?'hidden':null);
     if(this.renderer)this.renderer.domElement.hidden=mode==='2d';
     if(this.focusUI)this.focusUI.hidden=true;
-    this.countyPaths.attr('d',f=>f.path).attr('fill',f=>color(this.mappedValue(f))).attr('stroke','#382737').attr('stroke-width',.35)
+    this.countyPaths.attr('d',f=>f.path).attr('fill',f=>this.tint(this.mappedValue(f))).attr('stroke','#382737').attr('stroke-width',.35)
       .attr('visibility',f=>shown(f.stateId)?null:'hidden').attr('opacity',f=>parent&&f.stateId!==parent ? .3 : 1).classed('selected-county',f=>selectedId===f.id);
     this.statePaths.attr('d',f=>f.path).attr('visibility',f=>!shown(f.id)||(selectedId?.length===5&&f.id===parent)?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
-    if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),color,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
+    if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
     this.renderLabels();
     if(mode==='2d'){
       if(changedPlace||changedMode||changedLayout||changedRanks||!this.initialized)this.fit2D();
@@ -188,9 +190,13 @@ export class ExplorerMap {
     const id=this.state.countySupported===false ? feature.stateId : feature.id;
     return this.state.values.get(id)??null;
   }
+  mappedHeight(feature) {
+    const id=this.state.countySupported===false ? feature.stateId : feature.id;
+    return this.state.heightValues?.get(id)??null;
+  }
   setFlatMode(requested){
     if(requested&&!this.flat&&!this.flatFailed)try{
-      this.flat=new FlatMapRenderer(this.host,this.geo,{onFailure:message=>{this.flatActive=false;this.syncFlatLayers();this.onError(message);},onRestore:()=>{try{this.flat.update(this.state,f=>this.mappedValue(f),color,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));this.flatActive=this.state.mode==='2d'&&this.state.renderer2d==='webgl';this.syncFlatLayers();this.flat.setVisible(this.flatActive);}catch(error){this.failFlat(error);}}});
+      this.flat=new FlatMapRenderer(this.host,this.geo,{onFailure:message=>{this.flatActive=false;this.syncFlatLayers();this.onError(message);},onRestore:()=>{try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));this.flatActive=this.state.mode==='2d'&&this.state.renderer2d==='webgl';this.syncFlatLayers();this.flat.setVisible(this.flatActive);}catch(error){this.failFlat(error);}}});
     }catch(error){this.flatFailed=true;queueMicrotask(()=>this.onError('WebGL unavailable; using SVG. '+error.message));}
     this.flatActive=Boolean(requested&&this.flat&&!this.flat.suspended);this.flat?.setVisible(this.flatActive);this.syncFlatLayers();
   }
@@ -288,7 +294,7 @@ export class ExplorerMap {
       const center=new THREE.Vector3((b[0][0]+b[1][0])/200-6,0,(b[0][1]+b[1][1])/200-3.75);
       // One national height scale also keeps both comparison panes comparable.
       const height=RELIEF*this.settings.relief;
-      const {mesh,lines,outline,selection}=stateMesh(rows,f=>this.mappedValue(f),{height,color,center,selectedId:this.state.selectedId});
+      const {mesh,lines,outline,selection}=stateMesh(rows,f=>this.mappedValue(f),{height,color:this.tint,heightValue:f=>this.mappedHeight(f),center,selectedId:this.state.selectedId});
       const group=new THREE.Group();group.position.copy(center);group.userData={id,mesh,lines,outline,height};group.add(mesh,lines,outline);if(selection)group.add(selection);
       this.stateGroups.set(id,group);this.terrain.add(group);
     }
@@ -301,7 +307,7 @@ export class ExplorerMap {
     const occupied=[];
     rows.forEach((row,i)=>{
       const f=this.geo.byId.get(row.id),el=this.rankMarkers.children[i],w=this.viewportSize?.[0]||0,h=this.viewportSize?.[1]||0;let x,y,visible=true;
-      if(this.state.mode==='3d'&&this.camera){const parent=this.stateGroups?.get(f.stateId);const altitude=(.0015+(this.state.values.get(row.id)??0)*(parent?.userData.height??RELIEF))*(this.heightScale??1);const p=new THREE.Vector3(f.point[0]/100-6,altitude+.002,f.point[1]/100-3.75).project(this.camera);x=(p.x+1)*w/2;y=(1-p.y)*h/2;visible=p.z>=-1&&p.z<=1;}
+      if(this.state.mode==='3d'&&this.camera){const parent=this.stateGroups?.get(f.stateId);const altitude=(.0015+(this.state.heightValues?.get(row.id)??0)*(parent?.userData.height??RELIEF))*(this.heightScale??1);const p=new THREE.Vector3(f.point[0]/100-6,altitude+.002,f.point[1]/100-3.75).project(this.camera);x=(p.x+1)*w/2;y=(1-p.y)*h/2;visible=p.z>=-1&&p.z<=1;}
       else {const scale=Math.min(w/WIDTH,h/HEIGHT),p=d3.zoomTransform(this.svg.node()).apply(f.point);x=p[0]*scale+(w-WIDTH*scale)/2;y=p[1]*scale+(h-HEIGHT*scale)/2;}
       el.hidden=!visible||x<0||x>w||y<0||y>h;let offset=0;const width=Math.min(w,el.textContent.length*5.8+20);
       if(!el.hidden){while(occupied.some(b=>x-width/2<b.right&&x+width/2>b.left&&y-offset-27<b.bottom&&y-offset>b.top))offset+=30;occupied.push({left:x-width/2,right:x+width/2,top:y-offset-27,bottom:y-offset});}

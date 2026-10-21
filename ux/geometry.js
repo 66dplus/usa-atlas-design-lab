@@ -36,11 +36,11 @@ export function footprints(geo, stream) {
   return result;
 }
 
-export function stateMesh(rows, values, {height,color,center,selectedId}) {
+export function stateMesh(rows, values, {height,color,center,selectedId,heightValue=values}) {
   const parts=[],edges=[],selectedEdges=[],perimeter=new Map();
   const vertexKey=p=>`${Math.round(p.x*1e7)},${Math.round(p.y*1e7)}`;
   for(const {feature,geometry,shapes} of rows){
-    const v=values(feature),h=.0015+(v==null?0:v*height);
+    const v=values(feature),relief=heightValue(feature),h=.0015+(relief==null?0:relief*height);
     const part=geometry.clone(),positions=part.attributes.position,normals=part.attributes.normal;
     const colors=new Float32Array(positions.count*3),ids=new Float32Array(positions.count);
     const tint=new THREE.Color(color(v));

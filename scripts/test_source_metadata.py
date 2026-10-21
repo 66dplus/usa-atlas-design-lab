@@ -1,4 +1,6 @@
 """National observations and table-defined metadata preserve native source facts."""
+import json
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -20,12 +22,17 @@ class SourceMetadataTests(unittest.TestCase):
             data = atlas_data.observations('01.01:B01003_001E')
         self.assertEqual(data['period'], '2024')
         self.assertEqual(data['displayPeriod'], '2020–2024')
-        self.assertEqual(data['sourceUnit'], 'source_defined')
+        # The normalized contract publishes the table unit, not the stored placeholder.
+        self.assertEqual(data['sourceUnit'], 'people')
         self.assertEqual(data['unit'], 'people')
         nation = next(item for item in data['observations'] if item['id'] == 'US')
         self.assertEqual((nation['value'], nation['geoType'], nation['sourceGeoId']),
                          (334922499, 'nation', 'US'))
-        self.assertEqual(nation['methodologyNote'], 'Native estimate')
+        # A normalized series publishes the reviewed method instead of the stored note.
+        contract = json.loads((Path(atlas_data.ROOT) / 'ux/metric-definitions.json').read_text())
+        definition = next(metric for metric in contract['metrics']
+                          if metric.get('fieldId') == '01.01:B01003_001E')
+        self.assertEqual(nation['methodologyNote'], definition['method'])
 
     def test_unknown_nation_identifier_does_not_become_the_us(self):
         with patch.object(atlas_data, 'query', return_value=[row('06'), row('CA', 'nation', 99)]):

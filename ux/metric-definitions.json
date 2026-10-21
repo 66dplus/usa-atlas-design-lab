@@ -1,0 +1,1649 @@
+{
+  "release": "20261020-normalized39",
+  "visibleCount": 39,
+  "metrics": [
+    {
+      "id": "population",
+      "catalogId": "01.01",
+      "label": "Population",
+      "unit": "people",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.01:B01003_001E",
+      "formula": "B01003_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "age",
+      "catalogId": "01.02",
+      "label": "Median age",
+      "unit": "years",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.02:B01002_001E",
+      "formula": "B01002_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "sex",
+      "catalogId": "01.03",
+      "label": "Men per 100 women",
+      "unit": "men per 100 women",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.03:derived",
+      "formula": "B01001_002E / B01001_026E * 100",
+      "minDenominator": 100,
+      "method": "Men divided by women, multiplied by 100. Values below 100 mean fewer men than women.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "01.03:B01001_002E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.03:B01001_026E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "race-ethnicity",
+      "catalogId": "01.04",
+      "label": "Hispanic or Latino share",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.04:derived:hispanic",
+      "formula": "B03002_012E / B03002_001E * 100",
+      "minDenominator": 100,
+      "method": "Hispanic or Latino residents divided by total residents, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "01.04:B03002_012E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.04:B03002_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "foreign-born-population",
+      "catalogId": "01.05",
+      "label": "Foreign-born share",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.05:derived",
+      "formula": "B05002_013E / B05002_001E * 100",
+      "minDenominator": 100,
+      "method": "Foreign-born residents divided by total residents, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "01.05:B05002_013E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.05:B05002_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "country-region-of-birth",
+      "catalogId": "01.06",
+      "label": "Share of foreign-born residents born in Latin America",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.06:derived",
+      "formula": "B05006_139E / B05006_001E * 100",
+      "minDenominator": 100,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "citizenship",
+      "catalogId": "01.07",
+      "label": "Share of residents who are not U.S. citizens",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.07:derived",
+      "formula": "B05001_006E / B05001_001E * 100",
+      "minDenominator": 100,
+      "method": "Non-citizen residents divided by total residents, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "01.07:B05001_006E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.07:B05001_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "year-period-of-immigration",
+      "catalogId": "01.08",
+      "label": "Share of foreign-born residents who arrived in 2010 or later",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "01.08:derived",
+      "formula": "B05005_004E / B05002_013E * 100",
+      "minDenominator": 100,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "median-household-income",
+      "catalogId": "02.01",
+      "label": "Median household income",
+      "unit": "USD/year",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.01:B19013_001E",
+      "formula": "B19013_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "per-capita-income",
+      "catalogId": "02.02",
+      "label": "Average income per person",
+      "unit": "USD/year",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.02:B19301_001E",
+      "formula": "B19301_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "median-rent",
+      "catalogId": "02.03",
+      "label": "Median monthly rent",
+      "unit": "USD/month",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.03:B25064_001E",
+      "formula": "B25064_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "median-home-value",
+      "catalogId": "02.04",
+      "label": "Median home value",
+      "unit": "USD",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.04:B25077_001E",
+      "formula": "B25077_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "mortgage-selected-monthly-owner-costs",
+      "catalogId": "02.05",
+      "label": "Median monthly owner costs",
+      "unit": "USD/month",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.05:B25088_001E",
+      "formula": "B25088_001E",
+      "minDenominator": null,
+      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+    },
+    {
+      "id": "rent-as-of-income-rent-burden",
+      "catalogId": "02.06",
+      "label": "Share of renters spending 30%+ of income on rent",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.06:derived",
+      "formula": "(B25070_007E+B25070_008E+B25070_009E+B25070_010E) / (B25070_001E-B25070_011E) * 100",
+      "minDenominator": 100,
+      "method": "Renters spending 30 percent or more of household income on rent divided by renter households with a computable ratio, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.06:B25070_007E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "02.06:B25070_008E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "02.06:B25070_009E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "02.06:B25070_010E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.06:B25070_001E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "02.06:B25070_011E",
+            "period": "2024",
+            "multiplier": -1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "owner-renter-ratio",
+      "catalogId": "02.07",
+      "label": "Homeownership rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.07:derived",
+      "formula": "B25003_002E / (B25003_002E+B25003_003E) * 100",
+      "minDenominator": 100,
+      "method": "Owner-occupied households divided by owner- and renter-occupied households, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.07:B25003_002E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.07:B25003_002E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "02.07:B25003_003E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "poverty",
+      "catalogId": "02.08",
+      "label": "Poverty rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.08:derived",
+      "formula": "B17001_002E / B17001_001E * 100",
+      "minDenominator": 100,
+      "method": "People below the poverty level divided by the population for whom poverty status is determined, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.08:B17001_002E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.08:B17001_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "households-earning-200k",
+      "catalogId": "02.09",
+      "label": "Share of households earning $200,000+",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "02.09:derived",
+      "formula": "B19001_017E / B19001_001E * 100",
+      "minDenominator": 100,
+      "method": "Households with income of $200,000 or more divided by all households, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "02.09:B19001_017E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "02.09:B19001_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "cost-of-living-regional-price-parities",
+      "catalogId": "02.10",
+      "label": "Cost of living index",
+      "unit": "index (US=100)",
+      "geography": [
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": null,
+      "scale": "diverging",
+      "source": "BEA RPP",
+      "sourceUrl": "https://www.bea.gov/data/prices-inflation/regional-price-parities-state-and-metro-area",
+      "fieldId": "02.10",
+      "formula": "02.10",
+      "minDenominator": null,
+      "method": "BEA Regional Price Parities. The US value is 100; values above 100 indicate a higher price level. State observations only; no county value is inferred."
+    },
+    {
+      "id": "bachelors-degree",
+      "catalogId": "03.01",
+      "label": "Bachelor's degree rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "03.01:derived",
+      "formula": "B15003_022E / B15003_001E * 100",
+      "minDenominator": 100,
+      "method": "Adults 25+ with a bachelor's degree divided by adults 25+, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "03.01:B15003_022E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "03.01:B15003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "masters-degree",
+      "catalogId": "03.02",
+      "label": "Master's degree rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "03.02:derived",
+      "formula": "B15003_023E / B15003_001E * 100",
+      "minDenominator": 100,
+      "method": "Adults 25+ with a master's degree divided by adults 25+, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "03.02:B15003_023E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "03.02:B15003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "doctorate",
+      "catalogId": "03.03",
+      "label": "Doctorate rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "03.03:derived",
+      "formula": "B15003_025E / B15003_001E * 100",
+      "minDenominator": 100,
+      "method": "Adults 25+ with a doctorate divided by adults 25+, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "03.03:B15003_025E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "03.03:B15003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "high-school-attainment",
+      "catalogId": "03.04",
+      "label": "High school attainment rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "03.04:derived",
+      "formula": "SUM(B15003_017E..B15003_025E) / B15003_001E * 100",
+      "minDenominator": 100,
+      "method": "Adults 25+ with a high school diploma or higher divided by adults 25+, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "03.04:B15003_017E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_018E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_019E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_020E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_021E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_022E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_023E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_024E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.04:B15003_025E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "03.04:B15003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "no-diploma",
+      "catalogId": "03.05",
+      "label": "No diploma rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "03.05:derived",
+      "formula": "SUM(B15003_002E..B15003_016E) / B15003_001E * 100",
+      "minDenominator": 100,
+      "method": "Adults 25+ without a high school diploma divided by adults 25+, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "03.05:B15003_002E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_003E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_004E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_005E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_006E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_007E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_008E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_009E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_010E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_011E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_012E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_013E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_014E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_015E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "03.05:B15003_016E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "03.05:B15003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "unemployment",
+      "catalogId": "03.06",
+      "label": "Unemployment rate",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024-M12",
+      "displayPeriod": null,
+      "scale": "quantile7",
+      "source": "BLS LAUS",
+      "sourceUrl": "https://www.bls.gov/lau/",
+      "fieldId": "03.06:unemployment_rate",
+      "formula": "03.06:unemployment_rate",
+      "minDenominator": null,
+      "method": "BLS Local Area Unemployment Statistics unemployment rate. One latest month and release; no annual averaging."
+    },
+    {
+      "id": "work-from-home-share",
+      "catalogId": "03.09",
+      "label": "Share of workers working from home",
+      "unit": "%",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile7",
+      "source": "Census ACS",
+      "sourceUrl": "https://www.census.gov/data/developers/data-sets/acs-5year.html",
+      "fieldId": "03.09:derived",
+      "formula": "B08301_021E / B08301_001E * 100",
+      "minDenominator": 100,
+      "method": "Workers who worked from home divided by all workers, multiplied by 100.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "03.09:B08301_021E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "03.09:B08301_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "Census ACS 2024"
+    },
+    {
+      "id": "murders",
+      "catalogId": "04.01",
+      "label": "Murders",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.01:derived",
+      "formula": "04.01 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.01",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "violent-crime",
+      "catalogId": "04.02",
+      "label": "Violent crime",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.02:derived",
+      "formula": "04.02 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.02",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "robbery",
+      "catalogId": "04.03",
+      "label": "Robbery",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.03:derived",
+      "formula": "04.03 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.03",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "aggravated-assault",
+      "catalogId": "04.04",
+      "label": "Aggravated assault",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.04:derived",
+      "formula": "04.04 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.04",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "burglary",
+      "catalogId": "04.05",
+      "label": "Burglary",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.05:derived",
+      "formula": "04.05 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.05",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "motor-vehicle-theft",
+      "catalogId": "04.06",
+      "label": "Motor vehicle theft",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.06:derived",
+      "formula": "04.06 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.06",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "rape",
+      "catalogId": "04.07",
+      "label": "Rape",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "FBI CDE + Census ACS",
+      "sourceUrl": "https://cde.ucr.cjis.gov/",
+      "fieldId": "04.07:derived",
+      "formula": "04.07 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "04.07",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "FBI CDE 2023; ACS 2024"
+    },
+    {
+      "id": "obesity-rate",
+      "catalogId": "05.14",
+      "label": "Obesity rate",
+      "unit": "%",
+      "geography": [
+        "county"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile7",
+      "source": "CDC PLACES",
+      "sourceUrl": "https://www.cdc.gov/places/",
+      "fieldId": "05.14",
+      "formula": "05.14",
+      "minDenominator": 100,
+      "method": "CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred."
+    },
+    {
+      "id": "diabetes-rate",
+      "catalogId": "05.15",
+      "label": "Diabetes rate",
+      "unit": "%",
+      "geography": [
+        "county"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile7",
+      "source": "CDC PLACES",
+      "sourceUrl": "https://www.cdc.gov/places/",
+      "fieldId": "05.15",
+      "formula": "05.15",
+      "minDenominator": 100,
+      "method": "CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred."
+    },
+    {
+      "id": "physical-inactivity-rate",
+      "catalogId": "05.16",
+      "label": "Physical inactivity rate",
+      "unit": "%",
+      "geography": [
+        "county"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile7",
+      "source": "CDC PLACES",
+      "sourceUrl": "https://www.cdc.gov/places/",
+      "fieldId": "05.16",
+      "formula": "05.16",
+      "minDenominator": 100,
+      "method": "CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred."
+    },
+    {
+      "id": "adjusted-gross-income-agi",
+      "catalogId": "07.01",
+      "label": "Income before deductions",
+      "unit": "USD",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023 tax year",
+      "scale": "quantile7",
+      "source": "IRS SOI + Census ACS",
+      "sourceUrl": "https://www.irs.gov/statistics/soi-tax-stats-data-by-geographic-area",
+      "fieldId": "07.01:derived:total",
+      "formula": "A00100 × 1000",
+      "minDenominator": null,
+      "method": "Income before deductions from IRS Statistics of Income, multiplied by 1,000. State values are sums of their counties; the US value is the sum of county values. No tax or adjusted-gross-income label is shown.",
+      "derived": {
+        "operation": "sum",
+        "numerator": [
+          {
+            "field": "07.01:A00100:county_sum_agi_stubs_1_8",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [],
+        "multiplier": 1000,
+        "aggregateState": true,
+        "aggregateUS": true
+      },
+      "sourceRelease": "IRS SOI 2023; ACS 2024"
+    },
+    {
+      "id": "electricity-price",
+      "catalogId": "08.05",
+      "label": "Average electricity price",
+      "unit": "cents/kWh",
+      "geography": [
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": null,
+      "scale": "quantile5",
+      "source": "EIA Electricity",
+      "sourceUrl": "https://www.eia.gov/electricity/data.php",
+      "fieldId": "08.05:sector_ALL",
+      "formula": "08.05:sector_ALL",
+      "minDenominator": null,
+      "method": "EIA state average electricity price for all sectors. State observations only; no county value is inferred."
+    },
+    {
+      "id": "fitness-recreation-centers-per-capita",
+      "catalogId": "09.04",
+      "label": "Recreation and fitness facilities per 1,000 residents",
+      "unit": "per 1,000",
+      "geography": [
+        "county"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile7",
+      "source": "USDA Food Environment Atlas",
+      "sourceUrl": "https://www.ers.usda.gov/data-products/food-environment-atlas/",
+      "fieldId": "09.04:cbp_fitness_per1000_published",
+      "formula": "09.04:cbp_fitness_per1000_published",
+      "minDenominator": null,
+      "method": "USDA Food Environment Atlas published 2023 rate. County observations only; no state or national value is inferred."
+    },
+    {
+      "id": "all-cancer-new-cases",
+      "catalogId": "11.01",
+      "label": "New cancer cases per 100,000 residents",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2023",
+      "displayPeriod": "2023",
+      "scale": "quantile5",
+      "source": "CDC USCS + Census ACS",
+      "sourceUrl": "https://gis.cdc.gov/Cancer/USCS/",
+      "fieldId": "11.01:derived",
+      "formula": "11.01 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State cancer case count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "11.01",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "CDC USCS 2023; ACS 2024"
+    },
+    {
+      "id": "new-hiv-diagnoses",
+      "catalogId": "11.02",
+      "label": "New HIV diagnoses per 100,000 residents",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile5",
+      "source": "CDC AtlasPlus + Census ACS",
+      "sourceUrl": "https://gis.cdc.gov/api/AtlasPlus/qtOutputData",
+      "fieldId": "11.02:derived",
+      "formula": "11.02 count / 2024 state population * 100000",
+      "minDenominator": null,
+      "method": "State HIV diagnosis count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "11.02",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "CDC AtlasPlus 2024; ACS 2024"
+    },
+    {
+      "id": "deaths-under-18",
+      "catalogId": "11.03",
+      "label": "Deaths among children under 18 per 100,000 children",
+      "unit": "per 100,000",
+      "geography": [
+        "state"
+      ],
+      "period": "2024",
+      "displayPeriod": "2020–2024",
+      "scale": "quantile5",
+      "source": "CDC WONDER + Census ACS",
+      "sourceUrl": "https://wonder.cdc.gov/controller/saved/D158/D473F417",
+      "fieldId": "11.03:derived",
+      "formula": "11.03 count / under-18 population * 100000",
+      "minDenominator": null,
+      "method": "State death count for people younger than 18 divided by the ACS under-18 population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "derived": {
+        "operation": "ratio",
+        "numerator": [
+          {
+            "field": "11.03",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.02:B01001_003E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_004E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_005E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_006E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_027E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_028E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_029E",
+            "period": "2024",
+            "multiplier": 1
+          },
+          {
+            "field": "01.02:B01001_030E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 100000,
+        "aggregateState": false,
+        "aggregateUS": true
+      },
+      "sourceRelease": "CDC WONDER 2024; ACS 2024"
+    }
+  ],
+  "library": [
+    {
+      "id": "country-region-of-birth",
+      "catalogId": "01.06",
+      "label": "Share of foreign-born residents born in Latin America",
+      "unit": "%",
+      "period": "2024",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "formula": "B05006_139E / B05006_001E * 100",
+      "reason": "Loaded and valid, but it is a second birthplace lens; the map keeps one foreign-born indicator."
+    },
+    {
+      "id": "year-period-of-immigration",
+      "catalogId": "01.08",
+      "label": "Share of foreign-born residents who arrived in 2010 or later",
+      "unit": "%",
+      "period": "2024",
+      "geography": [
+        "county",
+        "state"
+      ],
+      "formula": "B05005_004E / B05002_013E * 100",
+      "reason": "Loaded and valid, but it is a second immigration-period lens; the map keeps one citizenship indicator."
+    },
+    {
+      "id": "crime-trends",
+      "catalogId": "04.09",
+      "label": "Violent crime, year-over-year change",
+      "unit": "%",
+      "period": "2020–2023",
+      "geography": [
+        "state"
+      ],
+      "formula": "Seven annual year-over-year series",
+      "reason": "A state trend series needs its own time control; it is not a single-snapshot map layer."
+    },
+    {
+      "id": "capital-gains",
+      "catalogId": "07.03",
+      "label": "Capital gains",
+      "unit": "USD thousand",
+      "period": "2023",
+      "geography": [
+        "county"
+      ],
+      "formula": "Additive county totals",
+      "reason": "Additive tax totals need return denominators before a rate can be compared."
+    },
+    {
+      "id": "dividends",
+      "catalogId": "07.04",
+      "label": "Dividends",
+      "unit": "USD thousand",
+      "period": "2023",
+      "geography": [
+        "county"
+      ],
+      "formula": "Additive county totals",
+      "reason": "Additive tax totals need return denominators before a rate can be compared."
+    },
+    {
+      "id": "fast-food-restaurants-per-10k-residents",
+      "catalogId": "09.01",
+      "label": "Fast-food restaurants per 1,000 residents",
+      "unit": "per 1,000 people",
+      "period": "2020",
+      "geography": [
+        "county"
+      ],
+      "formula": "Published rate",
+      "reason": "2020 vintage would imply current coverage; label the period before promotion."
+    },
+    {
+      "id": "access-to-a-grocery-store",
+      "catalogId": "09.02",
+      "label": "Low access to a grocery store",
+      "unit": "people · %",
+      "period": "2019",
+      "geography": [
+        "county"
+      ],
+      "formula": "Count and population share",
+      "reason": "Two distinct measures share one catalog field; keep both labels in the library."
+    },
+    {
+      "id": "farmers-markets-per-capita",
+      "catalogId": "09.03",
+      "label": "Farmers' markets per 1,000 residents",
+      "unit": "per 1,000 people",
+      "period": "2018",
+      "geography": [
+        "county"
+      ],
+      "formula": "Published rate",
+      "reason": "2018 vintage; label the period before promotion."
+    },
+    {
+      "id": "pm2-5",
+      "catalogId": "09.06",
+      "label": "PM2.5",
+      "unit": "µg/m³",
+      "period": "2025",
+      "geography": [
+        "county"
+      ],
+      "formula": "County maximum complete-monitor mean",
+      "reason": "Only 1,044 counties have monitoring coverage; not a national map."
+    },
+    {
+      "id": "ozone",
+      "catalogId": "09.07",
+      "label": "Ozone",
+      "unit": "ppm",
+      "period": "2025",
+      "geography": [
+        "county"
+      ],
+      "formula": "County maximum complete-monitor mean",
+      "reason": "Only 1,209 counties have monitoring coverage; not a national map."
+    }
+  ],
+  "variants": {
+    "race-ethnicity": [
+      {
+        "id": "race-ethnicity--white-non-hispanic",
+        "label": "White non-Hispanic share",
+        "fieldId": "01.04:derived:white",
+        "formula": "B03002_003E / B03002_001E * 100",
+        "numerator": [
+          {
+            "field": "01.04:B03002_003E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ]
+      },
+      {
+        "id": "race-ethnicity--black",
+        "label": "Black share",
+        "fieldId": "01.04:derived:black",
+        "formula": "B03002_004E / B03002_001E * 100",
+        "numerator": [
+          {
+            "field": "01.04:B03002_004E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ]
+      },
+      {
+        "id": "race-ethnicity--asian",
+        "label": "Asian share",
+        "fieldId": "01.04:derived:asian",
+        "formula": "B03002_006E / B03002_001E * 100",
+        "numerator": [
+          {
+            "field": "01.04:B03002_006E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ]
+      }
+    ],
+    "adjusted-gross-income-agi": [
+      {
+        "id": "adjusted-gross-income-agi--per-resident",
+        "label": "Income before deductions per resident",
+        "fieldId": "07.01:derived:per-resident",
+        "formula": "A00100 × 1000 / B01003_001E",
+        "unit": "USD per resident",
+        "numerator": [
+          {
+            "field": "07.01:A00100:county_sum_agi_stubs_1_8",
+            "period": "2023",
+            "multiplier": 1
+          }
+        ],
+        "denominator": [
+          {
+            "field": "01.01:B01003_001E",
+            "period": "2024",
+            "multiplier": 1
+          }
+        ],
+        "multiplier": 1000
+      }
+    ]
+  }
+}
