@@ -647,3 +647,32 @@ body:not([data-concept=compare]) .map-footer{display:none}
   }
 }
 @media(max-width:760px){.pane-footer{display:none!important}}
+
+/* Align the mobile map chrome to Safari's live viewport edges. */
+@media(max-width:760px){
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) #workspace{
+    height:100dvh!important;
+  }
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .maps{
+    height:100dvh!important;
+  }
+  body.ad-preview:not([data-concept=compare]) .app-header{
+    top:8px!important;
+  }
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .concept-tabs{
+    bottom:0!important;
+  }
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .explore-panel{
+    bottom:56px!important;
+  }
+  body.panel-collapsed:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .explore-panel{
+    bottom:56px!important;
+  }
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .osm-attribution{
+    font-size:6px!important;
+    line-height:9px!important;
+    padding:2px 6px!important;
+    min-width:0!important;
+    opacity:.58;
+  }
+}
