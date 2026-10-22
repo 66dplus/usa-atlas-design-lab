@@ -24,8 +24,9 @@ export function projectedShapes(feature, projection, stream) {
 }
 
 const cache=new WeakMap();
-export function footprints(geo, stream) {
-  const result=geo.counties.map(feature=>{
+export function footprints(geo, stream, states=null) {
+  const counties=states?geo.counties.filter(feature=>states.has(feature.stateId)):geo.counties;
+  const result=counties.map(feature=>{
     if(cache.has(feature.feature))return cache.get(feature.feature);
     const shapes=projectedShapes(feature.feature,geo.projection,stream);
     if(!shapes.length)throw new Error('No 3D boundary for '+feature.id+'. Use 2D while this boundary is repaired.');

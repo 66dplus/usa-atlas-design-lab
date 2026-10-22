@@ -50,7 +50,7 @@ function metricSwitchMarkup(m){
   return `<div class="metric-switch" role="group" aria-label="${escapeHTML(m.switchLabel||'Measure')}">${m.switchOptions.map(option=>`<button type="button" data-switch-metric="${option.id}" aria-pressed="${option.id===m.id}">${escapeHTML(option.label)}</button>`).join('')}</div>`;
 }
 const values=m=>layer(m).values;
-const needed=()=>[...new Set([state.metric,...(state.concept==='compare'?[metricB()?.id]:[]),...pinned])].map(id=>metricById.get(id)).filter(Boolean);
+const needed=()=>[...new Set([state.metric,...(state.concept==='compare'?[metricB()?.id]:[]),...(state.selected?pinned:[])])].map(id=>metricById.get(id)).filter(Boolean);
 const place=id=>geo?.byId.get(id);
 const selected=()=>place(state.selected);
 const selectedB=()=>place(state.comparison==='metrics'?state.selected:state.second);
@@ -155,7 +155,7 @@ async function choosePlace(id,side='a') {
 function showMetricLibrary(side='a',cardMode=false){
   state.metricTarget=state.concept==='compare'&&state.comparison==='metrics'?side:'a';state.cardMode=cardMode;state.category='All';
   $('#metric-search').value='';$('#metric-library-context').textContent=cardMode?'Fields in your data card':state.concept==='compare'?`${side==='a'?'Left':'Right'} map · ${state.comparison==='places'?'Applies to both maps':'Changes this map only'}`:'Colour and height on the map';
-  renderCategories();renderMetrics();renderPopular();openDrawer('metric-library',document.activeElement,side);
+  renderCategories();renderMetrics();openDrawer('metric-library',document.activeElement,side);
 }
 function showPlaceLibrary(side='a',countiesOnly=false){
   state.placeTarget=side;state.countiesOnly=countiesOnly;$('#place-search').value='';
@@ -181,7 +181,10 @@ function renderComparisonDraft(){
 }
 function renderCategories(){
   const categories=['All',...new Set(catalog.map(m=>m.shortCategory))];
-  $('#category-list').innerHTML=categories.map(c=>`<button data-category="${escapeHTML(c)}" aria-pressed="${state.category===c}">${escapeHTML(c)}</button>`).join('');
+  const list=$('#category-list');
+  list.innerHTML=categories.map(c=>`<button data-category="${escapeHTML(c)}" aria-pressed="${state.category===c}">${escapeHTML(c)}</button>`).join('');
+  list.onfocusin=event=>event.target.closest('[data-category]')?.scrollIntoView({block:'nearest',inline:'nearest'});
+  list.querySelector(`[data-category="${CSS.escape(state.category)}"]`)?.scrollIntoView({block:'nearest',inline:'nearest'});
 }
 function renderMetrics(){
   const query=$('#metric-search').value.trim().toLowerCase();
@@ -249,7 +252,6 @@ function renderMapHeads(){
     $('#summary-'+side).innerHTML=`<span><strong>${number(m,f?.id)}</strong><small>${escapeHTML(caption)}</small></span><span>Statistics ${icon('arrow')}</span>`;
   }
 }
-const popular=['unemployment','cost-of-living-regional-price-parities','electricity-price','violent-crime'];
 const prompts=[
  {title:'Where is unemployment lowest?',metric:'unemployment',place:null,rank:'lowest'},
  {title:'California or Texas?',metric:'unemployment',place:'06',other:'48',compare:true},
@@ -285,7 +287,8 @@ function photoMarkup(f){
 function renderExplorer(){
   const panel=$('#explore-panel'),scroll=panel.scrollTop,f=selected(),m=metric(),data=layer(m),v=value(m,f?.id),isSF=f?.id==='06075';
   const crumbs=`<button data-breadcrumb="US"${!f?' aria-current="location"':''}>United States</button>${f?`<span aria-hidden="true">/</span><button data-breadcrumb="${f.stateId}"${f.id.length===2?' aria-current="location"':''}>${escapeHTML(place(f.stateId).name)}</button>${f.id.length===5?`<span aria-hidden="true">/</span><span aria-current="location">${escapeHTML(f.name)}</span>`:''}`:''}`;
-  panel.innerHTML=`<div class="profile-heading"><button class="place-sheet-back" data-dismiss-place="true" aria-label="Dismiss place card">${icon('back')}</button><button class="place-chooser" data-pane-place="a" aria-expanded="false">${brandIcon('location')}<strong>${escapeHTML(f?.name||'Find a place')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span><small>Indicator</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong>${v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div>${metricSwitchMarkup(m)}<p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}</p>${v==null?`<p class="missing-note">${escapeHTML(missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">${icon('compare')} Compare</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div></div><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;
+  const nationalGap=!f&&data.status==='ready'&&!observation(m,'US');
+  panel.innerHTML=`<div class="profile-heading"><button class="place-sheet-back" data-dismiss-place="true" aria-label="Dismiss place card">${icon('back')}</button><button class="place-chooser" data-pane-place="a" aria-expanded="false">${brandIcon('location')}<strong>${escapeHTML(f?.name||'Find a place')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span><small>Indicator</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong>${v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':nationalGap?'No U.S. observation':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div>${metricSwitchMarkup(m)}<p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}</p>${v==null?`<p class="missing-note">${escapeHTML(nationalGap?'This release has state and county observations but no matching U.S. total. No national average is substituted.':missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">${icon('compare')} Compare</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div></div><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="a" aria-label="Open statistical source, coverage and method"></button></div>`;
   const handle=document.createElement('button');handle.className='sheet-handle';handle.type='button';handle.setAttribute('aria-label','Dismiss place sheet');
   let drag,suppressClick=false;
   handle.onclick=event=>{if(suppressClick&&event.detail>0){suppressClick=false;return;}suppressClick=false;setPlaceSheet('dismissed');};
@@ -295,7 +298,7 @@ function renderExplorer(){
   handle.onpointerup=finishDrag;handle.onpointercancel=finishDrag;handle.onlostpointercapture=()=>{drag=null;panel.style.transform='';panel.style.transition='';};panel.style.transform='';panel.style.transition='';panel.prepend(handle);
   const chooser=panel.querySelector('.indicator-chooser');if(chooser){
     const desktop=document.createElement('div');desktop.className='desktop-indicator';
-    desktop.innerHTML=`<button id="desktop-search" class="indicator-heading" aria-expanded="false">${icon('search')}<strong>Choose an indicator</strong>${icon('down')}</button><button class="selected-indicator" data-pane-metric="a">${indicatorIcon(m)}<b>${escapeHTML(m.name)}</b></button>`;
+    desktop.innerHTML=`<button id="desktop-search" class="selected-indicator indicator-heading" data-pane-metric="a" aria-label="Choose indicator: ${escapeHTML(m.name)}" aria-expanded="false">${indicatorIcon(m)}<b>${escapeHTML(m.name)}</b>${icon('down')}</button>`;
     panel.prepend(desktop);
   }
   const path=panel.querySelector('.place-path');path.setAttribute('role','navigation');path.setAttribute('aria-label','Selected place');
@@ -309,14 +312,8 @@ function renderQuickStats(){
   // First open: no side fields. The column appears with the first selected place.
   right.hidden=!f;
   if(!f){right.innerHTML='';return;}
-  const countMetric=metricById.get('unemployment--03-06-unemployment'),forceMetric=metricById.get('unemployment--03-06-labor-force');
-  const count=countMetric?value(countMetric,f?.id):null,force=forceMetric?value(forceMetric,f?.id):null;
-  const canChart=countMetric&&forceMetric&&count!=null&&count>=0&&force>0&&count<=force&&layer(countMetric).status==='ready'&&layer(forceMetric).status==='ready'&&layer(countMetric).period===layer(forceMetric).period&&layer(countMetric).sourceRelease===layer(forceMetric).sourceRelease&&layer(countMetric).source===layer(forceMetric).source&&layer(countMetric).unit==='people'&&layer(forceMetric).unit==='people';
   const rows=pinned.map(id=>metricById.get(id));
-  right.innerHTML=`<section class="quick-card"><div class="quick-title"><h2>Quick stats</h2><button data-statistics="a" aria-label="Open sources and all statistics">${icon('info')}</button></div><p class="quick-place">${escapeHTML(f?.name||'United States')}${f?.id.length===5?' · County':''}</p>${metricSwitchMarkup(m)}<div class="quick-main"><span>${indicatorIcon(m)}${escapeHTML(m.name)}</span><b>${m.plannedState==='proposed'?'Planned':number(m,f?.id)}</b><small>${m.plannedState==='proposed'?'No published observation · ':escapeHTML(data.unit||'—')+' · '+escapeHTML(formatPeriod(data.period)||'No data')+' · '}${sourceLink(m,f)}</small></div>${rows.map(item=>`<button class="quick-row" data-inspect-metric="${item.id}"><span><span class="quick-label">${indicatorIcon(item)}${escapeHTML(item.name.replace(' · people',''))}</span><small>${escapeHTML(formatPeriod(layer(item).period)||'No data')} · ${escapeHTML(layer(item).unit||'—')}</small></span><b title="${number(item,f?.id)}">${compactNumber(item,f?.id)}</b></button>`).join('')}${canChart?`<div class="labor-chart"><div class="labor-bar"><span style="width:${100*count/force}%"></span></div><span>Unemployed / labor force <b>${formatValue(100*count/force,'%')}</b></span><small>${sourceLink(metricById.get('unemployment'),f)} · ${escapeHTML(formatPeriod(layer(metricById.get('unemployment--03-06-unemployment')).period))} · ratio of published counts</small></div>`:''}<button class="source-button" data-statistics="a">All stats & sources ${icon('info')}</button></section>${adPlaceholder()}`;
-}
-function renderPopular(){
-  $('#popular-metrics').innerHTML=`<h3>Popular indicators</h3><p>Curated shortcuts</p><div>${popular.map(id=>`<button data-metric="${id}">${escapeHTML(metricById.get(id).name)} ${icon('arrow')}</button>`).join('')}</div>`;
+  right.innerHTML=`<section class="quick-card"><div class="quick-title"><h2>Quick stats</h2><button data-source="a" aria-label="Open source, coverage and method">${icon('info')}</button></div><p class="quick-place">${escapeHTML(f?.name||'United States')}${f?.id.length===5?' · County':''}</p>${metricSwitchMarkup(m)}<div class="quick-main"><span>${indicatorIcon(m)}${escapeHTML(m.name)}</span><b>${m.plannedState==='proposed'?'Planned':number(m,f?.id)}</b><small>${m.plannedState==='proposed'?'No published observation · ':escapeHTML(data.unit||'—')+' · '+escapeHTML(formatPeriod(data.period)||'No data')+' · '}${sourceLink(m,f)}</small></div>${rows.map(item=>`<button class="quick-row" data-inspect-metric="${item.id}"><span><span class="quick-label">${indicatorIcon(item)}${escapeHTML(item.name.replace(' · people',''))}</span><small>${escapeHTML(formatPeriod(layer(item).period)||'No data')} · ${escapeHTML(layer(item).unit||'—')}</small></span><b title="${number(item,f?.id)}">${compactNumber(item,f?.id)}</b></button>`).join('')}</section>${adPlaceholder()}`;
 }
 function savedItems(){
   try{const items=JSON.parse(localStorage.getItem('usa-atlas-explorations')||'[]');if(!Array.isArray(items))throw new Error('Invalid collection');return items.filter(x=>x&&typeof x.url==='string'&&typeof x.title==='string'&&typeof x.id==='string');}
@@ -379,21 +376,32 @@ function renderLegend(compare,data,other){
   const provenance=d=>d.status==='ready'?d.source+' · '+formatPeriod(d.period):d.status==='error'?'Database unavailable':'No loaded observations';
   const range=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'85 – 100 – 115':`${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}${d.unit==='%'?'':' '+d.unit}`;
   const scaleNote=d=>d.status!=='ready'?'No data':d.scale==='diverging'?'Diverging scale · 85 – 100 – 115':`${d.scale==='log'?'Logarithmic':'Linear'} scale · ${formatValue(d.domain[0],d.unit)} – ${formatValue(d.domain[1],d.unit)}`;
-  const title=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${data.status==='ready'&&data.scale==='log'?' · log':''}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
-  const labelsHTML=`<span>${escapeHTML(compare&&state.comparison==='metrics'?'Left: '+scaleNote(data):range(data))}</span>${compare&&state.comparison==='metrics'?`<span>${escapeHTML('Right: '+scaleNote(other))}</span>`:''}<span class="no-data-key">No data</span>`;
-  const palette=paletteFor(data);
-  for(const legend of document.querySelectorAll('.legend')){
+  const independent=compare&&state.comparison==='metrics';
+  const paint=(legend,d,side,title)=>{
+    if(!legend)return;
     legend.querySelector('.legend-title').textContent=title;
-    legend.querySelector('.legend-labels').innerHTML=labelsHTML;
-    const breaksLine=legend.querySelector('.legend-breaks');
-    if(breaksLine)breaksLine.remove();
-    const ramp=legend.querySelector('.color-ramp');
-    const sample=rampColor(palette);
+    legend.querySelector('.legend-labels').innerHTML=`<span>${escapeHTML(range(d))}</span><span class="no-data-key">No data</span>`;
+    legend.querySelector('.legend-breaks')?.remove();
+    const ramp=legend.querySelector('.color-ramp'),sample=rampColor(paletteFor(d));
     ramp.style.background=`linear-gradient(90deg,${Array.from({length:25},(_,index)=>`${sample(index/24)} ${(index*100/24).toFixed(2)}%`).join(',')})`;
+    ramp.title=d.scale==='log'?'Logarithmic colour scale':d.scale==='diverging'?'Diverging colour scale':'Linear colour scale';
+    const source=legend.closest('.pane-footer')?.querySelector('.indicator-legend-source');
+    if(source){source.textContent=provenance(d)==='No loaded observations'?'Source, coverage & method':`${provenance(d)} · Source & method`;source.dataset.source=side;}
+  };
+  for(const legend of document.querySelectorAll('.legend:not(.pane-footer .legend)')){
+    const ramp=legend.querySelector('.color-ramp');if(!ramp)continue;
+    const sample=rampColor(paletteFor(data));ramp.style.background=`linear-gradient(90deg,${Array.from({length:25},(_,index)=>`${sample(index/24)} ${(index*100/24).toFixed(2)}%`).join(',')})`;
     ramp.title=data.scale==='log'?'Logarithmic colour scale':data.scale==='diverging'?'Diverging colour scale':'Linear colour scale';
+    legend.querySelector('.legend-title').textContent=compare&&state.comparison==='metrics'?'Independent scales · left / right':`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}${metric().fieldId&&!metric().countySupported?' · state values':''}`;
+    legend.querySelector('.legend-labels').innerHTML=`<span>${escapeHTML(independent?'Left: '+scaleNote(data):range(data))}</span>${independent?`<span>${escapeHTML('Right: '+scaleNote(other))}</span>`:''}<span class="no-data-key">No data</span>`;
   }
-  for(const line of document.querySelectorAll('.indicator-legend-source')){
-    line.textContent=compare&&state.comparison==='metrics'?`Census 2017 boundaries · ${provenance(data)} · ${provenance(other)}`:'Census 2017 boundaries';
+  paint($('#footer-a .legend'),data,'a',independent?`Left · ${metric().name}`:`${state.mode==='3d'?'Colour + height':'Colour'} · ${data.unit||'No data'}`);
+  paint($('#footer-b .legend'),other,'b',`Right · ${metricB().name}`);
+  $('#footer-b').hidden=!independent;
+  $('#footer-a .indicator-legend-source').hidden=compare&&state.comparison==='places'&&data.status!=='ready';
+  for(const source of document.querySelectorAll('.indicator-legend-source:not(.pane-footer .indicator-legend-source)')){
+    const side=source.dataset.source||'a',layerData=side==='b'?other:data;
+    source.textContent=provenance(layerData)==='No loaded observations'?'Source, coverage & method':`${provenance(layerData)} · Source & method`;
   }
 }
 function render(){
@@ -479,7 +487,7 @@ document.addEventListener('click',event=>{
   if(button.dataset.camera){const map=button.dataset.side==='b'?mapB:mapA;const action=button.dataset.camera;if(action==='in')map.zoom(.8);else if(action==='out')map.zoom(1.25);else if(action==='reset')map.reset();else map.rotate(action==='left'?-1:1);return;}
   if(button.dataset.breadcrumb){choosePlace(button.dataset.breadcrumb==='US'?null:button.dataset.breadcrumb);return;}
   if(button.dataset.jump){choosePlace(button.dataset.jump);return;}
-  if(button.dataset.category){state.category=button.dataset.category;renderCategories();renderMetrics();return;}
+  if(button.dataset.category){state.category=button.dataset.category;for(const chip of $('#category-list').querySelectorAll('[data-category]'))chip.setAttribute('aria-pressed',String(chip.dataset.category===state.category));button.scrollIntoView({block:'nearest',inline:'nearest'});renderMetrics();return;}
   if(button.dataset.switchMetric){
     const id=button.dataset.switchMetric,previous=state.metricTarget==='b'?state.secondMetric:state.metric;
     if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;render();
@@ -530,7 +538,8 @@ pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalo
 const reviewOn=['1','true','yes','on'].includes(String(params.get('review')??'').toLowerCase());
 if(reviewOn){document.body.dataset.review='1';import('./feedback.js').then(({initFeedback})=>initFeedback({onStart:()=>[mapA,mapB].filter(Boolean).forEach(map=>map.settle()),getContext:point=>({settings:{...viewSettings},view:{page:document.body.dataset.page,theme:document.body.dataset.theme,concept:state.concept,mode:state.mode,selected:state.selected,second:state.second,metric:state.metric,secondMetric:state.secondMetric,comparison:state.comparison,pinned:[...pinned]},maps:[mapA,mapB].filter(Boolean).map(map=>map.feedbackSnapshot(point))})}));}
 try {
-  const [geography,payload,settingsData]=await Promise.all([loadGeography(),readAtlasJSON('/api/atlas/catalog'),loadViewSettings()]);
+  const snapshotRequest=fetch('./startup/unemployment-BLS-LAUS-2024-2024-M12.json').then(response=>response.ok?response.json():null).catch(()=>null);
+  const [geography,payload,settingsData,startupSnapshot]=await Promise.all([loadGeography(),readAtlasJSON('/api/atlas/catalog'),loadViewSettings(),snapshotRequest]);
   viewSettings={...settingsData.record.settings};
   initViewSettings({...settingsData,onOpen:()=>closeDrawers(false),onChange:next=>{viewSettings=next;if(dataStore)render();}});
   if(document.body.dataset.page==='compare')state.concept='compare';
@@ -538,6 +547,8 @@ try {
   if(!catalog.length)throw new Error('No map indicators have been loaded yet. Please retry later.');
   metricById=new Map(loadedMapMetrics(payload.metrics).map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
   dataStore=createDataStore(geo,id=>{if(needed().some(m=>m.id===id))render();});
+  const startupMetric=metricById.get('unemployment');
+  const seeded=startupSnapshot?.snapshotVersion==='BLS-LAUS-2024/2024-M12'&&startupSnapshot.metricId==='unemployment'&&startupSnapshot.fieldId==='03.06:unemployment_rate'&&startupSnapshot.data?.sourceRelease==='BLS-LAUS-2024'&&startupSnapshot.data?.period==='2024-M12'&&state.metric==='unemployment'&&dataStore.seed(startupMetric,startupSnapshot.data);
   $('#catalog-status').textContent=`${catalog.length} indicators`;
   if(!['2d','3d'].includes(state.mode))state.mode='2d';
   state.metric=availableIndicatorId(state.metric,'unemployment');
@@ -549,6 +560,7 @@ try {
   renderMixedTicker();
 
   render();$('#loading').hidden=true;
+  if(seeded)dataStore.refresh(startupMetric);
   const preview=new URLSearchParams(location.search).get('preview')==='1';if(preview){document.body.classList.add('ad-preview');if(new URLSearchParams(location.search).get('expanded')==='1')setPlaceSheet('expanded');}
   window.addEventListener('message',event=>{if(!preview||event.origin!==location.origin||event.source!==parent||event.data?.type!=='atlas-ad-preview')return;previewAd=event.data.creative;previewRevision=event.data.revision;if(['light','dark'].includes(event.data.theme)){document.body.dataset.theme=event.data.theme;updateMaps();}document.body.classList.toggle('highlight-ad',Boolean(event.data.highlight));renderAdPreview();});if(preview)parent.postMessage({type:'atlas-preview-ready'},location.origin);
   if(state.concept==='stories')openDrawer('story-rail',$('.concept-tabs [data-concept=stories]'));else if(state.rank)openRank(state.rank);

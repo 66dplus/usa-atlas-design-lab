@@ -157,7 +157,10 @@ class Handler(SimpleHTTPRequestHandler):
         return self.headers.get('Host') in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}')
 
     def end_headers(self):
-        if not urlsplit(self.path).path.startswith('/api/'):
+        path = urlsplit(self.path).path
+        if re.fullmatch(r'/ux/startup/[A-Za-z0-9._-]+\.json', path):
+            self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
+        elif not path.startswith('/api/'):
             self.send_header('Cache-Control', 'no-store')
         super().end_headers()
 

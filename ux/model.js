@@ -75,25 +75,31 @@ export function createDataStore(geo,onChange,request=fetch) {
     if(!layers.has(metric.id))layers.set(metric.id,{status:metric.fieldId?'idle':'unavailable',values:new Map(),observations:new Map()});
     return layers.get(metric.id);
   }
-  function load(metric){
+  function load(metric,{refresh=false}={}){
     if(pending.has(metric.id))return pending.get(metric.id);
     const current=get(metric);
-    if(!metric.fieldId||current.status==='ready'||current.status==='error')return Promise.resolve(current);
-    layers.set(metric.id,{...current,status:'loading'});
+    if(!metric.fieldId||(!refresh&&(current.status==='ready'||current.status==='error')))return Promise.resolve(current);
+    const fallback=current.status==='ready'?current:null;
+    if(!fallback)layers.set(metric.id,{...current,status:'loading'});
     const promise=(async()=>{
       await Promise.resolve(); // Install request ownership before callbacks, including synchronous fetch failures.
       try{
         const data=await readAtlasJSON('/api/atlas/observations?field='+encodeURIComponent(metric.fieldId),request);
         if(data.fieldId!==metric.fieldId)throw new Error('The server returned a different series.');
         layers.set(metric.id,prepareLayer(data,geo));
-      }catch(error){layers.set(metric.id,{status:'error',error:error.message,values:new Map(),observations:new Map()});}
+      }catch(error){layers.set(metric.id,fallback||{status:'error',error:error.message,values:new Map(),observations:new Map()});}
       finally{pending.delete(metric.id);onChange(metric.id);}
       return layers.get(metric.id);
     })();
     pending.set(metric.id,promise);return promise;
   }
   function retry(metric){layers.delete(metric.id);return load(metric);}
-  return {get,load,retry};
+  function seed(metric,data){
+    if(!metric?.fieldId||data?.fieldId!==metric.fieldId)return false;
+    layers.set(metric.id,prepareLayer(data,geo));return true;
+  }
+  function refresh(metric){return load(metric,{refresh:true});}
+  return {get,load,retry,seed,refresh};
 }
 
 export function missingReason(metric,feature,layer) {

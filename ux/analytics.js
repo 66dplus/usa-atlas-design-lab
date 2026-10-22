@@ -50,7 +50,7 @@ export function createAtlasAnalytics() {
       return;
     }
     try {
-      Promise.resolve(tracker.track(props => ({...props, url: '/ux/' + data.surface, title: 'USA Atlas',
+      Promise.resolve(tracker.track(props => ({...props, url: '/ux/' + data.surface, title: 'USA X-Ray',
         referrer: '', name: payload.name, data: payload.data}))).catch(diagnostic);
     } catch (error) { diagnostic(error); }
   }
@@ -101,7 +101,7 @@ export function createAtlasAnalytics() {
       });
       tracker = window.umami;
       if (!tracker) throw new Error('Umami tracker did not initialize');
-      await tracker.track(props => ({...props, url: '/ux/', title: 'USA Atlas', referrer: ''}));
+      await tracker.track(props => ({...props, url: '/ux/', title: 'USA X-Ray', referrer: ''}));
       const buffered = pending; pending = [];
       for (const event of buffered) send(event.name.slice(6), event.data);
     } catch (error) { diagnostic(error); }

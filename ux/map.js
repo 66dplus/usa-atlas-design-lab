@@ -33,7 +33,11 @@ export async function loadGeography() {
     }
     return {id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f,path:path(f),center:d3.geoCentroid(f),bounds,focusBounds,point};
   };
-  const s=states.map(decorate),c=counties.map(decorate);
+  const s=states.map(decorate);
+  // County paths are the only county geometry needed for the national 2D frame.
+  // Bounds, centroids and high-detail projected shapes are prepared for one state
+  // when its counties are opened, instead of calculating them for all 3,142 now.
+  const c=counties.map(f=>({id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f,path:path(f)}));
   const context=topojson.feature(world,world.objects.countries);
   // Only other countries form the backdrop; a coarse US coast would protrude into detailed bays.
   context.features=context.features.filter(f=>f.id!=='840');
@@ -288,20 +292,43 @@ export class ExplorerMap {
   }
   clear(){this.clearGroup(this.group);}
   buildTerrain(only=null) {
-    if(!only){this.clearGroup(this.terrain);this.stateGroups=new Map();}
-    const footprintsByState=d3.group(footprints(this.geo,d3.geoStream),row=>row.feature.stateId);
-    for(const [id,rows] of footprintsByState){
-      if(only&&!only.has(id))continue;
-      const old=this.stateGroups.get(id);if(old){this.terrain.remove(old);this.clearGroup(old);}
-      const state=this.geo.byId.get(id),b=this.state.selectedId?.startsWith(id)?this.geo.byId.get(this.state.selectedId).focusBounds:state.focusBounds;
-      const center=new THREE.Vector3((b[0][0]+b[1][0])/200-6,0,(b[0][1]+b[1][1])/200-3.75);
-      // One national height scale also keeps both comparison panes comparable.
-      const height=RELIEF*this.settings.relief;
-      const {mesh,lines,outline,selection}=stateMesh(rows,f=>this.mappedValue(f),{height,color:this.tint,heightValue:f=>this.mappedHeight(f),center,selectedId:this.state.selectedId});
-      const group=new THREE.Group();group.position.copy(center);group.userData={id,mesh,lines,outline,height};group.add(mesh,lines,outline);if(selection)group.add(selection);
-      this.stateGroups.set(id,group);this.terrain.add(group);
-    }
-    this.terrainDetailStates=new Set(this.geo.detailStates);
+    if(!this.renderer||this.state.mode!=='3d')return;
+    const rebuildAll=!only||this.terrainBuilding;
+    this.terrainBuildVersion=(this.terrainBuildVersion||0)+1;
+    if(rebuildAll){this.clearGroup(this.terrain);this.stateGroups=new Map();}
+    this.terrainBuilding=true;
+    const version=this.terrainBuildVersion;
+    const queue=[...(rebuildAll?new Set(this.geo.states.map(state=>state.id)):only)];
+    queue.forEach(id=>{const old=this.stateGroups.get(id);if(old){this.terrain.remove(old);this.clearGroup(old);this.stateGroups.delete(id);}});
+    let cursor=0;
+    const step=deadline=>{
+      if(version!==this.terrainBuildVersion||this.state.mode!=='3d')return;
+      const start=performance.now();
+      try {
+        while(cursor<queue.length&&(cursor===0||deadline.timeRemaining?.()>4||performance.now()-start<5))this.buildStateTerrain(queue[cursor++]);
+      } catch(error) {
+        this.terrainBuilding=false;
+        this.onError(error.message||'The 3D map could not be built. Switch to 2D to continue.');
+        return;
+      }
+      if(cursor<queue.length){this.scheduleTerrainStep(step);return;}
+      this.terrainBuilding=false;this.terrainDetailStates=new Set(this.geo.detailStates);this.render();
+    };
+    this.scheduleTerrainStep(step);
+  }
+  scheduleTerrainStep(step){
+    if('requestIdleCallback'in window)requestIdleCallback(step,{timeout:80});
+    else setTimeout(()=>step({timeRemaining:()=>0}),0);
+  }
+  buildStateTerrain(id){
+    const rows=footprints(this.geo,d3.geoStream,new Set([id]));
+    const state=this.geo.byId.get(id),b=this.state.selectedId?.startsWith(id)?this.geo.byId.get(this.state.selectedId).focusBounds:state.focusBounds;
+    const center=new THREE.Vector3((b[0][0]+b[1][0])/200-6,0,(b[0][1]+b[1][1])/200-3.75);
+    // One national height scale also keeps both comparison panes comparable.
+    const height=RELIEF*this.settings.relief;
+    const {mesh,lines,outline,selection}=stateMesh(rows,f=>this.mappedValue(f),{height,color:this.tint,heightValue:f=>this.mappedHeight(f),center,selectedId:this.state.selectedId});
+    const group=new THREE.Group();group.position.copy(center);group.userData={id,mesh,lines,outline,height};group.add(mesh,lines,outline);if(selection)group.add(selection);
+    this.stateGroups.set(id,group);this.terrain.add(group);
   }
   renderRankMarkers(){
     if(!this.rankMarkers){this.rankMarkers=document.createElement('div');this.rankMarkers.className='rank-markers';this.host.append(this.rankMarkers);}
