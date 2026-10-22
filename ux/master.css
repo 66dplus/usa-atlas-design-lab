@@ -617,6 +617,15 @@ body:not([data-concept=compare]) .map-footer{display:none}
 
 /* Keep the collapsed summary inside its frame and reserve clear map space for OSM credit. */
 @media(max-width:760px){
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .maps{
+    top:0!important;right:0!important;bottom:0!important;left:0!important;height:auto!important;max-height:none!important;
+  }
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .explore-panel{
+    left:0!important;right:0!important;border-left:1px solid var(--line);border-right:1px solid var(--line);
+  }
+  body:not([data-concept=compare]):not(.embedded-map):not(.left-replaced):not(.reading) .concept-tabs{
+    left:0!important;right:0!important;
+  }
   .panel-collapsed .explore-panel{
     left:0!important;right:0!important;
     border-left:1px solid var(--line);border-right:1px solid var(--line);
