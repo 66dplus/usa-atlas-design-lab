@@ -117,11 +117,14 @@ python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release
 `ux/build.json` carries the `release` identifier, the `sourceBaseCommit` the build
 came from, and the SHA-256 of every shipped source and contract file. The live file
 is at `https://usa-xray.online/ux/build.json`, so the published site always names
-the commit it was built from. The current live release is `20261020-normalized39-v2`;
-it was packaged before the commit field existed, so its `sourceSha256` and
-`dataContractSha256` lists identify the exact bytes instead. The repository carries
-those bytes: a build from this tree reproduces the live release file for file,
-except the two local review-tooling lines that the public build strips on purpose.
+the commit it was built from. The current live release is `20261022-colourfix`,
+built from design-lab commit `3038de3` on branch `fix/continuous-colour-scale`. It
+keeps the map-first interface and the mobile composition of `6bea162` and replaces
+the quantile classes with a continuous scale: county values define the colour
+domain, money and population use a logarithmic ramp, other values use a linear
+ramp, and the cost-of-living index keeps its diverging scale. The public build
+strips the two local review-tooling lines on purpose; every shipped file otherwise
+matches the repository.
 
 The public runtime is read-only. It serves the same admitted observations as a local
 run, reads them from the `usa_atlas` database through the read-only adapter, and
