@@ -542,6 +542,11 @@ body[data-theme=light] .creative.banner .creative-body .creative-cta{color:var(-
    viewport and no side field is exposed next to it. */
 .explore-panel{display:flex;flex-direction:column;overflow:hidden}
 .explore-panel .profile-content{flex:1 1 auto;min-height:0;overflow:auto}
+.explore-panel>.profile-heading{order:1}
+.explore-panel>.place-photo{order:2}
+.explore-panel>.mobile-metric-overview{order:3}
+.explore-panel>.profile-content:not(.mobile-metric-overview){order:4}
+.explore-panel>.indicator-legend{order:5}
 .indicator-legend{flex-shrink:0;margin-top:0;padding:12px 17px 14px;background:var(--panel);border-top:1px solid var(--line)}
 .indicator-legend .legend{width:auto}
 .indicator-legend .legend-title{display:block;font-size:9px;font-weight:500;color:var(--muted);margin-bottom:6px}
@@ -592,5 +597,21 @@ body:not([data-concept=compare]) .map-footer{display:none}
   .journal-cards .journal-preview-link{height:184px;margin-bottom:2px}
   .journal-cards .journal-card-map{display:block;width:100%;height:100%;object-fit:contain;border:0;border-radius:12px;background:var(--soft)}
   .snapshot-caption{color:var(--muted);font-size:10px;line-height:1.45}
+}
+
+/* Mobile state sheet: lead with the selected measure, then identify the place. */
+@media(max-width:760px){
+  .explore-panel>.mobile-indicator-summary{order:0}
+  .explore-panel>.mobile-metric-overview{order:1;flex:0 0 auto;min-height:0;overflow:visible;padding:20px 20px 0}
+  .mobile-metric-overview .indicator-chooser{width:100%;min-height:58px;}
+  .mobile-metric-overview .indicator-search-divider{width:1px;min-width:1px;}
+  .mobile-metric-overview .indicator-chooser-copy{flex:1 1 auto;min-width:0;}
+  .mobile-metric-overview .indicator-chooser-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mobile-metric-overview .profile-value{margin-top:12px;}
+  .explore-panel>.profile-heading{order:2;flex:0 0 auto;}
+  .explore-panel>.place-photo{display:none!important;}
+  .explore-panel>.profile-content:not(.mobile-metric-overview){order:3;flex:0 0 auto;min-height:0;overflow:visible;padding:8px 20px 24px;}
+  .explore-panel>.indicator-legend{order:4;}
+  .place-expanded .explore-panel>.mobile-metric-overview{padding-top:24px;}
 }
 @media(max-width:760px){.pane-footer{display:none!important}}
