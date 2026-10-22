@@ -23,6 +23,8 @@ jobs:
       - run: node ux/check-detail.mjs
       - run: node ux/check-motion.mjs
       - run: node ux/check-data.mjs
+      - run: node ux/check-place-sheet.mjs
+      - run: node ux/check-support-data.mjs
       - run: node ux/check-source-metadata.mjs
       - run: node ux/check-icons.mjs
       - run: node ux/check-runtime.mjs

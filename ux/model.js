@@ -5,7 +5,8 @@ import {indicatorVisibility} from './indicator-visibility.js';
 export function loadedMapMetrics(metrics) {
   // Native ZIP/monitor/tract data alone cannot be shown on the state/county map.
   // Observation totals may be null when the production inventory is uncounted.
-  return metrics.filter(metric=>indicatorVisibility[metric.catalogId]===true&&metric.fieldId&&(metric.stateSupported||metric.countySupported));
+  // A normalization definition describes a series; it does not prove it is loaded.
+  return metrics.filter(metric=>indicatorVisibility[metric.catalogId]===true&&metric.hasObservations!==false&&metric.fieldId&&(metric.stateSupported||metric.countySupported));
 }
 
 export function collectedMapIndicators(metrics) {
@@ -80,18 +81,25 @@ export function createDataStore(geo,onChange,request=fetch) {
     const current=get(metric);
     if(!metric.fieldId||(!refresh&&(current.status==='ready'||current.status==='error')))return Promise.resolve(current);
     const fallback=current.status==='ready'?current:null;
-    if(!fallback)layers.set(metric.id,{...current,status:'loading'});
+    if(fallback)layers.set(metric.id,{...fallback,refreshing:true,refreshError:null});
+    else layers.set(metric.id,{...current,status:'loading'});
     const promise=(async()=>{
       await Promise.resolve(); // Install request ownership before callbacks, including synchronous fetch failures.
       try{
         const data=await readAtlasJSON('/api/atlas/observations?field='+encodeURIComponent(metric.fieldId),request);
         if(data.fieldId!==metric.fieldId)throw new Error('The server returned a different series.');
-        layers.set(metric.id,prepareLayer(data,geo));
-      }catch(error){layers.set(metric.id,fallback||{status:'error',error:error.message,values:new Map(),observations:new Map()});}
+        const next=prepareLayer(data,geo);
+        delete next.refreshing;delete next.refreshError;
+        layers.set(metric.id,next);
+      }catch(error){
+        layers.set(metric.id,fallback?{...fallback,refreshing:false,refreshError:error.message}:{status:'error',error:error.message,values:new Map(),observations:new Map()});
+      }
       finally{pending.delete(metric.id);onChange(metric.id);}
       return layers.get(metric.id);
     })();
-    pending.set(metric.id,promise);return promise;
+    pending.set(metric.id,promise);
+    if(fallback)onChange(metric.id);
+    return promise;
   }
   function retry(metric){layers.delete(metric.id);return load(metric);}
   function seed(metric,data){

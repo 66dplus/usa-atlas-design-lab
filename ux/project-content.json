@@ -1,0 +1,26 @@
+{
+  "productName": "USA X-Ray",
+  "mission": "Make U.S. public statistics easier to explore by place, with maps, comparisons, and the context behind each value.",
+  "project": {
+    "description": "USA X-Ray brings place-based data into one atlas. It helps people explore places, compare matching measures, and follow each value back to its source and reference period.",
+    "creator": {
+      "description": "Built and maintained by one independent developer.",
+      "publicName": null,
+      "profileLinks": [],
+      "status": "unknown"
+    }
+  },
+  "methodology": {
+    "geography": "Mapped places use state and Census 2017 county-equivalent geographies with exact FIPS joins.",
+    "observations": "Values keep their published geography, unit, reference period, source, and source release where available.",
+    "missingData": "An unavailable or missing observation remains a visible gap. Values are not inferred from a coarser geography, and no U.S. average is substituted.",
+    "limitations": "Coverage, definitions, units, and reference periods vary by source and measure. Read the source details for the selected indicator before comparing it."
+  },
+  "support": {
+    "goal": null,
+    "donationMethods": {
+      "externalLinks": [],
+      "wallets": []
+    }
+  }
+}

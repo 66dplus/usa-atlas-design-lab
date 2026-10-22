@@ -239,7 +239,7 @@ function renderInspector(){
   $('#inspector').innerHTML=`<div class="drawer-top"><div><p class="panel-context">${state.concept==='compare'?(right?'Right map':'Left map')+' · ':''}Place statistics</p><h2>${escapeHTML(f?.name||'United States')}</h2></div><button data-close="inspector" aria-label="Close statistics" class="icon-button">×</button></div><p class="place-type">${f?(isCounty?escapeHTML(place(f.stateId).name)+' · County equivalent':'State profile'):'50 states + Washington, DC'}${f?' · '+f.id:''}</p>
     <p class="metric-caption">${escapeHTML(m.name)}</p>${metricSwitchMarkup(m)}${stat}
     <div class="local-position"><span>Observation period</span><strong>${escapeHTML(formatPeriod(data.period)||'—')}</strong></div>
-    <div class="inspector-actions"><button class="primary-button" id="inspect-next">${!f?'Choose a state':isCounty?'Browse nearby counties':'Explore counties'} ${icon('arrow')}</button>${state.concept!=='compare'?`<button class="outline-button" id="compare-place">Compare ${f?'this place':'two places'} ${icon('arrow')}</button>`:''}</div>
+    <div class="inspector-actions"><button class="primary-button" id="inspect-next">${!f?'Choose a state':isCounty?'Browse nearby counties':'Explore counties'} ${icon('arrow')}</button>${state.concept!=='compare'?`<button class="outline-button" id="inspector-compare-place">Compare ${f?'this place':'two places'} ${icon('arrow')}</button>`:''}</div>
     <div class="stats-title"><h3>Your data card</h3><button id="edit-card">Choose fields</button></div>
     ${rows.map(item=>`<div class="stat-row"><button data-inspect-metric="${item.id}">${escapeHTML(item.name)}<small class="data-period">${escapeHTML(formatPeriod(layer(item).period)||(layer(item).status==='error'?'Connection error · select to retry':!item.fieldId?(item.hasObservations?'Other geography':'Not loaded'):'Loading…'))}${layer(item).unit?' · '+escapeHTML(layer(item).unit):''}</small></button><strong>${number(item,f?.id)}</strong></div>`).join('')}
     <p class="explanation">Each field keeps its own unit and period. A dash means no observation.</p>
@@ -522,7 +522,7 @@ document.addEventListener('click',event=>{
     case 'metric-button':case 'all-layers':showMetricLibrary();break;
     case 'find-place':showPlaceLibrary();break;
     case 'inspect-next':showPlaceLibrary(state.inspectorSide||'a',Boolean(state.inspectorSide==='b'?selectedB():selected()));break;
-    case 'context-compare':case 'compare-place':if(matchMedia('(max-width:760px)').matches){openComparisonDraft();break;}rememberExploration();if(!state.selected)state.selected='06';state.comparison='places';pages.navigate('compare');break;
+    case 'context-compare':case 'compare-place':case 'inspector-compare-place':if(matchMedia('(max-width:760px)').matches){openComparisonDraft();break;}rememberExploration();if(!state.selected)state.selected='06';state.comparison='places';pages.navigate('compare');break;
     case 'edit-card':showMetricLibrary(state.inspectorSide||'a',true);break;
     case 'stories-open':openDrawer('story-rail',button);break;
     case 'compare-data-open':openDrawer('compare-results',button);break;
