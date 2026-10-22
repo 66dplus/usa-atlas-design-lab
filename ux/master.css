@@ -614,4 +614,20 @@ body:not([data-concept=compare]) .map-footer{display:none}
   .explore-panel>.indicator-legend{order:4;}
   .place-expanded .explore-panel>.mobile-metric-overview{padding-top:24px;}
 }
+
+/* Keep the collapsed summary inside its frame and reserve clear map space for OSM credit. */
+@media(max-width:760px){
+  .panel-collapsed .explore-panel{
+    left:0!important;right:0!important;
+    border-left:1px solid var(--line);border-right:1px solid var(--line);
+  }
+  .panel-collapsed .mobile-indicator-summary{box-sizing:border-box;}
+  .panel-collapsed .mobile-summary-copy{flex:1 1 0;}
+  .panel-collapsed .mobile-summary-value{max-width:38%;overflow:hidden;text-overflow:ellipsis;}
+  .panel-collapsed .concept-tabs{left:0;right:0;border-radius:0 0 24px 24px;}
+  .panel-collapsed .osm-attribution{
+    top:auto;right:16px;bottom:calc(190px + env(safe-area-inset-bottom,0px));left:auto;
+    max-width:calc(100% - 32px);min-width:0;z-index:3;
+  }
+}
 @media(max-width:760px){.pane-footer{display:none!important}}
