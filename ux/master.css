@@ -505,6 +505,12 @@ body[data-theme=light] .creative.banner .creative-body .creative-cta{color:var(-
 
 /* Keep the mobile indicator picker in the same floating sheet as the map card. */
 @media(max-width:760px){
+  .drawer:not(.expanded){
+    left:16px!important;right:16px!important;bottom:calc(80px + env(safe-area-inset-bottom,0px))!important;width:auto!important;
+    padding:22px 20px 28px!important;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+    border:1px solid var(--line)!important;border-bottom:0!important;border-radius:24px 24px 0 0!important;
+    background:var(--panel)!important;box-shadow:0 12px 34px #1018201a;
+  }
   .indicator-chooser,.place-expanded .indicator-chooser,.ad-preview .profile-content>.indicator-chooser{
     box-sizing:border-box;width:100%!important;max-width:none;min-width:0;flex:0 0 100%;
   }
@@ -523,6 +529,13 @@ body[data-theme=light] .creative.banner .creative-body .creative-cta{color:var(-
     display:block;content:"";position:absolute;top:8px;left:calc(50% - 22px);width:44px;height:4px;border-radius:4px;background:var(--muted);pointer-events:none;
   }
   .concept-tabs:has(~ .drawer.expanded){border-top:0;border-radius:0 0 24px 24px}
+  .place-expanded .explore-panel .profile-heading{
+    position:relative!important;top:auto!important;z-index:auto;min-height:0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px 12px;
+    padding:22px 20px 14px!important;
+  }
+  .place-expanded .explore-panel .place-path{
+    position:static;display:flex!important;flex:0 0 100%;margin:0;padding:0;line-height:16px;
+  }
 }
 
 /* The chosen-indicator frame carries the colour scale, so the map keeps the full
