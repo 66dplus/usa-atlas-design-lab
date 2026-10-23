@@ -1,6 +1,7 @@
 /* Checked Paper S01/S02: desktop state file and mobile iteration, 22 October. */
 body { --state-bg:#EFF1F3; --state-panel:#FFFFFF; --state-ink:#182126; --state-muted:#58636B; --state-line:#D2D8DC; }
 body[data-theme=dark] { --state-bg:#17191D; --state-panel:#25292D; --state-ink:#F3F4F5; --state-muted:#AEB7BE; --state-line:#3C4248; }
+#maps { overflow:clip; }
 #loading { position:fixed; inset:0; z-index:35; display:grid; place-items:center; box-sizing:border-box; padding:24px; background:var(--bg); color:var(--ink); line-height:normal; }
 #loading[hidden] { display:none; }
 .startup-card { width:min(480px,100%); text-align:center; }

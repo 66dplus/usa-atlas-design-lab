@@ -17,6 +17,7 @@ let page,context,errors;
 const settle=async()=>{
   await page.waitForFunction(()=>document.body.dataset.atlasStatus==='ready',null,{timeout:45000});
   await page.waitForFunction(()=>![...document.querySelectorAll('.map-host')].some(n=>['focusing','restoring'].includes(n.dataset.phase)||n.dataset.terrainStatus==='building'),null,{timeout:15000});
+  await page.waitForFunction(()=>![...document.querySelectorAll('.geo-svg')].some(e=>d3.active(e))&&!document.querySelector('#maps').getAnimations({subtree:true}).some(a=>a.playState==='running'&&a.effect.getTiming().iterations!==Infinity));
   await page.waitForTimeout(350);
 };
 async function check(name,screenshot=true){
@@ -233,7 +234,9 @@ try{
         await check(`${key}-county`,false);
       }
       for(const destination of ['compare','stats','blog']){
-        await page.locator(`.concept-tabs [data-page="${destination}"]`).click();await settle();await check(`${key}-${destination}`);
+        await page.locator(`.concept-tabs [data-page="${destination}"]`).click();
+        if(destination==='compare'){await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Compare entrance stays inside the viewport throughout motion');}
+        await settle();await check(`${key}-${destination}`);
         if(destination==='compare'){
           if(mobile)await page.locator('#mobile-view-toggle').click();else await page.locator('.dimension-control [data-mode="3d"]').click();
           await settle();await check(`${key}-compare-3d`,false);
