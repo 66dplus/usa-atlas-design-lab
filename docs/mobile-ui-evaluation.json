@@ -1,0 +1,772 @@
+{
+  "source": "/Users/dmitrijrybkin/Documents/USA-MAPS/usa-atlas-design-lab/USA_XRay_Mobile_UI_Specification.docx",
+  "source_sha256": "3409a30dd8ab91de4947850fd61a44272d7dd121d93d49200b01d9bfb531354e",
+  "evaluation_policy": "DIRECT self-review. Every source paragraph is mapped; a summary alone is not a pass. Record test commands, actual results and screenshot paths. Never mark unavailable real-device checks as performed.",
+  "result": {
+    "implementation_commit": "d9903359f9f6eca6d4a55eabf8fbb152b42f2795",
+    "chrome_records": 74,
+    "chrome_errors": 0,
+    "real_iphone_safari": "unavailable; not claimed",
+    "policy": "DIRECT; conditional real-device check reported as unavailable. Pass records establish implemented behavior and the documented available checks, not native Safari certification."
+  },
+  "ui": [
+    {
+      "id": "UI-001",
+      "source_section": "1. Purpose and scope",
+      "requirement": "Consolidate the current mobile UI into a coherent component system while fixing map viewport gaps, inconsistent bottom navigation and bottom sheet geometry, broken drag/scroll interactions, and abrupt content rendering. This is a controlled architectural and interaction refactor, not a visual redesign. Inspect the actual code before choosing a solution; screenshots describe symptoms, not confirmed root causes.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/baseline-binding.json"
+      ],
+      "verification": "Audited the published source before choosing a plain-JavaScript refactor. Baseline bf9dc8b matches all 13 public source hashes; implementation d990335 retains the current design and data contract."
+    },
+    {
+      "id": "UI-002",
+      "source_section": "2. Observed problems",
+      "requirement": "The same bottom navigation (Map / Compare / Stats / Blog) appears with different dimensions, padding and placement across map and statistics states.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The existing four-button navigation DOM is reused. Actual geometry is identical across every mobile page in both themes: width equals viewport, height 56px, bottom equals viewport; simulated bottom inset adds 34px consistently."
+    },
+    {
+      "id": "UI-003",
+      "source_section": "2. Observed problems",
+      "requirement": "Bottom sheet containers differ in width, corner geometry, layout and interaction behavior between screens.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "All ordinary mobile drawers and the place sheet use bottomSheet with the same surface radius, full width, persistent handle and snap geometry. Desktop and embedded variants are documented."
+    },
+    {
+      "id": "UI-004",
+      "source_section": "2. Observed problems",
+      "requirement": "On expansion, the sheet sometimes stretches without smoothly revealing content; content appears abruptly after a threshold.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Essential place content stays in the stable scroll viewport. Snap changes use transform/clipping, with a coordinated minimum-summary transition instead of conditional content mounting."
+    },
+    {
+      "id": "UI-005",
+      "source_section": "2. Observed problems",
+      "requirement": "The visible drag handle fails to drag the sheet in the expanded state; touching slightly above it may behave differently.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Pointer capture belongs to the persistent handle. Expanded-handle drags passed with content at the bottom."
+    },
+    {
+      "id": "UI-006",
+      "source_section": "2. Observed problems",
+      "requirement": "The collapsed/minimum sheet cannot reliably be dragged upward, even though it must remain visible and expandable.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Minimum is a visible 100px state, the root stays interactive and the same handle expands it upward. The real pointer cycle was verified."
+    },
+    {
+      "id": "UI-007",
+      "source_section": "2. Observed problems",
+      "requirement": "Scrolling sheet content and dragging the sheet interfere, particularly when fully expanded.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "A separate content viewport owns native scrolling at maximum; a cancelable downward pull at scrollTop zero transfers to the sheet. Mid-content scrolling retains ownership."
+    },
+    {
+      "id": "UI-008",
+      "source_section": "2. Observed problems",
+      "requirement": "iPhone Safari shows light-gray/white regions around the top status bar and bottom browser toolbar instead of a visually continuous map.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "Site-owned viewport backgrounds and map sizing are corrected; theme metadata follows the active theme. Native Safari-controlled regions cannot display arbitrary map pixels. Real iPhone verification is unavailable here.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-009",
+      "source_section": "3. Architecture audit before implementation",
+      "requirement": "Inventory all screen layouts, map wrappers, bottom sheets, bottom navigation implementations, floating controls, buttons, typography, search controls, segmented controls and overlays.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The audit inventories map hosts, drawers, navigation, floating controls, buttons, type, search, segmented controls, cards and reading pages, with existing canonical implementations."
+    },
+    {
+      "id": "UI-010",
+      "source_section": "3. Architecture audit before implementation",
+      "requirement": "Locate duplicate JSX/CSS, hardcoded values, conflicting parent styles, conditional mounts, inconsistent positioning, touch handlers and independent animation implementations.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The audit identifies root-innerHTML handle replacement, collapsed inert/display rules, repeated geometry, independent transforms and unused controller code. Verified unused controller/tests and legacy handle geometry were removed."
+    },
+    {
+      "id": "UI-011",
+      "source_section": "3. Architecture audit before implementation",
+      "requirement": "Determine whether each inconsistency is caused by duplicated components, different props/variants, inherited styles, viewport calculations or gesture coordination.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Root causes are recorded by surface: CSS inheritance and geometry, viewport calculations, gesture ownership and data-rendered handle replacement. Navigation already had one DOM implementation."
+    },
+    {
+      "id": "UI-012",
+      "source_section": "3. Architecture audit before implementation",
+      "requirement": "Report findings with affected files and a proposed component ownership diagram before making broad changes.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "docs/mobile-ui-architecture.md was written before the implementation and contains affected files and a Mermaid ownership diagram."
+    },
+    {
+      "id": "UI-013",
+      "source_section": "4. Design system and component reuse",
+      "requirement": "Create or consolidate one canonical implementation for recurring patterns. Use the existing framework and styling approach; do not introduce a new UI stack without clear justification.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Canonical bottomSheet, sheetContent, sheetScroll, viewport and mobile layout use the existing JS/CSS stack. No framework or dependency was added."
+    },
+    {
+      "id": "UI-014",
+      "source_section": "4. Design system and component reuse",
+      "requirement": "Centralize semantic color tokens, orange accent, typography scale, spacing, radius, shadows, borders, control heights, icon sizes, motion/easing, responsive breakpoints, safe-area offsets and z-index layers.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "ui-tokens.css centralizes semantic theme aliases, orange action alias, type roles, spacing, radius, shadow, borders, control/icon dimensions, motion, safe areas and layers. The 760px breakpoint and existing easing are documented."
+    },
+    {
+      "id": "UI-015",
+      "source_section": "4. Design system and component reuse",
+      "requirement": "Standardize Button, IconButton, BottomNavigation, NavigationItem, MapControls, MapControlButton, BottomSheet, SheetHandle, SheetHeader, SheetContent, segmented controls, cards, search inputs, and common text styles where appropriate.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Existing Button/IconButton, map controls, search, segmented controls, cards and text classes are reused; navigation, sheets, handle and content geometry have one owner. The component inventory lists each implementation."
+    },
+    {
+      "id": "UI-016",
+      "source_section": "4. Design system and component reuse",
+      "requirement": "Use explicit, typed props/variants for intentional differences. Prevent accidental styling from parent containers; avoid CSS selectors that couple components to particular screens.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "JSDoc SheetSnap and SheetOptions define explicit supported states and options. Desktop, embedded, compare and reading variants are documented; reusable sheet geometry uses .mobile-sheet rather than page-specific parent state."
+    },
+    {
+      "id": "UI-017",
+      "source_section": "4. Design system and component reuse",
+      "requirement": "Keep screen-specific data and business logic separate from reusable layout/interaction components. Do not overabstract trivial elements.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The reusable controller owns layout/gesture mechanics only; app.js retains place/metric data and business logic. Existing small controls are reused without new wrapper abstractions."
+    },
+    {
+      "id": "UI-018",
+      "source_section": "4. Design system and component reuse",
+      "requirement": "Preserve the existing visual identity and functional differences between 2D and 3D modes.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/baseline-binding.json"
+      ],
+      "verification": "The published composition, theme palette and data were preserved. Actual state/county flows and both 2D/3D modes, including compare, passed in Chrome."
+    },
+    {
+      "id": "UI-019",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Goal: keep iOS status indicators and Safari browser controls intact while letting the real map occupy as much available screen area as the browser supports. Do not fake map pixels behind browser chrome.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "The real map remains in the document viewport. Native status indicators and Safari controls are not hidden or simulated; browser chrome limitations are documented.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-020",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Review viewport meta settings; include viewport-fit=cover while preserving other required values.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "index.html retains width=device-width, initial-scale=1 and viewport-fit=cover."
+    },
+    {
+      "id": "UI-021",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Ensure html, body, application root and map layers do not introduce unintended white/gray gaps. Size the map to the actual available viewport and respond to visual viewport changes without jumps.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "viewport.js measures the visual viewport into --app-height; html/body/workspace and map layers consume one height. Resize/orientation checks passed without horizontal overflow."
+    },
+    {
+      "id": "UI-022",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Keep map rendering independent of sheet height; overlay the sheet on the map rather than resizing/remounting the map on each snap change.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/baseline-binding.json"
+      ],
+      "verification": "Map host and scroll/handle identities survive renders; actual map bounds remain unchanged across the complete snap cycle. Sheet movement changes no map dimensions."
+    },
+    {
+      "id": "UI-023",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Respect safe-area-inset-* for tappable controls and bottom navigation. Keep controls clear of browser chrome.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "Navigation uses all safe-area tokens and top controls respect the top inset. Simulated top 59px/bottom 34px checks passed at both mobile sizes/themes; native device behavior remains unverified.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-024",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Set an appropriate theme-color/background to visually blend Safari-controlled regions where possible. iOS Safari may not allow actual geographic map content behind all browser UI; do not claim otherwise.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "MutationObserver synchronizes theme-color and document background on theme changes. Both theme directions were tested. No claim of map pixels inside native Safari UI is made.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-025",
+      "source_section": "5. Map viewport and iOS Safari edge-to-edge",
+      "requirement": "Test expanded and collapsed Safari toolbar states, orientation changes, and both 2D and 3D maps.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "Visible-height changes and orientation were exercised in Chrome, with 2D/3D and compare. Native expanded/collapsed Safari toolbar states require a connected iPhone; no device harness is available.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-026",
+      "source_section": "6. Unified bottom sheet interaction model",
+      "requirement": "Use one canonical bottom sheet controller and one consistent snap-point system, with minimum, intermediate (if required) and maximum states. The minimum state must never be dismissible below its configured height.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "One controller exposes min/half/expanded. Geometry clamps to a 100px minimum; there is no dismissed/hidden snap."
+    },
+    {
+      "id": "UI-027",
+      "source_section": "6.1 Drag handle",
+      "requirement": "The visible gray handle must be a reliable drag target at every snap point, including fully expanded and collapsed.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Real pointer cycles and keyboard transitions exercise the same grip at every snap. All mobile drawers also retain a grip at minimum."
+    },
+    {
+      "id": "UI-028",
+      "source_section": "6.1 Drag handle",
+      "requirement": "The interactive hit area should be larger than the visible line, but visually aligned with it.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The 40\u00d74px visual line is centered within a full-width, 32px-high button with touch-action:none and a visible keyboard focus state."
+    },
+    {
+      "id": "UI-029",
+      "source_section": "6.1 Drag handle",
+      "requirement": "Dragging the handle must move the sheet, never scroll its contents.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Handle pointer events are separate from content touch listeners and capture their pointer. Dragging the handle works at the content scroll bottom."
+    },
+    {
+      "id": "UI-030",
+      "source_section": "6.1 Drag handle",
+      "requirement": "Do not allow overlays, nested scroll containers or pointer-event layers to intercept the handle unexpectedly.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The handle is a separate root child above the scroll viewport and summary layer. Hit-testing assertions confirmed primary controls are uncovered."
+    },
+    {
+      "id": "UI-031",
+      "source_section": "6.2 Collapsed and intermediate states",
+      "requirement": "From collapsed, upward drag must immediately track the finger and expand the sheet. Downward drag cannot hide it below minimum height.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Upward minimum drags follow continuously through the shared paint method; clamping prevents movement below the 100px minimum."
+    },
+    {
+      "id": "UI-032",
+      "source_section": "6.2 Collapsed and intermediate states",
+      "requirement": "From intermediate, dragging up/down continuously changes the sheet position, with predictable velocity/threshold snapping.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Pointer movement continuously paints transform and clipping. Recent velocity, projected distance and a short-flick threshold choose a bounded snap."
+    },
+    {
+      "id": "UI-033",
+      "source_section": "6.2 Collapsed and intermediate states",
+      "requirement": "Avoid sudden content appearance, height discontinuities, flicker, or snapping to the wrong state.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Consistent value/action layout avoids expanded-threshold reflow. Clipping and the coordinated summary transition reveal mounted content; interrupted settlement is cancelled from its current position."
+    },
+    {
+      "id": "UI-034",
+      "source_section": "6.3 Expanded state and nested scrolling",
+      "requirement": "At maximum height, the content area scrolls independently while the sheet remains anchored.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The maximum sheet has an independent overflow viewport; mid-content touch scrolling leaves its committed snap unchanged."
+    },
+    {
+      "id": "UI-035",
+      "source_section": "6.3 Expanded state and nested scrolling",
+      "requirement": "Dragging the handle down collapses the sheet even when content is scrolled.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The browser suite scrolls content to its bottom, then collapses through the handle and verifies the half state."
+    },
+    {
+      "id": "UI-036",
+      "source_section": "6.3 Expanded state and nested scrolling",
+      "requirement": "When content scrollTop is zero, a downward gesture initiated in the content region should hand off from content scrolling to sheet dragging, without a jump.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The browser sends actual touch input to content at scrollTop zero and verifies a downward pull settles at half. Transfer uses the preceding touch position to avoid a jump."
+    },
+    {
+      "id": "UI-037",
+      "source_section": "6.3 Expanded state and nested scrolling",
+      "requirement": "Scrolling within content must not accidentally move the sheet; define gesture ownership explicitly.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Native scrolling owns a gesture in the middle of expanded content. Transfer requires a vertical, cancelable downward pull at the top; noncancelable scrolling is not taken over."
+    },
+    {
+      "id": "UI-038",
+      "source_section": "6.3 Expanded state and nested scrolling",
+      "requirement": "Ensure iOS Safari touch/pointer behavior, overscroll, touch-action, pointer capture and passive listeners are handled correctly.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "The implementation uses touch-action:none on the handle, pointer capture, non-passive content touchmove, passive touchstart and overscroll containment. Real iOS Safari remains a documented device check.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-039",
+      "source_section": "6.4 Rendering and animation",
+      "requirement": "Keep essential content mounted during drag where practical; reveal it through clipping/viewport changes instead of threshold-based sudden mounting.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The content viewport and handle stay mounted during drag and data renders. Minimum content is clipped/hidden as a whole, without snap-dependent child mounting or layout removal."
+    },
+    {
+      "id": "UI-040",
+      "source_section": "6.4 Rendering and animation",
+      "requirement": "Avoid competing CSS and JS animations; coordinate drag position, snap state and scroll state through one controller.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The controller alone owns mobile transform/clipping and settlement. Mobile drawers bypass generic showSurface transforms; verified old handle rules and the unused controller were removed."
+    },
+    {
+      "id": "UI-041",
+      "source_section": "6.4 Rendering and animation",
+      "requirement": "Support interrupted gestures, rapid direction changes, changing viewport height and reduced-motion preferences.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Tests cover cancellation, reversing an in-flight settle, resize, orientation and reduced motion. Reduced motion produced zero active sheet animations."
+    },
+    {
+      "id": "UI-042",
+      "source_section": "6.4 Rendering and animation",
+      "requirement": "Keep the bottom navigation outside the scrolling content area and give it consistent layout ownership.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The shared navigation is outside all scrolling sheets. Geometry stays fixed while content scrolls and during drawer interactions."
+    },
+    {
+      "id": "UI-043",
+      "source_section": "7. Recommended ownership structure",
+      "requirement": "MapPage / MapViewport (persistent map) + MapControls (safe-area-aware overlay) + BottomSheet (shared gesture and snap controller) containing SheetHandle, SheetContent (scroll viewport with screen-specific content) and BottomNavigation (shared non-scrolling footer). Exact file boundaries may differ after code audit; the important requirement is single ownership of geometry and gestures.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The ownership diagram maps persistent map hosts, safe controls, shared footer, reusable controller, separate handle and content viewport to concrete files."
+    },
+    {
+      "id": "UI-044",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "Map, ranking, region detail and other applicable views use the same BottomNavigation implementation with identical geometry unless an explicit documented variant is requested.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Ranking, region detail, search, map and reading pages use the same navigation DOM. The mobile geometry is unchanged between these flows; intentional desktop/embedded variants are documented."
+    },
+    {
+      "id": "UI-045",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "All sheet states use one canonical gesture system; the handle works at every state and minimum state expands upward.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Place, ranking, search, library, comparison and inspector drawers use the canonical controller. Ranking content updates preserve its handle; minimum remains expandable."
+    },
+    {
+      "id": "UI-046",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "Drag follows the finger; content is revealed smoothly; no sudden mount/layout jumps.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "The root transform follows the finger; essential content remains mounted and is clipped. The old minimum child display:none rule and transient handle creation were removed."
+    },
+    {
+      "id": "UI-047",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "At maximum height, internal scroll works; downward scroll at top hands off to sheet drag; navigation stays fixed and usable.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log"
+      ],
+      "verification": "Touch tests verify native mid-content scrolling and top-edge handoff. Handle collapse works at the scroll bottom, and navigation remains usable during comparison preparation."
+    },
+    {
+      "id": "UI-048",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "No unintended map resize/remount, viewport jump, browser-toolbar collision, overlap or horizontal scrolling.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt",
+        "/tmp/usa-xray-ui-architecture-20261023/baseline-binding.json"
+      ],
+      "verification": "All 74 browser records have no page/console errors, horizontal overflow or covered primary controls. Map bounds stay stable on snaps; safe-area and resize checks pass. Native Safari collisions are not device-certified.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-049",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "On iOS Safari, site-owned gray/white gaps are removed and browser-controlled regions blend as closely as platform support permits.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "Site-owned gap sources are removed through shared viewport sizing/background and safe-area navigation. Both themes and simulated insets pass. Actual Safari toolbar blending still depends on platform behavior and needs a physical-device check.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-050",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "Desktop and mobile functionality, 2D/3D modes, search, navigation and data interactions remain intact.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/baseline-binding.json",
+        "/tmp/usa-xray-ui-architecture-20261023/package-check.json"
+      ],
+      "verification": "Real Chrome verifies desktop/mobile, selected state and county, search, navigation, map/compare 2D/3D, Stats/Blog/Support and theme switching. Existing motion/runtime/data/geometry checks pass."
+    },
+    {
+      "id": "UI-051",
+      "source_section": "9. Acceptance criteria",
+      "requirement": "Shared components and tokens are documented; new screens reuse existing patterns by default.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/AGENTS.md"
+      ],
+      "verification": "The component/token inventory and AGENTS.md specify reuse and ownership for future screens."
+    },
+    {
+      "id": "UI-052",
+      "source_section": "10. Verification matrix",
+      "requirement": "Verify on a real iPhone Safari if available, including expanded/collapsed browser chrome. Cover collapsed \u2192 intermediate \u2192 expanded \u2192 intermediate \u2192 collapsed; handle gestures at every snap point; scroll at top/middle/bottom; fast swipes; interrupted animation; viewport resize; switching regions; switching 2D/3D; navigation between Map, Compare, Stats and Blog. Include at least one desktop viewport and reduced-motion check.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/apple-devices.txt"
+      ],
+      "verification": "The automated Chrome matrix covers the complete snap cycle, top/middle/bottom scrolling, flicks, interruption, resize/orientation, state/county, 2D/3D, four destinations and reduced motion, at all three requested sizes and themes. Real iPhone Safari is unavailable, not claimed as tested.",
+      "limitation": "No real iPhone Safari run. xctrace device tooling is unavailable; Chrome viewport/inset/orientation tests do not substitute for native toolbar verification."
+    },
+    {
+      "id": "UI-053",
+      "source_section": "11. Constraints and deliverables",
+      "requirement": "Do not redesign, change data APIs or rewrite unrelated business logic. Avoid a blind mass rewrite and unnecessary new dependencies.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/baseline-binding.json",
+        "/tmp/usa-xray-ui-architecture-20261023/package-check.json"
+      ],
+      "verification": "No data API, renderer or unrelated business logic was rewritten. No dependency was added; changes are scoped to interaction/layout ownership and packaging the new assets."
+    },
+    {
+      "id": "UI-054",
+      "source_section": "11. Constraints and deliverables",
+      "requirement": "A vetted bottom-sheet library may be evaluated if the current custom implementation is fundamentally brittle; adoption requires an explicit rationale and regression plan.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/tmp/usa-xray-ui-architecture-20261023/package-check.json"
+      ],
+      "verification": "No library was adopted: the diagnosed faults were ownership and lifetime bugs, resolved with a bounded shared controller. This avoids a stack/dependency migration and is covered by the real browser regression suite."
+    },
+    {
+      "id": "UI-055",
+      "source_section": "11. Constraints and deliverables",
+      "requirement": "Deliver an audit with root causes and affected files; implementation summary; component/token inventory; screenshots or test evidence; remaining limitations (especially Safari chrome).",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/AGENTS.md"
+      ],
+      "verification": "The audit, implementation/component/token inventory, verification report, per-paragraph matrix and /tmp screenshots/results are delivered. Safari and existing detector warnings are explicitly recorded."
+    },
+    {
+      "id": "UI-056",
+      "source_section": "11. Constraints and deliverables",
+      "requirement": "Document future rules in AGENTS.md or equivalent: search for shared components and tokens before introducing new markup or styles.",
+      "status": "pass",
+      "evidence": [
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/docs/mobile-ui-architecture.md",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/ux/bottom-sheet.js",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-results.json",
+        "/tmp/usa-xray-ui-architecture-20261023/browser-check.log",
+        "/Users/dmitrijrybkin/Documents/USA-MAPS/.worktrees/mobile-ui-architecture-20261023/AGENTS.md"
+      ],
+      "verification": "The UI AGENTS.md instructs future agents to search and reuse shared patterns/tokens, keep roots/handles mounted and avoid competing geometry/gesture owners."
+    }
+  ]
+}
