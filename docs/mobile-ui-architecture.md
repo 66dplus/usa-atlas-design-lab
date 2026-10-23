@@ -34,7 +34,7 @@ Baseline Chrome measurements at 390 × 844 in both themes: minimum is 100px
 but inert, grip has no box; half clips a 446px document in 416px; expanded scrolls
 the entire 636px panel including its grip. The map is 390 × 844 at every snap.
 Evidence: `baseline-measurements.json` and `before-*.png` in the evidence folder.
-No independent review or evaluation agents are used (owner DIRECT policy).
+The initial audit followed DIRECT. On 24 October the owner explicitly requested an independent critique; after OpenCode GLM quotas failed, the owner authorized a separate Codex reviewer. See the verification report for findings and rechecks.
 
 ## Ownership contract
 
@@ -106,3 +106,24 @@ were removed together rather than retaining two competing reference controllers.
 Legacy mobile sheet/nav geometry and handle rules were removed from `master.css`;
 the existing content styles remain. Mobile sheets bypass the generic drawer
 transform animation, while desktop retains it. No dependency was added.
+
+## Owner follow-up decisions — 24 October 2026
+
+The four mobile top controls now start at 8 px or the real safe-area top, whichever
+is larger; the old artificial 56 px status-bar allowance is removed. Navigation
+stays against the available viewport bottom with its own safe-area padding.
+Startup is a centered loading label with rotating geography phrases, gentle dots,
+reduced-motion behavior and explicit error/retry. It has no attribution badge;
+map attribution remains on the map.
+
+The owner removed legacy SVG geographic rendering and fallback. 2D uses WebGL
+only; transparent SVG text/gesture overlays have no geographic paths. Explicit
+WebGL error/retry lives outside the translated camera host, with a compact
+comparison variant. City membership is cached by detailed state-feature reference
+so pan/zoom frames do not repeat expensive polygon containment. Replacement
+detail geometry invalidates the cache. The measured label-update hotspot fell
+from 158.9 ms median to under 0.1 ms for repeated updates; this is not an FPS claim.
+
+Terrain readiness includes all 51 state meshes; mode interruption invalidates
+incomplete work and reentry rebuilds it. Comparison entrance is clipped to its
+viewport so animated pane translation cannot introduce document overflow.
