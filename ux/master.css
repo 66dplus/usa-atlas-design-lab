@@ -286,7 +286,7 @@ body{min-height:100svh}
   #place-library.recent-states .drawer-top{margin-inline:8px}
   #place-library.recent-states>.drawer-top>button{height:34px;min-height:34px}
   #place-library.recent-states .search-field{margin-top:20px;border-radius:14px}
-  #place-library.recent-states .search-field input{font-size:15px;line-height:19px}
+  #place-library.recent-states .search-field input{line-height:1.4}
   #place-library.recent-states #place-list-caption{margin:23px 8px 12px;text-transform:uppercase;font-weight:600;line-height:18px}
   #place-library.recent-states #place-list{flex:none;margin:0 8px}
   #place-library.recent-states .place-item{display:flex;align-items:center;gap:16px;min-height:64px;padding:10px 0;border-radius:0;box-shadow:none}
@@ -296,7 +296,6 @@ body{min-height:100svh}
   #place-library.recent-states .place-item small{font-size:13px;margin-top:4px;line-height:16px}
   #place-library.recent-states .place-item>svg{width:20px;height:20px;flex:none}
   #place-library.recent-states .place-item>svg:last-child{width:18px;height:18px}
-  #place-library.expanded .drawer-top h2{font-size:28px;line-height:40px}
 }
 @media(max-width:760px){
   .context-compare{display:flex;justify-content:space-between;align-items:center}.context-compare[hidden]{display:none}.context-compare svg{width:20px;height:20px}
@@ -322,13 +321,10 @@ body{min-height:100svh}
   #metric-library>.drawer-top>button,#place-library>.drawer-top>button{order:-1;padding:0;min-height:36px;width:32px;font-size:0}#metric-library>.drawer-top>button:after,#place-library>.drawer-top>button:after{content:'←';font-size:24px}
   #metric-library .panel-context,#place-library .panel-context{display:none}#metric-library .drawer-top h2,#place-library .drawer-top h2{font-size:24px;line-height:34px}
   .drawer>.expand-sheet{right:24px;top:20px}.drawer.expanded>.expand-sheet{display:none}.drawer.expanded:before{display:none}
-  #metric-library.expanded .panel-context{display:block;position:absolute;top:42px;left:20px;margin:0;font-size:14px;line-height:20px}
-  .drawer.expanded .drawer-top{margin-bottom:38px}.drawer.expanded .drawer-top>button{position:fixed;left:16px;top:56px}
   #metric-library.expanded>.drawer-top>button,#place-library.expanded>.drawer-top>button{width:76px;text-align:left}
   #metric-library.expanded>.drawer-top>button:after,#place-library.expanded>.drawer-top>button:after{content:'← Back';font-size:14px}
   .sheet-expanded .map-host,.comparison-setup .map-host,.place-expanded .map-host,.reading .map-host{visibility:hidden}
   .sheet-expanded .osm-attribution{display:none}
-  #metric-library.expanded .drawer-top h2{font-size:28px;line-height:40px}
   .metric-item .metric-availability{display:none}.metric-item{position:relative;gap:14px}.metric-copy{padding-right:20px}.metric-item:not([aria-pressed=true]):after{content:'→';font-size:22px;color:var(--ink)}
   .selected-check{position:absolute;right:0}.search-field{padding:10px 14px}.drawer .search-field{height:48px;margin-top:22px}
   #metric-library>.drawer-top>div,#place-library>.drawer-top>div{flex:1;min-width:0}

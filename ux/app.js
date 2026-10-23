@@ -173,7 +173,7 @@ function showMetricLibrary(side='a',cardMode=false){
   renderCategories();renderMetrics();openDrawer('metric-library',document.activeElement,side);
 }
 function showPlaceLibrary(side='a',countiesOnly=false){
-  state.placeTarget=side;state.countiesOnly=countiesOnly;$('#place-search').value='';
+  state.placeTarget=side;state.countiesOnly=countiesOnly;state.placeBrowseAll=false;$('#place-search').value='';
   $('#place-library').classList.remove('expanded');
   $('#place-library-context').textContent=state.concept==='compare'?`${side==='a'?'Primary':'Comparison'} map · ${state.comparison==='metrics'?'Applies to both maps':'Changes this map only'}`:'Search states and counties';
   renderPlaces();openDrawer('place-library',document.activeElement,side);
@@ -211,7 +211,7 @@ function renderMetrics(){
 function renderPlaces(){
   const panel=$('#place-library'),mobile=matchMedia('(max-width:760px)').matches;
   const query=$('#place-search').value.trim().toLowerCase(),parent=(state.placeTarget==='b'?selectedB()?.id:state.selected)?.slice(0,2);
-  const recent=mobile&&!state.countiesOnly&&!query&&!panel.classList.contains('expanded');
+  const recent=mobile&&!state.countiesOnly&&!query&&!state.placeBrowseAll;
   panel.classList.toggle('recent-states',recent);
   $('#place-library-title').textContent=state.countiesOnly?'Explore the counties':mobile?'Find a state':'Choose a place';
   $('#place-search').placeholder=mobile&&!state.countiesOnly?'Search states':'State or county name…';
@@ -496,7 +496,7 @@ document.addEventListener('click',event=>{
   if(button.id==='mobile-view-toggle'){state.mode=state.mode==='3d'?'2d':'3d';render();return;}
   if(button.dataset.dismissPlace){setPlaceSheet('dismissed');return;}
   if(button.dataset.mode){state.mode=button.dataset.mode;render();return;}
-  if(button.hasAttribute('data-browse-states')){const panel=$('#place-library');if(mobileLayout())drawerSheets.get(panel)?.setSnap('expanded');else{panel.classList.add('expanded');document.body.classList.add('sheet-expanded');}renderPlaces();sheetScroll(panel).scrollTop=0;$('#place-search').focus({preventScroll:true});return;}
+  if(button.hasAttribute('data-browse-states')){state.placeBrowseAll=true;const panel=$('#place-library');if(mobileLayout())drawerSheets.get(panel)?.setSnap('expanded');else{panel.classList.add('expanded');document.body.classList.add('sheet-expanded');}renderPlaces();sheetScroll(panel).scrollTop=0;$('#place-search').focus({preventScroll:true});return;}
   if(button.dataset.expandSheet){const panel=$('#'+button.dataset.expandSheet);if(mobileLayout()){const sheet=drawerSheets.get(panel);sheet?.setSnap(sheet.snap==='expanded'?'half':'expanded');}else{panel.classList.toggle('expanded');document.body.classList.toggle('sheet-expanded',panel.classList.contains('expanded'));}if(button.dataset.expandSheet==='metric-library')$('#metric-library-context').textContent='Current place · '+(selected()?.name||'United States');if(button.dataset.expandSheet==='place-library')renderPlaces();return;}
   if(button.dataset.close){document.body.classList.remove('sheet-expanded');closeDrawers();return;}
   if(button.dataset.camera){const map=button.dataset.side==='b'?mapB:mapA;const action=button.dataset.camera;if(action==='in')map.zoom(.8);else if(action==='out')map.zoom(1.25);else if(action==='reset')map.reset();else map.rotate(action==='left'?-1:1);return;}
@@ -554,7 +554,6 @@ placeSheet=bottomSheet($('#explore-panel'),{initial:state.selected?'half':'min',
 }});
 for(const panel of document.querySelectorAll('.drawer'))drawerSheets.set(panel,bottomSheet(panel,{onSnap:snap=>{
   panel.classList.toggle('expanded',snap==='expanded');
-  if(geo&&panel.id==='place-library')renderPlaces();
 }}));
 pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept});
 // The local review panel is a development tool: it is enabled only on request.

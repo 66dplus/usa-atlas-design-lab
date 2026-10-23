@@ -35,6 +35,8 @@
     display:flex;flex:1 1 auto;min-height:0;flex-direction:column;overflow:auto;
     overscroll-behavior-y:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 var(--space-5) var(--space-6);
   }
+  .mobile-sheet::before {display:none!important;content:none!important;}
+  .mobile-sheet .search-field input {font-size:16px;line-height:1.4;}
   .sheet-content::-webkit-scrollbar {display:none;}
   .mobile-sheet > .expand-sheet {display:none;}
   body .explore-panel > .sheet-content {padding:0;}
@@ -62,8 +64,8 @@
   .explore-panel[data-snap=min] > .mobile-indicator-summary {pointer-events:auto;}
   .explore-panel[data-dragging=true] > .mobile-indicator-summary {pointer-events:none;}
   .mobile-summary-grip {display:none;}
-  .mobile-sheet[data-snap=min][data-dragging=false]:not([data-settling=true]) > .sheet-content {visibility:hidden;}
-  .mobile-sheet[data-snap=min][data-dragging=true] > .sheet-content {visibility:visible;}
+  .explore-panel[data-snap=min][data-dragging=false]:not([data-settling=true]) > .sheet-content {visibility:hidden;}
+  .explore-panel[data-snap=min][data-dragging=true] > .sheet-content {visibility:visible;}
   .mobile-sheet[data-dragging=true] {user-select:none;}
   .reading-page {bottom:calc(var(--nav-height) + var(--safe-bottom))!important;padding-bottom:var(--space-6);}
   body .app-header {top:max(56px,calc(var(--safe-top) + 8px));left:max(16px,var(--safe-left));right:max(16px,var(--safe-right));}

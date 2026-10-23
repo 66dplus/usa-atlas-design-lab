@@ -62,12 +62,14 @@ def build(destination, release):
         'medicalFields': [key for key in ('11.01', '11.02', '11.03')
                           if flags.get(key) == 'true'],
         'sourceSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
-                         for name in ('ux/app.js', 'ux/bottom-sheet.js', 'ux/viewport.js',
+                         for name in ('ux/index.html', 'ux/app.js', 'ux/bottom-sheet.js', 'ux/viewport.js',
                                       'ux/ui-tokens.css', 'ux/mobile-layout.css', 'ux/map.js', 'ux/flat-map.js',
                                       'ux/indicator-visibility.js', 'ux/model.js',
                                       'ux/motion.js', 'ux/master.css', 'ux/ui-overhaul.css',
                                       'ux/startup-guard.js', 'ux/pages.js',
                                       'ux/icons.js', 'ux/approved-icons.js', 'ux/style.css')},
+        'assetSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
+                        for name in sorted(set(manifest.values()))},
         'dataContractSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
                               for name in ('scripts/atlas_data.py', 'scripts/preview_server.py', 'ux/acs-series.json',
                                            'ux/catalog-v2.json', 'ux/metric-definitions.json')},

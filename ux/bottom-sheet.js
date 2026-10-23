@@ -52,6 +52,9 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     root.dataset.settling = 'false'; paint(current);
   }
   function geometry() {
+    // Pinch zoom changes visual pixels, not the app's layout viewport.
+    // Match viewport.js: do not reframe only the sheet while the map stays fixed.
+    if (window.visualViewport && Math.abs(window.visualViewport.scale - 1) > .01) return;
     interrupt(); drag = null; touch = null;
     const height = viewport(), footer = style('--nav-height') + style('--safe-bottom');
     const top = Math.max(height * .18, style('--safe-top') + 72);

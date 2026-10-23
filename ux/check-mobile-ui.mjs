@@ -5,11 +5,13 @@ import {createRequire} from 'node:module';
 import {mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 const require=createRequire(import.meta.url);
-const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const engine=process.env.ATLAS_TEST_BROWSER||'chrome';
+assert.ok(['chrome','webkit'].includes(engine),'Supported browser: chrome or webkit');
 const base=process.env.ATLAS_TEST_URL||'http://127.0.0.1:4198';
 const out=process.env.ATLAS_TEST_OUTPUT||'/tmp/usa-xray-ui-architecture-20261023';
 await mkdir(out,{recursive:true});
-const browser=await chromium.launch({channel:'chrome',headless:true});
+const browser=engine==='webkit'?await webkit.launch({headless:true}):await chromium.launch({channel:'chrome',headless:true});
 const results=[];
 let page,context,errors;
 const settle=async()=>{
@@ -36,7 +38,7 @@ async function check(name,screenshot=true){
   if(state.viewport.width<=760){assert.equal(state.nav.x,0,`${name}: nav left`);assert.equal(state.nav.width,state.viewport.width,`${name}: nav width`);assert.equal(state.nav.height,56,`${name}: nav height`);assert.equal(state.nav.bottom,state.viewport.height,`${name}: nav bottom`);}
   const file=screenshot?path.join(out,`${name}.png`):null;
   if(file)await page.screenshot({path:file});
-  results.push({name,...state,errors:[...errors],screenshot:file});
+  results.push({name,engine,...state,errors:[...errors],screenshot:file});
 }
 async function snap(name){
   const handle=page.locator('#explore-panel > .sheet-handle');
@@ -73,6 +75,14 @@ try{
       if(mobile){
         const original=await page.evaluateHandle(()=>({handle:document.querySelector('#explore-panel > .sheet-handle'),content:document.querySelector('#explore-panel > .sheet-content'),map:document.querySelector('#map-a'),canvas:document.querySelector('#map-a canvas')}));
         const mapBefore=await page.locator('#maps').boundingBox();
+        if(engine==='chrome'){
+        const sheetBeforeZoom=await page.locator('#explore-panel').evaluate(e=>({top:e.style.getPropertyValue('--sheet-top'),height:e.style.getPropertyValue('--sheet-height')}));
+        const zoomSession=await context.newCDPSession(page);
+        await zoomSession.send('Emulation.setPageScaleFactor',{pageScaleFactor:2});await page.waitForTimeout(150);
+        assert.deepEqual(await page.locator('#explore-panel').evaluate(e=>({top:e.style.getPropertyValue('--sheet-top'),height:e.style.getPropertyValue('--sheet-height')})),sheetBeforeZoom,'Pinch zoom must not reframe only the sheet');
+        await zoomSession.send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await page.waitForTimeout(150);await zoomSession.detach();
+
+        }
         // Complete bidirectional cycle with actual pointer drags.
         await dragHandle(-210);assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
         await check(`${key}-state-expanded`);
@@ -87,15 +97,25 @@ try{
         const topBefore=await page.locator('#explore-panel > .sheet-handle').boundingBox();
         await dragHandle(200,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Handle works with content scrolled to bottom');
         await snap('expanded');
+        if(engine==='chrome'){
         await scroll.evaluate(e=>e.scrollTop=Math.min(65,e.scrollHeight-e.clientHeight));
         await touchDrag(12,topBefore.y+100,18);
         assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded','Middle content scroll must not drag sheet');
         await scroll.evaluate(e=>e.scrollTop=0);
         await touchDrag(12,topBefore.y+180,210);
         assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Top edge pull hands off to sheet');
+        }else{
+          // WebKit's public automation API has no native touch-drag injection.
+          // Exercise the real pointer path; do not represent it as iPhone touch.
+          await dragHandle(200,{pause:150});
+        }
         await dragHandle(100,{cancel:true});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Cancel keeps committed snap');
         // Interrupt an in-flight settle with a reverse drag.
-        const h=page.locator('#explore-panel > .sheet-handle');await h.press('Home');await page.waitForTimeout(60);await dragHandle(300,{pause:150});
+        const h=page.locator('#explore-panel > .sheet-handle');await h.press('Home');
+        // Freeze a real in-flight animation at its midpoint so protocol latency
+        // cannot move a 32px grip away between measuring and pointerdown.
+        await page.locator('#explore-panel').evaluate(e=>e.getAnimations().forEach(a=>{a.pause();a.currentTime=80;}));
+        await page.waitForTimeout(20);await dragHandle(300,{pause:150});
         assert.notEqual(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
         await snap('half');
         assert.deepEqual(await page.locator('#maps').boundingBox(),mapBefore,'Map viewport does not resize on snap');
@@ -107,6 +127,17 @@ try{
         // Shared search drawer: normal typing, max scrolling and minimum handle.
         await page.locator('#mobile-search').click();
         await page.locator('#search-sheet [data-pane-place]').click();
+
+        const libraryFirstRow=await page.locator('#place-list').evaluateHandle(e=>e.firstElementChild);
+        const libraryGeometry=()=>page.locator('#place-library').evaluate(root=>{const h=root.querySelector('.drawer-top'),input=root.querySelector('input');return {headerHeight:h.getBoundingClientRect().height,inputOffset:Math.round(input.getBoundingClientRect().top-root.getBoundingClientRect().top)};});
+        const compactLibrary=await libraryGeometry();
+        await page.locator('#place-library>.sheet-handle').press('Home');await page.waitForTimeout(350);
+        assert.deepEqual(await libraryGeometry(),compactLibrary,'Library content geometry must not jump at a snap threshold');
+        assert.equal(await page.evaluate(old=>old===document.querySelector('#place-list').firstElementChild,libraryFirstRow),true,'Snapping must not replace recent states with another list');
+        await page.locator('#place-library>.sheet-handle').press('End');await page.waitForTimeout(350);
+        assert.equal(await page.locator('#place-library>.sheet-content').evaluate(e=>getComputedStyle(e).visibility),'visible','Minimum drawer keeps its title visible');
+        assert.ok(await page.locator('#place-search').evaluate(e=>parseFloat(getComputedStyle(e).fontSize))>=16,'Mobile search text is at least 16px');
+        await page.locator('#place-library>.sheet-handle').press('Home');await page.waitForTimeout(350);await libraryFirstRow.dispose();
         await page.locator('#place-search').fill('San Francisco');
         await page.locator('#place-library [data-place="06075"]').click();await settle();
         await check(`${key}-county`);
@@ -179,8 +210,9 @@ try{
       await context.close();
     }
   }
-  console.log(`PASS: ${results.length} Chrome states and sheet gesture/scroll/resize/reduced-motion assertions.`);
+  console.log(`PASS: ${results.length} ${engine} states and sheet gesture/scroll/resize/reduced-motion assertions.`);
 }finally{
   await browser.close();
   await writeFile(path.join(out,'browser-results.json'),JSON.stringify(results,null,2)+'\n');
+  await writeFile(path.join(out,'browser-capabilities.json'),JSON.stringify({engine,nativeTouchDrag:engine==='chrome',physicalIPhone:false,limitation:engine==='webkit'?'WebKit desktop runtime with mobile viewport; native iPhone/Safari toolbar/touch not certified.':'Chrome CDP touch input does not certify iPhone Safari.'},null,2)+'\n');
 }
