@@ -607,7 +607,7 @@ body:not([data-concept=compare]) .map-footer{display:none}
   .panel-collapsed .mobile-indicator-summary{box-sizing:border-box;}
   .panel-collapsed .mobile-summary-copy{flex:1 1 0;}
   .panel-collapsed .mobile-summary-value{max-width:38%;overflow:hidden;text-overflow:ellipsis;}
-  .panel-collapsed .concept-tabs{left:0;right:0;border-radius:0 0 24px 24px;}
+  .panel-collapsed .concept-tabs{left:0;right:0;}
   .panel-collapsed:not([data-concept=compare]):not(.embedded-map) .maps{
     top:0!important;right:0!important;bottom:0!important;left:0!important;height:auto!important;max-height:none!important;
   }
