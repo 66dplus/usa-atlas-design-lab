@@ -1,0 +1,186 @@
+// Real Chrome flow. Run against an isolated server, with feedback under /tmp.
+// PLAYWRIGHT_MODULE may point to the desktop's bundled Playwright installation.
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {mkdir,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+const require=createRequire(import.meta.url);
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const base=process.env.ATLAS_TEST_URL||'http://127.0.0.1:4198';
+const out=process.env.ATLAS_TEST_OUTPUT||'/tmp/usa-xray-ui-architecture-20261023';
+await mkdir(out,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const results=[];
+let page,context,errors;
+const settle=async()=>{
+  await page.waitForFunction(()=>document.body.dataset.atlasStatus==='ready',null,{timeout:45000});
+  await page.waitForFunction(()=>![...document.querySelectorAll('.map-host')].some(n=>['focusing','restoring'].includes(n.dataset.phase)),null,{timeout:15000});
+  await page.waitForTimeout(350);
+};
+async function check(name,screenshot=true){
+  const state=await page.evaluate(()=>{
+    const rect=s=>{const e=document.querySelector(s);return e&&!e.hidden?e.getBoundingClientRect().toJSON():null;};
+    return {theme:document.body.dataset.theme,page:document.body.dataset.page,view:document.body.dataset.view,
+      overflow:document.documentElement.scrollWidth>innerWidth,loadingHidden:document.querySelector('#loading').hidden,
+      nav:rect('.concept-tabs'),map:rect('#maps'),handle:rect('#explore-panel > .sheet-handle'),snap:document.querySelector('#explore-panel').dataset.snap,
+      viewport:{width:innerWidth,height:innerHeight},themeColor:document.querySelector('meta[name="theme-color"]').content,
+      coveredControls:[...document.querySelectorAll('.concept-tabs button,#mobile-view-toggle,#support-open,#info-open')].filter(e=>{
+        const r=e.getBoundingClientRect();if(!r.width||!r.height)return false;
+        const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !e.contains(hit);
+      }).map(e=>e.id||e.textContent.trim())};
+  });
+  assert.equal(state.overflow,false,`${name}: horizontal overflow`);
+  assert.equal(state.loadingHidden,true,`${name}: loading overlay`);
+  assert.deepEqual(errors,[],`${name}: page/console errors`);
+  assert.deepEqual(state.coveredControls,[],`${name}: covered primary controls`);
+  if(state.viewport.width<=760){assert.equal(state.nav.x,0,`${name}: nav left`);assert.equal(state.nav.width,state.viewport.width,`${name}: nav width`);assert.equal(state.nav.height,56,`${name}: nav height`);assert.equal(state.nav.bottom,state.viewport.height,`${name}: nav bottom`);}
+  const file=screenshot?path.join(out,`${name}.png`):null;
+  if(file)await page.screenshot({path:file});
+  results.push({name,...state,errors:[...errors],screenshot:file});
+}
+async function snap(name){
+  const handle=page.locator('#explore-panel > .sheet-handle');
+  await handle.focus();await handle.press(name==='min'?'End':'Home');
+  if(name==='half')await handle.press('ArrowDown');
+  await page.waitForTimeout(350);
+  assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),name);
+}
+async function dragHandle(delta,options={}){
+  const handle=page.locator('#explore-panel > .sheet-handle'),r=await handle.boundingBox();
+  await page.mouse.move(r.x+r.width/2,r.y+16);await page.mouse.down();
+  await page.mouse.move(r.x+r.width/2,r.y+16+delta,{steps:12});
+  if(options.pause)await page.waitForTimeout(options.pause);
+  if(options.cancel)await handle.dispatchEvent('pointercancel',{pointerId:1});
+  await page.mouse.up();await page.waitForTimeout(350);
+}
+async function touchDrag(x,y,delta,steps=15){
+  const cdp=await context.newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+  for(let i=1;i<=steps;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y+delta*i/steps}]});await page.waitForTimeout(16);}
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await page.waitForTimeout(400);await cdp.detach();
+}
+try{
+  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900}]){
+    for(const theme of ['light','dark']){
+      const mobile=viewport.width<=760,key=`after-${viewport.width}-${theme}`;
+      context=await browser.newContext({viewport,isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});
+      page=await context.newPage();errors=[];
+      page.on('pageerror',error=>errors.push(error.message));
+      page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+      await page.goto(`${base}/ux/?place=06&view=2d&theme=${theme}`,{waitUntil:'domcontentloaded'});await settle();
+      await check(`${key}-state-half`);
+      if(mobile){
+        const original=await page.evaluateHandle(()=>({handle:document.querySelector('#explore-panel > .sheet-handle'),content:document.querySelector('#explore-panel > .sheet-content'),map:document.querySelector('#map-a'),canvas:document.querySelector('#map-a canvas')}));
+        const mapBefore=await page.locator('#maps').boundingBox();
+        // Complete bidirectional cycle with actual pointer drags.
+        await dragHandle(-210);assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
+        await check(`${key}-state-expanded`);
+        await dragHandle(200,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half');
+        await dragHandle(350,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'min');
+        assert.equal(await page.locator('#explore-panel').evaluate(e=>e.inert),false,'Minimum handle must remain reachable');
+        await check(`${key}-state-minimum`);
+        await dragHandle(-250,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half');
+        await dragHandle(-210);assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
+        const scroll=page.locator('#explore-panel > .sheet-content');
+        await scroll.evaluate(e=>e.scrollTop=e.scrollHeight);
+        const topBefore=await page.locator('#explore-panel > .sheet-handle').boundingBox();
+        await dragHandle(200,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Handle works with content scrolled to bottom');
+        await snap('expanded');
+        await scroll.evaluate(e=>e.scrollTop=Math.min(65,e.scrollHeight-e.clientHeight));
+        await touchDrag(12,topBefore.y+100,18);
+        assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded','Middle content scroll must not drag sheet');
+        await scroll.evaluate(e=>e.scrollTop=0);
+        await touchDrag(12,topBefore.y+180,210);
+        assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Top edge pull hands off to sheet');
+        await dragHandle(100,{cancel:true});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Cancel keeps committed snap');
+        // Interrupt an in-flight settle with a reverse drag.
+        const h=page.locator('#explore-panel > .sheet-handle');await h.press('Home');await page.waitForTimeout(60);await dragHandle(300,{pause:150});
+        assert.notEqual(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
+        await snap('half');
+        assert.deepEqual(await page.locator('#maps').boundingBox(),mapBefore,'Map viewport does not resize on snap');
+        // Mode/data render must preserve the captured DOM and map host.
+        await page.locator('#mobile-view-toggle').click();await settle();
+        assert.equal(await page.evaluate(old=>old.handle===document.querySelector('#explore-panel > .sheet-handle')&&old.content===document.querySelector('#explore-panel > .sheet-content')&&old.map===document.querySelector('#map-a'),original),true);
+        await check(`${key}-state-3d`);
+        await page.locator('#mobile-view-toggle').click();await settle();
+        // Shared search drawer: normal typing, max scrolling and minimum handle.
+        await page.locator('#mobile-search').click();
+        await page.locator('#search-sheet [data-pane-place]').click();
+        await page.locator('#place-search').fill('San Francisco');
+        await page.locator('#place-library [data-place="06075"]').click();await settle();
+        await check(`${key}-county`);
+        await snap('expanded');await scroll.evaluate(e=>e.scrollTop=e.scrollHeight);await page.waitForTimeout(60);
+        await check(`${key}-county-scrolled`);
+        // Resizing simulates toolbar/orientation viewport changes, separately from
+        // real-device Safari checks which this test cannot claim.
+        await page.setViewportSize({width:viewport.width,height:viewport.height-100});await page.waitForTimeout(400);
+        assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');await check(`${key}-resized`,false);
+        await page.setViewportSize(viewport);await page.waitForTimeout(400);
+        await page.emulateMedia({reducedMotion:'reduce'});await snap('min');await snap('expanded');
+        assert.equal(await page.locator('#explore-panel').evaluate(e=>e.getAnimations().length),0,'Reduced motion settles without animation');
+        await page.emulateMedia({reducedMotion:'no-preference'});
+        await snap('half');await original.dispose();
+      }else{
+        await page.locator('.dimension-control [data-mode="3d"]').click();await settle();await check(`${key}-state-3d`);
+        await page.locator('.dimension-control [data-mode="2d"]').click();await settle();
+      }
+      // Every applicable drawer shares its grip, snaps and fixed navigation.
+      if(mobile){
+        await snap('expanded');
+        await page.locator('#explore-panel > .sheet-content').evaluate(e=>e.scrollTop=0);
+        await page.locator('[data-open-rank="highest"]').click();
+        const rankHandle=page.locator('#ranking-panel > .sheet-handle');
+        await rankHandle.press('Home');await page.waitForTimeout(350);
+        const rankIdentity=await rankHandle.elementHandle();
+        await page.locator('#ranking-panel [data-rank="lowest"]').click();
+        assert.equal(await page.evaluate(old=>old===document.querySelector('#ranking-panel > .sheet-handle'),rankIdentity),true,'Ranking refresh preserves handle');
+        await rankHandle.press('End');await page.waitForTimeout(350);
+        assert.equal(await page.locator('#ranking-panel').getAttribute('data-snap'),'min');
+        await rankHandle.press('Home');await page.waitForTimeout(350);
+        await page.locator('#ranking-panel [data-close]').first().click();
+        await snap('expanded');
+        await page.locator('#compare-place').click();await page.waitForTimeout(350);
+        assert.equal(await page.locator('#comparison-setup-panel').getAttribute('data-snap'),'expanded');
+        assert.equal(await page.locator('.concept-tabs').evaluate(e=>e.inert),false,'Draft keeps navigation available');
+        await page.locator('.concept-tabs [data-page="map"]').click();await settle();
+        // Simulated orientation and insets exercise document geometry only.
+        await page.setViewportSize({width:844,height:390});await page.waitForTimeout(400);
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+        await page.setViewportSize(viewport);await page.waitForTimeout(400);
+        await page.evaluate(()=>{document.documentElement.style.setProperty('--safe-bottom','34px');document.documentElement.style.setProperty('--safe-top','59px');window.dispatchEvent(new Event('resize'));});
+        await page.waitForTimeout(400);
+        const safe=await page.evaluate(()=>({nav:document.querySelector('.concept-tabs').getBoundingClientRect().toJSON(),handle:document.querySelector('#explore-panel > .sheet-handle').getBoundingClientRect().toJSON(),control:document.querySelector('#info-open').getBoundingClientRect().toJSON()}));
+        assert.equal(safe.nav.height,90);assert.equal(safe.nav.bottom,viewport.height);assert.ok(safe.control.top>=59);
+        await page.evaluate(()=>{document.documentElement.style.removeProperty('--safe-bottom');document.documentElement.style.removeProperty('--safe-top');window.dispatchEvent(new Event('resize'));});await page.waitForTimeout(400);
+        results.push({name:`${key}-drawer-orientation-safe-area`,pass:true,safe,errors:[...errors]});
+      }else{
+        await page.locator('#explore-panel .place-chooser').click();
+        await page.locator('#place-search').fill('San Francisco');
+        await page.locator('#place-library [data-place="06075"]').click();await settle();
+        await check(`${key}-county`,false);
+      }
+      for(const destination of ['compare','stats','blog']){
+        await page.locator(`.concept-tabs [data-page="${destination}"]`).click();await settle();await check(`${key}-${destination}`);
+        if(destination==='compare'){
+          if(mobile)await page.locator('#mobile-view-toggle').click();else await page.locator('.dimension-control [data-mode="3d"]').click();
+          await settle();await check(`${key}-compare-3d`,false);
+          if(mobile)await page.locator('#mobile-view-toggle').click();else await page.locator('.dimension-control [data-mode="2d"]').click();
+          await settle();
+        }
+      }
+      await page.locator('#support-open').click();await settle();await check(`${key}-support`);
+      await page.locator('.concept-tabs [data-page="map"]').click();await settle();await check(`${key}-map-return`);
+      await page.locator('#info-open').click();await settle();
+      const beforeColor=await page.locator('meta[name="theme-color"]').getAttribute('content');
+      await page.locator('#theme-toggle').click();await page.waitForTimeout(400);
+      assert.notEqual(await page.locator('meta[name="theme-color"]').getAttribute('content'),beforeColor,'Browser chrome color follows the theme');
+      await page.locator('#theme-toggle').click();await page.waitForTimeout(400);
+      await context.close();
+    }
+  }
+  console.log(`PASS: ${results.length} Chrome states and sheet gesture/scroll/resize/reduced-motion assertions.`);
+}finally{
+  await browser.close();
+  await writeFile(path.join(out,'browser-results.json'),JSON.stringify(results,null,2)+'\n');
+}

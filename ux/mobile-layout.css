@@ -1,0 +1,75 @@
+/* Structural ownership: mobile sheets and navigation are defined only here.
+   Existing master.css continues to own the approved typography and content. */
+.sheet-content {display: contents;}
+.mobile-sheet > .sheet-handle {display: none;}
+@media(max-width:760px) {
+  html,body {height:var(--app-height,100dvh);min-height:0;overflow:hidden;background:var(--bg);}
+  #workspace {height:var(--app-height,100dvh)!important;}
+  body:not([data-concept=compare]):not(.embedded-map) .maps {inset:0!important;height:100%!important;max-height:none!important;}
+  body .concept-tabs {
+    position:fixed;inset:auto 0 0!important;transform:none;width:auto;height:calc(var(--nav-height) + var(--safe-bottom));
+    box-sizing:border-box;padding:5px max(5px,var(--safe-right)) calc(5px + var(--safe-bottom)) max(5px,var(--safe-left));
+    border:var(--border-width) solid var(--line);border-bottom:0;border-radius:0;z-index:var(--z-navigation);background:var(--panel);
+  }
+  .concept-tabs button {min-height:var(--control-compact);}
+  .concept-tabs .nav-pill {bottom:calc(5px + var(--safe-bottom));}
+  body .mobile-sheet {
+    position:fixed!important;inset:var(--sheet-top) 0 auto!important;width:auto!important;
+    height:var(--sheet-height)!important;min-height:0!important;max-height:none!important;
+    margin:0;padding:0!important;display:flex;flex-direction:column;gap:0;
+    border:var(--border-width) solid var(--line);border-bottom:0;border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
+    background:var(--surface-panel);box-shadow:var(--shadow-sheet);overflow:hidden!important;
+    transform:translateY(var(--sheet-offset));clip-path:inset(0 0 var(--sheet-cut) 0);
+    transition:none!important;z-index:var(--z-sheet);touch-action:pan-x pan-y;
+  }
+  body .mobile-sheet[hidden] {display:none!important;}
+  body .mobile-sheet > .sheet-handle {
+    display:block!important;position:relative;flex:0 0 32px;inset:auto;width:100%;height:32px;min-height:32px;
+    padding:0;border:0;border-radius:0;background:transparent;z-index:2;touch-action:none;cursor:grab;
+  }
+  .mobile-sheet > .sheet-handle:before {content:none!important;}
+  .mobile-sheet > .sheet-handle > span {position:absolute;top:9px;left:calc(50% - 20px);width:40px;height:4px;border-radius:4px;background:var(--muted);}
+  .mobile-sheet > .sheet-handle:active {cursor:grabbing;}
+  .mobile-sheet > .sheet-handle:focus-visible {outline:2px solid var(--accent);outline-offset:-4px;}
+  body .mobile-sheet > .sheet-content {
+    display:flex;flex:1 1 auto;min-height:0;flex-direction:column;overflow:auto;
+    overscroll-behavior-y:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:0 var(--space-5) var(--space-6);
+  }
+  .sheet-content::-webkit-scrollbar {display:none;}
+  .mobile-sheet > .expand-sheet {display:none;}
+  body .explore-panel > .sheet-content {padding:0;}
+  .explore-panel .sheet-content > .mobile-metric-overview {order:1;flex:0 0 auto;padding:0 20px!important;overflow:visible;}
+  .explore-panel .sheet-content > .profile-heading {order:2;flex:0 0 auto;padding:24px 20px 12px!important;}
+  .explore-panel .sheet-content > .profile-content:not(.mobile-metric-overview) {order:3;flex:0 0 auto;padding:8px 20px 24px!important;overflow:visible;}
+  .explore-panel .sheet-content > .indicator-legend {order:4;flex:0 0 auto;padding:14px 20px 20px!important;}
+  .explore-panel .sheet-content > .place-photo,.explore-panel .expanded-stats,.explore-panel .inline-ad {display:none!important;}
+  body .explore-panel .profile-value {min-height:88px;margin-top:12px;}
+  body .explore-panel .profile-value strong {font-size:var(--type-value);line-height:60px;letter-spacing:-.055em;transition:none;}
+  body .explore-panel .ranking-shortcuts,body .explore-panel .profile-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 0;}
+  body .explore-panel .ranking-shortcuts button,body .explore-panel .profile-actions button {width:100%;height:var(--control-height);min-height:var(--control-height);padding:0 8px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);border-radius:var(--radius-control);font-size:13px;line-height:18px;white-space:nowrap;}
+  .explore-panel .ranking-shortcuts svg,.explore-panel .profile-actions svg {width:17px;height:17px;flex:0 0 17px;}
+  body .explore-panel .explore-next {display:block;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);}
+  .explore-panel .explore-next h3 {font-size:15px;line-height:20px;margin:0 0 4px;}
+  .explore-panel .explore-next>button {min-height:48px;padding:8px 0;gap:10px;}
+  .explore-panel .explore-next b {font-size:13px;line-height:18px;}
+  .explore-panel .explore-next small {font-size:12px;line-height:17px;}
+  body .explore-panel .mobile-indicator-summary {display:none!important;}
+  body .explore-panel > .mobile-indicator-summary {
+    display:flex!important;position:absolute;top:32px;left:0;width:100%;height:68px;min-height:0;
+    padding:0 16px 8px;align-items:center;gap:11px;background:var(--panel);border:0;border-radius:0;
+    opacity:var(--summary-opacity);pointer-events:none;z-index:1;
+  }
+  .explore-panel[data-snap=min] > .mobile-indicator-summary {pointer-events:auto;}
+  .explore-panel[data-dragging=true] > .mobile-indicator-summary {pointer-events:none;}
+  .mobile-summary-grip {display:none;}
+  .mobile-sheet[data-snap=min][data-dragging=false]:not([data-settling=true]) > .sheet-content {visibility:hidden;}
+  .mobile-sheet[data-snap=min][data-dragging=true] > .sheet-content {visibility:visible;}
+  .mobile-sheet[data-dragging=true] {user-select:none;}
+  .reading-page {bottom:calc(var(--nav-height) + var(--safe-bottom))!important;padding-bottom:var(--space-6);}
+  body .app-header {top:max(56px,calc(var(--safe-top) + 8px));left:max(16px,var(--safe-left));right:max(16px,var(--safe-right));}
+  body .support-trigger,body .app-header #info-open,body .workspace-bar {top:max(56px,calc(var(--safe-top) + 8px));}
+  body[data-concept=compare]:not(.reading) .mobile-compare-metric {max-width:calc(100vw - 252px);top:max(56px,calc(var(--safe-top) + 8px));}
+  body[data-concept=compare] .maps {top:max(110px,calc(var(--safe-top) + 62px));}
+  .mobile-sheet .comparison-confirm {position:static;flex:0 0 auto;margin:24px 0 0;width:100%;min-height:56px;}
+  body .source-popup {max-height:calc(var(--app-height,100dvh) - var(--nav-height) - var(--safe-bottom) - 32px);}
+}
