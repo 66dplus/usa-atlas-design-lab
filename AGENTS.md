@@ -21,6 +21,10 @@ Read `docs/mobile-ui-architecture.md` before changing mobile layout or gestures.
   one-use markup or add a framework for this refactor.
 - Map hosts persist independently of the sheet. Do not resize/remount maps on
   snap changes. `ux/viewport.js` owns the visible viewport and theme metadata.
+- 2D geography uses WebGL only. Do not restore the removed SVG renderer or
+  fallback. Keep geographic paths out of the SVG gesture/text overlay. Report
+  WebGL failure explicitly with retry, including after a mode change. Cache city
+  membership by state feature; do not run detailed polygon tests on camera frames.
 - Desktop anchored drawers, embedded maps and comparison pane geometry are
   intentional variants. Changes must preserve their behavior.
 - Run `node scripts/check.mjs`, relevant `ux/check-*.mjs`, and the browser flow in

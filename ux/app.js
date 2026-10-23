@@ -29,13 +29,12 @@ const icon=name=>brandNames[name]?brandIcon(brandNames[name]):utilityNames[name]
 document.querySelectorAll('[data-brand-icon]').forEach(node=>{node.outerHTML=brandIcon(node.dataset.brandIcon);});
 document.querySelectorAll('[data-ui-icon]').forEach(node=>{node.outerHTML=icon(node.dataset.uiIcon);});
 const params=new URLSearchParams(location.search);
-const renderer2dFrom=query=>query.get('renderer')==='svg'?'svg':'webgl';
 const embedded=params.get('embed')==='1';
 document.body.classList.toggle('embedded-map',embedded);
 window.addEventListener('message',event=>{if(embedded&&event.origin===location.origin&&event.source===parent&&event.data?.type==='atlas-embed-theme'&&['light','dark'].includes(event.data.theme)){document.body.dataset.theme=event.data.theme;if(dataStore)updateMaps();}});
 const concepts=['explorer','stories','compare'];
 const initialConcept=params.get('page')==='map'?'explorer':params.get('page')==='compare'?'compare':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
-const state={renderer2d:renderer2dFrom(params),concept:initialConcept,mode:params.get('view')||'2d',selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
+const state={concept:initialConcept,mode:params.get('view')||'2d',selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
 if(!['2d','3d'].includes(state.mode))state.mode='2d';
 document.body.dataset.view=state.mode;
 document.querySelectorAll('.dimension-control>[data-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===state.mode)));
@@ -70,7 +69,7 @@ function persist() {
   const q=new URLSearchParams({concept:state.concept,view:state.mode,metric:state.metric,metric2:state.secondMetric,comparison:state.comparison});
   if(secondExplicit||comparisonPrepared||state.concept==='compare')q.set('other',state.second||'US');
   for(const key of ['page','preview','expanded','embed','theme','article']){const v=new URLSearchParams(location.search).get(key);if(v)q.set(key,v);}
-  q.set('renderer',state.renderer2d);
+  q.delete('renderer');
   q.set('page',document.body.dataset.page);
   if(state.selected)q.set('place',state.selected);if(state.rank)q.set('rank',state.rank);
   history.replaceState(null,'',`${location.pathname}?${q}`);
@@ -344,7 +343,7 @@ async function restoreSaved(id){
   const item=(savedItems()||[]).find(x=>x.id===id);if(!item)return;const q=new URLSearchParams(item.url);
   secondExplicit=q.has('other');comparisonPrepared=secondExplicit;comparisonDefaultFor=null;
   if(q.get('concept')==='compare')rememberExploration();else explorationPose=null;
-  state.renderer2d=renderer2dFrom(q);state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=availableIndicatorId(q.get('metric'),'unemployment');state.secondMetric=availableIndicatorId(q.get('metric2'),catalog.find(m=>m.id!==state.metric)?.id);state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
+  state.concept=concepts.includes(q.get('concept'))?q.get('concept'):'explorer';state.mode=q.get('view')==='2d'?'2d':'3d';state.selected=geo.byId.has(q.get('place'))?q.get('place'):null;state.second=geo.byId.has(q.get('other'))?q.get('other'):null;state.metric=availableIndicatorId(q.get('metric'),'unemployment');state.secondMetric=availableIndicatorId(q.get('metric2'),catalog.find(m=>m.id!==state.metric)?.id);state.comparison=q.get('comparison')==='metrics'?'metrics':'places';state.rank=q.get('rank')||null;
   closeDrawers(false);try{if(state.concept==='compare')prepareComparison();await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);rememberState(state.selected);render();analytics.action('view_restore');if(state.rank)openRank(state.rank);}catch(error){toast(error.message);}
 }
 async function openPrompt(index){
@@ -361,13 +360,13 @@ function renderCompare(){
 }
 function updateMaps(){
   const dark=document.body.dataset.theme==='dark';
-  const handleError=message=>{toast(message);state.mode='2d';render();};
+  const handleError=message=>{toast(message);if(state.mode==='3d'){state.mode='2d';render();}};
   const entry={animateEntry:mapSplitEntry};
   if(!mapA)mapA=new ExplorerMap($('#map-a'),geo,{onSelect:id=>choosePlace(id),onError:handleError,onHover:info=>hover('a',info)});
-  const updateA=()=>mapA.update({...entry,renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:isSurfaceOpen($('#ranking-panel'))&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),heightValues:heights(metric()),countySupported:metric().countySupported,palette:paletteFor(layer(metric())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:isSurfaceOpen($('#ranking-panel'))&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
+  const updateA=()=>mapA.update({...entry,layoutKey:state.concept,mode:state.mode,selectedId:isSurfaceOpen($('#ranking-panel'))&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),heightValues:heights(metric()),countySupported:metric().countySupported,palette:paletteFor(layer(metric())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:isSurfaceOpen($('#ranking-panel'))&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
   if(state.concept==='compare'){
     if(!mapB)mapB=new ExplorerMap($('#map-b'),geo,{onSelect:id=>choosePlace(id,'b'),onError:handleError,onHover:info=>hover('b',info)});
-    const updateB=()=>mapB.update({...entry,renderer2d:state.renderer2d,layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),heightValues:heights(metricB()),countySupported:metricB().countySupported,palette:paletteFor(layer(metricB())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:[]});
+    const updateB=()=>mapB.update({...entry,layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),heightValues:heights(metricB()),countySupported:metricB().countySupported,palette:paletteFor(layer(metricB())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:[]});
     // Initialize the new pane before starting the existing pane's camera tween.
     if(mapSplitEntry){updateB();updateA();}else{updateA();updateB();}
   }else updateA();

@@ -89,7 +89,7 @@ try{
       await page.goto(`${base}/ux/?place=06&view=2d&theme=${theme}`,{waitUntil:'domcontentloaded'});await settle();
       await check(`${key}-state-half`);
       if(mobile){
-        const tops=await page.locator('#mobile-search,#support-open,#mobile-view-toggle,#info-open').evaluateAll(nodes=>nodes.map(e=>e.getBoundingClientRect().top));
+        const tops=await page.locator('#mobile-search,#support-open,.dimension-control,#info-open').evaluateAll(nodes=>nodes.map(e=>e.getBoundingClientRect().top));
         assert.ok(tops.every(top=>Math.abs(top-8)<1),'All four top controls sit 8px from the available viewport edge');
       }
       if(mobile){

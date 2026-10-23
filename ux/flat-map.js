@@ -65,11 +65,11 @@ export class FlatMapRenderer {
     try{
     this.scene=new THREE.Scene();this.camera=new THREE.OrthographicCamera(-6,6,3.75,-3.75,.01,100);this.camera.position.z=10;
     this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
-    this.renderer.debug.onShaderError=()=>{this.suspended=true;this.renderer.domElement.hidden=true;queueMicrotask(()=>{this.dispose();this.onFailure('WebGL could not draw the map; using SVG.');});};
+    this.renderer.debug.onShaderError=()=>{this.suspended=true;this.renderer.domElement.hidden=true;queueMicrotask(()=>{this.dispose();this.onFailure('WebGL could not draw the map. Try loading it again.');});};
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     const canvas=this.renderer.domElement;canvas.className='geo-canvas geo-flat-canvas';canvas.setAttribute('aria-label','Interactive 2D WebGL map');
     canvas.style.pointerEvents='none';host.prepend(canvas);
-    this.lost=event=>{event.preventDefault();this.suspended=true;cancelAnimationFrame(this.frame);this.frame=0;canvas.hidden=true;this.onFailure('WebGL interrupted; the SVG map is available.');};
+    this.lost=event=>{event.preventDefault();this.suspended=true;cancelAnimationFrame(this.frame);this.frame=0;canvas.hidden=true;this.onFailure('WebGL was interrupted. Try loading the map again.');};
     this.restored=()=>{this.suspended=false;this.onRestore();this.requestRender();};
     canvas.addEventListener('webglcontextlost',this.lost);canvas.addEventListener('webglcontextrestored',this.restored);
     this.worldGeometry=new THREE.ShapeGeometry(projectedShapes(geo.world,geo.projection,d3.geoStream),1);
@@ -159,7 +159,7 @@ export class FlatMapRenderer {
   renderNow(){
     if(this.disposed||this.suspended||!this.visible)return;
     try{this.renderer.render(this.scene,this.camera);this.stats.frames++;}
-    catch(error){this.suspended=true;this.dispose();queueMicrotask(()=>this.onFailure('WebGL draw failed; using SVG. '+error.message));}
+    catch(error){this.suspended=true;this.dispose();queueMicrotask(()=>this.onFailure('WebGL could not draw the map. Try loading it again.'));}
   }
   dispose(){
     if(this.disposed)return;

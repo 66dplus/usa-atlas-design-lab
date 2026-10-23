@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import * as d3 from 'd3';
+import {ExplorerMap} from './map.js';
+let checks=0;
+globalThis.d3={...d3,geoContains(feature,point){checks++;return point[0]>feature.minimum;}};
+const state={id:'06',feature:{minimum:0}},county={id:'06075',stateId:'06',name:'County',point:[600,375]};
+const cities=[{name:'Inside',lon:1,lat:0,point:[600,375]},{name:'Outside',lon:-1,lat:0,point:[100,100]}];
+const layer={selectAll(){return this;},data(){return this;},join(){return this;},attr(){return this;},text(){return this;}};
+const surface={__zoom:d3.zoomIdentity},map=Object.create(ExplorerMap.prototype);
+Object.assign(map,{state:{mode:'2d',selectedId:'06'},viewportSize:[390,844],svg:{node:()=>surface},geo:{cities,byId:new Map([['06',state],['06075',county]])},labelLayer:layer});
+map.renderLabels();assert.equal(checks,2);
+surface.__zoom=d3.zoomIdentity.translate(10,20).scale(4);
+for(let i=0;i<20;i++)map.renderLabels();assert.equal(checks,2,'Pan/zoom frames reuse geographic city membership');
+map.state.selectedId='06075';map.renderLabels();assert.equal(checks,2,'County selection reuses its parent membership');
+state.feature={minimum:2};map.renderLabels();assert.equal(checks,4,'New detailed geometry invalidates membership');
+assert.equal(map.cityMembership.get(state.feature).size,0,'Recomputed membership reflects the replacement boundary');
+console.log('PASS: city membership is cached across camera frames and county selection, and invalidated by replacement detail geometry.');

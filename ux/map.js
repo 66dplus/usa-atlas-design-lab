@@ -31,13 +31,12 @@ export async function loadGeography() {
       const areas=parts.map(d3.geoArea),largest=areas.indexOf(Math.max(...areas)),b=path.bounds(parts[largest]);
       if(areas[largest]/d3.sum(areas)>.65&&Math.max(bounds[1][0]-bounds[0][0],bounds[1][1]-bounds[0][1])>1.6*Math.max(b[1][0]-b[0][0],b[1][1]-b[0][1])){focusBounds=b;point=path.centroid(parts[largest]);}
     }
-    return {id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f,path:path(f),center:d3.geoCentroid(f),bounds,focusBounds,point};
+    return {id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f,center:d3.geoCentroid(f),bounds,focusBounds,point};
   };
   const s=states.map(decorate);
-  // County paths are the only county geometry needed for the national 2D frame.
-  // Bounds, centroids and high-detail projected shapes are prepared for one state
-  // when its counties are opened, instead of calculating them for all 3,142 now.
-  const c=counties.map(f=>({id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f,path:path(f)}));
+  // National WebGL geometry uses source features directly; detailed bounds and
+  // centroids are prepared only when a state is opened.
+  const c=counties.map(f=>({id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f}));
   const context=topojson.feature(world,world.objects.countries);
   // Only other countries form the backdrop; a coarse US coast would protrude into detailed bays.
   context.features=context.features.filter(f=>f.id!=='840');
@@ -53,17 +52,7 @@ export async function loadGeography() {
       const expected=c.filter(f=>f.stateId===parent);
       if(data.features.length!==expected.length||data.features.some(f=>!geo.byId.has(f.id)||f.id.slice(0,2)!==parent))throw new Error('Incomplete geographic detail');
       for(const f of data.features)Object.assign(geo.byId.get(f.id),decorate(f));
-      // Shared county edges cancel out, leaving a coastline/state perimeter at the same precision.
-      const edges=new Map();
-      for(const f of data.features){
-        const polygons=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
-        for(const polygon of polygons)for(const ring of polygon)for(let i=1;i<ring.length;i++){
-          const a=ring[i-1],b=ring[i],ka=a.join(','),kb=b.join(','),key=ka<kb?ka+'|'+kb:kb+'|'+ka;
-          const edge=edges.get(key);if(edge)edge.count++;else edges.set(key,{count:1,points:[a,b]});
-        }
-      }
       const state=geo.byId.get(parent),feature={type:'FeatureCollection',features:data.features};
-      state.path=path({type:'MultiLineString',coordinates:[...edges.values()].filter(e=>e.count===1).map(e=>e.points)});
       state.feature=feature;state.bounds=path.bounds(feature);state.focusBounds=[[d3.min(expected,f=>f.focusBounds[0][0]),d3.min(expected,f=>f.focusBounds[0][1])],[d3.max(expected,f=>f.focusBounds[1][0]),d3.max(expected,f=>f.focusBounds[1][1])]];state.point=path.centroid(feature);
       geo.detailStates.add(parent);
     })().finally(()=>pending.delete(parent));
@@ -77,18 +66,10 @@ export class ExplorerMap {
     Object.assign(this,{host,geo,onSelect,onError,onHover});
     this.state={mode:'2d',selectedId:null,values:new Map(),dark:false};
     this.svg=d3.select(host).append('svg').attr('viewBox',`0 0 ${WIDTH} ${HEIGHT}`).attr('class','geo-svg').attr('aria-label','United States interactive map');
-    this.layer=this.svg.append('g');
-    this.worldLayer=this.layer.append('path').attr('d',geo.path(geo.world)).attr('fill','#252c35').attr('stroke','#3d454f').attr('stroke-width',.5).attr('vector-effect','non-scaling-stroke').attr('pointer-events','none');
-    this.countyLayer=this.layer.append('g');
-    this.stateLayer=this.layer.append('g');
     this.labelLayer=this.svg.append('g').attr('pointer-events','none');
-    this.countyPaths=this.countyLayer.selectAll('path').data(geo.counties).join('path').attr('d',d=>d.path).attr('data-geo',d=>d.id).attr('vector-effect','non-scaling-stroke');
-    this.statePaths=this.stateLayer.selectAll('path').data(geo.states).join('path').attr('d',d=>d.path).attr('fill','none').attr('pointer-events','none').attr('vector-effect','non-scaling-stroke');
-    this.countyPaths.on('click',(event,d)=>{event.stopPropagation();this.pick(d.id);}).on('pointerenter',(e,d)=>this.hover(d.id)).on('pointerleave',()=>this.onHover(null));
-    this.zoomBehavior=d3.zoom().scaleExtent([.15,80]).translateExtent(geo.path.bounds({type:'Sphere'})).clickDistance(6).on('zoom',event=>{if(this.flatActive)this.flat.setTransform(event.transform);else this.layer.attr('transform',event.transform);this.renderLabels();this.renderRankMarkers();});
+    this.zoomBehavior=d3.zoom().scaleExtent([.15,80]).translateExtent(geo.path.bounds({type:'Sphere'})).clickDistance(6).on('zoom',event=>{if(this.flatActive)this.flat.setTransform(event.transform);this.renderLabels();this.renderRankMarkers();});
     this.svg.call(this.zoomBehavior).on('dblclick.zoom',null);
     this.svg.on('click.flat',event=>{if(!this.flatActive)return;const id=this.flat.hit(event);if(id)this.pick(id);else this.exitFocus();});
-    this.svg.on('click.background',event=>{if(!this.flatActive&&event.target===this.svg.node())this.exitFocus();});
     this.svg.on('pointermove.flat',event=>{
       if(!this.flatActive||event.buttons)return;
       this.hoverEvent={clientX:event.clientX,clientY:event.clientY};if(this.hoverFrame)return;
@@ -123,9 +104,9 @@ export class ExplorerMap {
     if((this.state.mode==='3d'&&this.renderer)||this.flatActive){
       const canvas=document.createElement('canvas');canvas.width=this.host.clientWidth;canvas.height=this.host.clientHeight;
       this.flat?.renderNow();canvas.getContext('2d').drawImage(this.flatActive?this.flat.renderer.domElement:this.renderer.domElement,0,0,canvas.width,canvas.height);
-      if(this.flatActive){cover=document.createElement('div');canvas.className='geo-canvas';cover.append(canvas);const labels=this.svg.node().cloneNode(true);labels.style.display='block';labels.style.background='transparent';labels.querySelector('g')?.remove();cover.append(labels);}else cover=canvas;
+      if(this.flatActive){cover=document.createElement('div');canvas.className='geo-canvas';cover.append(canvas);const labels=this.svg.node().cloneNode(true);labels.style.display='block';labels.style.background='transparent';cover.append(labels);}else cover=canvas;
     }
-    else {cover=this.svg.node().cloneNode(true);cover.style.display='block';cover.style.background=this.state.background||'#EEF0F3';}
+    else return null;
     cover.classList.add('map-transition-cover');cover.setAttribute('aria-hidden','true');this.host.append(cover);return cover;
   }
   mapBackdrop(){
@@ -147,18 +128,12 @@ export class ExplorerMap {
     this.state={...previous,...next};
     this.tint=value=>color(value,this.state.palette||this.state.scale);
     const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
-    this.setFlatMode(mode==='2d'&&this.state.renderer2d==='webgl');
-    const isolated=this.state.cleanBackdrop;
-    const shown=id=>!isolated||(parent?id===parent:!['02','15'].includes(id));
+    this.setFlatMode(mode==='2d');
     this.host.dataset.mode=mode;this.host.dataset.selected=selectedId||'US';this.host.dataset.metric=this.state.metricKey||'';
     this.host.dataset.renderMode=mode;
     this.host.classList.toggle('map-dark',dark);this.svg.style('display',mode==='2d'?null:'none').style('background',this.flatActive?'transparent':this.mapBackdrop());
-    this.worldLayer.attr('fill',dark?'#25292D':this.state.cleanBackdrop?'#FFFFFF':'#EEF0F3').attr('visibility',isolated?'hidden':null);
     if(this.renderer)this.renderer.domElement.hidden=mode==='2d';
     if(this.focusUI)this.focusUI.hidden=true;
-    this.countyPaths.attr('d',f=>f.path).attr('fill',f=>this.tint(this.mappedValue(f))).attr('stroke','#382737').attr('stroke-width',.35)
-      .attr('visibility',f=>shown(f.stateId)?null:'hidden').attr('opacity',f=>parent&&f.stateId!==parent ? .3 : 1).classed('selected-county',f=>selectedId===f.id);
-    this.statePaths.attr('d',f=>f.path).attr('visibility',f=>!shown(f.id)?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
     if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
     this.renderLabels();
     if(mode==='2d'){
@@ -224,29 +199,52 @@ export class ExplorerMap {
   }
   setFlatMode(requested){
     if(requested&&!this.flat&&!this.flatFailed)try{
-      this.flat=new FlatMapRenderer(this.host,this.geo,{onFailure:message=>{this.flatActive=false;this.syncFlatLayers();this.onError(message);},onRestore:()=>{try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));this.flatActive=this.state.mode==='2d'&&this.state.renderer2d==='webgl';this.syncFlatLayers();this.flat.setVisible(this.flatActive);}catch(error){this.failFlat(error);}}});
-    }catch(error){this.flatFailed=true;queueMicrotask(()=>this.onError('WebGL unavailable; using SVG. '+error.message));}
-    this.flatActive=Boolean(requested&&this.flat&&!this.flat.suspended);this.flat?.setVisible(this.flatActive);this.syncFlatLayers();
+      this.flat=new FlatMapRenderer(this.host,this.geo,{
+        onFailure:message=>{this.flatActive=false;this.syncFlatLayers();this.showFlatError(message);},
+        onRestore:()=>{try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));this.flatActive=this.state.mode==='2d';this.syncFlatLayers();this.flat.setVisible(this.flatActive);this.clearFlatError();}catch(error){this.failFlat(error);}}
+      });
+    }catch(error){this.flatFailed=true;queueMicrotask(()=>this.showFlatError('WebGL is unavailable. Try loading the map again.'));}
+    this.flatActive=Boolean(requested&&this.flat&&!this.flat.suspended&&!this.flat.disposed);
+    this.flat?.setVisible(this.flatActive);this.syncFlatLayers();
+    if(!requested||this.flatActive)this.clearFlatError();
+    else this.showFlatError(this.flatErrorMessage||'WebGL is unavailable. Try loading the map again.');
   }
-  failFlat(error){this.flat?.dispose();this.flat=null;this.flatFailed=true;this.flatActive=false;this.syncFlatLayers();queueMicrotask(()=>this.onError('WebGL could not draw the map; using SVG. '+error.message));}
+  failFlat(error){
+    this.flat?.dispose();this.flat=null;this.flatFailed=true;this.flatActive=false;this.syncFlatLayers();
+    queueMicrotask(()=>this.showFlatError('WebGL could not draw the map. Try loading it again.'));
+  }
+  showFlatError(message){
+    this.flatErrorMessage=message;
+    if(this.state.mode!=='2d'||this.isDisposed)return;
+    if(!this.flatError){
+      this.flatError=document.createElement('section');this.flatError.id=`${this.host.id}-error`;this.flatError.className='map-render-error';this.flatError.setAttribute('role','alert');
+      this.flatError.innerHTML='<h2>The 2D map is unavailable</h2><p></p><button type="button" class="primary-button">Try again</button>';
+      this.flatError.querySelector('button').addEventListener('click',()=>{this.flat?.dispose();this.flat=null;this.flatFailed=false;this.update(this.state);});
+      this.host.parentElement.append(this.flatError);
+    }
+    this.flatError.querySelector('p').textContent=message;
+  }
+  clearFlatError(){this.flatError?.remove();this.flatError=null;}
   syncFlatLayers(){
-    this.layer.style('display',this.flatActive?'none':null);
-    if(!this.flatActive)this.layer.attr('transform',d3.zoomTransform(this.svg.node()));
-    this.svg.style('background',this.flatActive?'transparent':this.mapBackdrop());
-    this.host.dataset.renderer=this.state.mode==='3d'?'webgl3d':this.flatActive?'webgl':'svg';
+    this.svg.style('background','transparent');
+    this.host.dataset.renderer=this.state.mode==='3d'?'webgl3d':this.flatActive?'webgl':'unavailable';
   }
   fitScale(){const b=this.bounds();return Math.max(.8,Math.min(400,.82/Math.max((b[1][0]-b[0][0])/WIDTH,(b[1][1]-b[0][1])/HEIGHT)));}
   focusFeature(id=this.state.selectedId){const feature=id?this.geo.byId.get(id):null;return feature?.id.length===5?this.geo.byId.get(feature.stateId):feature;}
   bounds() {if(this.state.ranks?.length){const bounds=[[[45,20],[1155,720]],...this.state.ranks.map(row=>this.geo.byId.get(row.id).focusBounds)];return [[Math.min(...bounds.map(b=>b[0][0])),Math.min(...bounds.map(b=>b[0][1]))],[Math.max(...bounds.map(b=>b[1][0])),Math.max(...bounds.map(b=>b[1][1]))]];}const focus=this.focusFeature();return focus?focus.focusBounds:[[45,20],[1155,720]];}
   renderLabels() {
     if(this.state.mode!=='2d'||!this.viewportSize?.[0])return;
-    // Read the cached viewport: the zoom handler has just changed the SVG transform.
-    // A live clientWidth read here would force layout of every detailed county path.
+    // Read the cached viewport so camera gestures do not trigger synchronous layout.
     const transform=d3.zoomTransform(this.svg.node()),scale=Math.min(this.viewportSize[0]/WIDTH,this.viewportSize[1]/HEIGHT);
     const fontSize=12/scale,occupied=[],labels=[];
     const selected=this.geo.byId.get(this.state.selectedId);
     const focusedState=selected?(selected.id.length===5?this.geo.byId.get(selected.stateId):selected.id.length===2?selected:null):null;
-    const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name)&&(!focusedState||d3.geoContains(focusedState.feature,[city.lon,city.lat])));
+    let members;
+    if(focusedState){
+      this.cityMembership ||= new WeakMap();members=this.cityMembership.get(focusedState.feature);
+      if(!members){members=new Set(this.geo.cities.filter(city=>d3.geoContains(focusedState.feature,[city.lon,city.lat])));this.cityMembership.set(focusedState.feature,members);}
+    }
+    const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name)&&(!focusedState||members.has(city)));
     if(selected?.id.length===5)rows.unshift({name:selected.name+' · county',point:selected.point});
     // Screen-space collision estimates avoid layout reads and hundreds of county labels per zoom tick.
     for(const row of rows){
@@ -469,7 +467,7 @@ export class ExplorerMap {
     const r=this.host.getBoundingClientRect(),inside=point.x>=r.left&&point.x<=r.right&&point.y>=r.top&&point.y<=r.bottom;
     let picked=null;
     if(inside&&this.state.mode!=='2d')picked=this.hit({clientX:point.x,clientY:point.y});
-    if(inside&&this.state.mode==='2d')picked=this.flatActive?this.flat.hit({clientX:point.x,clientY:point.y}):document.elementsFromPoint(point.x,point.y).find(el=>this.host.contains(el)&&el.dataset.geo)?.dataset.geo||null;
+    if(inside&&this.state.mode==='2d'&&this.flatActive)picked=this.flat.hit({clientX:point.x,clientY:point.y});
     const transform=d3.zoomTransform(this.svg.node());
     return {side:this.host.id,mode:this.state.mode,renderer:this.host.dataset.renderer,phase:this.phase,selected:this.state.selectedId,metric:this.state.metricKey,picked:picked?{id:picked,name:this.geo.byId.get(picked)?.name}:null,
       bounds:{x:r.x,y:r.y,width:r.width,height:r.height},transform2d:{x:transform.x,y:transform.y,k:transform.k},settings:{...this.settings},reliefScale:this.heightScale??1,camera:this.state.mode==='2d'?null:this.snapshotPose()};
@@ -521,5 +519,5 @@ export class ExplorerMap {
     if(this.focusUI){this.focusUI.hidden=true;this.focusUI.querySelector('span').textContent=this.geo.byId.get(this.state.selectedId)?.name||'';}
     this.renderer.render(this.scene,this.camera);this.renderRankMarkers();
   }
-  dispose(){this.isDisposed=true;this.cancelMotion();cancelAnimationFrame(this.hoverFrame);this.flat?.dispose();this.svg.interrupt().remove();this.rankMarkers?.remove();this.observer.disconnect();document.removeEventListener('keydown',this.onEscape);this.controls?.dispose();this.clear();this.renderer?.dispose();this.renderer?.domElement.remove();this.focusUI?.remove();}
+  dispose(){this.isDisposed=true;this.cancelMotion();cancelAnimationFrame(this.hoverFrame);this.flat?.dispose();this.clearFlatError();this.svg.interrupt().remove();this.rankMarkers?.remove();this.observer.disconnect();document.removeEventListener('keydown',this.onEscape);this.controls?.dispose();this.clear();this.renderer?.dispose();this.renderer?.domElement.remove();this.focusUI?.remove();}
 }

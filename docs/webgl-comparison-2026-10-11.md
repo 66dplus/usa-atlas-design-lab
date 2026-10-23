@@ -1,5 +1,7 @@
 # SVG and WebGL comparison — 11 October 2026
 
+Historical comparison. The owner removed SVG map mode and fallback on 24 October 2026; see the current renderer rule in README.md.
+
 This branch adds a flat WebGL renderer to the exact October collected35
 application. The source baseline is `f5cd8bf`; its imported asset hashes and original
 Git base are recorded in [october-svg-baseline.json](october-svg-baseline.json).

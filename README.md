@@ -26,9 +26,17 @@ The same atlas on a phone:
   <img src="docs/screenshots/03-mobile-compare-2d.png" width="31%" alt="Mobile compare: two stacked place maps">
 </p>
 
-## 2D renderer: owner decision, 14 October 2026
+## 2D renderer: owner decision, 24 October 2026
 
-Standard 2D maps render in WebGL; links without a `renderer` parameter serve WebGL. Saved views and links with an explicit `renderer=svg` keep using SVG, and newly saved or shared links always record the selected renderer in the URL. SVG remains the automatic fallback when WebGL is unavailable, a draw fails, or the context is lost. The 3D renderer is unchanged. The local SVG-vs-WebGL comparison over a frozen set of observations is described in [docs/webgl-comparison-2026-10-11.md](docs/webgl-comparison-2026-10-11.md); the preference for WebGL came from the owner after a local comparison and is not a performance claim.
+All 2D maps use WebGL. The legacy SVG geographic renderer and automatic SVG
+fallback have been removed at the owner's request. Old `renderer=svg` links open
+WebGL and the obsolete renderer parameter is removed when the URL is saved.
+WebGL failure shows an explicit map error with a retry button. Transparent SVG
+text labels and the existing D3 gesture surface remain; they contain no county,
+state or world paths and do not render the geographic map. The 3D renderer remains
+WebGL. The [October comparison](docs/webgl-comparison-2026-10-11.md) is historical.
+City membership is cached by state feature so detailed polygon containment is not
+repeated on every 2D pan/zoom frame.
 
 ## Current interface — Paper runtime, promoted 20 October 2026
 
