@@ -16,13 +16,19 @@ const results=[];
 let page,context,errors;
 const settle=async()=>{
   await page.waitForFunction(()=>document.body.dataset.atlasStatus==='ready',null,{timeout:45000});
-  await page.waitForFunction(()=>![...document.querySelectorAll('.map-host')].some(n=>['focusing','restoring'].includes(n.dataset.phase)),null,{timeout:15000});
+  await page.waitForFunction(()=>![...document.querySelectorAll('.map-host')].some(n=>['focusing','restoring'].includes(n.dataset.phase)||n.dataset.terrainStatus==='building'),null,{timeout:15000});
   await page.waitForTimeout(350);
 };
 async function check(name,screenshot=true){
   const state=await page.evaluate(()=>{
     const rect=s=>{const e=document.querySelector(s);return e&&!e.hidden?e.getBoundingClientRect().toJSON():null;};
-    return {theme:document.body.dataset.theme,page:document.body.dataset.page,view:document.body.dataset.view,
+    const terrainPixels=document.body.dataset.view==='3d'&&['map','compare'].includes(document.body.dataset.page)?[...document.querySelectorAll('.map-host[data-mode="3d"]>canvas:not(.geo-flat-canvas):not(.map-transition-cover)')].filter(c=>c.getBoundingClientRect().width).map(c=>{
+      const sample=document.createElement('canvas');sample.width=60;sample.height=60;const ctx=sample.getContext('2d');ctx.drawImage(c,0,0,60,60);const pixels=ctx.getImageData(0,0,60,60).data;let count=0;
+      for(let i=0;i<pixels.length;i+=4)if(pixels[i]>90&&pixels[i]-pixels[i+2]>40)count++;
+      return count;
+    }):null;
+    const terrainStateCounts=terrainPixels?[...document.querySelectorAll('.map-host[data-mode="3d"]')].filter(e=>e.getBoundingClientRect().width).map(e=>Number(e.dataset.terrainStateCount)):null;
+    return {theme:document.body.dataset.theme,page:document.body.dataset.page,view:document.body.dataset.view,terrainPixels,terrainStateCounts,
       overflow:document.documentElement.scrollWidth>innerWidth,loadingHidden:document.querySelector('#loading').hidden,
       nav:rect('.concept-tabs'),map:rect('#maps'),handle:rect('#explore-panel > .sheet-handle'),snap:document.querySelector('#explore-panel').dataset.snap,
       viewport:{width:innerWidth,height:innerHeight},themeColor:document.querySelector('meta[name="theme-color"]').content,
@@ -35,6 +41,7 @@ async function check(name,screenshot=true){
   assert.equal(state.loadingHidden,true,`${name}: loading overlay`);
   assert.deepEqual(errors,[],`${name}: page/console errors`);
   assert.deepEqual(state.coveredControls,[],`${name}: covered primary controls`);
+  if(state.terrainPixels){assert.ok(state.terrainPixels.length>0,`${name}: visible 3D canvas`);assert.ok(state.terrainPixels.every(n=>n>10),`${name}: rendered 3D geography, not an empty backdrop`);assert.ok(state.terrainStateCounts.every(n=>n===51),`${name}: all state meshes are built`);}
   if(state.viewport.width<=760){assert.equal(state.nav.x,0,`${name}: nav left`);assert.equal(state.nav.width,state.viewport.width,`${name}: nav width`);assert.equal(state.nav.height,56,`${name}: nav height`);assert.equal(state.nav.bottom,state.viewport.height,`${name}: nav bottom`);}
   const file=screenshot?path.join(out,`${name}.png`):null;
   if(file)await page.screenshot({path:file});
@@ -46,6 +53,15 @@ async function snap(name){
   if(name==='half')await handle.press('ArrowDown');
   await page.waitForTimeout(350);
   assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),name);
+  assert.equal(await page.locator('#explore-panel > .mobile-indicator-summary').evaluate(e=>e.inert),name!=='min','Only the visible summary is accessible');
+  if(name!=='min')assert.equal(await page.locator('#explore-panel > .mobile-indicator-summary').evaluate(e=>{e.focus();return e===document.activeElement;}),false,'Invisible summary cannot receive keyboard focus');
+}
+async function sheetGeometry(selector){
+  const geometry=await page.locator(selector).evaluate(root=>{const r=root.getBoundingClientRect(),h=root.querySelector(':scope > .sheet-handle').getBoundingClientRect();return {x:r.x,width:r.width,padding:getComputedStyle(root).padding,handleInset:h.y-r.y};});
+  assert.equal(geometry.x,0,'Shared sheet starts at the viewport edge');
+  assert.equal(geometry.width,page.viewportSize().width,'All mobile sheets share one width');
+  assert.equal(geometry.padding,'0px','Only sheet content owns padding');
+  assert.ok(geometry.handleInset<=1,'Grip sits at the sheet lip');
 }
 async function dragHandle(delta,options={}){
   const handle=page.locator('#explore-panel > .sheet-handle'),r=await handle.boundingBox();
@@ -73,6 +89,10 @@ try{
       await page.goto(`${base}/ux/?place=06&view=2d&theme=${theme}`,{waitUntil:'domcontentloaded'});await settle();
       await check(`${key}-state-half`);
       if(mobile){
+        const tops=await page.locator('#mobile-search,#support-open,#mobile-view-toggle,#info-open').evaluateAll(nodes=>nodes.map(e=>e.getBoundingClientRect().top));
+        assert.ok(tops.every(top=>Math.abs(top-8)<1),'All four top controls sit 8px from the available viewport edge');
+      }
+      if(mobile){
         const original=await page.evaluateHandle(()=>({handle:document.querySelector('#explore-panel > .sheet-handle'),content:document.querySelector('#explore-panel > .sheet-content'),map:document.querySelector('#map-a'),canvas:document.querySelector('#map-a canvas')}));
         const mapBefore=await page.locator('#maps').boundingBox();
         if(engine==='chrome'){
@@ -86,6 +106,14 @@ try{
         // Complete bidirectional cycle with actual pointer drags.
         await dragHandle(-210);assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
         await check(`${key}-state-expanded`);
+        await sheetGeometry('#explore-panel');
+        if(engine==='chrome'){
+          const pinch=await context.newCDPSession(page);
+          await pinch.send('Input.synthesizePinchGesture',{x:viewport.width/2,y:viewport.height*.5,scaleFactor:2,relativeSpeed:600,gestureSourceType:'touch'});
+          await page.waitForTimeout(150);
+          assert.ok(await page.evaluate(()=>visualViewport.scale)>1.5,'Native touch pinch remains available inside sheet content');
+          await pinch.send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await page.waitForTimeout(150);await pinch.detach();
+        }
         await dragHandle(200,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half');
         await dragHandle(350,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'min');
         assert.equal(await page.locator('#explore-panel').evaluate(e=>e.inert),false,'Minimum handle must remain reachable');
@@ -120,7 +148,9 @@ try{
         await snap('half');
         assert.deepEqual(await page.locator('#maps').boundingBox(),mapBefore,'Map viewport does not resize on snap');
         // Mode/data render must preserve the captured DOM and map host.
-        await page.locator('#mobile-view-toggle').click();await settle();
+        if(viewport.width===390&&theme==='light')await page.evaluate(()=>{const toggle=document.querySelector('#mobile-view-toggle');toggle.click();toggle.click();toggle.click();});
+        else await page.locator('#mobile-view-toggle').click();
+        await settle();
         assert.equal(await page.evaluate(old=>old.handle===document.querySelector('#explore-panel > .sheet-handle')&&old.content===document.querySelector('#explore-panel > .sheet-content')&&old.map===document.querySelector('#map-a'),original),true);
         await check(`${key}-state-3d`);
         await page.locator('#mobile-view-toggle').click();await settle();
@@ -131,7 +161,9 @@ try{
         const libraryFirstRow=await page.locator('#place-list').evaluateHandle(e=>e.firstElementChild);
         const libraryGeometry=()=>page.locator('#place-library').evaluate(root=>{const h=root.querySelector('.drawer-top'),input=root.querySelector('input');return {headerHeight:h.getBoundingClientRect().height,inputOffset:Math.round(input.getBoundingClientRect().top-root.getBoundingClientRect().top)};});
         const compactLibrary=await libraryGeometry();
+        await sheetGeometry('#place-library');
         await page.locator('#place-library>.sheet-handle').press('Home');await page.waitForTimeout(350);
+        await sheetGeometry('#place-library');
         assert.deepEqual(await libraryGeometry(),compactLibrary,'Library content geometry must not jump at a snap threshold');
         assert.equal(await page.evaluate(old=>old===document.querySelector('#place-list').firstElementChild,libraryFirstRow),true,'Snapping must not replace recent states with another list');
         await page.locator('#place-library>.sheet-handle').press('End');await page.waitForTimeout(350);
@@ -173,6 +205,15 @@ try{
         await snap('expanded');
         await page.locator('#compare-place').click();await page.waitForTimeout(350);
         assert.equal(await page.locator('#comparison-setup-panel').getAttribute('data-snap'),'expanded');
+        await sheetGeometry('#comparison-setup-panel');
+        await page.locator('[data-comparison-change]').first().click();await page.waitForTimeout(150);
+        const nested=page.locator('.comparison-place-list');
+        await nested.evaluate(e=>e.scrollTop=500);
+        if(engine==='chrome'){
+          const r=await nested.boundingBox();await touchDrag(r.x+r.width/2,r.y+35,140);
+          assert.ok(await nested.evaluate(e=>e.scrollTop)<500,'Downward swipe scrolls the nested list before moving the sheet');
+          assert.equal(await page.locator('#comparison-setup-panel').getAttribute('data-snap'),'expanded','Nested scrolling keeps the sheet expanded');
+        }
         assert.equal(await page.locator('.concept-tabs').evaluate(e=>e.inert),false,'Draft keeps navigation available');
         await page.locator('.concept-tabs [data-page="map"]').click();await settle();
         // Simulated orientation and insets exercise document geometry only.

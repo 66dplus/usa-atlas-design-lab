@@ -309,6 +309,7 @@ function renderExplorer(){
   const content=sheetContent(panel),summary=content.querySelector('.mobile-indicator-summary');
   const previous=panel.querySelector(':scope > .mobile-indicator-summary');
   if(previous)previous.replaceWith(summary);else panel.append(summary);
+  placeSheet.syncSummary();
   const chooser=panel.querySelector('.indicator-chooser');if(chooser){
     const desktop=document.createElement('div');desktop.className='desktop-indicator';
     desktop.innerHTML=`<button id="desktop-search" class="selected-indicator indicator-heading" data-pane-metric="a" aria-label="Choose indicator: ${escapeHTML(m.name)}" aria-expanded="false">${indicatorIcon(m)}<b>${escapeHTML(m.name)}</b>${icon('down')}</button>`;
@@ -580,7 +581,7 @@ try {
   await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);
   rememberState(state.selected);
 
-  render();window.dispatchEvent(new Event('atlas:startup-ready'));
+  render();await Promise.all([mapA?.whenReady(),mapB?.whenReady()]);window.dispatchEvent(new Event('atlas:startup-ready'));
   if(seeded)dataStore.refresh(startupMetric);
   if(state.concept==='stories')openDrawer('story-rail',$('.concept-tabs [data-concept=stories]'));else if(state.rank)openRank(state.rank);
 } catch(error) {console.error(error);window.dispatchEvent(new CustomEvent('atlas:startup-error',{detail:{message:'Map boundaries or indicator data could not be reached. Check your connection and try again. About and Support are available.'}}));}

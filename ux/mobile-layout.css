@@ -20,7 +20,7 @@
     border:var(--border-width) solid var(--line);border-bottom:0;border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;
     background:var(--surface-panel);box-shadow:var(--shadow-sheet);overflow:hidden!important;
     transform:translateY(var(--sheet-offset));clip-path:inset(0 0 var(--sheet-cut) 0);
-    transition:none!important;z-index:var(--z-sheet);touch-action:pan-x pan-y;
+    transition:none!important;z-index:var(--z-sheet);touch-action:pan-x pan-y pinch-zoom;
   }
   body .mobile-sheet[hidden] {display:none!important;}
   body .mobile-sheet > .sheet-handle {
@@ -67,11 +67,12 @@
   .explore-panel[data-snap=min][data-dragging=false]:not([data-settling=true]) > .sheet-content {visibility:hidden;}
   .explore-panel[data-snap=min][data-dragging=true] > .sheet-content {visibility:visible;}
   .mobile-sheet[data-dragging=true] {user-select:none;}
-  .reading-page {bottom:calc(var(--nav-height) + var(--safe-bottom))!important;padding-bottom:var(--space-6);}
-  body .app-header {top:max(56px,calc(var(--safe-top) + 8px));left:max(16px,var(--safe-left));right:max(16px,var(--safe-right));}
-  body .support-trigger,body .app-header #info-open,body .workspace-bar {top:max(56px,calc(var(--safe-top) + 8px));}
-  body[data-concept=compare]:not(.reading) .mobile-compare-metric {max-width:calc(100vw - 252px);top:max(56px,calc(var(--safe-top) + 8px));}
-  body[data-concept=compare] .maps {top:max(110px,calc(var(--safe-top) + 62px));}
+  .reading-page {top:calc(var(--mobile-chrome-top) + 64px)!important;bottom:calc(var(--nav-height) + var(--safe-bottom))!important;padding-bottom:var(--space-6);}
+  body .app-header {top:var(--mobile-chrome-top);left:max(16px,var(--safe-left));right:max(16px,var(--safe-right));}
+  body #mobile-search,body.reading #sheet-back,body.place-expanded #sheet-back,body .support-trigger,body .app-header #info-open,body .workspace-bar {top:var(--mobile-chrome-top);}
+  .reading .app-header:before {height:calc(var(--mobile-chrome-top) + 64px);}
+  body[data-concept=compare]:not(.reading) .mobile-compare-metric {max-width:calc(100vw - 252px);top:var(--mobile-chrome-top);}
+  body[data-concept=compare] .maps {top:calc(var(--mobile-chrome-top) + 54px);}
   .mobile-sheet .comparison-confirm {position:static;flex:0 0 auto;margin:24px 0 0;width:100%;min-height:56px;}
   body .source-popup {max-height:calc(var(--app-height,100dvh) - var(--nav-height) - var(--safe-bottom) - 32px);}
 }

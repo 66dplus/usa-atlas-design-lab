@@ -137,7 +137,7 @@ export class ExplorerMap {
   update(next) {
     const previous=this.state,oldSettings=this.settings;
     const changedLayout=previous.layoutKey!==next.layoutKey,changedMode=previous.mode!==next.mode;
-    const cover=changedMode&&this.initialized?this.coverTransition():null;
+    let cover=changedMode&&this.initialized?this.coverTransition():null;
     const changedPlace=previous.selectedId!==next.selectedId,changedRanks=JSON.stringify(previous.ranks||[])!==JSON.stringify(next.ranks||[]);
     const detailChanges=[...this.geo.detailStates].filter(id=>!this.terrainDetailStates?.has(id));
     const cameraChanged=['tilt','cameraSide','minZoom','maxZoom'].some(key=>oldSettings?.[key]!==next.settings[key]);
@@ -162,15 +162,17 @@ export class ExplorerMap {
     if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
     this.renderLabels();
     if(mode==='2d'){
+      if(this.terrainBuilding){this.terrainBuildVersion++;this.terrainInterrupted=true;}
+      this.terrainBuilding=false;this.setTerrainStatus('inactive');
       if(changedPlace||changedMode||changedLayout||changedRanks||!this.initialized)this.fit2D();
     }else try{
       this.ensureWebGL();this.renderer.domElement.hidden=false;
-      const rebuild=!this.stateGroups||previous.values!==this.state.values||previous.countySupported!==this.state.countySupported||oldSettings?.relief!==this.settings.relief;
-      if(rebuild)this.buildTerrain();
+      const rebuild=this.terrainInterrupted||!this.stateGroups||previous.values!==this.state.values||previous.countySupported!==this.state.countySupported||oldSettings?.relief!==this.settings.relief;
+      if(rebuild){if(this.initialized&&this.stateGroups?.size)cover ||= this.coverTransition();this.buildTerrain();}
       else {
         const refresh=new Set(detailChanges);
         if(changedPlace&&(previous.selectedId?.length===5||selectedId?.length===5)){if(previous.selectedId)refresh.add(previous.selectedId.slice(0,2));if(parent)refresh.add(parent);}
-        if(refresh.size)this.buildTerrain(refresh);
+        if(refresh.size){if(this.initialized&&this.stateGroups?.size)cover ||= this.coverTransition();this.buildTerrain(refresh);}
       }
       if(selectedId&&!this.session){
         const overview=before&&!previous.selectedId?before:this.pose(null,mode);
@@ -191,7 +193,26 @@ export class ExplorerMap {
     }catch(error){this.onError(error.message);}
     this.renderRankMarkers();
     this.initialized=true;
-    if(cover){const version=cover.motionVersion=(cover.motionVersion||0)+1;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(cover.motionVersion!==version)return;const a=cover.animate([{opacity:1},{opacity:0}],{duration:320,easing:'ease-out'});a.finished.then(()=>{if(cover.motionVersion===version)cover.remove();}).catch(()=>{});}));}
+    if(cover)this.revealTerrain(cover);
+  }
+  whenReady(){
+    if(this.state.mode!=='3d'||!this.terrainBuilding)return Promise.resolve();
+    return new Promise(resolve=>(this.terrainWaiters ||= []).push(resolve));
+  }
+  setTerrainStatus(status){
+    this.host.dataset.terrainStatus=status;this.host.setAttribute('aria-busy',String(status==='building'));
+    this.host.dataset.terrainStateCount=String(this.stateGroups?.size||0);
+    if(status!=='building'){for(const resolve of this.terrainWaiters||[])resolve();this.terrainWaiters=[];}
+  }
+  revealTerrain(cover=this.host.querySelector('.map-transition-cover')){
+    if(!cover||this.state.mode==='3d'&&this.terrainBuilding)return;
+    const version=cover.motionVersion=(cover.motionVersion||0)+1;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(cover.motionVersion!==version||this.state.mode==='3d'&&this.terrainBuilding)return;
+      if(this.reduced()){cover.remove();return;}
+      const animation=cover.animate([{opacity:1},{opacity:0}],{duration:320,easing:'ease-out'});
+      animation.finished.then(()=>{if(cover.motionVersion===version)cover.remove();}).catch(()=>{});
+    }));
   }
   mappedValue(feature) {
     const id=this.state.countySupported===false ? feature.stateId : feature.id;
@@ -298,7 +319,7 @@ export class ExplorerMap {
     const rebuildAll=!only||this.terrainBuilding;
     this.terrainBuildVersion=(this.terrainBuildVersion||0)+1;
     if(rebuildAll){this.clearGroup(this.terrain);this.stateGroups=new Map();}
-    this.terrainBuilding=true;
+    this.terrainInterrupted=false;this.terrainBuilding=true;this.setTerrainStatus('building');
     const version=this.terrainBuildVersion;
     const queue=[...(rebuildAll?new Set(this.geo.states.map(state=>state.id)):only)];
     queue.forEach(id=>{const old=this.stateGroups.get(id);if(old){this.terrain.remove(old);this.clearGroup(old);this.stateGroups.delete(id);}});
@@ -309,12 +330,12 @@ export class ExplorerMap {
       try {
         while(cursor<queue.length&&(cursor===0||deadline.timeRemaining?.()>4||performance.now()-start<5))this.buildStateTerrain(queue[cursor++]);
       } catch(error) {
-        this.terrainBuilding=false;
+        this.terrainBuilding=false;this.setTerrainStatus('error');
         this.onError(error.message||'The 3D map could not be built. Switch to 2D to continue.');
         return;
       }
       if(cursor<queue.length){this.scheduleTerrainStep(step);return;}
-      this.terrainBuilding=false;this.terrainDetailStates=new Set(this.geo.detailStates);this.render();
+      this.terrainBuilding=false;this.terrainDetailStates=new Set(this.geo.detailStates);this.render();this.setTerrainStatus('ready');this.revealTerrain();
     };
     this.scheduleTerrainStep(step);
   }

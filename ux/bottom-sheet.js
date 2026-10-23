@@ -76,6 +76,7 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     handle.setAttribute('aria-label', snap === 'expanded' ? 'Return to compact sheet' : 'Expand sheet');
     handle.setAttribute('aria-expanded', String(snap === 'expanded'));
     content.inert = mobile.matches && snap === 'min';
+    syncSummary();
     if (snap !== 'expanded') content.scrollTop = 0;
     paint(end); onSnap(snap);
     root.dataset.settling = 'false';
@@ -96,6 +97,7 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     suppressClick = false;
     // Content remains mounted and participates in hit testing while pulling out of minimum.
     content.inert = false;
+    syncSummary(true);
     paint(offset);
   }
   function move(y, time) {
@@ -138,17 +140,31 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     const index = names.indexOf(snap);
     setSnap(event.key === 'Home' ? 'expanded' : event.key === 'End' ? 'min' : names[clamp(index + (event.key === 'ArrowUp' ? -1 : 1), 0, 2)]);
   });
+  function canScrollTowardTop(target){
+    if(content.scrollTop>0)return true;
+    for(let node=target instanceof Element?target:target?.parentElement;node&&node!==content;node=node.parentElement){
+      if(node.scrollTop>0&&node.scrollHeight>node.clientHeight+1&&/auto|scroll/.test(getComputedStyle(node).overflowY))return true;
+    }
+    return false;
+  }
+  function syncSummary(dragging = false) {
+    const summary = root.querySelector(':scope > .mobile-indicator-summary');
+    if (!summary) return;
+    const visible = mobile.matches && snap === 'min' && !dragging;
+    summary.inert = !visible;
+    summary.setAttribute('aria-hidden', String(!visible));
+  }
   // Native vertical scrolling is preserved at maximum. A non-passive listener
   // takes ownership only after a downward pull reaches the top of that scroll.
   content.addEventListener('touchstart', event => {
     if (!mobile.matches || event.touches.length !== 1) return;
-    const t = event.touches[0]; touch = {y: t.clientY, x: t.clientX, startY: t.clientY, startX: t.clientX, owned: false};
+    const t = event.touches[0]; touch = {target:event.target,y: t.clientY, x: t.clientX, startY: t.clientY, startX: t.clientX, owned: false};
   }, {passive: true});
   content.addEventListener('touchmove', event => {
     if (!touch || event.touches.length !== 1) return;
     const t = event.touches[0], delta = t.clientY - touch.y;
     const vertical = Math.abs(t.clientY - touch.startY) > Math.abs(t.clientX - touch.startX);
-    if (!touch.owned && event.cancelable && vertical && Math.abs(t.clientY - touch.startY) > 5 && (snap !== 'expanded' || content.scrollTop <= 0 && delta > 0)) {
+    if (!touch.owned && event.cancelable && vertical && Math.abs(t.clientY - touch.startY) > 5 && (snap !== 'expanded' || !canScrollTowardTop(touch.target) && delta > 0)) {
       touch.owned = true;
       begin(touch.y, event.timeStamp - 16);
     }
@@ -169,7 +185,7 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
   window.visualViewport?.addEventListener('resize', resize);
   mobile.addEventListener('change', () => {geometry(); setSnap(snap, false);});
   reduced.addEventListener('change', () => {interrupt(); setSnap(snap, false);});
-  const api = {setSnap, content, handle, get snap() {return snap;}, refresh: geometry};
+  const api = {setSnap, content, handle, get snap() {return snap;}, refresh: geometry, syncSummary};
   controllers.set(root, api);
   geometry(); setSnap(snap, false);
   return api;
