@@ -43,6 +43,15 @@ export function normalizeSupportGoal(rawGoal) {
   if (!rawGoal || typeof rawGoal !== 'object' || Array.isArray(rawGoal)) return {status: 'unavailable', goal: null, reason: 'invalid-goal'};
   const {title, targetUsd, raisedUsd, updatedAt} = rawGoal;
   const improvements = normalizeImprovements(rawGoal.improvements);
+  if (rawGoal.status === 'planning') {
+    if (!validUsd(targetUsd) || (title != null && !nonEmptyString(title)) || raisedUsd != null || updatedAt != null || !improvements) {
+      return {status: 'unavailable', goal: null, reason: 'invalid-planned-goal'};
+    }
+    return {status: 'planning', goal: {
+      title: title?.trim() || null, targetUsd, raisedUsd: null, updatedAt: null,
+      progress: null, progressPercent: null, state: 'planning', improvements
+    }};
+  }
   if (!nonEmptyString(title) || !validUsd(targetUsd) || !validUsd(raisedUsd, {allowZero: true}) || !validDate(updatedAt) || !improvements) {
     return {status: 'unavailable', goal: null, reason: 'invalid-goal'};
   }
@@ -135,6 +144,6 @@ export function normalizeSupportData(rawSupport) {
   const donationMethods = normalizeDonationMethods(rawSupport.donationMethods);
   const status = goal.status === 'unavailable' || donationMethods.status === 'unavailable'
     ? 'unavailable'
-    : goal.status === 'available' || donationMethods.status === 'available' ? 'available' : 'unconfigured';
+    : goal.status === 'available' || donationMethods.status === 'available' ? 'available' : goal.status === 'planning' ? 'planning' : 'unconfigured';
   return {status, goal, donationMethods};
 }

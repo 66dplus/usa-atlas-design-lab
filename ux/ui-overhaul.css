@@ -1,0 +1,24 @@
+/* Checked Paper S01/S02: desktop state file and mobile iteration, 22 October. */
+body { --state-bg:#EFF1F3; --state-panel:#FFFFFF; --state-ink:#182126; --state-muted:#58636B; --state-line:#D2D8DC; }
+body[data-theme=dark] { --state-bg:#17191D; --state-panel:#25292D; --state-ink:#F3F4F5; --state-muted:#AEB7BE; --state-line:#3C4248; }
+#loading { position:fixed; inset:72px 0 0; z-index:16; display:flex; align-items:center; justify-content:center; padding:24px; background:var(--state-bg); color:var(--state-ink); line-height:normal; }
+#loading[hidden] { display:none; }
+.startup-card { display:flex; flex-direction:column; align-items:flex-start; gap:12px; width:440px; max-width:100%; padding:28px 32px; border:1px solid var(--state-line); border-radius:16px; background:var(--state-panel); }
+.startup-spinner { width:22px; height:22px; flex-shrink:0; border:2px solid var(--state-line); border-top-color:#FF7A32; border-radius:50%; animation:startup-spin 1s linear infinite; }
+.startup-card h1 { margin:0; font-size:20px; font-weight:600; line-height:26px; letter-spacing:normal; }
+.startup-card p { margin:0; color:var(--state-muted); font-size:14px; line-height:20px; }
+#startup-retry { min-height:44px; padding:10px 14px; border:0; border-radius:10px; background:#FF7A32; color:#171A1D; font-size:13px; line-height:18px; font-weight:600; text-decoration:none; }
+#loading[data-state=error] .startup-spinner { display:none; }
+#loading[data-state=error] .startup-card::before { content:'!'; display:grid; place-items:center; width:24px; height:24px; flex-shrink:0; border:2px solid #FF7A32; border-radius:50%; color:var(--state-ink); font-size:14px; line-height:18px; font-weight:700; }
+button:disabled { cursor:default; opacity:.55; }
+@keyframes startup-spin { to { transform:rotate(360deg); } }
+@media (max-width:760px) {
+  #loading { inset:0; align-items:flex-end; padding:16px 16px calc(156px + env(safe-area-inset-bottom, 0px)); }
+  .startup-card { width:100%; flex-direction:row; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; }
+  .startup-copy { flex:1; min-width:0; }
+  .startup-card h1 { font-size:14px; line-height:18px; }
+  .startup-card p { margin-top:3px; font-size:12px; line-height:16px; }
+  #startup-retry { flex-shrink:0; min-width:72px; border-radius:20px; }
+  .startup-spinner { width:20px; height:20px; }
+}
+@media (prefers-reduced-motion:reduce) { .startup-spinner { animation:none; } }

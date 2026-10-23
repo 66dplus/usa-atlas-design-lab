@@ -10,7 +10,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC = '''ux/index.html ux/advertise.html ux/app.js ux/studio.js ux/pages.js ux/settings.js ux/model.js ux/map.js ux/flat-map.js ux/geometry.js ux/motion.js ux/icons.js ux/analytics.js ux/advertising/creative.js ux/advertising/request.js ux/style.css ux/master.css ux/studio.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
+PUBLIC = '''ux/index.html ux/advertise.html ux/app.js ux/studio.js ux/pages.js ux/settings.js ux/model.js ux/map.js ux/flat-map.js ux/geometry.js ux/motion.js ux/icons.js ux/analytics.js ux/advertising/creative.js ux/advertising/request.js ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/studio.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
 THREE = '''build/three.module.js build/three.core.js examples/jsm/controls/OrbitControls.js examples/jsm/lines/LineSegments2.js examples/jsm/lines/LineSegmentsGeometry.js examples/jsm/lines/LineMaterial.js examples/jsm/utils/BufferGeometryUtils.js'''.split()
 PRIVATE = 'scripts/atlas_data.py scripts/preview_server.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json'.split()
 STATES = '01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56'.split()
@@ -64,7 +64,8 @@ def build(destination, release):
         'sourceSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
                          for name in ('ux/app.js', 'ux/map.js', 'ux/flat-map.js',
                                       'ux/indicator-visibility.js', 'ux/model.js',
-                                      'ux/motion.js', 'ux/master.css', 'ux/pages.js',
+                                      'ux/motion.js', 'ux/master.css', 'ux/ui-overhaul.css',
+                                      'ux/startup-guard.js', 'ux/pages.js',
                                       'ux/icons.js', 'ux/approved-icons.js', 'ux/style.css')},
         'dataContractSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
                               for name in ('scripts/atlas_data.py', 'scripts/preview_server.py', 'ux/acs-series.json',

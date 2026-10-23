@@ -4,10 +4,10 @@
   "project": {
     "description": "USA X-Ray brings place-based data into one atlas. It helps people explore places, compare matching measures, and follow each value back to its source and reference period.",
     "creator": {
-      "description": "Built and maintained by one independent developer.",
-      "publicName": null,
+      "description": "Built and maintained by Dmitrii Rybkin, an independent developer who enjoys maps and statistics.",
+      "publicName": "Dmitrii Rybkin",
       "profileLinks": [],
-      "status": "unknown"
+      "status": "confirmed"
     }
   },
   "methodology": {
@@ -17,7 +17,14 @@
     "limitations": "Coverage, definitions, units, and reference periods vary by source and measure. Read the source details for the selected indicator before comparing it."
   },
   "support": {
-    "goal": null,
+    "goal": {
+      "status": "planning",
+      "title": null,
+      "targetUsd": 2500,
+      "raisedUsd": null,
+      "updatedAt": null,
+      "improvements": []
+    },
     "donationMethods": {
       "externalLinks": [],
       "wallets": []

@@ -8,7 +8,7 @@ assert.equal(unconfigured.goal.goal, null, 'unconfigured funding must not become
 assert.equal(unconfigured.donationMethods.status, 'unconfigured');
 assert.deepEqual(unconfigured.donationMethods.wallets, []);
 
-// Synthetic values exercise formatting and clamping only; no goal ships in project-content.json.
+// Synthetic totals exercise funding states; the configured target has no reported raised amount.
 const goal = (raisedUsd, overrides = {}) => ({
   title: 'Next release package',
   targetUsd: 1000,
@@ -20,6 +20,15 @@ const goal = (raisedUsd, overrides = {}) => ({
   ],
   ...overrides
 });
+
+const planned = normalizeSupportGoal({status:'planning', targetUsd:2500, title:null, raisedUsd:null, updatedAt:null, improvements:[]});
+assert.equal(planned.status, 'planning');
+assert.equal(planned.goal.targetUsd, 2500);
+assert.equal(planned.goal.raisedUsd, null, 'an unreported total is not zero');
+assert.equal(planned.goal.progress, null, 'a planned target has no invented progress');
+assert.equal(planned.goal.updatedAt, null, 'an unreported date is not today');
+assert.equal(normalizeSupportData({goal:{status:'planning',targetUsd:2500,improvements:[]}}).status, 'planning');
+assert.equal(normalizeSupportGoal({status:'planning',targetUsd:2500,raisedUsd:100,improvements:[]}).status, 'unavailable');
 
 const zero = normalizeSupportGoal(goal(0));
 assert.equal(zero.status, 'available');

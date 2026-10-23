@@ -38,7 +38,7 @@ On Desktop the map is the workspace. The left panel holds the indicator, the pla
 
 On a phone the map keeps the top of the screen and the place panel becomes a bottom sheet that expands over the map; Compare stacks the two place maps, and a docked bar switches modes. The source and geometry popups, the camera controls and the sheet transitions follow the same rules on both sizes.
 
-The indicator pickers share one set of display switches: 38 collected fields are enabled — the 35 collected map indicators plus the three admitted medical fields. Only the enabled fields whose default series the connected database has admitted appear in a picker, so the number you see depends on that database. A missing observation stays an explicit gap: a state value is never spread over its counties, and no US average is computed from states.
+The indicator pickers share one set of display switches: 39 collected fields are enabled — the 36 collected map indicators plus the three admitted medical fields. Only the enabled fields whose default series the connected database has admitted appear in a picker, so the number you see depends on that database. A missing observation stays an explicit gap: a state value is never spread over its counties, and no US average is computed from states.
 
 The Blog is the Atlas journal. It shows live map previews and two editorial drafts that are still marked review pending. Stats is the audience view; no public audience data is connected, so its figures read as unavailable rather than zero.
 
@@ -117,14 +117,15 @@ python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release
 `ux/build.json` carries the `release` identifier, the `sourceBaseCommit` the build
 came from, and the SHA-256 of every shipped source and contract file. The live file
 is at `https://usa-xray.online/ux/build.json`, so the published site always names
-the commit it was built from. The current live release is `20261022-colourfix`,
-built from design-lab commit `3038de3` on branch `fix/continuous-colour-scale`. It
-keeps the map-first interface and the mobile composition of `6bea162` and replaces
-the quantile classes with a continuous scale: county values define the colour
-domain, money and population use a logarithmic ramp, other values use a linear
-ramp, and the cost-of-living index keeps its diverging scale. The public build
-strips the two local review-tooling lines on purpose; every shipped file otherwise
-matches the repository.
+the commit it was built from. The current live release is `20261023-ui-overhaul`,
+built from `951f70f` with a reviewed but uncommitted worktree; the exact shipped
+bytes are identified by `sourceSha256` and `dataContractSha256` in `ux/build.json`
+and in the deployment record. It keeps the continuous colour scale of
+`20261022-colourfix` and adds the full UI overhaul: county context and filtered
+city labels, a mobile map camera that keeps the selected state above the bottom
+sheet, shared comparison controls, and revised Stats and Support pages. The public
+build strips the two local review-tooling lines on purpose; every shipped file
+otherwise matches the verified build.
 
 The public runtime is read-only. It serves the same admitted observations as a local
 run, reads them from the `usa_atlas` database through the read-only adapter, and

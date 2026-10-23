@@ -158,7 +158,7 @@ export class ExplorerMap {
     if(this.focusUI)this.focusUI.hidden=true;
     this.countyPaths.attr('d',f=>f.path).attr('fill',f=>this.tint(this.mappedValue(f))).attr('stroke','#382737').attr('stroke-width',.35)
       .attr('visibility',f=>shown(f.stateId)?null:'hidden').attr('opacity',f=>parent&&f.stateId!==parent ? .3 : 1).classed('selected-county',f=>selectedId===f.id);
-    this.statePaths.attr('d',f=>f.path).attr('visibility',f=>!shown(f.id)||(selectedId?.length===5&&f.id===parent)?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
+    this.statePaths.attr('d',f=>f.path).attr('visibility',f=>!shown(f.id)?'hidden':null).attr('stroke',f=>f.id===parent?'#fff7d2':'#ddc8a7').attr('stroke-width',f=>f.id===parent?2.5:1.1);
     if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
     this.renderLabels();
     if(mode==='2d'){
@@ -215,7 +215,8 @@ export class ExplorerMap {
     this.host.dataset.renderer=this.state.mode==='3d'?'webgl3d':this.flatActive?'webgl':'svg';
   }
   fitScale(){const b=this.bounds();return Math.max(.8,Math.min(400,.82/Math.max((b[1][0]-b[0][0])/WIDTH,(b[1][1]-b[0][1])/HEIGHT)));}
-  bounds() {if(this.state.ranks?.length){const bounds=[[[45,20],[1155,720]],...this.state.ranks.map(row=>this.geo.byId.get(row.id).focusBounds)];return [[Math.min(...bounds.map(b=>b[0][0])),Math.min(...bounds.map(b=>b[0][1]))],[Math.max(...bounds.map(b=>b[1][0])),Math.max(...bounds.map(b=>b[1][1]))]];}return this.state.selectedId?this.geo.byId.get(this.state.selectedId).focusBounds:[[45,20],[1155,720]];}
+  focusFeature(id=this.state.selectedId){const feature=id?this.geo.byId.get(id):null;return feature?.id.length===5?this.geo.byId.get(feature.stateId):feature;}
+  bounds() {if(this.state.ranks?.length){const bounds=[[[45,20],[1155,720]],...this.state.ranks.map(row=>this.geo.byId.get(row.id).focusBounds)];return [[Math.min(...bounds.map(b=>b[0][0])),Math.min(...bounds.map(b=>b[0][1]))],[Math.max(...bounds.map(b=>b[1][0])),Math.max(...bounds.map(b=>b[1][1]))]];}const focus=this.focusFeature();return focus?focus.focusBounds:[[45,20],[1155,720]];}
   renderLabels() {
     if(this.state.mode!=='2d'||!this.viewportSize?.[0])return;
     // Read the cached viewport: the zoom handler has just changed the SVG transform.
@@ -223,7 +224,8 @@ export class ExplorerMap {
     const transform=d3.zoomTransform(this.svg.node()),scale=Math.min(this.viewportSize[0]/WIDTH,this.viewportSize[1]/HEIGHT);
     const fontSize=12/scale,occupied=[],labels=[];
     const selected=this.geo.byId.get(this.state.selectedId);
-    const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name));
+    const focusedState=selected?(selected.id.length===5?this.geo.byId.get(selected.stateId):selected.id.length===2?selected:null):null;
+    const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name)&&(!focusedState||d3.geoContains(focusedState.feature,[city.lon,city.lat])));
     if(selected?.id.length===5)rows.unshift({name:selected.name+' · county',point:selected.point});
     // Screen-space collision estimates avoid layout reads and hundreds of county labels per zoom tick.
     for(const row of rows){
@@ -347,7 +349,7 @@ export class ExplorerMap {
   pose(selectedId=this.state.selectedId,mode=this.state.mode) {
     let target,position,distance,extent;
     {
-      const b=this.state.ranks?.length?this.bounds():selectedId?this.geo.byId.get(selectedId).focusBounds:[[45,20],[1155,720]];
+      const focus=this.focusFeature(selectedId),b=this.state.ranks?.length?this.bounds():focus?focus.focusBounds:[[45,20],[1155,720]];
       const dx=(b[1][0]-b[0][0])/100,dz=(b[1][1]-b[0][1])/100;
       const aspect=this.host.clientWidth/Math.max(1,this.host.clientHeight),tilt=this.settings.tilt*Math.PI/180;
       const height=(this.stateGroups?.get(selectedId?.slice(0,2))?.userData.height??RELIEF)*this.reliefScale(selectedId);
