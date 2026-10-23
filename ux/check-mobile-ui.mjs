@@ -80,8 +80,8 @@ async function touchDrag(x,y,delta,steps=15){
   await page.waitForTimeout(400);await cdp.detach();
 }
 try{
-  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900}]){
-    for(const theme of ['light','dark']){
+  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900}].filter(v=>!process.env.ATLAS_TEST_WIDTH||v.width===Number(process.env.ATLAS_TEST_WIDTH))){
+    for(const theme of ['light','dark'].filter(t=>!process.env.ATLAS_TEST_THEME||t===process.env.ATLAS_TEST_THEME)){
       const mobile=viewport.width<=760,key=`after-${viewport.width}-${theme}`;
       context=await browser.newContext({viewport,isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});
       page=await context.newPage();errors=[];
@@ -108,13 +108,6 @@ try{
         await dragHandle(-210);assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded');
         await check(`${key}-state-expanded`);
         await sheetGeometry('#explore-panel');
-        if(engine==='chrome'){
-          const pinch=await context.newCDPSession(page);
-          await pinch.send('Input.synthesizePinchGesture',{x:viewport.width/2,y:viewport.height*.5,scaleFactor:2,relativeSpeed:600,gestureSourceType:'touch'});
-          await page.waitForTimeout(150);
-          assert.ok(await page.evaluate(()=>visualViewport.scale)>1.5,'Native touch pinch remains available inside sheet content');
-          await pinch.send('Emulation.setPageScaleFactor',{pageScaleFactor:1});await page.waitForTimeout(150);await pinch.detach();
-        }
         await dragHandle(200,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half');
         await dragHandle(350,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'min');
         assert.equal(await page.locator('#explore-panel').evaluate(e=>e.inert),false,'Minimum handle must remain reachable');
@@ -127,11 +120,13 @@ try{
         await dragHandle(200,{pause:150});assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Handle works with content scrolled to bottom');
         await snap('expanded');
         if(engine==='chrome'){
+        await page.evaluate(()=>{window.sheetTouchTrace=[];const root=document.querySelector('#explore-panel');for(const type of ['touchstart','touchmove','touchend','touchcancel'])root.addEventListener(type,e=>window.sheetTouchTrace.push({type,contacts:e.touches.length,target:e.target.className,y:e.touches[0]?.clientY,cancelable:e.cancelable,prevented:e.defaultPrevented,scroll:root.querySelector('.sheet-content').scrollTop,dragging:root.dataset.dragging,snap:root.dataset.snap}));});
         await scroll.evaluate(e=>e.scrollTop=Math.min(65,e.scrollHeight-e.clientHeight));
         await touchDrag(12,topBefore.y+100,18);
         assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'expanded','Middle content scroll must not drag sheet');
         await scroll.evaluate(e=>e.scrollTop=0);
         await touchDrag(12,topBefore.y+180,210);
+        await writeFile(path.join(out,`${key}-touch-trace.json`),JSON.stringify(await page.evaluate(()=>({trace:sheetTouchTrace,viewport:{scale:visualViewport.scale,top:visualViewport.offsetTop},handle:document.querySelector('#explore-panel>.sheet-handle').getBoundingClientRect().toJSON()})),null,2));
         assert.equal(await page.locator('#explore-panel').getAttribute('data-snap'),'half','Top edge pull hands off to sheet');
         }else{
           // WebKit's public automation API has no native touch-drag injection.
@@ -251,6 +246,16 @@ try{
       await page.locator('#theme-toggle').click();await page.waitForTimeout(400);
       assert.notEqual(await page.locator('meta[name="theme-color"]').getAttribute('content'),beforeColor,'Browser chrome color follows the theme');
       await page.locator('#theme-toggle').click();await page.waitForTimeout(400);
+      if(mobile&&engine==='chrome'){
+        // Run the browser-owned pinch last: its compositor contacts must not
+        // overlap the subsequent single-finger CDP handoff scenarios.
+        await page.locator('.concept-tabs [data-page="map"]').click();await settle();await snap('expanded');
+        const pinch=await context.newCDPSession(page);
+        await pinch.send('Input.synthesizePinchGesture',{x:viewport.width/2,y:viewport.height*.5,scaleFactor:2,relativeSpeed:600,gestureSourceType:'touch'});
+        await page.waitForFunction(()=>visualViewport.scale>1.5);
+        assert.ok(await page.evaluate(()=>visualViewport.scale)>1.5,'Native touch pinch remains available inside sheet content');
+        await page.waitForTimeout(600);await pinch.detach();
+      }
       await context.close();
     }
   }
