@@ -152,3 +152,36 @@ checks Compare, county, Stats and Support at all three viewport sizes and themes
 Results and screenshots for this release are under
 `/tmp/usa-xray-mobile-states-20261024/`; the workspace release record retains the
 machine-readable evidence. Physical iPhone Safari remains unverified.
+
+## Approved Compare 01 and anchored map credit — 24 October 2026
+
+The owner selected the real-map Compare 01 in Paper and requested white names,
+chevrons and values, then explicitly authorized implementation and deployment.
+The complete native source is master Mobile `27Q2-1` / `1YJL-1`; selected working
+light frame `4UA7-0` in file `01M5N2NQYECYC38Y01TJWCBCAH`, page `p-19-0`.
+Source-to-working mappings and exact owner decisions are retained in the workspace
+`ops/mobile-states-20261024/paper/` evidence.
+
+Mobile Compare now uses two equal, full map halves with names and values directly
+on the geography. Names use the master's 18px/22px type; values use 34px/42px,
+with a 24px variant for long original numeric strings. No data rounding or
+substitution is introduced. Source/legend rows are removed from this compact
+composition; the percentage buttons still open the existing statistics sheet.
+The top shared selector, map gestures, place selection, both comparison modes,
+2D/3D controls and global navigation remain available.
+
+There is exactly one OpenStreetMap copyright link. On mobile it belongs directly
+to `body`, outside translated/clipped sheets, at a fixed offset below the top
+controls. Its 8px/12px type and 2px/5px padding do not change with snapping,
+scrolling, page layout or available-height changes. On desktop it lives inside
+the existing indicator/source frame after the Source & method button. Re-renders
+and breakpoint transitions retain the same link node; overlay states use the
+existing floating desktop credit when the source frame is hidden. Other desktop
+layout and navigation retain the prior design.
+
+`ux/check-compare-layout.mjs` verifies both map views, equal halves, white labels,
+uncut values, source-frame placement, unique-node preservation, statistics access
+and desktop/mobile breakpoint transitions. All checks still use isolated feedback
+and screenshots under `/tmp`; physical iPhone Safari remains a separate check.
+
+Desktop Compare now groups each place, indicator and observation in one compact card, 28px above the map edge. The observation shares the indicator row; the smaller colour key and statistical source follow below. The separate Compare data trigger is removed. Place, indicator, observation/statistics and source interactions retain their existing handlers. Desktop navigation and Explorer layout are unchanged.

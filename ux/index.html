@@ -32,19 +32,24 @@
     <div id="maps" class="maps">
       <section class="map-pane" id="pane-a" aria-label="Primary map">
         <div id="map-a" class="map-host"></div>
-        <div class="pane-heading" id="heading-a"></div>
         <nav id="breadcrumbs" aria-label="Geographic location"></nav>
         <div class="map-intro" id="map-intro"><h1>Every place<br>has a story.</h1><p>Choose a state. See what changes.</p></div>
+        <div class="compare-map-card">
+        <div class="pane-heading" id="heading-a"></div>
         <button class="map-summary" id="summary-a" data-statistics="a" aria-expanded="false"></button>
         <div class="pane-footer" id="footer-a"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="a" aria-label="Open statistical source, coverage and method"></button></div>
+        </div>
       </section>
       <section class="map-pane" id="pane-b" aria-label="Comparison map" hidden>
-        <div id="map-b" class="map-host"></div><div class="pane-heading" id="heading-b"></div>
+        <div id="map-b" class="map-host"></div>
+        <div class="compare-map-card">
+        <div class="pane-heading" id="heading-b"></div>
         <button class="map-summary" id="summary-b" data-statistics="b" aria-expanded="false"></button>
         <div class="pane-footer" id="footer-b"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="b" aria-label="Open statistical source, coverage and method"></button></div>
+        </div>
       </section>
     </div>
-    <div class="map-actions"><button id="stories-open" hidden aria-expanded="false">Browse stories <span aria-hidden="true">↗</span></button><button id="compare-data-open" hidden aria-expanded="false">Compare data <span aria-hidden="true">↑</span></button></div>
+    <div class="map-actions"><button id="stories-open" hidden aria-expanded="false">Browse stories <span aria-hidden="true">↗</span></button></div>
     <div id="region-jumps" class="region-jumps"><button data-jump="02">Alaska</button><button data-jump="15">Hawaii</button></div>
     <span id="map-hint" class="map-hint"></span>
   </section>

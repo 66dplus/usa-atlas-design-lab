@@ -18,6 +18,7 @@ try {
     page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     async function settle() {
       await page.waitForFunction(()=>document.body.dataset.atlasStatus==='ready',null,{timeout:45000});
+      await page.waitForFunction(()=>!['map','compare'].includes(document.body.dataset.page)||document.body.dataset.concept===(document.body.dataset.page==='compare'?'compare':'explorer'));
       await page.waitForFunction(()=>![...document.querySelectorAll('.map-host')].some(e=>['focusing','restoring'].includes(e.dataset.phase)));
       await page.waitForTimeout(400);
     }
@@ -51,7 +52,8 @@ try {
         assert.ok(data.nav.slice(1).every(e=>e.radius==='28px'),`${name}: mobile menu items retain their rounded shape`);
       }
       if(mobile&&['map','compare'].includes(data.page)) {
-        assert.deepEqual(data.attribution.style,{fontSize:'10px',lineHeight:'14px',padding:'3px 7px',borderRadius:'4px',opacity:'1',position:'fixed'},`${name}: stable attribution treatment`);
+        assert.deepEqual(data.attribution.style,{fontSize:'8px',lineHeight:'12px',padding:'2px 5px',borderRadius:'3px',opacity:'1',position:'fixed'},`${name}: stable attribution treatment`);
+        assert.equal(data.attribution.rect.top,56,`${name}: attribution stays below the top controls`);
         assert.equal(data.attribution.visible,true,`${name}: attribution visible`);
         assert.equal(data.attribution.hit,true,`${name}: attribution link reachable`);
         assert.equal(data.attribution.href,'https://www.openstreetmap.org/copyright');

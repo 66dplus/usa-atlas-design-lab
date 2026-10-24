@@ -16,6 +16,7 @@ const results=[];
 let page,context,errors;
 const settle=async()=>{
   await page.waitForFunction(()=>document.body.dataset.atlasStatus==='ready',null,{timeout:45000});
+  await page.waitForFunction(()=>!['map','compare'].includes(document.body.dataset.page)||document.body.dataset.concept===(document.body.dataset.page==='compare'?'compare':'explorer'));
   await page.waitForFunction(()=>![...document.querySelectorAll('.map-host')].some(n=>['focusing','restoring'].includes(n.dataset.phase)||n.dataset.terrainStatus==='building'),null,{timeout:15000});
   await page.waitForFunction(()=>![...document.querySelectorAll('.geo-svg')].some(e=>d3.active(e))&&!document.querySelector('#maps').getAnimations({subtree:true}).some(a=>a.playState==='running'&&a.effect.getTiming().iterations!==Infinity));
   await page.waitForTimeout(350);
