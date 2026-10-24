@@ -127,3 +127,28 @@ from 158.9 ms median to under 0.1 ms for repeated updates; this is not an FPS cl
 Terrain readiness includes all 51 state meshes; mode interruption invalidates
 incomplete work and reentry rebuilds it. Comparison entrance is clipped to its
 viewport so animated pane translation cannot introduce document overflow.
+
+## Owner panel-state fixes — 24 October 2026
+
+The mobile web navigation keeps square outer edges and the existing rounded items
+and active selection. Desktop design is unchanged. A dedicated pixel comparison
+against `18f0770` confirms identical desktop Map, Compare, Stats and Support pages
+in both themes.
+
+Mobile attribution has one compact 10px/14px treatment and a fixed slot below the
+four top controls, including Search and indicator drawers. Compare reserves that
+same slot and reclaims its former empty footer space. Attribution retains its
+OpenStreetMap copyright link and never covers a primary control or value.
+
+Removed legacy expanded-sheet rules that hid Search and dimension controls,
+translated Support, moved Support/Info to 50px, hid the map behind a partly open
+sheet, and added a second 20px inset to the expanded indicator picker. The shared
+sheet content remains the only padding owner. No Safari toolbar styling or
+viewport emulation is introduced.
+
+`ux/check-mobile-states.mjs` exercises computed font/padding/position and hit tests
+through snap transitions, scrolling, focus and available-height changes, then
+checks Compare, county, Stats and Support at all three viewport sizes and themes.
+Results and screenshots for this release are under
+`/tmp/usa-xray-mobile-states-20261024/`; the workspace release record retains the
+machine-readable evidence. Physical iPhone Safari remains unverified.
