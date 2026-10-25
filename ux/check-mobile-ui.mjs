@@ -81,9 +81,9 @@ async function touchDrag(x,y,delta,steps=15){
   await page.waitForTimeout(400);await cdp.detach();
 }
 try{
-  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900}].filter(v=>!process.env.ATLAS_TEST_WIDTH||v.width===Number(process.env.ATLAS_TEST_WIDTH))){
+  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900},{width:1440,height:640}].filter(v=>!process.env.ATLAS_TEST_WIDTH||v.width===Number(process.env.ATLAS_TEST_WIDTH))){
     for(const theme of ['light','dark'].filter(t=>!process.env.ATLAS_TEST_THEME||t===process.env.ATLAS_TEST_THEME)){
-      const mobile=viewport.width<=760,key=`after-${viewport.width}-${theme}`;
+      const mobile=viewport.width<=760,key=`after-${viewport.width}x${viewport.height}-${theme}`;
       context=await browser.newContext({viewport,isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});
       page=await context.newPage();errors=[];
       page.on('pageerror',error=>errors.push(error.message));

@@ -1,0 +1,229 @@
+{
+  "format": "usa_atlas_geography_contract",
+  "version": 1,
+  "geographyVintage": 2017,
+  "boundarySource": "https://tigerweb.geo.census.gov/arcgis/rest/services/Generalized_ACS2017/State_County/MapServer/5",
+  "boundaryScale": "1:500,000",
+  "canonicalIds": {
+    "state": "two digit Census FIPS",
+    "county": "five digit Census FIPS"
+  },
+  "vendor": {
+    "package": "us-atlas",
+    "version": "3.0.1",
+    "path": "node_modules/us-atlas/counties-10m.json",
+    "sha256": "145aaf5d1433352a6a1d8e86b5f149c7c653f9171baf14aaf75ee66575def1b0"
+  },
+  "countyBoundaryRepair": {
+    "path": "ux/county-boundary-repair.json",
+    "sha256": "227dd81c5167a89c16445674aaa35c0c217f19847f37ce70b8e230501adb7bc4"
+  },
+  "stateBoundaryFiles": {
+    "01": {
+      "path": "ux/boundaries/01.json",
+      "sha256": "db57d4047357abf9ddf39678b8d0a81876f932e5d712f14c665808563c9ed19b"
+    },
+    "02": {
+      "path": "ux/boundaries/02.json",
+      "sha256": "9dd9632a0544e73ddba11cd3971b24ccf1041e4e5536c4079ff6402e4282bdf8"
+    },
+    "04": {
+      "path": "ux/boundaries/04.json",
+      "sha256": "34b1f416f6fb510658bc69e95c333a1be024be0267991758bb1de18fb3bef3d8"
+    },
+    "05": {
+      "path": "ux/boundaries/05.json",
+      "sha256": "8c0280722c0939f7425fae1a03486bf24535d8bbea694cdd5526966563b7f9ee"
+    },
+    "06": {
+      "path": "ux/boundaries/06.json",
+      "sha256": "e7229bf2a7c864e31eb25169998f01eecea91736aa4a71b59083c60d64d07ca6"
+    },
+    "08": {
+      "path": "ux/boundaries/08.json",
+      "sha256": "a7c98833aca0b060115f56d7e83528561775f3f07f1165b36a8d04d3a20188a0"
+    },
+    "09": {
+      "path": "ux/boundaries/09.json",
+      "sha256": "131c0dad6c295ae3e42ac32cecd3b8856987766ef5c0c9865b77ee10da295680"
+    },
+    "10": {
+      "path": "ux/boundaries/10.json",
+      "sha256": "642b35ec830bf4cfc46ee2e2cb28b45dac7e6dd22eda5cfc2a859c17fd4f6e5d"
+    },
+    "11": {
+      "path": "ux/boundaries/11.json",
+      "sha256": "3f7d0b24c29981417551531a28c170afd3c46200c377448a4a1a59e9fef0b2a6"
+    },
+    "12": {
+      "path": "ux/boundaries/12.json",
+      "sha256": "7627be1d2f253023e81b03d9d9ab926b29edfcfe398a6362d8d42633876d8cb4"
+    },
+    "13": {
+      "path": "ux/boundaries/13.json",
+      "sha256": "552b30cc2bce3d1f106bdf0eb21d6e1b1ace71f913532a3361b2aef359d92fee"
+    },
+    "15": {
+      "path": "ux/boundaries/15.json",
+      "sha256": "69b0b942e53c4ac682f10d870913341db5dfb766ce9d2afbdb8c0a6f3476c981"
+    },
+    "16": {
+      "path": "ux/boundaries/16.json",
+      "sha256": "c0989256c02916757387136987ee86da600ccf85f25a348812cca2d8f446e412"
+    },
+    "17": {
+      "path": "ux/boundaries/17.json",
+      "sha256": "17e7b8b25074bf9ebcdb1ded8777fd43157adaf8663ce156d409b0d7e1e8a2b2"
+    },
+    "18": {
+      "path": "ux/boundaries/18.json",
+      "sha256": "1451221920f41e192d19f55f5dae10b06f4a69eda0c554837c2ea8d0ff74b416"
+    },
+    "19": {
+      "path": "ux/boundaries/19.json",
+      "sha256": "caa218db91377260afdb921676fd4eaa37391dc79e9a816ac94843fe0153f092"
+    },
+    "20": {
+      "path": "ux/boundaries/20.json",
+      "sha256": "4e83ab6a2bca19f06724ac6739659ee4b54b5f4eb756e17808280a2a74404a67"
+    },
+    "21": {
+      "path": "ux/boundaries/21.json",
+      "sha256": "f1836af7c9d549df5a811a2b6e72b087e71b5fe8d1c4ecdb374c910bd926cea6"
+    },
+    "22": {
+      "path": "ux/boundaries/22.json",
+      "sha256": "8a2ce9e2430fd1852b4d266b85e8335defe0bced2ca0f8349a0048f1b16ba16a"
+    },
+    "23": {
+      "path": "ux/boundaries/23.json",
+      "sha256": "aa5becf2e9230279e6f80f880a0a0e6e9945f9d38772ffe22ae7a4d2429f726f"
+    },
+    "24": {
+      "path": "ux/boundaries/24.json",
+      "sha256": "25769fab2099a230eefced05d6eb8b4d804df3d502f0da0b8a82745726350e9a"
+    },
+    "25": {
+      "path": "ux/boundaries/25.json",
+      "sha256": "eb3fad37f6b64e1c665e6a14bb121e632d75e711c0c4eee9185eb0688f62784d"
+    },
+    "26": {
+      "path": "ux/boundaries/26.json",
+      "sha256": "cb9ffc44e02647ce416f288def22e88d7cc580666ffe95ed112dd13a896e4b5e"
+    },
+    "27": {
+      "path": "ux/boundaries/27.json",
+      "sha256": "2ff9130f54eaabfe04d9c514a95e652a8c07b63e8e791fef693efff04f6cdd95"
+    },
+    "28": {
+      "path": "ux/boundaries/28.json",
+      "sha256": "7c2b19acd72c10a5bf7130bc70e317d5dabaedf9f289146e5f89bb5565b54291"
+    },
+    "29": {
+      "path": "ux/boundaries/29.json",
+      "sha256": "16196d6b0906284ec584d88119393bd59444f46f183e95bdba12b38c90ff3bce"
+    },
+    "30": {
+      "path": "ux/boundaries/30.json",
+      "sha256": "6ea8f41fbb5f0bc3743fd3353a15eba188baacef76b0503df00cbec8be8941e5"
+    },
+    "31": {
+      "path": "ux/boundaries/31.json",
+      "sha256": "80849ac65a972c7848a5d34cd5f1d65c5a73d2ccb016f658b0f265da074e5e85"
+    },
+    "32": {
+      "path": "ux/boundaries/32.json",
+      "sha256": "a0242c9b405e90103133c4c51ea6e14a8fd47a1dc50bfca03c6e7268cccbe1cf"
+    },
+    "33": {
+      "path": "ux/boundaries/33.json",
+      "sha256": "2a48565ef00981c9c64bfe2d0353a0f6bca5f30bdbb0d69eb88eda57f24ee9d4"
+    },
+    "34": {
+      "path": "ux/boundaries/34.json",
+      "sha256": "1cad998b7ea8bf714a84b0f253dffdb345b6befabb054a846059b3b63693354c"
+    },
+    "35": {
+      "path": "ux/boundaries/35.json",
+      "sha256": "a078c6e8e9730b616bc245a39d98112929f8cc95eb405817ef23ac73054564a0"
+    },
+    "36": {
+      "path": "ux/boundaries/36.json",
+      "sha256": "8ef1aa30ff2db64e899b58a7fca2a0f618b72dced777735831b47c5530199fb8"
+    },
+    "37": {
+      "path": "ux/boundaries/37.json",
+      "sha256": "0635f9132c67ee4731b16ccab5b551c3c8af8ceee2ce4c0a248f8dd5070724ce"
+    },
+    "38": {
+      "path": "ux/boundaries/38.json",
+      "sha256": "93af975b5ee5602b12f0f5394657e2bf46f7a51a20a1fe24e81a5a0a86f458db"
+    },
+    "39": {
+      "path": "ux/boundaries/39.json",
+      "sha256": "20e1e6e8cb43e1e4f48b76c8387940d86415455c96fe27a37cef08b87392942c"
+    },
+    "40": {
+      "path": "ux/boundaries/40.json",
+      "sha256": "343c02aa4e3fdd3936045bb1cf6afc08f6040a73781b222f47d0d004e1be5915"
+    },
+    "41": {
+      "path": "ux/boundaries/41.json",
+      "sha256": "9fd21ca4ff15c052c7904951299ecf42e74243d916180c7f1a51c0cc2ce51bb1"
+    },
+    "42": {
+      "path": "ux/boundaries/42.json",
+      "sha256": "9286d786045578469ec6105f4b2cd2a6b738f13a455979453aad5e3f744445fe"
+    },
+    "44": {
+      "path": "ux/boundaries/44.json",
+      "sha256": "96ca607c7c3500fb3eccef1ce32aba79c9acfcd5585e44321453fafeeb6f3d6f"
+    },
+    "45": {
+      "path": "ux/boundaries/45.json",
+      "sha256": "e4c3e971be6e929cec573c809c036b289e65918f970547c597224613864cf5fc"
+    },
+    "46": {
+      "path": "ux/boundaries/46.json",
+      "sha256": "6d30347ea78d3c2bde6217268ce83d1c365a4f10967c59fcc411ab25a24aa24c"
+    },
+    "47": {
+      "path": "ux/boundaries/47.json",
+      "sha256": "03676f0ca82aba8208945e8e84066149e6c2b9d7a0292ec4299866f18fb75495"
+    },
+    "48": {
+      "path": "ux/boundaries/48.json",
+      "sha256": "c69a17015db2831b3b8615a4bf297274993eb3bff9f8e8a9a42b63598a31a3fe"
+    },
+    "49": {
+      "path": "ux/boundaries/49.json",
+      "sha256": "44674666006c30788083ff694e897d57c95a8c834d39cbc7f3e97c62e3009fd2"
+    },
+    "50": {
+      "path": "ux/boundaries/50.json",
+      "sha256": "58542dc54adc5f1b53aaeba4d7af951b64d579b0fcb7aae78d1f8cf1fd6c720e"
+    },
+    "51": {
+      "path": "ux/boundaries/51.json",
+      "sha256": "c862b131dc61b5b058743eb9391b95407039a3ddd164ba1cf7c27724587ebac6"
+    },
+    "53": {
+      "path": "ux/boundaries/53.json",
+      "sha256": "71e98adf929295544f3148f2ad02f86379290f823ac7e3a14f046b9cfd412e89"
+    },
+    "54": {
+      "path": "ux/boundaries/54.json",
+      "sha256": "b4957dc549a8de0af5f3dd10725c909265e0f06ba0944e3414701494c1a548b9"
+    },
+    "55": {
+      "path": "ux/boundaries/55.json",
+      "sha256": "0ac12a3cc4d08dc89fa517517480da27f018cfb564ceb208f95bcc3e3d9dc7f5"
+    },
+    "56": {
+      "path": "ux/boundaries/56.json",
+      "sha256": "c608c0500a9aaff4292b477ad53587c1bdd6a16f09687aef7d2ea0d39ee37ddc"
+    }
+  },
+  "boundaryManifestSha256": "04ef9444c133dd3f9f60caec1a791af4b6b73806e7affa07ec23b131ad7d4833",
+  "scope": "geographic display and exact FIPS matching; no data completeness or aggregation claim"
+}

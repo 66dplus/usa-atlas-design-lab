@@ -2,7 +2,7 @@
   "schema": 1,
   "acceptancePolicy": {
     "suiteIdentity": "usa-atlas-application-acceptance-v1",
-    "sha256": "3c62dbb95e0e84b5ea339ffc240326f5533b72e4c4e96b192f5cfd545628210a",
+    "sha256": "f7b9c38c8f4b9159081f20abc169bcfdc5235bdfdd6759d2941805d9c1ef5c8b",
     "mandatoryCheckIDs": [
       "application.staged-build-identity",
       "application.staged-runtime-api",

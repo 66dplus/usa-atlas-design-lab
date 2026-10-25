@@ -22,8 +22,21 @@ from view_settings import read_settings, save_settings
 import atlas_data
 import advertising
 import analytics_config
+from seo_render import articles, geography, metric_labels, redirect_target, render_route
 
 MAX_BODY = 16 * 1024 * 1024
+_SEO_CATALOG = None
+
+
+def seo_catalog():
+    global _SEO_CATALOG
+    if _SEO_CATALOG is not None:
+        return _SEO_CATALOG
+    try:
+        _SEO_CATALOG = atlas_data.catalog()
+    except atlas_data.DatabaseUnavailable:
+        return None
+    return _SEO_CATALOG
 
 
 def invalid_constant(value):
@@ -174,9 +187,54 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
+    def seo_route(self):
+        path = urlsplit(self.path).path
+        if path not in ('/ux', '/ux/', '/ux/index.html') and not re.fullmatch(
+                r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})',
+                path.rstrip('/') or '/'):
+            return False
+        topology = ROOT / 'node_modules/us-atlas/counties-10m.json'
+        definitions = ROOT / 'ux/metric-definitions.json'
+        journal = ROOT / 'ux/journal.js'
+        geo, metrics, article_data = geography(str(topology)), metric_labels(str(definitions)), articles(str(journal))
+        target = redirect_target(self.path, geo, metrics, article_data)
+        if target:
+            self.send_response(301)
+            self.send_header('Location', target)
+            self.send_header('Cache-Control', 'public, max-age=86400')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return True
+        index = ROOT / 'ux/index.html'
+        template = index.read_bytes()
+        status, body = render_route(template, self.path, topology, definitions, journal)
+        if status == 404:
+            catalog = seo_catalog()
+            if catalog:
+                target = redirect_target(self.path, geo, metrics, article_data, catalog)
+                if target:
+                    self.send_response(301)
+                    self.send_header('Location', target)
+                    self.send_header('Cache-Control', 'public, max-age=86400')
+                    self.send_header('Content-Length', '0')
+                    self.end_headers()
+                    return True
+                status, body = render_route(template, self.path, topology, definitions, journal, catalog)
+        self.send_response(status)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.end_headers()
+        if self.command != 'HEAD':
+            self.wfile.write(body)
+        return True
+
     def do_GET(self):
         if not self.allowed_host():
             return self.respond(403, {'error': 'Loopback Host required'})
+        if self.seo_route():
+            return
         path = urlsplit(self.path).path
         if path == '/api/analytics/config':
             try:
@@ -231,6 +289,10 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if path.startswith('/api/'):
             return self.respond(404, {'error': 'Unknown endpoint'})
+        route_path=path.rstrip('/')
+        if re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})',route_path):
+            query=urlsplit(self.path).query
+            self.path='/ux/index.html'+('?' + query if query else '')
         # Local edits can have an earlier mtime than a previously cached checkout.
         # Always deliver the current UI, including after a data-model replacement.
         if 'If-Modified-Since' in self.headers:
@@ -241,9 +303,14 @@ class Handler(SimpleHTTPRequestHandler):
         if not self.allowed_host():
             self.send_error(403, 'Loopback Host required')
             return
+        if self.seo_route():
+            return
         if urlsplit(self.path).path.startswith('/api/'):
             self.send_error(405, 'Use GET for feedback')
             return
+        route_path=urlsplit(self.path).path.rstrip('/')
+        if re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})',route_path):
+            self.path='/ux/index.html'
         super().do_HEAD()
 
     def do_POST(self):

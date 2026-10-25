@@ -144,9 +144,13 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 pass  # No persistence or retry is implied by a disconnected read.
 
     def do_GET(self):
-        if len(self.path) > 2048 or self.headers.get('Host') != '127.0.0.1:4429':
+        if len(self.path) > 2048 or self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
             return self.reply(400, {'error': 'Invalid request'})
         path = urlsplit(self.path).path
+        app_route = path in ('/', '/ux', '/ux/', '/ux/index.html') or re.fullmatch(
+            r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})', path)
+        if not app_route:
+            return self.serve_asset(path)
         if path == '/':
             return self.reply(301, b'', extra={'Location': '/united-states/unemployment'},
                               cache_control='public, max-age=86400')
@@ -172,7 +176,10 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 return self.reply(404, {'error': 'Legacy atlas URL could not be resolved'})
         except KeyError:
             return self.reply(503, {'error': 'The route index is unavailable'}, extra={'Retry-After': '2'})
-        app_route = re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})', path)
+        return self.serve_asset(path, app_route=True, topology=topology,
+                                definitions=definitions, journal=journal)
+
+    def serve_asset(self, path, app_route=False, topology=None, definitions=None, journal=None):
         try:
             if path == '/api/atlas/catalog':
                 return self.reply(200, self.server.cache.get('catalog', atlas_data.catalog))
@@ -251,9 +258,20 @@ def load_assets(root=ROOT):
 
 
 if __name__ == '__main__':
-    os.environ['PGPASSWORD'] = Path('/run/secrets/reader_password').read_text().strip()
-    # Only this isolated container listens on all interfaces. Its host binding is
-    # loopback-only; cloudflared supplies the fixed origin Host header above.
-    server = PreviewServer(('0.0.0.0', 4429), load_assets())
-    print('Temporary read-only Atlas preview listening', flush=True)
-    server.serve_forever()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--host', default='0.0.0.0')
+    parser.add_argument('--port', type=int, default=4429)
+    parser.add_argument('--secret-file', type=Path, default=Path('/run/secrets/reader_password'))
+    args = parser.parse_args()
+    if (os.environ.get('ATLAS_DISABLE_SECRET_FILE') != '1' and
+            not os.environ.get('PGPASSWORD') and args.secret_file.is_file()):
+        os.environ['PGPASSWORD'] = args.secret_file.read_text().strip()
+    server = PreviewServer((args.host, args.port), load_assets())
+    print(f'Temporary read-only Atlas preview listening on {args.host}:{server.server_port}', flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()

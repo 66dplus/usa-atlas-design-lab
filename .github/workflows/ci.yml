@@ -7,6 +7,28 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: atlas
+      PGPASSWORD: atlas
+      PGDATABASE: usa_atlas
+      REQUIRE_POSTGRES: '1'
+      ATLAS_CI_READER_PASSWORD: atlas-ci-only-reader
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas
+          POSTGRES_DB: usa_atlas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U atlas -d usa_atlas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,15 +39,18 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci --ignore-scripts
-      - run: npm run check
-      - run: node ux/check-flat-map.mjs
-      - run: node ux/check-geometry.mjs
-      - run: node ux/check-detail.mjs
-      - run: node ux/check-motion.mjs
-      - run: node ux/check-data.mjs
-      - run: node ux/check-place-sheet.mjs
-      - run: node ux/check-support-data.mjs
-      - run: node ux/check-source-metadata.mjs
-      - run: node ux/check-icons.mjs
-      - run: node ux/check-runtime.mjs
+      - run: npx playwright install --with-deps chrome
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y postgresql-client
+      - run: python3 scripts/prepare_ci_database.py
+      - run: python3 scripts/check_reader_contract.py --require-postgres
+      - run: python3 scripts/check_geography_contract.py
+      - run: npm run check:seo
+      - run: npm run check:source
+      - run: python3 scripts/build_temporary_preview.py /tmp/usa-atlas-ci-package --release ci-${{ github.sha }} --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000
+      - name: Run required Chrome regressions against the packaged runtime
+        env:
+          PGUSER: atlas_reader
+          PGPASSWORD: atlas-ci-only-reader
+        run: python3 scripts/run_ci_browser.py /tmp/usa-atlas-ci-package
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'

@@ -1,0 +1,24 @@
+{
+  "format": "usa_atlas_reader_lock",
+  "version": 1,
+  "producerRepository": "usa-atlas-data-collection",
+  "sourceCommit": "b405bfdf473614beea49dd5126a843a916168f7d",
+  "producerTag": "reader-contract-v1.0.0",
+  "contractVersion": "1.0.0",
+  "artifactPath": "database/reader/v1",
+  "localArtifactPath": "contracts/reader/v1",
+  "prodArtifactPath": "database/reader/v1",
+  "contractSha256": "7b9910816ac5608cbb8c1c90d2bbef45cc464e80d3c13aed92b7a2d62dd7600b",
+  "schemaFingerprint": "91c807fa18d4ee39f4b89526bf7566cb1e47de31908521d887b68f8c48f4b811",
+  "bootstrapSha256": "265ce38b27279fd6b9887ef9c5375ca0891bd59b50e8a43d45bbf39e9f405ec4",
+  "fixtureSha256": "ab042a955ed23f702291835905c0f52f91a3bf240123881211dcfcf9ecb31ae7",
+  "artifacts": {
+    "contract.json": "7b9910816ac5608cbb8c1c90d2bbef45cc464e80d3c13aed92b7a2d62dd7600b",
+    "schema.sql": "265ce38b27279fd6b9887ef9c5375ca0891bd59b50e8a43d45bbf39e9f405ec4",
+    "fixtures/reader-fixture.sql": "ab042a955ed23f702291835905c0f52f91a3bf240123881211dcfcf9ecb31ae7",
+    "fixtures/reader-query.sql": "bb910b7ab9afe889c35a04ff214fa6e4f0e1e6b4dad1203819022a2b9d325710"
+  },
+  "readOnly": true,
+  "admissionFilter": "usa_atlas.ingest_run.status = 'pass'",
+  "coverageClaim": "none; contract does not assert completeness"
+}

@@ -85,7 +85,7 @@ class FakeBackend:
     def activate(self, stage, prior):
         self.live = {'containerId': stage['containerId'], 'name': 'primary', 'imageId': stage['imageId'],
                      'buildSha256': stage['buildSha256'] if 'buildSha256' in stage else self.stage_state['buildSha256'],
-                     'mounts': [], 'readOnlyRoot': True, 'user': '10001:10001', 'sourceCommit':'a'*40, 'state': 'running'}
+                     'mounts': [], 'readOnlyRoot': True, 'user': '10001:10001', 'sourceCommit':'a'*40, 'release':'r1', 'state': 'running'}
         if self.fail_after_switch:
             raise RuntimeError('injected activation failure')
         return dict(self.live)
@@ -159,13 +159,15 @@ class WorkflowTests(unittest.TestCase):
 
     def receipt(self, operation, image='sha256:image', build=None, release='r1', started=None, source='a'*40):
         from scripts.release_workflow import contract_identity
+        runtime_release = 'base' if operation == 'rollback' else release
         checks = {'stagedBuildIdentity': {'runtimeBuildSha256':build or self.target_sha,
-                    'releaseId':release,'sourceCommit':source},
+                    'releaseId':runtime_release,'sourceCommit':source},
                   'stagedRuntimeApi': {'exitCode':0}}
         checks.update({check: {'exitCode':0} for check in self.coordinator.mandatory_checks
                        if check not in ('application.staged-build-identity','application.staged-runtime-api')})
         return {'format':'usa_atlas_release_acceptance','status':'pass','failures':[],
             'checks':checks,'releaseId':release,'operation':operation,
+            'runtimeReleaseId':runtime_release,
             'testedImageDigest':image,'buildSha256':build or self.target_sha,
             'sourceCommit':source, 'suiteIdentity':'usa-atlas-application-acceptance-v1',
             **contract_identity(self.lock), 'mandatorySuccessfulCheckIDs':['application.staged-build-identity','application.staged-runtime-api','application.reader-contract','application.geography-contract','application.seo-static','application.source-checks','application.chrome-regressions'],
@@ -311,7 +313,9 @@ class WorkflowTests(unittest.TestCase):
         self.stage()
         self.coordinator.activate('r1', self.receipt('activate'))
         current=self.backend.live_identity()
-        receipt=self.receipt('rollback', image='sha256:base', build=self.baseline_sha, source='b'*40)
+        receipt=self.receipt('rollback', image='sha256:base', build=self.baseline_sha, release='r1', source='b'*40)
+        with self.assertRaisesRegex(ReleaseError, 'not bound to the current operation baseline'):
+            self.coordinator.rollback('r1', current, receipt)
         receipt['operationBaselineContainerId']=current['containerId']
         receipt['operationBaselineBuildSha256']=current['buildSha256']
         self.coordinator.rollback('r1', current, receipt)

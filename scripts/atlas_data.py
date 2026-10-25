@@ -33,11 +33,11 @@ class DatabaseUnavailable(RuntimeError):
     pass
 
 
-def query(sql, variables=None, *, statement_timeout_ms=8000):
+def query(sql, variables=None, *, statement_timeout_ms=8000, database='usa_atlas'):
     env = {**os.environ, 'PGCONNECT_TIMEOUT': '3',
            'PGAPPNAME': 'usa_atlas_ui',
            'PGOPTIONS': f'-c default_transaction_read_only=on -c statement_timeout={statement_timeout_ms}'}
-    args = ['psql', '-X', '-w', '-qAt', '--dbname', 'usa_atlas', '--set', 'ON_ERROR_STOP=1']
+    args = ['psql', '-X', '-w', '-qAt', '--dbname', database, '--set', 'ON_ERROR_STOP=1']
     for name, value in (variables or {}).items():
         args.extend(['--set', f'{name}={value}'])
     try:

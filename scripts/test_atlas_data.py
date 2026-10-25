@@ -19,6 +19,8 @@ class AtlasDataIntegration(unittest.TestCase):
         try:
             atlas_data.query('SELECT 1')
         except atlas_data.DatabaseUnavailable as error:
+            if os.environ.get('REQUIRE_POSTGRES') == '1':
+                raise AssertionError('Required PostgreSQL integration database unavailable: %s' % error) from error
             raise unittest.SkipTest('PostgreSQL usa_atlas is unavailable; integration checks skipped: %s' % error)
         cls.temp = tempfile.TemporaryDirectory(prefix='atlas-data-http-')
         cls.server = create_server(0, Path(cls.temp.name))

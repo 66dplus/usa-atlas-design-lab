@@ -8,7 +8,12 @@
     "start": "python3 scripts/serve.py",
     "assets": "node scripts/build-assets.mjs",
     "check": "node scripts/check.mjs",
-    "start:analytics": "python3 scripts/run_analytics_atlas.py"
+    "check:source": "npm run check && node ux/check-flat-map.mjs && node ux/check-geometry.mjs && node ux/check-detail.mjs && node ux/check-motion.mjs && node ux/check-data.mjs && node ux/check-support-data.mjs && node ux/check-source-metadata.mjs && node ux/check-icons.mjs && node ux/check-runtime.mjs && node ux/check-label-cache.mjs",
+    "start:analytics": "python3 scripts/run_analytics_atlas.py",
+    "check:seo": "python3 scripts/check_seo.py && node ux/check-routes.mjs",
+    "check:reader": "python3 scripts/check_reader_contract.py && python3 -m unittest discover -s scripts -p 'test_reader_contract.py'",
+    "check:geography": "python3 scripts/check_geography_contract.py",
+    "check:acceptance": "python3 scripts/check_release_acceptance.py"
   },
   "dependencies": {
     "d3": "7.9.0",
@@ -19,6 +24,7 @@
     "world-atlas": "2.0.2"
   },
   "devDependencies": {
+    "playwright": "1.62.1",
     "sharp": "0.35.4"
   }
 }

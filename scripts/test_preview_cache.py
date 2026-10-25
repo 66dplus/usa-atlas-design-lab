@@ -30,7 +30,7 @@ class PreviewCacheTests(unittest.TestCase):
 
     def request(self, path, **headers):
         connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
-        connection.request('GET', path, headers={'Host': '127.0.0.1:4429', **headers})
+        connection.request('GET', path, headers={'Host': f'127.0.0.1:{self.server.server_port}', **headers})
         response = connection.getresponse()
         result = response.status, dict(response.getheaders()), response.read()
         connection.close()

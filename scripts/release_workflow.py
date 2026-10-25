@@ -326,17 +326,20 @@ def contract_identity(lock_path, vendored_artifact=None):
 
 def verify_receipt(receipt, lock_path, *, release_id, operation, image_digest, build_sha,
                    source_commit, started_at, suite_identity, mandatory_checks,
-                   vendored_artifact=None):
+                   vendored_artifact=None, runtime_release_id=None):
     if (not isinstance(receipt, dict) or receipt.get('format') != 'usa_atlas_release_acceptance' or
             receipt.get('status') != 'pass' or receipt.get('failures') != []):
         raise ReleaseError('current behavioral acceptance receipt is required')
     identity = contract_identity(lock_path, vendored_artifact)
+    runtime_release_id = runtime_release_id or release_id
     for key, expected in {'releaseId': release_id, 'operation': operation,
                           'testedImageDigest': image_digest, 'buildSha256': build_sha,
                           'sourceCommit': source_commit,
                           **identity}.items():
         if receipt.get(key) != expected:
             raise ReleaseError(f'acceptance receipt {key} mismatch')
+    if receipt.get('runtimeReleaseId') != (runtime_release_id or release_id):
+        raise ReleaseError('acceptance receipt runtimeReleaseId mismatch')
     checks = receipt.get('mandatorySuccessfulCheckIDs')
     if not isinstance(checks, list) or not checks or any(not isinstance(x, str) for x in checks) or len(checks) != len(set(checks)):
         raise ReleaseError('receipt must list mandatorySuccessfulCheckIDs')
@@ -350,7 +353,7 @@ def verify_receipt(receipt, lock_path, *, release_id, operation, image_digest, b
     staged_identity = evidence.get('stagedBuildIdentity')
     staged_api = evidence.get('stagedRuntimeApi')
     if (not isinstance(staged_identity, dict) or staged_identity.get('runtimeBuildSha256') != build_sha or
-            staged_identity.get('releaseId') != release_id or staged_identity.get('sourceCommit') != source_commit or
+            staged_identity.get('releaseId') != runtime_release_id or staged_identity.get('sourceCommit') != source_commit or
             not isinstance(staged_api, dict) or staged_api.get('exitCode') != 0):
         raise ReleaseError('staged build and runtime API checks lack successful evidence')
     for check_id in mandatory_checks:
@@ -775,15 +778,22 @@ class DockerBackend:
         except BaseException:
             self.remove_stage({'containerId': cid})
             raise
+        runtime_release_id = build.get('release')
+        if not isinstance(runtime_release_id, str) or not runtime_release_id:
+            self.remove_stage({'containerId': cid})
+            raise ReleaseError('archived rollback image has no runtime release identity')
         verified = {'containerId': obj['Id'], 'imageId': image_id, 'status': obj['State']['Status'],
-                    'releaseId': release_id, 'buildSha256': prior['buildSha256'],
+                    'releaseId': release_id, 'runtimeReleaseId': runtime_release_id,
+                    'buildSha256': prior['buildSha256'],
                     'sourceCommit': build.get('sourceCommit')}
         stage_identity = {'containerId': cid, 'imageId': image_id, 'releaseId': release_id,
+                          'runtimeReleaseId': runtime_release_id,
                           'operation': 'rollback', 'testedImageDigest': image_id,
                           'runtimeBuildSha256': prior['buildSha256'],
                           'buildSha256': prior['buildSha256'],
                           'sourceCommit': build.get('sourceCommit'), **reader_identity}
-        return {'releaseId': release_id, 'operation': 'rollback', 'containerId': cid,
+        return {'releaseId': release_id, 'operation': 'rollback', 'targetRelease': runtime_release_id,
+                'runtimeReleaseId': runtime_release_id, 'containerId': cid,
                 'name': name, 'stageUrl': f"http://{self.config['stageAddress']}:{self.config['port']}",
                 'testedImageDigest': image_id, 'imageDigest': image_id,
                 'buildSha256': prior['buildSha256'], 'runtimeBuildSha256': prior['buildSha256'],
@@ -1022,13 +1032,19 @@ class Coordinator:
                            source_commit=prior.get('sourceCommit'),
                            started_at=(datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat(),
                            suite_identity=self.suite_identity, mandatory_checks=self.mandatory_checks,
-                           vendored_artifact=self.contract_artifact.relative_to(self.contract_lock.parent.parent).as_posix())
+                           vendored_artifact=self.contract_artifact.relative_to(self.contract_lock.parent.parent).as_posix(),
+                           runtime_release_id=(stage_evidence or {}).get('targetRelease') or prior.get('release'))
             if current_baseline != live:
                 raise ReleaseError('current baseline changed during rollback preparation')
             if (receipt.get('operationBaselineContainerId') != current_baseline.get('containerId') or
                     receipt.get('operationBaselineBuildSha256') != current_baseline.get('buildSha256')):
                 raise ReleaseError('rollback receipt is not bound to the current operation baseline')
             if isinstance(self.backend, DockerBackend):
+                if (stage_evidence.get('targetRelease') != prior.get('release') or
+                        stage_evidence.get('runtimeReleaseId') != prior.get('release') or
+                        stage_evidence.get('sourceCommit') != prior.get('sourceCommit') or
+                        stage_evidence.get('buildSha256') != prior.get('buildSha256')):
+                    raise ReleaseError('rollback stage runtime identity differs from the archived operation target')
                 if (not isinstance(stage_evidence, dict) or stage_evidence.get('operation') != 'rollback' or
                         stage_evidence.get('releaseId') != release_id or
                         stage_evidence.get('testedImageDigest') != prior['imageId'] or
@@ -1064,6 +1080,12 @@ class Coordinator:
                 proof.get('schemaFingerprint') != contract_identity(self.contract_lock)['readerSchemaFingerprint'] or
                 any(proof.get(key) != value for key, value in expected.items())):
             raise ReleaseError('current reader schema proof is missing or bound to a different runtime/lock')
+        try:
+            checked = datetime.fromisoformat(proof['checkedAt'].replace('Z', '+00:00'))
+        except (KeyError, ValueError, TypeError, AttributeError) as error:
+            raise ReleaseError('current reader schema proof has no valid checkedAt timestamp') from error
+        if checked.tzinfo is None or checked > datetime.now(timezone.utc) or datetime.now(timezone.utc) - checked > timedelta(minutes=15):
+            raise ReleaseError('current reader schema proof is stale or from the future')
 
 
 def capture_snapshot(config, output):
