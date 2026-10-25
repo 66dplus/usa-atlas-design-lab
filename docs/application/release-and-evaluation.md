@@ -19,7 +19,7 @@ At the start of every implementation session:
 
 ## Luna Standard review route
 
-Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, with Fast and Ultrafast off. Use the bundled CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex` (version `0.163.0-alpha.11.2`); do not use the older `codex` from `PATH`. Example: `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex exec -m gpt-6-luna -c service_tier='"default"' --disable fast_mode --disable ultrafast_mode --cd /path/to/usa-atlas-design-lab "Implement the assigned task; preserve existing global configuration."` These per-invocation options select the required model and service tier and disable Fast and Ultrafast without changing the global configuration. The user primary does not implement application changes; the parent performs primary review, required tests, and integration. An authorized parent integrator may perform requested Git/release/SSH operations through established secure credential loading. Production release remains controlled by the unified workflow.
+Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, with Fast and Ultrafast off. Use the bundled CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex` (version `0.163.0-alpha.11.2`); do not use the older `codex` from `PATH`. Example: `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex exec -m gpt-6-luna -c service_tier='"default"' --disable fast_mode --disable ultrafast_mode --cd /path/to/usa-atlas-design-lab "Implement the assigned task; preserve existing global configuration."` These per-invocation options select the required model and service tier and disable Fast and Ultrafast without changing the global configuration. The user primary does not author application implementation code; required code corrections are returned to Luna. The parent performs primary review, required tests, and integration. The parent may dispatch up to three independent workers in separate worktrees with explicit file ownership; workers do not recursively delegate. Sol verification uses `gpt-6-sol`, default service tier, with Fast and Ultrafast off. An authorized parent integrator may perform requested Git/release/SSH operations through established secure credential loading. Production release remains controlled by the unified workflow.
 
 ## E1–E11 evaluation plan
 
@@ -67,7 +67,7 @@ The `--stage-evidence` input is the immutable JSON record returned by the releas
 
 ## Current evaluation pointer
 
-The current release/evaluation status is maintained in [versioning-evaluation-20261026.md](versioning-evaluation-20261026.md). Runtime evaluation E1–E11 is **PASS**; documentation integration is being prepared for primary review and a protected PR. This approved file remains the plan and acceptance policy; its historic `NOT RUN` statement below is superseded by the canonical evaluation evidence.
+The current release/evaluation status is maintained in [versioning-evaluation-20261026.md](versioning-evaluation-20261026.md). Runtime evaluation E1–E11 is **PASS**. This approved file remains the plan and acceptance policy; its historic `NOT RUN` statement below is superseded by the canonical evaluation evidence. Documentation/test-only integration follows the protected PR process and is verifiable in GitHub history.
 
 ## Known limitations and pending work
 

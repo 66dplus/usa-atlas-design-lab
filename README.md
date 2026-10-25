@@ -122,10 +122,12 @@ also records the binding in `ux/build.json`:
 python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release-id>
 ~~~
 
-`ux/build.json` carries the `release` identifier, the `sourceBaseCommit` the build
-came from, and the SHA-256 of every shipped source and contract file. The live file
-is at `https://usa-xray.online/ux/build.json`, so the published site always names
-the commit it was built from. The canonical current release manifest and evaluation status are maintained in
+`ux/build.json` carries the exact `sourceCommit` the build was built from, the
+`sourceBaseCommit` compatibility field (equal to `sourceCommit` for new builds),
+the prior release/raw-build hash, the reader-lock record, and the SHA-256 of every
+shipped source and contract file. The live file is at
+`https://usa-xray.online/ux/build.json`; `sourceCommit` identifies the exact
+published source. The canonical current release manifest and evaluation status are maintained in
 [the application versioning evaluation](docs/application/versioning-evaluation-20261026.md).
 Runtime evaluation E1–E11 passed. The deployed source remains the immutable A
 release/tag at `ed8eefbe22c3befcf2b40d5e16fde0948e696772`; later documentation/test-only
