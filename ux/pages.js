@@ -1,16 +1,17 @@
 import {showSurface,slidePill,animateReplacement,isSurfaceOpen,reducedMotion} from './motion.js';
 import {indicatorIcon} from './icons.js';
-import {articleExists,articleView,journalView,featureView,features} from './journal-view.js';
+import {articleExists,articleMetadata,articleView,journalView,featureView,features,hasPublishedArticles} from './journal-view.js';
 const $=s=>document.querySelector(s);
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const empty=(title,copy)=>`<div class="empty-state"><h3>${title}</h3><p>${copy}</p></div>`;
-export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeography,openSearch,closePlaceSheet,closeOverlays,syncChrome,getConcept}) {
+export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeography,openSearch,closePlaceSheet,closeOverlays,syncChrome,getConcept,initialPage=null,initialArticle=null,syncURL=()=>{},beginHistory=()=>{},setSEO=()=>{}}) {
   const host=$('#reading-page'),cache=new Map(),scrolls=new Map();
   const returns=[];
-  let articleSlug=new URLSearchParams(location.search).get('article')||'mississippi',featureIndex=0;
+  let articleSlug=initialArticle||new URLSearchParams(location.search).get('article')||'mississippi',featureIndex=0;
   const preview=document.body.dataset.runtime==='preview';
   const pageKey=page=>page==='article'?'article:'+articleSlug:page;
-  let current=getConcept()==='compare'?'compare':'map',prior=current,contentPage,theme='light',sourceFocus,sourceFocusSelector,navigation=0,infoTab='about';
+  let current=initialPage|| (getConcept()==='compare'?'compare':'map'),prior=current,contentPage,theme='light',sourceFocus,sourceFocusSelector,navigation=0,infoTab='about';
+  document.body.dataset.page=current;
   try{theme=localStorage.getItem('usa-atlas-theme')==='dark'?'dark':'light';}catch{}
   const requestedTheme=new URLSearchParams(location.search).get('theme');if(['light','dark'].includes(requestedTheme))theme=requestedTheme;
   document.body.dataset.theme=theme;
@@ -41,6 +42,7 @@ export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeo
   const blog=()=>preview?journalView(theme):`<p class="page-eyebrow">THE JOURNAL</p><h1>Look closer. See the whole picture.</h1><p class="page-intro">Thoughtful stories about the numbers and places behind the map.</p>${empty('The journal is taking shape','There are no published articles yet. Editorial drafts remain private until approved for publication.')}<button class="primary-button" data-page="map">Explore the map →</button>`;
   const article=()=>preview&&articleExists(articleSlug)?articleView(articleSlug):`<button class="article-back" data-page="blog">← Blog</button><h1>Article unavailable</h1>${empty('No published article at this address','Return to the journal or explore the source observations on the map.')}<button class="outline-button" data-page="blog">Return to Blog</button>`;
   const markup={stats,info,support,blog,article};
+  document.body.classList.toggle('reading',Boolean(markup[current]));
   function syncJournalTheme(){host.querySelectorAll('.journal-map').forEach(frame=>frame.contentWindow?.postMessage({type:'atlas-embed-theme',theme},location.origin));}
   // A cached iframe may reload its original URL when its fragment is restored.
   // Reapply the current theme after that load as well as on an active theme change.
@@ -55,10 +57,11 @@ export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeo
     host.scrollTop=0;
   }
   function cacheContent(){if(!contentPage)return;scrolls.set(contentPage,host.scrollTop);const fragment=document.createDocumentFragment();fragment.append(...host.childNodes);cache.set(contentPage,fragment);contentPage=null;}
-  async function navigate(page,slug){
+  async function navigate(page,slug,{replace=false,force=false,fromPopState=false}={}){
     if(!['map','compare',...Object.keys(markup)].includes(page))page='map';
     const nextSlug=page==='article'?(slug||articleSlug):articleSlug;
-    if(current===page&&nextSlug===articleSlug)return;
+    if(current===page&&nextSlug===articleSlug&&!force)return;
+    if(!replace&&!fromPopState&&(current!==page||nextSlug!==articleSlug))beginHistory();
     articleSlug=nextSlug;
     const outgoing=current,request=++navigation;
     // Popping a return destination preserves nested Info → Support → Info → Map.
@@ -74,14 +77,19 @@ export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeo
     const pageName=page==='article'?(host.querySelector('h1')?.textContent||'Article'):({map:'Explore the map',compare:'Compare',stats:'Stats',info:'About',support:'Support',blog:'Journal'}[page]||'Explore the map');
     document.title=`USA X-Ray — ${pageName}`;
     const navPage=['info','support'].includes(page)?null:page==='article'?'blog':page;
-    $('.concept-tabs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===navPage)));
+    $('.concept-tabs').querySelectorAll('a[data-page]').forEach(link=>{
+      if(link.dataset.page===navPage)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+    });
     $('.concept-tabs>.nav-pill').hidden=navPage===null;
-    slidePill($('.concept-tabs'),$('.concept-tabs button[aria-pressed=true]'));
+    slidePill($('.concept-tabs'),$('.concept-tabs a[aria-current="page"]'));
     syncChrome();
     $('#sheet-back').setAttribute('aria-label',page==='article'?'Return to Blog':'Return to previous page');
-    const q=new URLSearchParams(location.search);q.set('page',page);if(page==='article')q.set('article',articleSlug);else q.delete('article');history.replaceState(null,'',location.pathname+'?'+q);
     if(reading){host.setAttribute('tabindex','-1');host.focus({preventScroll:true});}
-    else await changeConcept(page==='compare'?'compare':'explorer');
+    else await changeConcept(page==='compare'?'compare':'explorer',{refresh:force});
+    syncURL({page,article:page==='article'?articleSlug:null});
+    const articleInfo=page==='article'?articleMetadata(articleSlug):null;
+    setSEO({page,article:articleSlug,title:articleInfo?.title,description:articleInfo?.description,
+      noindex:page==='stats'||(page==='blog'&&!hasPublishedArticles)||(page==='article'&&(!articleInfo||articleInfo.draft))});
   }
   function closeSource(){
     showSurface($('#source-popup'),false);showSurface($('#source-backdrop'),false,{distance:0});
@@ -106,11 +114,17 @@ export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeo
   function refreshSources(){const map=host.querySelector('#audience-geography')||cache.get('stats')?.querySelector('#audience-geography');if(map&&!map.firstChild)map.innerHTML=audienceGeography();const list=host.querySelector('#info-sources-list')||cache.get('info')?.querySelector('#info-sources-list');if(list){const html=sourceRows();if(list.innerHTML!==html)list.innerHTML=html;}const libraryList=host.querySelector('#info-library-list')||cache.get('info')?.querySelector('#info-library-list');if(libraryList){const html=libraryRows();if(libraryList.innerHTML!==html)libraryList.innerHTML=html;}}
   $('#source-backdrop').onclick=closeSource;
   document.addEventListener('click',e=>{
+    const link=e.target.closest('a[data-page],a#info-open,a#support-open');
+    if(link?.getAttribute('aria-disabled')==='true'){e.preventDefault();return;}
+    if(link&&e.button===0&&!e.metaKey&&!e.ctrlKey&&!e.shiftKey&&!e.altKey){
+      e.preventDefault();
+      if(link.id==='info-open'){navigate(current==='info'?prior:'info');return;}
+      if(link.id==='support-open'){navigate(current==='support'?prior:'support');return;}
+      navigate(link.dataset.page,link.dataset.article);return;
+    }
     const b=e.target.closest('button');if(!b)return;
     if(b.dataset.page){navigate(b.dataset.page,b.dataset.article);return;}
     if(b.dataset.feature){featureIndex=(featureIndex+(b.dataset.feature==='next'?1:-1)+features.length)%features.length;animateReplacement($('#journal-feature'),()=>{$('#journal-feature').innerHTML=featureView(featureIndex,theme);});return;}
-    if(b.id==='info-open'){navigate(current==='info'?prior:'info');return;}
-    if(b.id==='support-open'){navigate(current==='support'?prior:'support');return;}
     if(b.id==='sheet-back'){if(document.body.classList.contains('place-expanded')&&!markup[current])closePlaceSheet();else navigate(current==='article'?'blog':prior);return;}
     if(b.id==='mobile-search')openSearch();
     if(b.id==='source-close')closeSource();
@@ -123,11 +137,12 @@ export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeo
   document.addEventListener('keydown',e=>{
     if(isSurfaceOpen($('#source-popup'))){if(e.key==='Escape'){e.stopImmediatePropagation();closeSource();}if(e.key==='Tab'){const list=[...$('#source-popup').querySelectorAll('a,button,input,summary')].filter(el=>el.getClientRects().length&&(!el.closest('details')||el.tagName==='SUMMARY'||el.closest('details').open));const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}}
     else if(e.key==='Escape'&&markup[current])navigate(current==='article'?'blog':prior);
-    const group=e.target.closest('.concept-tabs,.segmented');if(group&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){const buttons=[...group.querySelectorAll('button:not(:disabled)')],index=buttons.indexOf(e.target);const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();buttons[next].click();}
+    const group=e.target.closest('.concept-tabs,.segmented');if(group&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){const buttons=[...group.querySelectorAll(group.matches('.concept-tabs')?'a[data-page]':'button:not(:disabled)')],index=buttons.indexOf(e.target);if(!buttons.length||index<0)return;const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();buttons[next].click();}
   });
   document.addEventListener('submit',event=>{if(event.target.id==='info-contact')event.preventDefault();});
   const themeControl=document.createElement('button');themeControl.id='theme-toggle';themeControl.className='theme-toggle';themeControl.textContent=theme==='dark'?'Light theme':'Dark theme';$('#info-open').after(themeControl);
-  const initial=new URLSearchParams(location.search).get('page');if(initial&&initial!==current)navigate(initial);else{document.body.dataset.page=current;$('.concept-tabs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===current)));slidePill($('.concept-tabs'),$('.concept-tabs button[data-page='+current+']'));}
+  $('.concept-tabs').querySelectorAll('a[data-page]').forEach(link=>{if(link.dataset.page===current)link.setAttribute('aria-current','page');});
+  slidePill($('.concept-tabs'),$('.concept-tabs a[aria-current="page"]'));
   function syncConcept(concept){if(!markup[current]){current=concept==='compare'?'compare':'map';document.body.dataset.page=current;}}
   return {navigate,showSource,closeSource,syncConcept,refreshSources};
 }

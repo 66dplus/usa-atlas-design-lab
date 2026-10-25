@@ -1,0 +1,92 @@
+{
+  "release": "20261025-seo-routes-dd3d97",
+  "sourceBaseCommit": "dd3d97d829e85e341b051538707298bd943dea31",
+  "sourceEvidence": "ops/releases/20261025-seo-routes-dd3d97/{README.md,verification.json,public-check.json}; source forms read from .worktrees/seo-current-live",
+  "verifiedFiles": {
+    "changedExisting": [
+      "ux/index.html",
+      "ux/app.js",
+      "ux/master.css",
+      "ux/mobile-layout.css",
+      "ux/motion.js",
+      "ux/pages.js",
+      "ux/journal-view.js",
+      "scripts/preview_server.py"
+    ],
+    "addedSEO": [
+      "robots.txt",
+      "sitemap.xml",
+      "ux/routes.js",
+      "ux/seo.js",
+      "scripts/seo_render.py"
+    ],
+    "supportingChecks": [
+      "scripts/check_seo.py",
+      "ux/check-routes.mjs"
+    ],
+    "developmentRouting": [
+      "scripts/serve.py"
+    ]
+  },
+  "preTransferValidation": {
+    "sourceSha256Matches": [
+      "ux/index.html",
+      "ux/app.js",
+      "ux/master.css",
+      "ux/mobile-layout.css",
+      "ux/motion.js",
+      "ux/pages.js",
+      "ux/journal-view.js",
+      "robots.txt",
+      "sitemap.xml",
+      "ux/routes.js",
+      "ux/seo.js"
+    ],
+    "dataContractSha256Matches": [
+      "scripts/preview_server.py",
+      "scripts/seo_render.py"
+    ],
+    "count": 13
+  },
+  "additionalRequiredInputs": {
+    "Dockerfile": "3e6f50b994594e939e23a5bc55d9354222f4745dc6eb32649a4d7bb1dc807d20",
+    "ux/catalog.json": "f290cd229c91263bd943fe03102a6c558b5813f48d6a09c1beee4964951708ec",
+    "ux/catalog-proposals.json": "bb4948a885618c660a0f04c66bf094f61ae099454268de87f7f8918ec3166b17"
+  },
+  "notes": [
+    "No deployment environment, credential, host inventory, or private feedback content copied.",
+    "Published HTML metadata is server-rendered; map content remains client-rendered.",
+    "The raw manifest contains source, vendor asset, and data-contract hashes; generated package contains 130 unique manifest paths."
+  ],
+  "localSourceTransforms": {
+    "ux/index.html": [
+      "restored the local feedback.css link removed during public packaging; package build strips this exact link"
+    ],
+    "ux/app.js": [
+      "restored the local review hook from packaged if(false){ to source if(reviewOn){"
+    ]
+  },
+  "baselineComparison": {
+    "oldManifestEntries": 125,
+    "additionalRequiredInputs": 3,
+    "changedOldHashedFiles": [
+      "ux/index.html",
+      "ux/app.js",
+      "ux/master.css",
+      "ux/mobile-layout.css",
+      "ux/motion.js",
+      "ux/pages.js",
+      "ux/journal-view.js",
+      "scripts/preview_server.py"
+    ],
+    "unexpectedOldHashChanges": [],
+    "verification": "All 127 old entries present in the source checkout matched except the eight allowlisted files; Dockerfile is generated from deploy/temporary-preview/Dockerfile by the packager."
+  },
+  "packagerReproduction": {
+    "temporaryCopy": "/tmp/usa-xray-versioning-20261025/packager-check/scripts/build_temporary_preview.py",
+    "temporaryOutput": "/tmp/usa-xray-versioning-20261025/packager-check/out-final",
+    "manifestChecks": "130 corrected manifest paths plus three additional required inputs passed",
+    "packagerChangesReport": "/tmp/usa-xray-versioning-20261025/required-packager-changes.md",
+    "packagerPatch": "/tmp/usa-xray-versioning-20261025/required-packager-changes.patch"
+  }
+}

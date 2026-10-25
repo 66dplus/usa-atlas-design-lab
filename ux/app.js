@@ -1,6 +1,8 @@
 import {bottomSheet,sheetContent,sheetScroll} from './bottom-sheet.js?v=674e5b8';
 import {initViewport} from './viewport.js';
 import {initPages} from './pages.js';
+import {buildPlaceIndex,canonicalPath,parsePath,resolveRoute,routeParams} from './routes.js';
+import {applyPageMetadata,mapPageMetadata,screenPageMetadata} from './seo.js';
 import {showSurface,slidePill,isSurfaceOpen,captureMapLayout,animateMapLayout} from './motion.js';
 import {ExplorerMap,loadGeography,rampColor,EMBER,DIVERGING} from './map.js';
 import {createDataStore,readAtlasJSON,loadedMapMetrics,collectedMapIndicators,displayLayer,formatValue,formatPeriod,missingReason,comparable} from './model.js?v=postgres-1';
@@ -31,11 +33,15 @@ const icon=name=>brandNames[name]?brandIcon(brandNames[name]):utilityNames[name]
 document.querySelectorAll('[data-brand-icon]').forEach(node=>{node.outerHTML=brandIcon(node.dataset.brandIcon);});
 document.querySelectorAll('[data-ui-icon]').forEach(node=>{node.outerHTML=icon(node.dataset.uiIcon);});
 const params=new URLSearchParams(location.search);
+const initialPathRoute=parsePath(location.pathname);
+const initialPathPage=initialPathRoute?.kind==='screen'?({stats:'stats',support:'support',about:'info',blog:'blog'}[initialPathRoute.screen]):initialPathRoute?.kind==='article'?'article':initialPathRoute?.kind==='comparison'?'compare':null;
+const initialPathArticle=initialPathRoute?.kind==='article'?initialPathRoute.article:null;
+const initialRoutePage=initialPathPage||(initialPathRoute?.kind==='root'||initialPathRoute?.kind==='map'?'map':null);
 const embedded=params.get('embed')==='1';
 document.body.classList.toggle('embedded-map',embedded);
 window.addEventListener('message',event=>{if(embedded&&event.origin===location.origin&&event.source===parent&&event.data?.type==='atlas-embed-theme'&&['light','dark'].includes(event.data.theme)){document.body.dataset.theme=event.data.theme;if(dataStore)updateMaps();}});
 const concepts=['explorer','stories','compare'];
-const initialConcept=params.get('page')==='map'?'explorer':params.get('page')==='compare'?'compare':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
+const initialConcept=initialPathPage==='compare'||params.get('page')==='compare'?'compare':params.get('page')==='map'?'explorer':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
 const state={concept:initialConcept,mode:params.get('view')||'2d',selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
 if(!['2d','3d'].includes(state.mode))state.mode='2d';
 document.body.dataset.view=state.mode;
@@ -47,7 +53,8 @@ const stories=[
  {title:'Where work is changing',description:'Explore employment, place by place.',metric:'unemployment',place:'48',action:'Explore Texas'},
  {title:'A closer look at city life',description:'San Francisco, from state to city & county.',metric:'unemployment',place:'06075',action:'Explore San Francisco'}
 ];
-let pages,explorationPose,rankFocus=null,geo,catalog,metricById,library,mapA,mapB,viewSettings,dataStore,toastTimer,returnFocus,returnFocusSelector;
+let pages,explorationPose,rankFocus=null,geo,catalog,metricById,library,mapA,mapB,viewSettings,dataStore,toastTimer,returnFocus,returnFocusSelector,routeIndex=null,locationRouteValid=Boolean(initialPathRoute)||['/ux','/ux/'].includes(location.pathname),appReady=false;
+let activeArticle=initialPathArticle||params.get('article')||null;
 let pinned=['unemployment--03-06-employment','unemployment--03-06-labor-force','unemployment--03-06-unemployment'];
 const availableIndicatorId=(id,fallback)=>catalog.find(m=>m.id===id)?.id||metricById?.get(id)?.id||catalog.find(m=>m.id===fallback)?.id||catalog[0].id;
 const metric=()=>metricById.get(state.metric);
@@ -68,15 +75,33 @@ const observation=(m,id)=>layer(m).observations.get(id||'US');
 const value=(m,id)=>observation(m,id)?.value??null;
 const number=(m,id)=>formatValue(value(m,id),layer(m).unit);
 const compactNumber=(m,id)=>{const v=value(m,id),unit=layer(m).unit;return v!=null&&unit==='people'&&Math.abs(v)>=1000?new Intl.NumberFormat('en-US',{notation:'compact',minimumFractionDigits:Math.abs(v)>=1e6?2:1,maximumFractionDigits:Math.abs(v)>=1e6?2:1}).format(v):number(m,id);};
-function persist() {
-  const q=new URLSearchParams({concept:state.concept,view:state.mode,metric:state.metric,metric2:state.secondMetric,comparison:state.comparison});
-  if(secondExplicit||comparisonPrepared||state.concept==='compare')q.set('other',state.second||'US');
-  for(const key of ['page','preview','expanded','embed','theme','article']){const v=new URLSearchParams(location.search).get(key);if(v)q.set(key,v);}
-  q.delete('renderer');
-  q.set('page',document.body.dataset.page);
-  if(state.selected)q.set('place',state.selected);if(state.rank)q.set('rank',state.rank);
-  history.replaceState(null,'',`${location.pathname}?${q}`);
+function beginRouteHistory(){history.pushState(null,'',location.pathname+location.search);}
+function updateLocation(options={}){
+  if(!routeIndex)return;
+  const page=options.page||document.body.dataset.page||'map';
+  if(page==='article'&&options.article)activeArticle=options.article;
+  const article=page==='article'?(options.article||activeArticle):null;
+  const path=canonicalPath({...state,page,article},routeIndex)||'/united-states/unemployment';
+  const retained=routeParams(new URLSearchParams(location.search));
+  const next=path+(retained?'?'+retained:'');
+  if(next!==location.pathname+location.search)history.replaceState(null,'',next);
 }
+function applyMapSEO(){
+  const page=document.body.dataset.page||'map';
+  if(!['map','compare'].includes(page)||!routeIndex)return;
+  const path=canonicalPath({...state,page},routeIndex);
+  const query=new URLSearchParams(location.search);
+  const noindex=!locationRouteValid||!path||query.has('preview')||query.has('review')||query.get('embed')==='1';
+  const canonicalFallback=location.pathname.startsWith('/ux/')?'/ux/':location.pathname;
+  applyPageMetadata(mapPageMetadata({state:{...state,secondMetricName:metricB()?.name,secondName:selectedB()?.name},index:routeIndex,metricName:metric()?.name,placeName:selected()?.name||'the United States',path:path||canonicalFallback,noindex}));
+}
+function syncPageSEO({page,article=null,title=null,description=null,noindex=false}={}){
+  if(page==='map'||page==='compare'){applyMapSEO();return;}
+  const path=canonicalPath({page,article},routeIndex)||'/';
+  const query=new URLSearchParams(location.search);
+  applyPageMetadata(screenPageMetadata(page,path,{article:title?{title,description}:null,noindex:noindex||query.has('preview')||query.has('review')||query.get('embed')==='1'}));
+}
+function persist(){updateLocation();applyMapSEO();}
 function toast(text){clearTimeout(toastTimer);$('#toast').textContent=text;showSurface($('#toast'),true,{distance:8,duration:180});toastTimer=setTimeout(()=>showSurface($('#toast'),false,{distance:8,duration:180}),3500);}
 function setPlaceSheet(mode){
   const snap=mode==='dismissed'?'min':mode;
@@ -186,6 +211,7 @@ async function choosePlace(id,side='a') {
   const target=side==='b'&&state.concept==='compare'&&state.comparison==='places'?'b':'a';
   const request=++selectionRequest[target];rankFocus=null;closeDrawers();
   const previous=side==='b'&&state.concept==='compare'&&state.comparison==='places'?state.second:state.selected;
+  if(previous!==id)beginRouteHistory();
   if(side==='b'&&state.concept==='compare'&&state.comparison==='places'){state.second=id;secondExplicit=true;comparisonPrepared=true;}
   else state.selected=id;
   geo.prepareFocus(id);
@@ -503,7 +529,7 @@ function render(){
   document.body.dataset.concept=state.concept;
   document.body.dataset.comparison=state.comparison;
   pages?.syncConcept(state.concept);
-  if(!document.body.classList.contains('reading')){document.querySelectorAll('.concept-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===(state.concept==='compare'?'compare':'map'))));slidePill($('.concept-tabs'),$('.concept-tabs button[aria-pressed=true]'));}
+  if(!document.body.classList.contains('reading')){const page=state.concept==='compare'?'compare':'map';document.querySelectorAll('.concept-tabs a[data-page]').forEach(link=>{if(link.dataset.page===page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});slidePill($('.concept-tabs'),$('.concept-tabs a[aria-current="page"]'));}
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
   if(!$('#compare-toolbar .segment-pill'))$('#compare-toolbar .segmented').insertAdjacentHTML('afterbegin','<span class="segment-pill" aria-hidden="true"></span>');
   document.body.dataset.view=state.mode;const mobileView=$('#mobile-view-toggle');const mobileTarget=state.mode==='2d'?'3d':'2d';mobileView.innerHTML=$(`.dimension-control [data-mode="${mobileTarget}"]`).innerHTML;mobileView.setAttribute('aria-label',`Switch to ${mobileTarget.toUpperCase()}`);slidePill($('.dimension-control'),$(`.dimension-control [data-mode="${state.mode}"]`));
@@ -588,6 +614,7 @@ document.addEventListener('click',event=>{
   if(button.dataset.category){state.category=button.dataset.category;for(const chip of $('#category-list').querySelectorAll('[data-category]'))chip.setAttribute('aria-pressed',String(chip.dataset.category===state.category));button.scrollIntoView({block:'nearest',inline:'nearest'});renderMetrics();return;}
   if(button.dataset.switchMetric){
     const id=button.dataset.switchMetric,previous=state.metricTarget==='b'?state.secondMetric:state.metric;
+    if(previous!==id)beginRouteHistory();
     if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;render();
     if(previous!==id)analytics.action('indicator_select',{selected_indicator_id:id});return;
   }
@@ -595,13 +622,14 @@ document.addEventListener('click',event=>{
     const id=button.dataset.metric;
     if(state.cardMode){dataStore.load(metricById.get(id));if(pinned.includes(id)){if(pinned.length>1)pinned=pinned.filter(p=>p!==id);else toast('Keep at least one field in the card.');}else if(pinned.length<5)pinned.push(id);else toast('Your card can show up to 5 fields. Remove one first.');renderMetrics();renderInspector();renderExplorer();return;}
     const previous=state.metricTarget==='b'?state.secondMetric:state.metric;
+    if(previous!==id)beginRouteHistory();
     if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;closeDrawers();render();if(previous!==id)analytics.action('indicator_select',{selected_indicator_id:id});return;
   }
   if(button.dataset.retry){dataStore.retry(metricById.get(button.dataset.retry));render();return;}
   if(button.dataset.place){choosePlace(button.dataset.place,state.placeTarget);return;}
-  if(button.dataset.inspectMetric){const previous=state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics'?state.secondMetric:state.metric;if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();if(previous!==button.dataset.inspectMetric)analytics.action('indicator_select',{selected_indicator_id:button.dataset.inspectMetric});return;}
+  if(button.dataset.inspectMetric){const previous=state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics'?state.secondMetric:state.metric;if(previous!==button.dataset.inspectMetric)beginRouteHistory();if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();if(previous!==button.dataset.inspectMetric)analytics.action('indicator_select',{selected_indicator_id:button.dataset.inspectMetric});return;}
   if(button.dataset.story){const previous=state.metric,s=stories[+button.dataset.story];state.metric=s.metric;state.rank=null;state.concept='explorer';choosePlace(s.place).then(ok=>{if(ok){if(previous!==s.metric)analytics.action('indicator_select');analytics.action('view_select',{entry:'story'});}});return;}
-  if(button.dataset.compare){const previous=state.comparison;closeDrawers(false);selectionRequest.a++;selectionRequest.b++;state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();if(previous!==state.comparison)analytics.action('comparison_mode_select');return;}
+  if(button.dataset.compare){const previous=state.comparison;if(previous!==button.dataset.compare)beginRouteHistory();closeDrawers(false);selectionRequest.a++;selectionRequest.b++;state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();if(previous!==state.comparison)analytics.action('comparison_mode_select');return;}
   if(button.hasAttribute('data-mobile-search')){openDrawer('search-sheet',button);return;}
   if(button.dataset.panePlace){showPlaceLibrary(button.dataset.panePlace);return;}
   if(button.dataset.paneMetric){showMetricLibrary(button.dataset.paneMetric);return;}
@@ -637,7 +665,33 @@ placeSheet=bottomSheet($('#explore-panel'),{initial:mobileLayout()?'min':state.s
 for(const panel of document.querySelectorAll('.drawer'))drawerSheets.set(panel,bottomSheet(panel,{maxSnap:panel.id==='search-sheet'?'half':'expanded',fitContent:panel.id==='search-sheet',onSnap:snap=>{
   panel.classList.toggle('expanded',snap==='expanded');
 }}));
-pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept});
+pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept,initialArticle:initialPathArticle,syncURL:updateLocation,beginHistory:beginRouteHistory,setSEO:syncPageSEO});
+function applyResolvedRoute(resolved){
+  if(!resolved)return;
+  if(resolved.concept){
+    state.concept=resolved.concept;
+    state.selected=resolved.place||null;
+    state.second=resolved.second||null;
+    state.metric=availableIndicatorId(resolved.metric||'unemployment','unemployment');
+    state.secondMetric=availableIndicatorId(resolved.secondMetric||'population',catalog.find(item=>item.id!==state.metric)?.id);
+    state.comparison=resolved.comparison||'places';
+    secondExplicit=Boolean(resolved.page==='compare'&&resolved.comparison==='places');
+    comparisonPrepared=resolved.page==='compare';
+    comparisonDefaultFor=null;
+    state.rank=null;
+  }
+  if(resolved.page)document.body.dataset.page=resolved.page;
+  if(resolved.article)activeArticle=resolved.article;
+}
+async function restoreLocation(){
+  if(!geo||!catalog||!metricById||!routeIndex)return;
+  const route=parsePath(location.pathname),resolved=route&&resolveRoute(route,routeIndex,new Set(metricById.keys()));
+  if(route&&!resolved)locationRouteValid=false;else locationRouteValid=true;
+  if(resolved)applyResolvedRoute(resolved);
+  await pages.navigate(resolved?.page||'map',resolved?.article,{replace:true,force:true,fromPopState:true});
+  if(state.rank)openRank(state.rank);
+}
+window.addEventListener('popstate',()=>{if(appReady)void restoreLocation();});
 // The local review panel is a development tool: it is enabled only on request.
 const reviewOn=['1','true','yes','on'].includes(String(params.get('review')??'').toLowerCase());
 if(reviewOn){document.body.dataset.review='1';import('./feedback.js').then(({initFeedback})=>initFeedback({onStart:()=>[mapA,mapB].filter(Boolean).forEach(map=>map.settle()),getContext:point=>({settings:{...viewSettings},view:{page:document.body.dataset.page,theme:document.body.dataset.theme,concept:state.concept,mode:state.mode,selected:state.selected,second:state.second,metric:state.metric,secondMetric:state.secondMetric,comparison:state.comparison,pinned:[...pinned]},maps:[mapA,mapB].filter(Boolean).map(map=>map.feedbackSnapshot(point))})}));}
@@ -649,7 +703,10 @@ try {
   if(document.body.dataset.page==='compare')state.concept='compare';
   geo=geography;catalog=collectedMapIndicators(payload.metrics);library=payload.library||[];
   if(!catalog.length)throw new Error('No map indicators have been loaded yet. Please retry later.');
-  metricById=new Map(loadedMapMetrics(payload.metrics).map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
+  metricById=new Map(loadedMapMetrics(payload.metrics).map(m=>[m.id,m]));routeIndex=buildPlaceIndex(geo.states,geo.counties);pinned=pinned.filter(id=>metricById.has(id));
+  const bootResolved=initialPathRoute&&resolveRoute(initialPathRoute,routeIndex,new Set(metricById.keys()));
+  if(initialPathRoute&&!bootResolved)locationRouteValid=false;
+  if(bootResolved)applyResolvedRoute(bootResolved);
   dataStore=createDataStore(geo,id=>{if(needed().some(m=>m.id===id))render();});
   const startupMetric=metricById.get('unemployment');
   const seeded=startupSnapshot?.snapshotVersion==='BLS-LAUS-2024/2024-M12'&&startupSnapshot.metricId==='unemployment'&&startupSnapshot.fieldId==='03.06:unemployment_rate'&&startupSnapshot.data?.sourceRelease==='BLS-LAUS-2024'&&startupSnapshot.data?.period==='2024-M12'&&state.metric==='unemployment'&&dataStore.seed(startupMetric,startupSnapshot.data);
@@ -658,11 +715,14 @@ try {
   state.metric=availableIndicatorId(state.metric,'unemployment');
   state.secondMetric=availableIndicatorId(state.secondMetric,catalog.find(m=>m.id!==state.metric)?.id);
   if(!geo.byId.has(state.selected))state.selected=null;if(state.second&&!geo.byId.has(state.second))state.second='48';
-  if(state.concept==='compare'){prepareComparison(state.selected);if(!state.selected)state.selected='06';}
+  if(state.concept==='compare'){prepareComparison(state.selected);if(!state.selected&&!bootResolved&&state.comparison==='places')state.selected='06';}
   await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);
   rememberState(state.selected);
 
-  render();await Promise.all([mapA?.whenReady(),mapB?.whenReady()]);window.dispatchEvent(new Event('atlas:startup-ready'));
+  render();await Promise.all([mapA?.whenReady(),mapB?.whenReady()]);
+  if(bootResolved?.page&&bootResolved.page!=='map')await pages.navigate(bootResolved.page,bootResolved.article,{replace:true,force:true});
+  else {updateLocation();applyMapSEO();}
+  appReady=true;window.dispatchEvent(new Event('atlas:startup-ready'));
   if(seeded)dataStore.refresh(startupMetric);
   if(state.concept==='stories')openDrawer('story-rail',$('.concept-tabs [data-concept=stories]'));else if(state.rank)openRank(state.rank);
 } catch(error) {console.error(error);window.dispatchEvent(new CustomEvent('atlas:startup-error',{detail:{message:'Map boundaries or indicator data could not be reached. Check your connection and try again. About and Support are available.'}}));}

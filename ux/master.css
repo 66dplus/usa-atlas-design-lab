@@ -80,6 +80,11 @@ body[data-theme=dark]{--bg:#171A1D;--panel:#25292D;--ink:#F4F1E8;--muted:#B6BBB8
   .article-body>h2{font-size:28px;line-height:35px;margin-top:40px}.article-map{width:100%;margin:28px 0}
   .article-map h2{font-size:22px;line-height:30px}.article-map figcaption{font-size:14px;line-height:22px}
 }
+
+/* Crawlable navigation links keep the same animated tab treatment as buttons. */
+.concept-tabs a{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-height:34px;padding:5px 12px;border-radius:28px;background:none!important;color:var(--ink)!important;text-decoration:none;font-size:12px;font-weight:500}
+.concept-tabs a[aria-current="page"]{color:#171A1D!important}
+.support-trigger,#info-open{text-decoration:none}
 .indicator-icon{display:flex;flex:0 0 20px;color:var(--accent)}
 .indicator-icon svg{width:20px;height:20px}
 .metric-copy{flex:1;min-width:0}

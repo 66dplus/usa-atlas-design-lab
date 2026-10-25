@@ -8,6 +8,7 @@ import json
 import mimetypes
 import os
 from pathlib import Path
+import re
 import socket
 from socketserver import ThreadingMixIn
 import threading
@@ -15,6 +16,7 @@ import time
 from urllib.parse import parse_qs, urlsplit
 
 import atlas_data
+from seo_render import articles, geography, metric_labels, redirect_target, render_route
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -145,8 +147,32 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if len(self.path) > 2048 or self.headers.get('Host') != '127.0.0.1:4429':
             return self.reply(400, {'error': 'Invalid request'})
         path = urlsplit(self.path).path
-        if path in ('/', '/ux'):
-            return self.reply(302, b'', extra={'Location': '/ux/'})
+        if path == '/':
+            return self.reply(301, b'', extra={'Location': '/united-states/unemployment'},
+                              cache_control='public, max-age=86400')
+        try:
+            topology = self.server.assets['/node_modules/us-atlas/counties-10m.json']
+            definitions = ROOT / 'ux/metric-definitions.json'
+            journal = ROOT / 'ux/journal.js'
+            target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
+                                     articles(str(journal)))
+            if target:
+                return self.reply(301, b'', extra={'Location': target},
+                                  cache_control='public, max-age=86400')
+            if path in ('/ux', '/ux/'):
+                try:
+                    catalog = self.server.cache.get('catalog', atlas_data.catalog)
+                except (Busy, atlas_data.DatabaseUnavailable):
+                    catalog = None
+                target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
+                                         articles(str(journal)), catalog)
+                if target:
+                    return self.reply(301, b'', extra={'Location': target},
+                                      cache_control='public, max-age=86400')
+                return self.reply(404, {'error': 'Legacy atlas URL could not be resolved'})
+        except KeyError:
+            return self.reply(503, {'error': 'The route index is unavailable'}, extra={'Retry-After': '2'})
+        app_route = re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})', path)
         try:
             if path == '/api/atlas/catalog':
                 return self.reply(200, self.server.cache.get('catalog', atlas_data.catalog))
@@ -164,12 +190,28 @@ class PreviewHandler(BaseHTTPRequestHandler):
             if path == '/api/view-settings':
                 defaults = json.loads((ROOT / 'ux/view-settings.json').read_text())
                 return self.reply(200, {**defaults, 'savedAt': None})
-            asset = self.server.assets.get(path)
+            asset = self.server.assets.get('/ux/index.html') if app_route else self.server.assets.get(path)
             if asset is None:
                 return self.reply(404, {'error': 'Not found'})
             content = asset.read_bytes()
             content_type = mimetypes.guess_type(asset.name)[0] or 'application/octet-stream'
             if asset.suffix == '.html':
+                if app_route:
+                    status, rendered = render_route(content, self.path, topology, definitions, journal)
+                    if status == 404:
+                        try:
+                            catalog = self.server.cache.get('catalog', atlas_data.catalog)
+                        except (Busy, atlas_data.DatabaseUnavailable):
+                            catalog = None
+                        if catalog:
+                            target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
+                                                     articles(str(journal)), catalog)
+                            if target:
+                                return self.reply(301, b'', extra={'Location': target},
+                                                  cache_control='public, max-age=86400')
+                            status, rendered = render_route(content, self.path, topology, definitions, journal, catalog)
+                    content = rendered
+                    return self.reply(status, content, content_type)
                 return self.reply(200, content, content_type)
             # Revalidate every time: unchanged large geometry/fonts/icons can use
             # browser-cached bytes, while a changed build never serves stale code.
