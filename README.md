@@ -122,15 +122,21 @@ also records the binding in `ux/build.json`:
 python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release-id>
 ~~~
 
-`ux/build.json` carries the `release` identifier, the `sourceBaseCommit` the build
-came from, and the SHA-256 of every shipped source and contract file. The live file
-is at `https://usa-xray.online/ux/build.json`, so the published site always names
-the commit it was built from. The current live release is `20261025-seo-routes-dd3d97`, based on source commit
-`dd3d97d829e85e341b051538707298bd943dea31`. It adds canonical geography, indicator,
-comparison and page routes with server-rendered search metadata, permanent legacy
-URL redirects, a 57-route sitemap, and explicit noindex handling for Stats and
-unpublished Blog content. The published bytes are bound by the raw manifest in
-[`docs/releases/20261025-seo-routes-dd3d97/public-build.json`](docs/releases/20261025-seo-routes-dd3d97/public-build.json); the full application-side evidence is in that release folder. The recovered runtime remains the baseline for version binding.
+`ux/build.json` carries the exact `sourceCommit` the build was built from, the
+`sourceBaseCommit` compatibility field (equal to `sourceCommit` for new builds),
+the prior release/raw-build hash, the reader-lock record, and the SHA-256 of every
+shipped source and contract file. The live file is at
+`https://usa-xray.online/ux/build.json`; `sourceCommit` identifies the exact
+published source. The canonical current release manifest and evaluation status are maintained in
+[the application versioning evaluation](docs/application/versioning-evaluation-20261026.md).
+Runtime evaluation E1–E11 passed. The deployed source remains the immutable A
+release/tag at `ed8eefbe22c3befcf2b40d5e16fde0948e696772`; later documentation/test-only
+mainline commits do not change the deployed source and are not a deployment request.
+The prior published baseline was `20261025-seo-routes-dd3d97`;
+its exact Git source commit was not established by its manifest binding. SEO routes,
+redirects, sitemap and noindex behavior remain part of the accepted application
+contract. Do not use this README or historical release records as a live-state
+receipt.
 
 The public runtime is read-only. It serves the same admitted observations as a local
 run, reads them from the `usa_atlas` database through the read-only adapter, and

@@ -19,7 +19,7 @@ At the start of every implementation session:
 
 ## Luna Standard review route
 
-Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, with Fast and Ultrafast off. Use the bundled CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex` (version `0.163.0-alpha.11.2`); do not use the older `codex` from `PATH`. Example: `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex exec -m gpt-6-luna -c service_tier='"default"' --disable fast_mode --disable ultrafast_mode --cd /path/to/usa-atlas-design-lab "Implement the assigned task; preserve existing global configuration."` These per-invocation options select the required model and service tier and disable Fast and Ultrafast without changing the global configuration. The user primary does not implement application changes; the parent performs primary review, required tests, and integration. An authorized parent integrator may perform requested Git/release/SSH operations through established secure credential loading. Production release remains controlled by the unified workflow.
+Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, with Fast and Ultrafast off. Use the bundled CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex` (version `0.163.0-alpha.11.2`); do not use the older `codex` from `PATH`. Example: `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex exec -m gpt-6-luna -c service_tier='"default"' --disable fast_mode --disable ultrafast_mode --cd /path/to/usa-atlas-design-lab "Implement the assigned task; preserve existing global configuration."` These per-invocation options select the required model and service tier and disable Fast and Ultrafast without changing the global configuration. The user primary does not author application implementation code; required code corrections are returned to Luna. The parent performs primary review, required tests, and integration. The parent may dispatch up to three independent workers in separate worktrees with explicit file ownership; workers do not recursively delegate. Sol verification uses `gpt-6-sol`, default service tier, with Fast and Ultrafast off. An authorized parent integrator may perform requested Git/release/SSH operations through established secure credential loading. Production release remains controlled by the unified workflow.
 
 ## E1–E11 evaluation plan
 
@@ -65,16 +65,20 @@ Only the acceptance runner may produce a receipt. It must return nonzero if a ma
 
 The `--stage-evidence` input is the immutable JSON record returned by the release coordinator after staging. The runner consumes its `stageVerifiedIdentity` object and checks the verified container and image IDs, running state, build hash, source commit, and release ID against the actual staged runtime. It also requires `readerSchemaProof` with `status: "pass"`, `queryReadOnly: true`, `source: "stage.database-schema-readonly"`, the pinned `schemaFingerprint`, and a timezone-aware `checkedAt` within 15 minutes of the acceptance run. The release backend must produce this proof by querying only `information_schema.columns` on the configured database with a read-only connection; export the normalized reader schema fingerprint and check timestamp, never query results, credentials, or environment values.
 
+## Current evaluation pointer
+
+The current release/evaluation status is maintained in [versioning-evaluation-20261026.md](versioning-evaluation-20261026.md). Runtime evaluation E1–E11 is **PASS**. This approved file remains the plan and acceptance policy; its historic `NOT RUN` statement below is superseded by the canonical evaluation evidence. Documentation/test-only integration follows the protected PR process and is verifiable in GitHub history.
+
 ## Known limitations and pending work
 
 - The application reader bundle is copied byte-for-byte from producer tag `reader-contract-v1.0.0`, commit `b405bfdf473614beea49dd5126a843a916168f7d`. Its hashes and schema fingerprint are recorded in `contracts/reader-contract.lock.json`.
-- Full required E1–E11 acceptance has not yet run for this integration branch. Do not infer PASS from a missing receipt or from checks that did not execute.
+- Do not infer overall E1–E11 PASS from individual receipts. The canonical evaluation records completed checks, rollback and final public closeout.
 - Public SEO follow-up includes search-console submission/indexing, Core Web Vitals, owner-approved About methodology/biography, approved Blog content, and an Open Graph image.
 - React/TypeScript remains a separate future task after all mandatory evaluations PASS.
 
 ## UI refactoring: React + TypeScript
 
-Do not migrate during versioning or release integration. After all mandatory evaluations pass, create a separate task with short, reviewable PRs. Inventory these surfaces before proposing component boundaries: panels, headers, scroll regions, footers, buttons, selectors, search, metric rows, legends, and loading/error states. Assign ownership of navigation and selected-data state explicitly. Keep the map adapter and mobile gesture controller intact. Preserve design, application functions, SEO routes/metadata, and release manifests in each PR. Require a working before/after comparison and the full acceptance suite before integration.
+Do not migrate during versioning or release integration. After all mandatory evaluations pass, create a separate task with short, reviewable PRs. Inventory these surfaces before proposing component boundaries: panels, headers, scroll regions, footers, buttons, selectors, search, metric rows, legends, loading/error states, and remaining valid native-input, scroll/drawer, and resize coverage. Assign ownership of navigation and selected-data state explicitly. Keep the map adapter and mobile gesture controller intact. Preserve design, application functions, SEO routes/metadata, and release manifests in each PR. Require a working before/after comparison and the full acceptance suite before integration.
 
 ### Current state ownership for that future task
 

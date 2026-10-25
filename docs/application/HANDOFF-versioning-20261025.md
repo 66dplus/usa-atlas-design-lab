@@ -1,6 +1,12 @@
+# Historical versioning implementation handoff — 25 October 2026
+
+**Historical checkpoint; superseded.** Do not use this file as current runtime, branch, task, or release status. The canonical current evaluation and evidence pointer is [versioning-evaluation-20261026.md](versioning-evaluation-20261026.md). Preserve this handoff as historical evidence; its old paths, identities, and pending statements describe the earlier pause checkpoint.
+
+---
+
 # Versioning implementation handoff — owner-requested pause, 25 October 2026
 
-Status: **INCOMPLETE, PAUSED AT OWNER REQUEST**. Resume only when the owner asks. The owner plans to select Luna for continuation. This is the latest checkpoint; earlier progress notes are historical. No versioning production deployment or application-main merge has occurred.
+Status at this historical checkpoint: **INCOMPLETE, PAUSED AT OWNER REQUEST**. The owner planned to select Luna for continuation. This was the latest checkpoint at that time; subsequent completion is recorded in the canonical evaluation linked above. The statements below preserve the earlier state and are not current release status.
 
 ## Open this worktree
 
