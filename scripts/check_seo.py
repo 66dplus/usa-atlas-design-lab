@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """Check route metadata, redirect policy, sitemap and the packaged SEO renderer."""
 import html
+import http.client
 import json
 from pathlib import Path
 import re
 import sys
+import threading
 import xml.etree.ElementTree as ET
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from seo_render import (INDICATOR_ALIASES, articles, geography, metric_labels,
                         redirect_target, render_route)
+from preview_server import PreviewServer
 
 TOPOLOGY = ROOT / 'node_modules/us-atlas/counties-10m.json'
 DEFINITIONS = ROOT / 'ux/metric-definitions.json'
@@ -34,6 +38,56 @@ def meta(body, attribute, name):
 
 def html_for(url):
     return render_route(INDEX.read_bytes(), url, TOPOLOGY, DEFINITIONS, JOURNAL)
+
+
+def http_response(server, path):
+    connection = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=5)
+    connection.request('GET', path, headers={'Host': f'127.0.0.1:{server.server_port}'})
+    response = connection.getresponse()
+    result = response.status, dict(response.getheaders()), response.read()
+    connection.close()
+    return result
+
+
+def check_preview_http_dispatch():
+    assets = {
+        '/node_modules/us-atlas/counties-10m.json': TOPOLOGY,
+        '/ux/index.html': INDEX,
+        '/robots.txt': ROOT / 'robots.txt',
+    }
+    server = PreviewServer(('127.0.0.1', 0), assets)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        for source, destination in [
+            ('/united-states/california-vs-texas/unemployment/',
+             '/compare/places/unemployment/california/vs/texas'),
+            ('/united-states/unemployment/', '/united-states/unemployment'),
+            ('/UNIted-states/California/Unemployment/?embed=1',
+             '/united-states/california/unemployment?embed=1'),
+        ]:
+            status, headers, _ = http_response(server, source)
+            check(status == 301 and headers.get('Location') == destination,
+                  f'HTTP {source} should redirect to {destination}; got {status} {headers.get("Location")}')
+
+        with patch('preview_server.atlas_data.catalog', return_value={'metrics': []}):
+            status, _, _ = http_response(server, '/united-states/not-a-real-place/unemployment')
+        check(status == 404, 'unknown app routes should remain HTTP 404')
+
+        # Static and API requests must stay outside route-index loading and redirects.
+        with patch('preview_server.geography', side_effect=AssertionError('loaded route geography')):
+            with patch('preview_server.redirect_target', side_effect=AssertionError('checked app redirect')):
+                check(http_response(server, '/robots.txt')[0] == 200,
+                      'static requests should bypass app route indices')
+                check(http_response(server, '/api/analytics/config')[0] == 200,
+                      'API requests should bypass app route indices')
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
+check_preview_http_dispatch()
 
 
 check(len(GEO['statesById']) == 51 and len(GEO['countiesById']) == 3142,
