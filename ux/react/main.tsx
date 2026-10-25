@@ -458,7 +458,7 @@ function App() {
   }
   useEffect(() => {
     const keydown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || dialogs.active.current) return;
       const state = atlas.current.current;
       if (state.source) {
         atlas.closeSource();
@@ -474,32 +474,10 @@ function App() {
         event.stopImmediatePropagation();
       }
     };
-    document.addEventListener('keydown', keydown);
-    return () => document.removeEventListener('keydown', keydown);
+    document.addEventListener('keydown', keydown, true);
+    return () => document.removeEventListener('keydown', keydown, true);
   }, []);
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === 'Escape') {
-      if (state.source) {
-        atlas.closeSource();
-        event.stopPropagation();
-        return;
-      }
-      if (state.overlay) {
-        atlas.closeDrawers();
-        event.stopPropagation();
-        return;
-      }
-      if (!['map', 'compare'].includes(state.page)) {
-        atlas.back();
-        event.stopPropagation();
-        return;
-      }
-      if (mobile && !document.body.classList.contains('panel-collapsed')) {
-        atlas.setPlaceSheet(document.body.classList.contains('place-expanded') ? 'half' : 'min');
-        event.stopPropagation();
-        return;
-      }
-    }
     const group = (event.target as HTMLElement).closest('.concept-tabs,.segmented');
     if (group && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       const buttons = [

@@ -184,7 +184,10 @@ try {
           reducedMotion: 'reduce',
         }),
         errors = [];
-      await context.addInitScript((theme) => localStorage.setItem('usa-atlas-theme', theme), theme);
+      await context.addInitScript((theme) => {
+        localStorage.setItem('usa-atlas-theme', theme);
+        Math.random = () => 0.42;
+      }, theme);
       try {
         if (before) await captureBefore(context, key, theme);
         const page = await context.newPage();
@@ -208,13 +211,13 @@ try {
         if (viewport.width <= 760) {
           const grip = page.locator('#explore-panel>.sheet-handle');
           await grip.focus();
-          await page.keyboard.press('End');
+          await page.keyboard.press('Home');
           await page.keyboard.press('Escape');
           await page.waitForFunction(
             () => document.querySelector('#explore-panel')?.dataset.snap === 'half',
           );
           await grip.focus();
-          await page.keyboard.press('Home');
+          await page.keyboard.press('End');
           const summary = await page.locator('.mobile-indicator-summary').boundingBox();
           assert.ok(summary, 'The compact summary remains reachable');
           await page.mouse.move(summary.x + summary.width / 2, summary.y + summary.height / 2);
@@ -242,6 +245,13 @@ try {
         await shot(page, 'after-' + key + '-stats');
         await navigate(page, 'blog');
         await shot(page, 'after-' + key + '-blog');
+        assert.equal(
+          await page
+            .locator('.reading-content:not([style*=none]) > h1')
+            .evaluate((e) => getComputedStyle(e).maxWidth),
+          'none',
+          'Cached reading content retains the approved Blog heading geometry',
+        );
         await page.locator('#info-open').click();
         await page.locator('#about-main').waitFor();
         await shot(page, 'after-' + key + '-about');

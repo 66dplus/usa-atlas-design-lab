@@ -53,7 +53,7 @@ for (const [path, noindex] of [
   assert.match(body, /<title>[^<]+USA X-Ray<\/title>/);
   assert.match(body, /<meta name="description" content="[^"]+"/);
   assert.ok(body.includes(`name="robots" content="${noindex ? 'noindex' : 'index'},follow"`), path);
-  assert.match(body, /<script type="application\/ld\+json">/);
+  assert.match(body, /<script\b[^>]*type="application\/ld\+json"[^>]*>/);
   checks.push({ kind: 'server-metadata', path, noindex });
 }
 for (const path of [

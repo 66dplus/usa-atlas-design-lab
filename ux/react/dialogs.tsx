@@ -138,7 +138,7 @@ export function useDialogs(atlas: Atlas) {
       });
     }
   }
-  return { dialog, draft, update, open, close, submit };
+  return { dialog, active, draft, update, open, close, submit };
 }
 export type Dialogs = ReturnType<typeof useDialogs>;
 function stops(panel: HTMLElement) {

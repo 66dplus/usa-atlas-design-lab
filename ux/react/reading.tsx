@@ -41,7 +41,11 @@ export function ReadingPages({ atlas }: { atlas: Atlas }) {
       onScroll={(event) => scrolls.current.set(key, event.currentTarget.scrollTop)}
     >
       {[...cached.current].map(([cachedKey, entry]) => (
-        <div key={cachedKey} style={{ display: cachedKey === displayKey ? 'contents' : 'none' }}>
+        <div
+          className="reading-content"
+          key={cachedKey}
+          style={{ display: cachedKey === displayKey ? 'contents' : 'none' }}
+        >
           <ReadingContent atlas={atlas} page={entry.page} article={entry.article} />
         </div>
       ))}
@@ -63,6 +67,7 @@ function ReadingContent({
       {page === 'info' && (
         <>
           <div
+            className="reading-content"
             style={{
               display: state.infoSurface === 'about' ? 'contents' : 'none',
             }}
@@ -70,6 +75,7 @@ function ReadingContent({
             <AboutPage />
           </div>
           <div
+            className="reading-content"
             style={{
               display: state.infoSurface === 'legacy' ? 'contents' : 'none',
             }}

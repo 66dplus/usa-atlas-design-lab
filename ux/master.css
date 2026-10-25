@@ -48,9 +48,9 @@ body[data-theme=dark]{--bg:#171A1D;--panel:#25292D;--ink:#F4F1E8;--muted:#B6BBB8
 .journal-cards .page-eyebrow{margin:0;letter-spacing:0}.journal-cards .photo-credit{font-size:10px!important}
 .journal-review-note{margin:28px 0 0;font-size:12px;color:var(--muted)}
 [data-page=blog] .reading-page{inset:86px 0 0;padding-top:24px}
-[data-page=blog] .reading-page>h1{max-width:none;margin:0}
-[data-page=blog] .reading-page>.page-eyebrow{font-size:14px;line-height:20px;letter-spacing:0;margin-bottom:14px}
-[data-page=blog] .reading-page>.page-intro{font-size:16px;line-height:25px;margin-top:14px}
+[data-page=blog] :is(.reading-page,.reading-content)>h1{max-width:none;margin:0}
+[data-page=blog] :is(.reading-page,.reading-content)>.page-eyebrow{font-size:14px;line-height:20px;letter-spacing:0;margin-bottom:14px}
+[data-page=blog] :is(.reading-page,.reading-content)>.page-intro{font-size:16px;line-height:25px;margin-top:14px}
 .reading .brand>svg{display:none}
 [data-page=article] .reading-page{padding:0 0 72px;inset:90px 0 0}
 .article-back{margin:4px 48px 32px;min-height:32px;font-size:14px}
@@ -331,7 +331,7 @@ body{min-height:100svh}
   .reading-page .page-period button{font-weight:500}.reading-page .page-period{margin-top:12px}
 }
 
-[data-page=info] .reading-page>h1,[data-page=stats] .reading-page>h1,[data-page=support] .support-layout h1{font-weight:650}
+[data-page=info] :is(.reading-page,.reading-content)>h1,[data-page=stats] :is(.reading-page,.reading-content)>h1,[data-page=support] .support-layout h1{font-weight:650}
 @media(max-width:760px){
   [data-page=info] .reading-page,[data-page=stats] .reading-page,[data-page=support] .reading-page{inset:112px 0 96px;padding:24px}
   [data-page=info] .page-intro{font-size:18px;line-height:25px;margin-top:16px}

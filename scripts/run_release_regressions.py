@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "ux/check-release-regressions.mjs"
 FAILURE_MARKER = "comparison footer stays inside the pane instead of covering the viewport"
 FILTER_VARIABLES = ("ATLAS_TEST_WIDTH", "ATLAS_TEST_HEIGHT", "ATLAS_TEST_THEME",
-                    "ATLAS_TEST_SKIP_RETRY", "ATLAS_TEST_MUTATION")
+                    "ATLAS_TEST_SKIP_RETRY", "ATLAS_TEST_MUTATION", "ATLAS_BEFORE_URL")
 
 
 def browser_env(env, output: Path, *, mutation: str | None = None, filtered: bool = False):

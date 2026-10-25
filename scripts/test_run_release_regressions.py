@@ -11,13 +11,13 @@ class ReleaseRegressionRunnerTests(unittest.TestCase):
         ambient = {
             "ATLAS_TEST_WIDTH": "390", "ATLAS_TEST_HEIGHT": "844",
             "ATLAS_TEST_THEME": "dark", "ATLAS_TEST_SKIP_RETRY": "1",
-            "ATLAS_TEST_MUTATION": "legacy-footer", "ATLAS_TEST_URL": "http://127.0.0.1:4321",
+            "ATLAS_TEST_MUTATION": "legacy-footer", "ATLAS_BEFORE_URL": "http://unrelated.invalid", "ATLAS_TEST_URL": "http://127.0.0.1:4321",
         }
         with tempfile.TemporaryDirectory() as temp:
             positive = browser_env(ambient, Path(temp) / "positive")
             self.assertEqual(positive["ATLAS_TEST_URL"], ambient["ATLAS_TEST_URL"])
             for name in ("ATLAS_TEST_WIDTH", "ATLAS_TEST_HEIGHT", "ATLAS_TEST_THEME",
-                         "ATLAS_TEST_SKIP_RETRY", "ATLAS_TEST_MUTATION"):
+                         "ATLAS_TEST_SKIP_RETRY", "ATLAS_TEST_MUTATION", "ATLAS_BEFORE_URL"):
                 self.assertNotIn(name, positive)
             negative = browser_env(ambient, Path(temp) / "negative", mutation="legacy-footer", filtered=True)
             self.assertEqual(negative["ATLAS_TEST_WIDTH"], "1440")
