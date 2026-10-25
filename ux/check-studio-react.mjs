@@ -42,7 +42,7 @@ try {
           acceptDownloads: true,
         }),
         errors = [],
-        posts = [];
+        posts = [], advertisingRequests = [];
       await context.addInitScript((theme) => localStorage.setItem('usa-atlas-theme', theme), theme);
       try {
         if (before) {
@@ -58,6 +58,9 @@ try {
         });
         page.on('request', (request) => {
           if (request.method() === 'POST') posts.push(request.url());
+          const url = new URL(request.url());
+          if (url.hostname === 'example.test' || /\/api\/(?:ad(?:vertis)?|placements?|publish)/i.test(url.pathname))
+            advertisingRequests.push(request.url());
         });
         await loaded(page, base);
         assert.equal(await page.locator('body').getAttribute('data-theme'), theme);
@@ -69,6 +72,18 @@ try {
         );
         await page.locator('#ad-headline').fill('A synthetic browser preview');
         await page.locator('#ad-url').fill('https://example.test/preview');
+        await page.waitForFunction(() => document.querySelector('#preview-status')?.dataset.phase === 'unverified', null, {timeout:8000});
+        assert.equal(await page.locator('#preview-status').innerText(), 'Fit has not been verified.');
+        assert.equal(await page.locator('#ad-headline').inputValue(), 'A synthetic browser preview', 'Settling an unsupported handshake retains edited fields');
+        await page.frameLocator('#map-preview').locator('body[data-atlas-status=ready]').waitFor({state:'attached',timeout:60000});
+        assert.equal(await page.frameLocator('#map-preview').locator('#loading').isHidden(),true,'The real map preview settles independently');
+        if (viewport.width <= 760) {
+          await page.locator('#preview-in-place').click();
+          assert.equal(await page.locator('#close-preview').evaluate(element=>{const r=element.getBoundingClientRect();return element.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),true,'The real mobile reference keeps its exit reachable');
+          await shot(page, 'after-' + name + '-settled-reference');
+          await page.locator('#close-preview').click();
+        } else await shot(page, 'after-' + name + '-settled-reference');
+
         await page.locator(viewport.width <= 760 ? '#mobile-review' : '#review-request').click();
         await page.locator('#request-settings').waitFor();
         await page.locator('[data-channel=email]').click();
@@ -123,6 +138,7 @@ try {
           await page.locator('#inquiry-idea').fill('A synthetic custom campaign inquiry');
           assert.equal(await page.locator('#duration-settings').isVisible(), false);
           assert.equal(await page.locator('#inquiry-field').isVisible(), true);
+          await page.waitForFunction(()=>document.querySelector('#preview-status')?.textContent==='Placement reference. Your creative draft is retained.');
         }
         assert.equal(
           await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
@@ -134,12 +150,13 @@ try {
           [],
           'Saving and downloading drafts do not send requests or publish advertising',
         );
+        assert.deepEqual(advertisingRequests, [], 'Draft URLs and advertising endpoints are never requested');
         await page.locator(viewport.width <= 760 ? '#save-mobile' : '#save-draft').click();
         result.checks.push({
           name,
           status: 'pass',
           scope:
-            'controlled creative/contact/duration/targeting, private browser draft persistence, download-only request, invalid URL and Desktop-only ticker',
+            'bounded unverified reference, independently settled real map, retained creative/contact/duration/targeting, private browser draft persistence, download-only request, invalid URL and Desktop-only ticker; no advertising requests',
         });
         await page.close();
       } catch (error) {
@@ -159,5 +176,5 @@ if (result.failures.length) {
   process.exitCode = 1;
 } else
   console.log(
-    `PASS: advertiser studio ${result.checks.length}/8 viewport/theme cases; drafts/downloads/validation/targeting; no delivery or publication; evidence ${out}`,
+    `PASS: advertiser studio ${result.checks.length}/8 viewport/theme cases; bounded unverified reference status/drafts/downloads/validation/targeting; no delivery or publication; evidence ${out}`,
   );

@@ -22,6 +22,12 @@ import urllib.error
 import urllib.request
 
 
+try:
+    from .runtime_conformance import validate_conformance
+except ImportError:
+    from runtime_conformance import validate_conformance
+
+
 class ReleaseError(RuntimeError):
     pass
 
@@ -436,6 +442,11 @@ def verify_receipt(receipt, lock_path, *, release_id, operation, image_digest, b
         result = evidence.get(check_id)
         if not isinstance(result, dict) or result.get('exitCode') != 0:
             raise ReleaseError(f'acceptance receipt lacks passing execution evidence for {check_id}')
+    try:
+        validate_conformance(evidence.get('runtimeConformance'), build_sha=build_sha,
+                             source=source_commit, release=runtime_release_id, image=image_digest)
+    except ValueError as error:
+        raise ReleaseError(str(error)) from error
     try:
         tested = datetime.fromisoformat(receipt['testedAt'].replace('Z', '+00:00'))
         start = datetime.fromisoformat(started_at.replace('Z', '+00:00'))
@@ -876,6 +887,15 @@ class DockerBackend:
         run(['docker', 'rm', '-f', stage['containerId']], check=False)
         # Keep the unique image tag and saved image for failure-label audit.
 
+    def remove_baseline_test_stage(self, stage):
+        obj = self.inspect(stage['containerId'])
+        if (stage.get('purpose') != 'preactivation-baseline-rehearsal' or
+                obj.get('Name') != '/usa-atlas-rollback-stage-' + stage['releaseId'] or
+                obj.get('Image') != stage['testedImageDigest'] or
+                self._primary_owner_id() == stage['containerId']):
+            raise ReleaseError('baseline test container identity changed; preserving it')
+        self.remove_stage(stage)
+
     def stage_rollback_target(self, prior, current, release_id, reader_identity,
                               lock_path, contract_path):
         """Run the exact archived image at the isolated stage IP for regression tests."""
@@ -913,6 +933,9 @@ class DockerBackend:
             run(['docker', 'cp', f'{cid}:/app/.', str(temp)])
             if digest((temp / 'ux/build.json').read_bytes()) != digest(raw) or digest(raw) != prior['buildSha256']:
                 raise ReleaseError('archived rollback image runtime build identity differs from prior baseline')
+            required = prior.get('requiredFileSha256')
+            if not isinstance(required, dict) or not required or _tree_hashes(temp, required) != required:
+                raise ReleaseError('archived rollback image files differ from the exact captured baseline')
             build = read_json(temp / 'ux/build.json')
             if (build.get('readerLockSha256') != reader_identity['readerLockSha256'] or
                     build.get('readerSchemaFingerprint') != reader_identity['readerSchemaFingerprint']):
@@ -1248,6 +1271,51 @@ class Coordinator:
             atomic_json(path, record)
             return record
 
+    def stage_current_baseline(self, proof_id, output):
+        """Rehearse current approved runtime at stage before any candidate activation."""
+        with deployment_lock(self.global_lock):
+            if not self.is_main_accepted(require_clean_checkout(self.source_repo)):
+                raise ReleaseError('baseline rehearsal requires clean current accepted main')
+            path = self._record(proof_id + '-baseline-proof')
+            if path.exists() or Path(output).exists():
+                raise ReleaseError('baseline rehearsal identity/output already exists')
+            current = self.backend.live_identity()
+            if (not policy_not_revoked(read_json(self.policy_path), current['buildSha256'], current['imageId']) or
+                    not policy_allows(read_json(self.registry_path), current['buildSha256'], current['imageId'])):
+                raise ReleaseError('baseline runtime is not currently approved or is revoked')
+            identity = contract_identity(self.contract_lock,
+                self.contract_artifact.relative_to(self.contract_lock.parent.parent).as_posix())
+            result = self.backend.stage_rollback_target(current, current, proof_id, identity,
+                                                       self.contract_lock, self.contract_artifact)
+            result.update(purpose='preactivation-baseline-rehearsal')
+            try:
+                if self.backend.live_identity() != current:
+                    raise ReleaseError('live identity changed during baseline rehearsal')
+                atomic_json(path, {'releaseId':proof_id, 'status':'baseline-test-staged',
+                                   'stageEvidence':result})
+                with Path(output).open('x') as stream:
+                    json.dump(result, stream, indent=2, sort_keys=True)
+                    stream.write('\n')
+                    stream.flush(); os.fsync(stream.fileno())
+            except BaseException:
+                self.backend.remove_stage(result)
+                atomic_json(path, {'releaseId': proof_id, 'status': 'baseline-test-failed',
+                                   'stageEvidence': result, 'testContainerRemoved': True})
+                raise
+            return result
+
+    def discard_baseline_stage(self, proof_id):
+        with deployment_lock(self.global_lock):
+            path = self._record(proof_id + '-baseline-proof')
+            record = read_json(path)
+            if record.get('status') != 'baseline-test-staged':
+                raise ReleaseError('baseline test stage is not pending cleanup')
+            stage = record['stageEvidence']
+            self.backend.remove_baseline_test_stage(stage)
+            record.update(status='baseline-test-discarded', discardedAt=datetime.now(timezone.utc).isoformat())
+            atomic_json(path, record)
+            return record
+
     def stage_rollback(self, release_id, output):
         with deployment_lock(self.global_lock):
             record = read_json(self._record(release_id))
@@ -1415,6 +1483,8 @@ def main(argv=None):
     rollback = sub.add_parser('rollback'); rollback.add_argument('--id', required=True); rollback.add_argument('--receipt', type=Path, required=True)
     rollback.add_argument('--stage-evidence', type=Path)
     rollback_stage = sub.add_parser('rollback-stage'); rollback_stage.add_argument('--id', required=True); rollback_stage.add_argument('--output', type=Path, required=True)
+    baseline_stage = sub.add_parser('baseline-stage'); baseline_stage.add_argument('--id', required=True); baseline_stage.add_argument('--output', type=Path, required=True)
+    discard_baseline = sub.add_parser('baseline-stage-discard'); discard_baseline.add_argument('--id', required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == 'snapshot':
@@ -1469,6 +1539,11 @@ def main(argv=None):
                 result = coordinator.activate(args.id, read_json(args.receipt))
             elif args.command == 'recover':
                 result = coordinator.recover(args.id)
+            elif args.command == 'baseline-stage':
+                require_clean_checkout(args.repo)
+                result = coordinator.stage_current_baseline(args.id, args.output)
+            elif args.command == 'baseline-stage-discard':
+                result = coordinator.discard_baseline_stage(args.id)
             elif args.command == 'rollback-stage':
                 require_clean_checkout(args.repo)
                 result = coordinator.stage_rollback(args.id, args.output)

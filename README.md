@@ -169,7 +169,7 @@ When changing data, keep the original values, units, period, source release and 
 ## Privacy and external services
 
 - Analytics are off by default. Local setup and reporting are described in [deploy/analytics/README.md](deploy/analytics/README.md).
-- Sending requests from the advertising studio is unavailable without the server variables <code>RESEND_API_KEY</code>, <code>ATLAS_AD_FROM</code> and <code>ATLAS_AD_TO</code>. Do not put them into client code or Git.
+- The advertising studio retains browser drafts and downloads review requests. Placement delivery stays dormant; its bounded reference status does not certify fit or activate advertising.
 - Advertising preview data snapshots and collected bundles are generated locally. They may contain records from your database and file paths on your machine, so they are excluded from Git.
 - The comment form stores a snapshot and description on the local server. Before publishing or sending a review, check that the image contains no personal data.
 
@@ -179,6 +179,6 @@ Project source code and documentation are available under the [MIT license](LICE
 
 ## Maintained React frontend
 
-The production atlas and advertiser editor are native React + TypeScript in `ux/react/`. `npm start` compiles their pinned esbuild bundles before starting the local server. Run `npm run typecheck`, `npm run build`, and `npm run check:source`; the canonical Chrome runner additionally exercises React lifecycle, Support/About, report states, editor drafts and actual HTTP SEO against the built runtime. The gallery remains a historical local study, outside the maintained production package.
+The production atlas and advertiser editor are native React + TypeScript in `ux/react/`. `npm start` compiles their pinned esbuild bundles before starting the local server. Run `npm run typecheck`, `npm run build`, and `npm run check:source`; the canonical Chrome runner additionally exercises React lifecycle, Support/About, report states, editor drafts and actual HTTP SEO against the built runtime. The gallery remains a historical local study, outside the maintained production package. The editor settles an unsupported placement handshake to a truthful unverified reference state while preserving the actual map and draft. Exact archived-runtime applicability and preactivation rollback rehearsal are documented in the unified workflow.
 
 See [component and state ownership](docs/application/react-typescript.md), [candidate evaluation](docs/application/react-typescript-evaluation-20261026.md), and [unified release](docs/unified-release.md). Use `npm run start:review -- --port PORT --feedback-dir /tmp/atlas-feedback` for local review captures; the normal production build excludes that tool. Bug reports require a separate private durable directory; see [Support/About](docs/application/support-about-implementation.md).

@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
 import { animateReplacement } from '../motion.js';
-import { Fragment } from 'react';
 import { articles } from '../journal.js';
 const headings = new Set([
   'What USDA means by low access',
@@ -37,45 +36,29 @@ export function ArticlePage({ slug }: { slug: string }) {
   if (!article) return null;
   const href = explorePaths[slug];
   const mapAction = href ? (
-    <>
-      <a href={href}>{article.mapLink}</a>
-    </>
+    <a href={href}>{article.mapLink}</a>
   ) : (
-    <>
-      <p className={'article-map-note'}>
-        {'This historical indicator is not available in the live atlas yet.'}
-      </p>
-    </>
+    <p className="article-map-note">
+      {'This historical indicator is not available in the live atlas yet.'}
+    </p>
   );
   const map = (
-    <>
-      <figure className={'article-map'}>
-        <h2>{href ? 'Explore the data' : 'Historical map preview'}</h2>
-        <picture>
-          <source media={'(max-width:760px)'} srcSet={article.mapMobileImage} />
-          <img
-            src={article.mapImage}
-            alt={'Historical ' + article.period + ' source-data map preview'}
-            loading={'lazy'}
-          />
-        </picture>
-        <figcaption>{article.caption}</figcaption>
-        {mapAction}
-      </figure>
-    </>
+    <figure className="article-map">
+      <h2>{href ? 'Explore the data' : 'Historical map preview'}</h2>
+      <picture>
+        <source media="(max-width:760px)" srcSet={article.mapMobileImage} />
+        <img
+          src={article.mapImage}
+          alt={'Historical ' + article.period + ' source-data map preview'}
+          loading="lazy"
+        />
+      </picture>
+      <figcaption>{article.caption}</figcaption>
+      {mapAction}
+    </figure>
   );
   const blockMarkup = (block: string) =>
-    block === '__MAP__' ? (
-      map
-    ) : headings.has(block) ? (
-      <>
-        <h2>{block}</h2>
-      </>
-    ) : (
-      <>
-        <p>{block}</p>
-      </>
-    );
+    block === '__MAP__' ? map : headings.has(block) ? <h2>{block}</h2> : <p>{block}</p>;
   // The electricity master places this whole passage beside its map on Desktop.
   // Mobile reads the passage first and then the same figure, without duplicating copy.
   const splitStart = slug === 'electricity' ? article.blocks.indexOf('How large was the gap?') : -1;
@@ -84,48 +67,40 @@ export function ArticlePage({ slug }: { slug: string }) {
     if (splitStart < 0 || index < splitStart || index > splitEnd) return blockMarkup(block);
     if (index !== splitStart) return [];
     return (
-      <>
-        <div className={'article-split'}>
-          <div className={'article-split-copy'}>
-            {article.blocks.slice(splitStart, splitEnd).map(blockMarkup)}
-          </div>
-          {map}
+      <div className="article-split">
+        <div className="article-split-copy">
+          {article.blocks.slice(splitStart, splitEnd).map(blockMarkup)}
         </div>
-      </>
+        {map}
+      </div>
     );
   });
   return (
     <>
-      <button className={'article-back'} data-page={'blog'}>
+      <button className="article-back" data-page="blog">
         {'← Blog'}
       </button>
-      <article className={'journal-article'} data-article={slug}>
-        <header className={'article-hero'}>
-          <p className={'article-eyebrow'}>{article.eyebrow}</p>
+      <article className="journal-article" data-article={slug}>
+        <header className="article-hero">
+          <p className="article-eyebrow">{article.eyebrow}</p>
           <h1>{article.title}</h1>
-          <p className={'article-deck'}>{article.description}</p>
-          <p className={'article-meta'}>{article.meta}</p>
+          <p className="article-deck">{article.description}</p>
+          <p className="article-meta">{article.meta}</p>
         </header>
-        <div className={'article-body'}>
+        <div className="article-body">
           {body}
           <h2>{'Primary sources'}</h2>
-          <ul className={'article-sources'}>
+          <ul className="article-sources">
             {article.sources.map((source, jsxIndex) => (
-              <Fragment key={jsxIndex}>
-                {
-                  <>
-                    <li>
-                      <a href={source.url} target={'_blank'} rel={'noreferrer'}>
-                        {source.role}
-                        {' ↗'}
-                      </a>
-                    </li>
-                  </>
-                }
-              </Fragment>
+              <li key={jsxIndex}>
+                <a href={source.url} target="_blank" rel="noreferrer">
+                  {source.role}
+                  {' ↗'}
+                </a>
+              </li>
             ))}
           </ul>
-          <p className={'article-preview-note'}>
+          <p className="article-preview-note">
             {
               'Historical article draft · owner review pending. The map image preserves its original period. Explore opens the production atlas, which chooses the latest admitted snapshot.'
             }
@@ -159,32 +134,32 @@ export function JournalFeature({ index }: { index: number; theme: string }) {
     action = explorePaths[feature.slug] ? 'Open interactive map' : 'Read the draft';
   return (
     <>
-      <a className={'journal-preview-link'} href={path} aria-label={action + ': ' + feature.title}>
-        <img className={'journal-map'} src={feature.mapImage} alt={alt} loading={'lazy'} />
+      <a className="journal-preview-link" href={path} aria-label={action + ': ' + feature.title}>
+        <img className="journal-map" src={feature.mapImage} alt={alt} loading="lazy" />
       </a>
-      <div className={'feature-copy'}>
-        <p className={'page-eyebrow'}>{feature.label}</p>
+      <div className="feature-copy">
+        <p className="page-eyebrow">{feature.label}</p>
         <h2>{feature.title}</h2>
         <p>{feature.description}</p>
-        <p className={'snapshot-caption'}>
+        <p className="snapshot-caption">
           {feature.snapshotCaption}
           {' · '}
           {feature.sources[0].role}
         </p>
-        <button data-page={'article'} data-article={feature.slug}>
+        <button data-page="article" data-article={feature.slug}>
           {'Read the draft →'}
         </button>
-        <div className={'feature-controls'}>
+        <div className="feature-controls">
           <span>
             {'FEATURED · '}
             {String(index + 1).padStart(2, '0')}
             {' / '}
             {features.length}
           </span>
-          <button data-feature={'previous'} aria-label={'Previous featured story'}>
+          <button data-feature="previous" aria-label="Previous featured story">
             {'‹'}
           </button>
-          <button data-feature={'next'} aria-label={'Next featured story'}>
+          <button data-feature="next" aria-label="Next featured story">
             {'›'}
           </button>
         </div>
@@ -204,82 +179,82 @@ export function JournalPage({ theme, index = 0 }: { theme: string; index?: numbe
     mississippi = articles.mississippi;
   return (
     <>
-      <p className={'page-eyebrow'}>{'The USA X-Ray journal'}</p>
+      <p className="page-eyebrow">{'The USA X-Ray journal'}</p>
       <h1>{'Look closer. See the whole picture.'}</h1>
-      <p className={'page-intro'}>
+      <p className="page-intro">
         {'Thoughtful stories about the numbers and places behind the map.'}
       </p>
-      <section ref={feature} id={'journal-feature'} className={'journal-feature'}>
+      <section ref={feature} id="journal-feature" className="journal-feature">
         <JournalFeature index={index} theme={theme} />
       </section>
-      <h2 className={'more-heading'}>{'More to explore'}</h2>
-      <div className={'journal-cards'}>
+      <h2 className="more-heading">{'More to explore'}</h2>
+      <div className="journal-cards">
         <article>
           <a
-            className={'journal-preview-link'}
+            className="journal-preview-link"
             href={explorePath('electricity')}
-            aria-label={'Open interactive map: California and Texas electricity prices'}
+            aria-label="Open interactive map: California and Texas electricity prices"
           >
             <img
-              className={'journal-card-map'}
+              className="journal-card-map"
               src={electricity.mapImage}
               alt={'California and Texas · ' + electricity.caption}
-              loading={'lazy'}
+              loading="lazy"
             />
           </a>
-          <p className={'snapshot-caption'}>
+          <p className="snapshot-caption">
             {electricity.caption}
             {' · EIA-electricity-retail-sales-2024'}
           </p>
-          <p className={'page-eyebrow'}>{'COMPARISONS'}</p>
+          <p className="page-eyebrow">{'COMPARISONS'}</p>
           <h3>{'California and Texas, side by side'}</h3>
           <p>
             {'A careful comparison starts with the same measure, geography and reference period.'}
           </p>
-          <button data-page={'article'} data-article={'electricity'}>
+          <button data-page="article" data-article="electricity">
             {'Read the electricity draft →'}
           </button>
         </article>
         <article>
           <a
-            className={'journal-preview-link'}
+            className="journal-preview-link"
             href={explorePath('mississippi')}
-            aria-label={'Read the draft: Mississippi grocery access'}
+            aria-label="Read the draft: Mississippi grocery access"
           >
             <img
-              className={'journal-card-map'}
+              className="journal-card-map"
               src={mississippi.mapImage}
               alt={'Mississippi · ' + mississippi.caption}
-              loading={'lazy'}
+              loading="lazy"
             />
           </a>
-          <p className={'snapshot-caption'}>
+          <p className="snapshot-caption">
             {mississippi.caption}
             {' · USDA-FEA-2025'}
           </p>
-          <p className={'page-eyebrow'}>{'METHODS'}</p>
+          <p className="page-eyebrow">{'METHODS'}</p>
           <h3>{'Reading a map without losing the source'}</h3>
           <p>{'Displayed values keep their unit, date and source.'}</p>
-          <button data-page={'info'}>{'Read about the sources →'}</button>
+          <button data-page="info">{'Read about the sources →'}</button>
         </article>
         <article>
           <img
-            src={'assets/san-francisco-photo.jpg'}
-            alt={'San Francisco skyline and Golden Gate Bridge'}
-            loading={'lazy'}
+            src="assets/san-francisco-photo.jpg"
+            alt="San Francisco skyline and Golden Gate Bridge"
+            loading="lazy"
           />
-          <p className={'photo-credit'}>
+          <p className="photo-credit">
             {'San Francisco, California · Daniel L. Lu · CC BY-SA 4.0'}
           </p>
-          <p className={'page-eyebrow'}>{'PLACES'}</p>
+          <p className="page-eyebrow">{'PLACES'}</p>
           <h3>{'A closer look at San Francisco'}</h3>
           <p>{'One city scene offers place context without standing in for the whole state.'}</p>
-          <a href={'/united-states/california/san-francisco-county/unemployment'}>
+          <a href="/united-states/california/san-francisco-county/unemployment">
             {'Explore San Francisco →'}
           </a>
         </article>
       </div>
-      <p className={'journal-review-note'}>
+      <p className="journal-review-note">
         {
           'Temporary review preview · article drafts remain owner review pending; no final journal publication is implied.'
         }

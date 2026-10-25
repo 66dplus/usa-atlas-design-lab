@@ -49,7 +49,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
     : m.coverageNote;
   const desktop = (
     <>
-      <div className={'source-observation'}>
+      <div className="source-observation">
         <p>
           {f?.name || 'United States'}
           {' · '}
@@ -61,12 +61,10 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         <dt>{'Source'}</dt>
         <dd>
           {url ? (
-            <>
-              <a href={url} target={'_blank'} rel={'noreferrer'}>
-                {data.source || m.source}
-                {' ↗'}
-              </a>
-            </>
+            <a href={url} target="_blank" rel="noreferrer">
+              {data.source || m.source}
+              {' ↗'}
+            </a>
           ) : (
             data.source || m.source
           )}
@@ -80,7 +78,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         <dt>{'Coverage'}</dt>
         <dd>{coverage}</dd>
       </dl>
-      <div className={'source-method'}>
+      <div className="source-method">
         <h3>{'Method & data gaps'}</h3>
         <p>
           {unemploymentMethod ||
@@ -88,16 +86,14 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
             'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.'}
         </p>
         {current.definition?.formula ? (
-          <>
-            <p>
-              {'Formula: '}
-              {current.definition.formula}
-              {current.definition.minDenominator
-                ? ` · minimum denominator ${String(current.definition.minDenominator)}`
-                : ''}
-              {'.'}
-            </p>
-          </>
+          <p>
+            {'Formula: '}
+            {current.definition.formula}
+            {current.definition.minDenominator
+              ? ` · minimum denominator ${String(current.definition.minDenominator)}`
+              : ''}
+            {'.'}
+          </p>
         ) : (
           ''
         )}
@@ -112,20 +108,18 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
             'The latest single period and release are used, with no older-place fallback.'}
         </p>
         {data.status === 'ready' ? (
-          <>
-            <p>
-              {data.scale === 'diverging'
-                ? 'Colour uses a diverging 85 – 100 – 115 scale'
-                : `Colour uses a ${data.scale === 'log' ? 'logarithmic' : 'linear'} scale`}
-              {' across mapped places, from '}
-              {formatValue(data.min, data.unit)}
-              {' to '}
-              {formatValue(data.max, data.unit)}
-              {
-                '. 3D height is linear between the same minimum and maximum. Both maps share the same scale for this indicator.'
-              }
-            </p>
-          </>
+          <p>
+            {data.scale === 'diverging'
+              ? 'Colour uses a diverging 85 – 100 – 115 scale'
+              : `Colour uses a ${data.scale === 'log' ? 'logarithmic' : 'linear'} scale`}
+            {' across mapped places, from '}
+            {formatValue(data.min, data.unit)}
+            {' to '}
+            {formatValue(data.max, data.unit)}
+            {
+              '. 3D height is linear between the same minimum and maximum. Both maps share the same scale for this indicator.'
+            }
+          </p>
         ) : (
           ''
         )}
@@ -134,8 +128,8 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
   );
   return (
     <>
-      <div className={'source-desktop'}>{desktop}</div>
-      <div className={'source-mobile'}>
+      <div className="source-desktop">{desktop}</div>
+      <div className="source-mobile">
         <h3>{m.name}</h3>
         <dl>
           <dt>{'Source'}</dt>
@@ -153,11 +147,9 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         </dl>
         <p>{explanation}</p>
         {url ? (
-          <>
-            <a className={'primary-button'} href={url} target={'_blank'} rel={'noreferrer'}>
-              {'Open original source'}
-            </a>
-          </>
+          <a className="primary-button" href={url} target="_blank" rel="noreferrer">
+            {'Open original source'}
+          </a>
         ) : (
           ''
         )}

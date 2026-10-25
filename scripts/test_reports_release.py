@@ -1,5 +1,7 @@
 """Private report storage is the single explicit runtime write exception."""
 import os
+import json
+from types import SimpleNamespace
 from pathlib import Path
 import tempfile
 import unittest
@@ -100,6 +102,16 @@ class ReportsReleaseTests(unittest.TestCase):
         with self.assertRaises(ReleaseError):
             self.backend._runtime_args()
 
+    def test_baseline_cleanup_preserves_foreign_or_promoted_container(self):
+        stage={'purpose':'preactivation-baseline-rehearsal','releaseId':'proof','containerId':'owned','testedImageDigest':'sha256:old'}
+        obj={'Name':'/usa-atlas-rollback-stage-proof','Image':'sha256:old'}
+        with patch.object(self.backend,'inspect',return_value=obj),patch.object(self.backend,'_primary_owner_id',return_value='primary'),patch.object(self.backend,'remove_stage') as remove:
+            self.backend.remove_baseline_test_stage(stage);remove.assert_called_once_with(stage)
+        for changed,primary in ((dict(obj,Name='/foreign'),'primary'),(dict(obj,Image='sha256:new'),'primary'),(obj,'owned')):
+            with self.subTest(changed=changed,primary=primary),patch.object(self.backend,'inspect',return_value=changed),patch.object(self.backend,'_primary_owner_id',return_value=primary),patch.object(self.backend,'remove_stage') as remove,self.assertRaises(ReleaseError):
+                self.backend.remove_baseline_test_stage(stage)
+            remove.assert_not_called()
+
     def test_stage_reinspection_retains_mount_binding_for_activation(self):
         self.config.update(runtimeUser='10001:10001', network='fixture', stageAddress='192.0.2.2')
         report = {'Type': 'volume', 'Name': 'reports', 'Source': '/isolated/reports',
@@ -127,6 +139,44 @@ class ReportsReleaseTests(unittest.TestCase):
         self.assertEqual(identity['expectedMounts'], expected)
         self.assertEqual(repeated['expectedMounts'], expected)
         self.backend._reject_unapproved_writes(identity['mounts'], identity['expectedMounts'])
+
+    def test_archived_clone_verifies_all_captured_files_before_reader_proof(self):
+        self.config.update(runtimeUser='10001:10001', network='fixture', stageAddress='192.0.2.2')
+        reader = {'readerLockSha256': 'c'*64, 'readerSchemaFingerprint': 'schema'}
+        raw = json.dumps({'release': 'old', 'sourceCommit': 'a'*40, **reader}).encode()
+        prior = {**self.identity, 'imageId': 'sha256:archived', 'buildSha256': digest(raw),
+                 'requiredFileSha256': {'ux/build.json': digest(raw), 'ux/app.js': digest(b'accepted bytes')},
+                 'sourceCommit': 'a'*40}
+        obj = {'Id': 'clone', 'Image': prior['imageId'], 'Mounts': self.mounts,
+               'Config': {'User': '10001:10001', 'Cmd': ['--port', '4429']},
+               'State': {'Status': 'running'}, 'HostConfig': {'ReadonlyRootfs': True},
+               'NetworkSettings': {'Networks': {'fixture': {'IPAddress': '192.0.2.2'}}}}
+        for content, valid in ((b'accepted bytes', True), (b'replaced UI', False)):
+            commands = []
+            def execute(command, **kwargs):
+                commands.append(command)
+                if command[:2] == ['docker', 'cp']:
+                    destination = Path(command[-1]) / 'ux'
+                    destination.mkdir()
+                    (destination / 'build.json').write_bytes(raw)
+                    (destination / 'app.js').write_bytes(content)
+                return SimpleNamespace(stdout=raw.decode() if command[:2] == ['docker', 'exec'] else 'clone')
+            with self.subTest(valid=valid), patch.object(self.backend, 'ensure_stage_address_free'), \
+                    patch.object(self.backend, 'image_digest', return_value=prior['imageId']), \
+                    patch.object(self.backend, 'inspect', return_value=obj), \
+                    patch.object(self.backend, 'remove_stage') as remove, \
+                    patch.object(self.backend, 'reader_schema_proof', return_value={'status': 'pass'}) as proof, \
+                    patch('scripts.release_workflow.run', side_effect=execute):
+                if valid:
+                    stage = self.backend.stage_rollback_target(prior, prior, 'proof', reader, Path('lock'), Path('contract'))
+                    self.assertEqual(stage['targetRelease'], 'old')
+                    proof.assert_called_once(); remove.assert_not_called()
+                    runtime = next(command for command in commands if command[:2] == ['docker', 'run'])
+                    self.assertEqual(runtime[-3:], ['sha256:archived', '--port', '4429'])
+                else:
+                    with self.assertRaisesRegex(ReleaseError, 'files differ'):
+                        self.backend.stage_rollback_target(prior, prior, 'proof', reader, Path('lock'), Path('contract'))
+                    proof.assert_not_called(); remove.assert_called_once_with({'containerId': 'clone'})
 
 
 if __name__ == '__main__':

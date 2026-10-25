@@ -11,6 +11,11 @@ import re
 import shutil
 import subprocess
 
+try:
+    from .runtime_conformance import CAPABILITIES
+except ImportError:
+    from runtime_conformance import CAPABILITIES
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/studio.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
 PRIVATE = 'ux/journal.js scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
@@ -114,6 +119,7 @@ def build(destination, release, source_commit=None, previous_release=None,
         'sourceCommit': head,
         'renderer2dDefault': 'webgl',
         'frontendFramework': 'react-typescript',
+        'conformanceCapabilities': CAPABILITIES,
         'visibleFieldCount': sum(value == 'true' for value in flags.values()),
         'medicalFields': [key for key in ('11.01', '11.02', '11.03')
                           if flags.get(key) == 'true'],
@@ -150,7 +156,7 @@ def build(destination, release, source_commit=None, previous_release=None,
     shutil.copyfile(ROOT / 'deploy/temporary-preview/Dockerfile', destination / 'Dockerfile')
     metadata['toolchainSha256'] = {
         name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-        for name in ('package-lock.json', 'deploy/temporary-preview/Dockerfile')
+        for name in ('package-lock.json', 'deploy/temporary-preview/Dockerfile', 'scripts/runtime_conformance.py')
     }
     metadata['shippedSha256']['Dockerfile'] = hashlib.sha256(
         (destination / 'Dockerfile').read_bytes()).hexdigest()

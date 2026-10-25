@@ -9,7 +9,7 @@ const engine=process.env.ATLAS_TEST_BROWSER||'chrome';
 await mkdir(out,{recursive:true});
 const browser=engine==='webkit'?await webkit.launch():await chromium.launch({channel:'chrome'}),results=[];
 try {
-  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900}].filter(v=>!process.env.ATLAS_TEST_WIDTH||v.width===Number(process.env.ATLAS_TEST_WIDTH)))for(const theme of ['light','dark'].filter(t=>!process.env.ATLAS_TEST_THEME||t===process.env.ATLAS_TEST_THEME)){
+  for(const viewport of [{width:390,height:844},{width:360,height:640},{width:1440,height:900},{width:1440,height:640}].filter(v=>!process.env.ATLAS_TEST_WIDTH||v.width===Number(process.env.ATLAS_TEST_WIDTH)))for(const theme of ['light','dark'].filter(t=>!process.env.ATLAS_TEST_THEME||t===process.env.ATLAS_TEST_THEME)){
     const mobile=viewport.width<=760,key=`${engine}-${viewport.width}-${theme}`;
     const context=await browser.newContext({viewport,isMobile:mobile,hasTouch:mobile}),page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
@@ -24,10 +24,11 @@ try {
       const data=await page.evaluate(()=>{
         const box=e=>e.getBoundingClientRect().toJSON(),visible=e=>{const s=getComputedStyle(e);return s.display!=='none'&&s.visibility!=='hidden'&&e.getBoundingClientRect().width>0;};
         const hit=e=>{const r=box(e);return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));};
-        const a=document.querySelector('.osm-attribution'),parent=a.parentElement,source=parent.querySelector('.indicator-legend-source');
+        const a=document.querySelector('.osm-attribution'),parent=a.parentElement,frame=a.closest('.desktop-compare-card,.indicator-legend,.sheet-map-footer')||parent,source=frame.querySelector('.indicator-legend-source');
         return {count:document.querySelectorAll('.osm-attribution').length,overflow:document.documentElement.scrollWidth>innerWidth,loadingHidden:document.querySelector('#loading').hidden,
           compareDataButton:!!document.querySelector('#compare-data-open'),page:document.body.dataset.page,mode:document.body.dataset.view,viewport:{width:innerWidth,height:innerHeight},
-          attribution:{parent:parent.id||parent.className,body:parent===document.body,placement:a.dataset.placement,position:getComputedStyle(a).position,fontSize:getComputedStyle(a).fontSize,visible:visible(a),hit:hit(a),rect:box(a),frame:box(parent),source:source?box(source):null},
+          attribution:{parent:parent.id||parent.className,body:parent===document.body,placement:a.dataset.placement,position:getComputedStyle(a).position,fontSize:getComputedStyle(a).fontSize,visible:visible(a),hit:hit(a),rect:box(a),frame:box(frame),sharedCompare:frame.matches('.desktop-compare-card'),source:source?box(source):null},
+          desktopCompare:(()=>{const card=document.querySelector('#desktop-compare-card');if(!visible(card))return null;const row=card.querySelector('.desktop-compare-source-row'),source=row.querySelector('.indicator-legend-source'),ramp=card.querySelector('.desktop-compare-ramp');return {rect:box(card),workspace:box(document.querySelector('.map-workspace')),footer:box(row),footerPosition:getComputedStyle(row).position,ramp:box(ramp),sourceReachable:hit(source),places:[...card.querySelectorAll('.desktop-compare-place')].map(place=>{const metric=place.querySelector('.desktop-compare-value button'),value=place.querySelector('.desktop-compare-value strong');return {metric:box(metric),value:box(value),valueReachable:hit(metric),nameReachable:hit(place.querySelector('.desktop-compare-name'))};})};})(),
           panes:[...document.querySelectorAll('.map-pane')].filter(visible).map(pane=>{const host=pane.querySelector('.map-host'),heading=pane.querySelector('.pane-heading'),value=pane.querySelector('.map-summary strong'),button=pane.querySelector('.map-summary'),label=[...pane.querySelectorAll('.field-value')].find(visible);return {rect:box(pane),map:box(host),heading:box(heading),label:label?{rect:box(label),color:getComputedStyle(label).color}:null,value:{rect:box(value),color:getComputedStyle(value).color,fontSize:getComputedStyle(value).fontSize,text:value.textContent},valueButton:box(button),valueReachable:hit(button),footer:visible(pane.querySelector('.pane-footer')),card:box(pane.querySelector('.compare-map-card')),metric:box(pane.querySelector('.metric-field')),ramp:box(pane.querySelector('.color-ramp')),sourceReachable:hit(pane.querySelector('.indicator-legend-source')),meshes:Number(host.dataset.terrainStateCount)};})};
       });
       await writeFile(`${out}/${key}-${name}-geometry.json`,JSON.stringify(data,null,2));
@@ -36,19 +37,26 @@ try {
       if(data.viewport.width<=760){assert.equal(data.attribution.body,true);assert.equal(data.attribution.position,'fixed');assert.equal(data.attribution.rect.top,56);assert.equal(data.attribution.fontSize,'8px');}
       else {
         assert.equal(data.attribution.placement,'source');assert.equal(data.attribution.position,'static');
-        assert.ok(data.attribution.rect.top>=data.attribution.source.bottom,`${name}: OSM is below Source & method`);
+        assert.ok(data.attribution.source,`${name}: source resolves in the canonical attribution frame`);
+        if(data.attribution.sharedCompare)assert.ok(data.attribution.rect.left>=data.attribution.source.right,`${name}: shared Compare credit and source do not overlap`);
+        else assert.ok(data.attribution.rect.top>=data.attribution.source.bottom,`${name}: OSM is below Source & method`);
         assert.ok(data.attribution.rect.bottom<=data.attribution.frame.bottom&&data.attribution.rect.left>=data.attribution.frame.left,`${name}: credit stays inside the frame`);
       }
       assert.equal(data.compareDataButton,false,'Compare data trigger removed');
       if(!mobile&&data.page==='compare'){
-        for(const pane of data.panes){
-          assert.equal(pane.rect.bottom-pane.card.bottom,28,'Compact card sits at the lower map edge');
-          assert.ok(pane.card.height<160,'Place, observation and sources stay compact');
-          assert.ok(Math.abs(pane.metric.y+pane.metric.height/2-pane.valueButton.y-pane.valueButton.height/2)<1,'Observation shares the indicator row');
-          assert.ok(pane.valueButton.left>=pane.metric.right,'Indicator and observation never overlap');
-          assert.ok(pane.ramp.height<=3&&pane.ramp.width<=150,'Smaller colour key');
-          assert.equal(pane.valueReachable,true);assert.equal(pane.sourceReachable,true);
+        const card=data.desktopCompare;assert.ok(card,'Canonical shared Desktop comparison card is visible');
+        assert.equal(card.workspace.bottom-card.rect.bottom,10,'Shared card keeps the accepted lower map inset');
+        assert.ok(card.rect.height<160,'Place, observation and sources stay compact');
+        assert.equal(card.places.length,2);
+        for(const place of card.places){
+          assert.ok(Math.abs(place.metric.y+place.metric.height/2-place.value.y-place.value.height/2)<1,'Observation shares the indicator row');
+          assert.ok(place.value.left>=place.metric.right,'Indicator and observation never overlap');
+          assert.equal(place.valueReachable,true);assert.equal(place.nameReachable,true);
         }
+        assert.equal(card.ramp.height,4,'Shared card keeps the accepted compact 4px colour key');
+        assert.ok(card.ramp.width>0&&card.ramp.left>=card.rect.left&&card.ramp.right<=card.rect.right,'Colour key fits the canonical shared card');
+        assert.equal(card.sourceReachable,true);assert.equal(card.footerPosition,'static');
+        assert.ok(card.footer.top>=card.rect.top&&card.footer.bottom<=card.rect.bottom&&card.footer.left>=card.rect.left&&card.footer.right<=card.rect.right,'Shared source footer stays inside the card');
       }
       if(mobile&&data.page==='compare'){
         assert.equal(data.panes.length,2);assert.ok(Math.abs(data.panes[0].rect.height-data.panes[1].rect.height)<=1,'Equal map halves');

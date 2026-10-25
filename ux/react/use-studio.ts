@@ -43,6 +43,7 @@ interface StudioState {
   leaveDialog: boolean;
   status: string;
   previewStatus: string;
+  previewPhase: 'loading' | 'unverified' | 'reported';
   previewError: boolean;
   fieldError: { id: string; message: string } | null;
 }
@@ -84,6 +85,7 @@ const defaults: StudioState = {
   leaveDialog: false,
   status: '',
   previewStatus: 'Loading live source observations…',
+  previewPhase: 'loading',
   previewError: false,
   fieldError: null,
 };
@@ -504,6 +506,31 @@ export function useStudio() {
       document.getElementById('stay-in-studio')?.focus();
     } else if (!state.leaveDialog && dialog.open) dialog.close();
   }, [state.leaveDialog]);
+  // Placement delivery stays dormant. A missing fit handshake must not leave
+  // the independently loading real map or the retained draft behind a spinner.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (current.current.previewPhase === 'loading')
+        patch({
+          previewPhase: 'unverified',
+          previewStatus:
+            current.current.kind === 'inquiry'
+              ? 'Placement reference. Your creative draft is retained.'
+              : 'Fit has not been verified.',
+          previewError: false,
+        });
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
+  useEffect(() => {
+    if (state.previewPhase === 'unverified')
+      patch({
+        previewStatus:
+          state.kind === 'inquiry'
+            ? 'Placement reference. Your creative draft is retained.'
+            : 'Fit has not been verified.',
+      });
+  }, [state.kind, state.previewPhase]);
   useEffect(() => {
     const message = (event: MessageEvent) => {
       if (event.origin !== location.origin || event.source !== frame.current?.contentWindow) return;
@@ -526,6 +553,7 @@ export function useStudio() {
       ) {
         if (event.data.targeted) fits.current.set(event.data.device, event.data.fits);
         patch({
+          previewPhase: 'reported',
           previewError: !event.data.targeted || event.data.fits === false,
           previewStatus:
             current.current.kind === 'inquiry'
