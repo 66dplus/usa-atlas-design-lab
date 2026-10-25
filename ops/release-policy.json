@@ -18,10 +18,13 @@
   ],
   "revocations": [
     {
-      "reason": "Historical 20261025 SEO deployment was rejected; revocation is bound to image digest.",
+      "reason": "Historical 20261025 SEO deployment was rejected; raw build and image digest are revoked.",
       "releaseLabelForAuditOnly": "20261025-seo-routes",
+      "buildSha256": "b870c0d5889f8f01716f42514f0c6714ae261a208d8bf63b7488caa6919b1fd1",
       "imageDigest": "sha256:f6ede23c5fed55dcf9bda27d7796b4d19571d9affba098eb50e45889362116ea"
     }
   ],
-  "revokedBuildSha256": []
+  "revokedBuildSha256": [
+    "b870c0d5889f8f01716f42514f0c6714ae261a208d8bf63b7488caa6919b1fd1"
+  ]
 }

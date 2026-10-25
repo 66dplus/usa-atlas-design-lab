@@ -401,11 +401,23 @@ class WorkflowTests(unittest.TestCase):
                         ['ux/build.json','ux/index.html'], self.plan_path)
 
     def test_actual_revoked_seo_image_digest_is_blocked(self):
-        revoked = 'sha256:f6ede23c5fed55dcf9bda27d7796b4d19571d9affba098eb50e45889362116ea'
-        policy = {'revocations':[{'imageDigest':revoked}], 'revokedImageDigests':[revoked]}
+        rejected_build = 'b870c0d5889f8f01716f42514f0c6714ae261a208d8bf63b7488caa6919b1fd1'
+        rejected_image = 'sha256:f6ede23c5fed55dcf9bda27d7796b4d19571d9affba098eb50e45889362116ea'
+        policy_path = Path(__file__).resolve().parents[1] / 'ops' / 'release-policy.json'
+        policy = json.loads(policy_path.read_text())
         from scripts.release_workflow import policy_not_revoked
-        self.assertFalse(policy_not_revoked(policy, 'f'*64, revoked))
+        self.assertIn(rejected_build, policy['revokedBuildSha256'])
+        self.assertIn(rejected_image, policy['revokedImageDigests'])
+        self.assertFalse(policy_not_revoked(policy, rejected_build, 'sha256:other-image'))
+        self.assertFalse(policy_not_revoked(policy, 'f'*64, rejected_image))
         self.assertTrue(policy_not_revoked(policy, 'f'*64, 'sha256:approved'))
+
+        audit_rows = [row for row in policy.get('revocations', [])
+                      if row.get('releaseLabelForAuditOnly') == '20261025-seo-routes']
+        self.assertEqual(len(audit_rows), 1)
+        self.assertEqual(audit_rows[0].get('buildSha256'), rejected_build)
+        self.assertEqual(audit_rows[0].get('imageDigest'), rejected_image)
+        self.assertTrue(audit_rows[0].get('reason'))
 
     def test_stage_then_receipt_gated_activation_and_restore_on_failure(self):
         self.stage()
