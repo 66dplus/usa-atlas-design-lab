@@ -106,7 +106,7 @@ assert.doesNotMatch(sitemap,/<loc>https:\/\/usa-xray\.online\/(?:stats|blog)<\/l
 assert.doesNotMatch(sitemap,/\/blog\/(?:mississippi|electricity)/,'editorial drafts must stay outside the sitemap');
 assert.match(fs.readFileSync(new URL('../robots.txt',import.meta.url),'utf8'),/Sitemap: https:\/\/usa-xray\.online\/sitemap\.xml/);
 
-const journal=fs.readFileSync(new URL('./journal-view.js',import.meta.url),'utf8');
+const journal=fs.readFileSync(new URL('./react/journal.tsx',import.meta.url),'utf8');
 assert.doesNotMatch(journal,/href=["']\.\/\?/,'journal navigation should use readable paths rather than query URLs');
 assert.match(journal,/article-map-note/,'unavailable historical indicators should not link to a different live measure');
 assert.match(fs.readFileSync(new URL('../scripts/seo_render.py',import.meta.url),'utf8'),/def render_route\(/,'the server must render route metadata before JavaScript');

@@ -86,6 +86,8 @@ export function mapPageMetadata({state, index, metricName, placeName, path, noin
   return createPageMetadata({title, description, path, noindex});
 }
 
+/** @param {string} page @param {string} path
+ * @param {{article?: {title:string,description:string}|null,noindex?:boolean}} options */
 export function screenPageMetadata(page, path, {article = null, noindex = false} = {}) {
   const pages = {
     stats: ['Atlas statistics | USA X-Ray', 'Explore how visitors use USA X-Ray. Visitor analytics are not connected yet.'],

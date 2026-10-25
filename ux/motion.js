@@ -45,6 +45,8 @@ export function captureMapLayout(container,maps) {
   if(!overlay.childElementCount)return null;
   container.append(overlay);layouts.set(container,{overlay,animations:[]});return overlay;
 }
+/** @param {Element|null} container @param {HTMLElement|null} overlay
+ * @param {{entering?:boolean,pane?:Element|null}} options */
 export function animateMapLayout(container,overlay,{entering=false,pane}={}) {
   const owner=layouts.get(container);if(!overlay||owner?.overlay!==overlay)return Promise.resolve();
   const options={duration:entering?650:320,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'};

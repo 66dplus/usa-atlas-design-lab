@@ -14,6 +14,7 @@ from uuid import uuid4
 import zlib
 
 from serve import create_server, MAX_BODY
+from feedback_sources import SOURCES, resolve_sources
 from view_settings import DEFAULTS
 
 
@@ -63,6 +64,14 @@ class FeedbackIntegration(unittest.TestCase):
         conn.close()
         return status, body
 
+    def test_all_current_component_anchors_resolve_without_client_paths(self):
+        for key in SOURCES:
+            with self.subTest(component=key):
+                refs = resolve_sources(key, '')
+                self.assertEqual(len(refs), 1)
+                self.assertTrue(refs[0]['file'].startswith('usa-atlas-design-lab/ux/'))
+                self.assertEqual(len(refs[0]['sha256']), 64)
+
     def test_persistence_sources_image_and_restart(self):
         data = self.payload()
         status, body = self.request('POST', '/api/feedback', data)
@@ -72,10 +81,10 @@ class FeedbackIntegration(unittest.TestCase):
         self.assertEqual(set(p.name for p in directory.iterdir()), {'comment.json', 'comment.md', 'capture.png'})
         self.assertEqual((directory / 'capture.png').read_bytes(), png())
         self.assertEqual(record['imageSha256'], hashlib.sha256(png()).hexdigest())
-        self.assertEqual(record['sources'][0]['symbol'], 'renderInspector')
+        self.assertEqual(record['sources'][0]['symbol'], 'InspectorContent')
         relative_source = record['sources'][0]['file'].removeprefix('usa-atlas-design-lab/')
         source = Path(__file__).resolve().parents[1] / relative_source
-        self.assertIn('function renderInspector(', source.read_text().splitlines()[record['sources'][0]['line'] - 1])
+        self.assertIn('function InspectorContent(', source.read_text().splitlines()[record['sources'][0]['line'] - 1])
         self.stop()
         self.start()
         status, body = self.request('GET', '/api/feedback')

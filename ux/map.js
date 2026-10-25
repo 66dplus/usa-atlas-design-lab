@@ -66,8 +66,8 @@ export async function loadGeography() {
 }
 
 export class ExplorerMap {
-  constructor(host,geo,{onSelect=()=>{},onRankSelect=()=>{},onError=()=>{},onHover=()=>{}}={}) {
-    Object.assign(this,{host,geo,onSelect,onRankSelect,onError,onHover});
+  constructor(host,geo,{onSelect=()=>{},onRankSelect=()=>{},onError=()=>{},onHover=()=>{},onRenderError=()=>{}}={}) {
+    Object.assign(this,{host,geo,onSelect,onRankSelect,onError,onHover,onRenderError});
     this.state={mode:'2d',selectedId:null,values:new Map(),dark:false};
     this.svg=d3.select(host).append('svg').attr('viewBox',`0 0 ${WIDTH} ${HEIGHT}`).attr('class','geo-svg').attr('aria-label','United States interactive map');
     this.labelLayer=this.svg.append('g').attr('pointer-events','none');
@@ -137,7 +137,6 @@ export class ExplorerMap {
     this.host.dataset.renderMode=mode;
     this.host.classList.toggle('map-dark',dark);this.svg.style('display',mode==='2d'?null:'none').style('background',this.flatActive?'transparent':this.mapBackdrop());
     if(this.renderer)this.renderer.domElement.hidden=mode==='2d';
-    if(this.focusUI)this.focusUI.hidden=true;
     if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
     this.renderLabels();
     if(mode==='2d'){
@@ -219,16 +218,11 @@ export class ExplorerMap {
   }
   showFlatError(message){
     this.flatErrorMessage=message;
-    if(this.state.mode!=='2d'||this.isDisposed)return;
-    if(!this.flatError){
-      this.flatError=document.createElement('section');this.flatError.id=`${this.host.id}-error`;this.flatError.className='map-render-error';this.flatError.setAttribute('role','alert');
-      this.flatError.innerHTML='<h2>The 2D map is unavailable</h2><p></p><button type="button" class="primary-button">Try again</button>';
-      this.flatError.querySelector('button').addEventListener('click',()=>{this.flat?.dispose();this.flat=null;this.flatFailed=false;this.update(this.state);});
-      this.host.parentElement.append(this.flatError);
-    }
-    this.flatError.querySelector('p').textContent=message;
+    if(this.state.mode!=='2d'||this.isDisposed||this.flatRenderError===message)return;
+    this.flatRenderError=message;this.onRenderError(message);
   }
-  clearFlatError(){this.flatError?.remove();this.flatError=null;}
+  clearFlatError(){if(this.flatRenderError){this.flatRenderError=null;this.onRenderError(null);}}
+  retryFlat(){this.flat?.dispose();this.flat=null;this.flatFailed=false;this.update(this.state);}
   syncFlatLayers(){
     this.svg.style('background','transparent');
     this.host.dataset.renderer=this.state.mode==='3d'?'webgl3d':this.flatActive?'webgl':'unavailable';
@@ -289,9 +283,6 @@ export class ExplorerMap {
     this.terrain=new THREE.Group();this.group.add(this.terrain);
     const worldGeometry=new THREE.ShapeGeometry(projectedShapes(this.geo.world,this.geo.projection,d3.geoStream));worldGeometry.rotateX(-Math.PI/2);
     this.worldMesh=new THREE.Mesh(worldGeometry,new THREE.MeshBasicMaterial({color:'#d3d7dc'}));this.worldMesh.position.y=-.005;this.group.add(this.worldMesh);
-    this.focusUI=document.createElement('div');this.focusUI.className='focus-caption';this.focusUI.hidden=true;
-    this.focusUI.innerHTML='<button type="button" class="focus-back">← United States</button><span></span><small>Click another state to explore · Click the background to return · Esc</small>';
-    this.focusUI.querySelector('button').onclick=()=>this.exitFocus();this.host.append(this.focusUI);
     canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.onError('3D was interrupted. Switch to 2D to continue.');});
     canvas.addEventListener('pointerdown',e=>{this.pointerStart=e.button===0?[e.clientX,e.clientY]:null;this.dragging=true;});
     canvas.addEventListener('pointerup',e=>{
@@ -535,8 +526,7 @@ export class ExplorerMap {
     const distance=this.camera.position.distanceTo(this.controls.target);
     this.camera.near=Math.max(.00001,distance*.01);this.camera.far=Math.max(40,distance*8);this.camera.updateProjectionMatrix();
     this.host.dataset.phase=this.phase||'overview';
-    if(this.focusUI){this.focusUI.hidden=true;this.focusUI.querySelector('span').textContent=this.geo.byId.get(this.state.selectedId)?.name||'';}
     this.renderer.render(this.scene,this.camera);this.renderRankMarkers();
   }
-  dispose(){this.isDisposed=true;this.cancelMotion();cancelAnimationFrame(this.hoverFrame);this.flat?.dispose();this.clearFlatError();this.svg.interrupt().remove();this.rankMarkers?.remove();this.observer.disconnect();document.removeEventListener('keydown',this.onEscape);this.controls?.dispose();this.clear();this.renderer?.dispose();this.renderer?.domElement.remove();this.focusUI?.remove();}
+  dispose(){this.isDisposed=true;this.cancelMotion();cancelAnimationFrame(this.hoverFrame);this.flat?.dispose();this.clearFlatError();this.svg.interrupt().remove();this.rankMarkers?.remove();this.observer.disconnect();document.removeEventListener('keydown',this.onEscape);this.controls?.dispose();this.clear();this.renderer?.dispose();this.renderer?.domElement.remove();}
 }

@@ -166,6 +166,12 @@ def store_comment(folder, data, png, sources):
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        if urlsplit(path).path in ('/ux/app.js', '/ux/studio.js'):
+            name = urlsplit(path).path.rsplit('/', 1)[-1]
+            return str(ROOT / 'dist' / 'ux' / name)
+        return super().translate_path(path)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 

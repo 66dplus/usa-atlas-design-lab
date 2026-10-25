@@ -5,26 +5,39 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "python3 scripts/serve.py",
+    "start": "npm run build && python3 scripts/serve.py",
     "assets": "node scripts/build-assets.mjs",
     "check": "node scripts/check.mjs",
-    "check:source": "npm run check && node ux/check-flat-map.mjs && node ux/check-geometry.mjs && node ux/check-detail.mjs && node ux/check-motion.mjs && node ux/check-data.mjs && node ux/check-support-data.mjs && node ux/check-source-metadata.mjs && node ux/check-icons.mjs && node ux/check-runtime.mjs && node ux/check-label-cache.mjs",
+    "check:source": "npm run typecheck && npm run build && npm run check && node ux/check-flat-map.mjs && node ux/check-geometry.mjs && node ux/check-detail.mjs && node ux/check-motion.mjs && node ux/check-data.mjs && node ux/check-support-data.mjs && node ux/check-source-metadata.mjs && node ux/check-icons.mjs && node ux/check-runtime.mjs && node ux/check-label-cache.mjs && node ux/check-support-about.mjs",
     "start:analytics": "python3 scripts/run_analytics_atlas.py",
     "check:seo": "python3 scripts/check_seo.py && node ux/check-routes.mjs",
     "check:reader": "python3 scripts/check_reader_contract.py && python3 -m unittest discover -s scripts -p 'test_reader_contract.py'",
     "check:geography": "python3 scripts/check_geography_contract.py",
-    "check:acceptance": "python3 scripts/check_release_acceptance.py"
+    "check:acceptance": "python3 scripts/check_release_acceptance.py",
+    "build": "node scripts/build-frontend.mjs",
+    "typecheck": "tsc --noEmit",
+    "build:review": "node scripts/build-frontend.mjs dist/ux --review",
+    "start:review": "npm run build:review && python3 scripts/serve.py",
+    "check:react": "node ux/check-react-ui.mjs",
+    "check:studio": "node ux/check-studio-react.mjs"
   },
   "dependencies": {
     "d3": "7.9.0",
     "html2canvas": "1.4.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "three": "0.186.0",
     "topojson-client": "3.1.0",
     "us-atlas": "3.0.1",
     "world-atlas": "2.0.2"
   },
   "devDependencies": {
+    "@types/d3": "7.4.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "esbuild": "0.25.11",
     "playwright": "1.62.1",
-    "sharp": "0.35.4"
+    "sharp": "0.35.4",
+    "typescript": "5.9.3"
   }
 }
