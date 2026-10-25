@@ -1,5 +1,8 @@
 # Local Audience analytics
 
+Production collection uses a separate stack and private dashboard; see
+[PRODUCTION.md](PRODUCTION.md).
+
 Before: the map had no Atlas event collector or verified Audience aggregates.
 After: one optional browser integration sends stable map actions and active time to
 an isolated Umami 3.4.0 service. A private CLI reads its API and produces aggregates.
