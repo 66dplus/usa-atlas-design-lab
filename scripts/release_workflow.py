@@ -55,14 +55,19 @@ def atomic_json(path, value):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temp, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         if os.path.exists(temp):
             os.unlink(temp)
 
 
-def run(command, *, capture=True, check=True, input_text=None):
+def run(command, *, capture=True, check=True, input_text=None, cwd=None):
     try:
-        result = subprocess.run(command, text=True, input=input_text,
+        result = subprocess.run(command, cwd=cwd, text=True, input=input_text,
                                 stdout=subprocess.PIPE if capture else None,
                                 stderr=subprocess.PIPE if capture else None)
     except OSError as error:
@@ -208,6 +213,68 @@ def package_sha(package):
     return digest(json.dumps(files, sort_keys=True, separators=(',', ':')).encode())
 
 
+def reconstruct_package(repo, commit, release, previous_release, previous_build_sha256):
+    """Build package from an isolated checkout of the exact committed source."""
+    repo = Path(repo).resolve()
+    temp = Path(tempfile.mkdtemp(prefix='usa-release-source-proof-'))
+    checkout, output = temp / 'source', temp / 'package'
+    try:
+        run(['git', '-C', str(repo), 'worktree', 'add', '--detach', str(checkout), commit])
+        head = run(['git', '-C', str(checkout), 'rev-parse', 'HEAD']).stdout.strip()
+        if head != commit:
+            raise ReleaseError('source reconstruction checkout differs from requested commit')
+        run(['npm', '--userconfig=/dev/null', '--cache', str(temp / 'npm-cache'),
+             'ci', '--ignore-scripts'], capture=True, check=True, cwd=checkout)
+        run(['python3', 'scripts/release_workflow.py', 'prepare',
+             '--destination', str(output), '--release', release,
+             '--source-commit', commit, '--previous-release', previous_release,
+             '--previous-build-sha256', previous_build_sha256], capture=True,
+            check=True, cwd=checkout)
+        return package_inventory(output), (output / 'ux/build.json').read_bytes(), (output / 'preview-assets.json').read_bytes()
+    finally:
+        run(['git', '-C', str(repo), 'worktree', 'remove', '--force', str(checkout)], check=False)
+        import shutil
+        shutil.rmtree(temp, ignore_errors=True)
+
+
+def compare_source_reconstruction(actual_package, reconstructed):
+    inventory, build_raw, preview_raw = reconstructed
+    actual = package_inventory(actual_package)
+    if (actual != inventory or (Path(actual_package) / 'ux/build.json').read_bytes() != build_raw or
+            (Path(actual_package) / 'preview-assets.json').read_bytes() != preview_raw):
+        raise ReleaseError('package bytes differ from exact committed-source reconstruction')
+    files = {**actual['files'], 'ux/build.json': actual['buildSha256'],
+             'preview-assets.json': actual['previewAssetsSha256']}
+    return {'sourceCommit': actual['sourceCommit'], 'packageSha256': digest(
+        json.dumps(files, sort_keys=True, separators=(',', ':')).encode()),
+        'buildRawSha256': digest(build_raw), 'previewAssetsSha256': digest(preview_raw)}
+
+
+def recompute_content_diff(baseline_files, baseline_text, package):
+    for name, text in baseline_text.items():
+        if name not in baseline_files or digest(text.encode()) != baseline_files[name]:
+            raise ReleaseError(f'plan baseline review text is not bound to snapshot hash: {name}')
+    inventory = package_inventory(package)
+    actual = {**inventory['files'], 'ux/build.json': inventory['buildSha256'],
+              'preview-assets.json': inventory['previewAssetsSha256']}
+    changes = sorted(name for name in set(baseline_files) | set(actual)
+                     if baseline_files.get(name) != actual.get(name))
+    result = {}
+    for name in changes:
+        if not name.lower().endswith(('.html', '.js', '.css', '.json', '.xml', '.txt', '.py', '.sql')):
+            continue
+        old = baseline_text.get(name)
+        path = Path(package) / name
+        new = path.read_text(errors='replace') if path.is_file() else None
+        if old is None and name in baseline_files:
+            raise ReleaseError(f'plan lacks hash-bound review text for changed baseline file: {name}')
+        if old is not None or new is not None:
+            result[name] = ''.join(difflib.unified_diff(
+                (old or '').splitlines(keepends=True), (new or '').splitlines(keepends=True),
+                fromfile=f'baseline/{name}', tofile=f'target/{name}'))
+    return result
+
+
 def _tree_hashes(directory, paths):
     root = Path(directory)
     out = {}
@@ -282,6 +349,11 @@ def create_plan(baseline_dir, target_dir, baseline_release, baseline_build_sha,
             'baselineBuildSha256': baseline_build_sha, 'targetCommit': target_inv['sourceCommit'],
             'baselineFiles': before, 'baselineContainerId': baseline_container_id,
             'baselineImageId': baseline_image_id,
+            'baselineFileText': ({name: value for name, value in (snapshot.get('requiredFileText') or {}).items()
+                                  if name in before} if baseline_dir.is_file() else
+                                 {name: (baseline_dir / name).read_text(errors='replace')
+                                  for name in before if (baseline_dir / name).is_file() and
+                                  name.lower().endswith(('.html', '.js', '.css', '.json', '.xml', '.txt', '.py', '.sql'))}),
             'acceptedMainCommits': sorted(set(accepted_main_commits)),
             'targetWasAcceptedAtPlanning': target_inv['sourceCommit'] in set(accepted_main_commits),
             'declaredChanges': changes, 'diff': {name: {'before': before.get(name), 'after': after.get(name)} for name in changes},
@@ -804,12 +876,14 @@ class DockerBackend:
 
 class Coordinator:
     def __init__(self, root, backend, policy_path, contract_lock, global_lock, is_main_accepted,
-                 registry_path, suite_identity, mandatory_checks, contract_artifact=None):
+                 registry_path, suite_identity, mandatory_checks, contract_artifact=None,
+                 source_repo=None, source_reconstructor=reconstruct_package):
         self.root, self.backend = Path(root), backend
         self.policy_path, self.contract_lock = Path(policy_path), Path(contract_lock)
         self.contract_artifact = (Path(contract_artifact) if contract_artifact else
                                   self.contract_lock.parent.parent / 'contracts/reader/v1/contract.json')
         self.global_lock, self.is_main_accepted = Path(global_lock), is_main_accepted
+        self.source_repo, self.source_reconstructor = source_repo, source_reconstructor
         self.registry_path = Path(registry_path)
         if not suite_identity or not mandatory_checks:
             raise ReleaseError('current acceptance suite identity and required checks must be configured')
@@ -878,11 +952,22 @@ class Coordinator:
                              for name in changes}
             if changes != plan.get('declaredChanges') or expected_diff != plan.get('diff'):
                 raise ReleaseError('plan declared diff does not match the full content inventories')
+            if recompute_content_diff(baseline_files, plan.get('baselineFileText') or {}, package) != plan.get('contentDiff'):
+                raise ReleaseError('reviewed contentDiff differs from the staged baseline and candidate bytes')
+            if not self.source_repo:
+                raise ReleaseError('exact committed-source reconstruction is not configured')
+            reconstructed = self.source_reconstructor(
+                self.source_repo, plan['targetCommit'], release_id,
+                build_meta['previousRelease'], build_meta['previousBuildSha256'])
+            source_proof = compare_source_reconstruction(package, reconstructed)
+            if source_proof['sourceCommit'] != plan['targetCommit'] or source_proof['packageSha256'] != expected:
+                raise ReleaseError('source proof does not bind the exact target commit and package')
             started = datetime.now(timezone.utc).isoformat()
             record = {'schema': 2, 'releaseId': release_id, 'status': 'staging',
                       'events':[{'status':'staging','at':started}], 'plan': plan,
                       'baselineAtOperationStart': current, 'buildSha256': inv['buildSha256'],
-                      'sourceCommit': inv['sourceCommit'], 'startedAt': started}
+                      'sourceCommit': inv['sourceCommit'], 'sourceProof': source_proof,
+                      'startedAt': started}
             atomic_json(path, record)
             stage = None
             archive_dir = self.root / (release_id + '.artifacts')
@@ -949,6 +1034,11 @@ class Coordinator:
             prior = record['baselineAtOperationStart']
             if self.backend.live_identity() != prior:
                 raise ReleaseError('production baseline changed since stage')
+            proof = record.get('sourceProof') or {}
+            if (proof.get('sourceCommit') != record.get('sourceCommit') or
+                    proof.get('packageSha256') != record.get('plan', {}).get('packageSha256') or
+                    proof.get('buildRawSha256') != record.get('buildSha256')):
+                raise ReleaseError('activation requires a source proof bound to the staged package')
             stage_now = self.backend.stage_identity(record['stageIdentity'])
             if stage_now.get('containerId') != record['stageIdentity']['containerId'] or stage_now.get('imageId') != record['stageIdentity']['imageId']:
                 raise ReleaseError('staged immutable container/image identity changed')
@@ -974,6 +1064,13 @@ class Coordinator:
             record['readerSchemaProof'] = proof
             record['activationStartedAt'] = datetime.now(timezone.utc).isoformat()
             record.setdefault('events', []).append({'status':'activating','at':record['activationStartedAt']})
+            record['status'] = 'activating'
+            record['activationTransaction'] = {
+                'priorIdentity': prior,
+                'candidateIdentity': record['stageIdentity'],
+                'status': 'pending-recovery',
+                'startedAt': record['activationStartedAt']}
+            atomic_json(path, record)
             try:
                 live = self.backend.activate(record['stageIdentity'], prior)
                 if live.get('containerId') != record['stageIdentity']['containerId'] or live.get('imageId') != record['stageIdentity']['imageId']:
@@ -997,18 +1094,89 @@ class Coordinator:
                         record['status'] = 'activation-failed-restored'
                     else:
                         raise ReleaseError('live container is not this transaction candidate; preserving foreign writer')
+                    record['activationTransaction']['status'] = 'restored'
+                    record['activationTransaction']['recoveredAt'] = datetime.now(timezone.utc).isoformat()
                 except BaseException as recovery:
                     record['status'] = 'activation-recovery-conflict'
                     record['recoveryError'] = str(recovery)
+                    record['activationTransaction']['status'] = 'recovery-failed'
+                    record['activationTransaction']['error'] = str(recovery)
                 record['activationError'] = str(error)
                 record['events'].append({'status':record['status'],'at':datetime.now(timezone.utc).isoformat()})
                 atomic_json(path, record)
                 raise
             record.update(status='active', liveIdentity=live, activationReceipt=receipt,
                           activatedAt=datetime.now(timezone.utc).isoformat())
+            record['activationTransaction']['status'] = 'complete'
+            record['activationTransaction']['completedAt'] = record['activatedAt']
             record['events'].append({'status':'active','at':record['activatedAt']})
             atomic_json(path, record)
             return record
+
+    def recover(self, release_id):
+        with deployment_lock(self.global_lock):
+            path = self._record(release_id)
+            record = read_json(path)
+            transaction = record.get('activationTransaction')
+            if not transaction or transaction.get('status') not in ('pending-recovery', 'recovery-failed'):
+                raise ReleaseError('release has no interrupted activation transaction to recover')
+            prior = transaction.get('priorIdentity')
+            candidate = transaction.get('candidateIdentity')
+            if not isinstance(prior, dict) or not isinstance(candidate, dict):
+                raise ReleaseError('activation recovery identities are incomplete')
+            try:
+                prior_id = prior.get('containerId')
+                candidate_id = candidate.get('containerId')
+                if not prior_id or not candidate_id:
+                    raise ReleaseError('activation recovery container IDs are incomplete')
+                self.backend.restore(prior, {'containerId': candidate_id})
+                result = self.backend.live_identity()
+                if result.get('containerId') != prior_id:
+                    raise ReleaseError('recovery did not restore the recorded prior container')
+                if candidate_id != prior_id:
+                    self.backend.remove_stage({'containerId': candidate_id})
+                transaction.update(status='restored', resultIdentity=result,
+                                   recoveredAt=datetime.now(timezone.utc).isoformat())
+                record.update(status='activation-failed-restored', recoveryResult='prior-restored')
+            except BaseException as error:
+                transaction.update(status='recovery-failed', error=str(error),
+                                   attemptedAt=datetime.now(timezone.utc).isoformat())
+                record.update(status='activation-recovery-conflict', recoveryError=str(error))
+                atomic_json(path, record)
+                raise
+            record.setdefault('events', []).append({'status':record['status'],
+                'at':transaction['recoveredAt']})
+            atomic_json(path, record)
+            return record
+
+    def stage_rollback(self, release_id, output):
+        with deployment_lock(self.global_lock):
+            record = read_json(self._record(release_id))
+            if record.get('status') != 'active':
+                raise ReleaseError('rollback target must be an active release')
+            current = self.backend.live_identity()
+            if current != record.get('liveIdentity'):
+                raise ReleaseError('live identity changed; rollback staging would test against a stale baseline')
+            prior = record['baselineAtOperationStart']
+            if (not policy_not_revoked(read_json(self.policy_path), prior['buildSha256'], prior['imageId']) or
+                    not policy_allows(read_json(self.registry_path), prior['buildSha256'], prior['imageId'])):
+                raise ReleaseError('rollback image is not currently approved or is revoked')
+            output = Path(output)
+            if output.exists():
+                raise ReleaseError('rollback stage evidence output already exists')
+            output.parent.mkdir(parents=True, exist_ok=True)
+            identity = contract_identity(self.contract_lock,
+                self.contract_artifact.relative_to(self.contract_lock.parent.parent).as_posix())
+            result = self.backend.stage_rollback_target(
+                prior, current, release_id, identity, self.contract_lock, self.contract_artifact)
+            try:
+                with output.open('x') as stream:
+                    json.dump(result, stream, indent=2, sort_keys=True)
+                    stream.write('\n')
+            except BaseException:
+                self.backend.remove_stage(result)
+                raise
+            return result
 
     def rollback(self, release_id, current_baseline, receipt, stage_evidence=None):
         with deployment_lock(self.global_lock):
@@ -1142,6 +1310,7 @@ def main(argv=None):
     prepare = sub.add_parser('prepare'); prepare.add_argument('--destination', type=Path, required=True); prepare.add_argument('--release', required=True); prepare.add_argument('--source-commit', required=True); prepare.add_argument('--previous-release', required=True); prepare.add_argument('--previous-build-sha256', required=True)
     plan = sub.add_parser('plan'); plan.add_argument('--baseline', type=Path, required=True); plan.add_argument('--package', type=Path, required=True); plan.add_argument('--baseline-build-sha', required=True); plan.add_argument('--baseline-release', required=True); plan.add_argument('--changes', nargs='*', default=[]); plan.add_argument('--output', type=Path, required=True)
     stage = sub.add_parser('stage'); stage.add_argument('--id', required=True); stage.add_argument('--package', type=Path, required=True); stage.add_argument('--plan', type=Path, required=True); stage.add_argument('--baseline-build-sha', required=True)
+    recover = sub.add_parser('recover'); recover.add_argument('--id', required=True)
     activate = sub.add_parser('activate'); activate.add_argument('--id', required=True); activate.add_argument('--receipt', type=Path, required=True)
     rollback = sub.add_parser('rollback'); rollback.add_argument('--id', required=True); rollback.add_argument('--receipt', type=Path, required=True)
     rollback.add_argument('--stage-evidence', type=Path)
@@ -1184,7 +1353,8 @@ def main(argv=None):
                                           accepted_main(args.repo, commit, config.get('mainRemote', 'origin'), config.get('mainBranch', 'main'))),
                                       args.registry or Path(config.get('approvalRegistry', str(state / 'approved-artifacts.json'))),
                                       acceptance_policy.get('suiteIdentity'), acceptance_policy['mandatoryCheckIDs'],
-                                      args.contracts_artifact or Path(config.get('readerContractArtifact', 'contracts/reader/v1/contract.json')))
+                                      args.contracts_artifact or Path(config.get('readerContractArtifact', 'contracts/reader/v1/contract.json')),
+                                      source_repo=args.repo)
             if args.command == 'stage':
                 require_clean_checkout(args.repo)
                 # Network query is mandatory even when stage is attempted before source approval.
@@ -1197,33 +1367,11 @@ def main(argv=None):
                 require_clean_checkout(args.repo)
                 remote_main_sha(args.repo, config.get('mainRemote', 'origin'), config.get('mainBranch', 'main'))
                 result = coordinator.activate(args.id, read_json(args.receipt))
+            elif args.command == 'recover':
+                result = coordinator.recover(args.id)
             elif args.command == 'rollback-stage':
                 require_clean_checkout(args.repo)
-                record = read_json(coordinator._record(args.id))
-                if record.get('status') != 'active':
-                    raise ReleaseError('rollback target must be an active release')
-                current = backend.live_identity()
-                if current != record.get('liveIdentity'):
-                    raise ReleaseError('live identity changed; rollback staging would test against a stale baseline')
-                prior = record['baselineAtOperationStart']
-                if not policy_not_revoked(read_json(args.policy), prior['buildSha256'], prior['imageId']) or not policy_allows(read_json(coordinator.registry_path), prior['buildSha256'], prior['imageId']):
-                    raise ReleaseError('rollback image is not currently approved or is revoked')
-                if args.output.exists():
-                    raise ReleaseError('rollback stage evidence output already exists')
-                args.output.parent.mkdir(parents=True, exist_ok=True)
-                with deployment_lock(coordinator.global_lock):
-                    identity = contract_identity(args.contracts_lock,
-                        args.contracts_artifact or Path(config.get('readerContractArtifact', 'contracts/reader/v1/contract.json')))
-                    result = backend.stage_rollback_target(
-                        prior, current, args.id, identity, args.contracts_lock,
-                        args.contracts_artifact or Path(config.get('readerContractArtifact', 'contracts/reader/v1/contract.json')))
-                    try:
-                        with args.output.open('x') as stream:
-                            json.dump(result, stream, indent=2, sort_keys=True)
-                            stream.write('\n')
-                    except BaseException:
-                        backend.remove_stage(result)
-                        raise
+                result = coordinator.stage_rollback(args.id, args.output)
             else:
                 if not args.stage_evidence:
                     raise ReleaseError('rollback requires tested --stage-evidence from rollback-stage')
