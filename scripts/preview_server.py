@@ -147,8 +147,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if len(self.path) > 2048 or self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
             return self.reply(400, {'error': 'Invalid request'})
         path = urlsplit(self.path).path
-        app_route = path in ('/', '/ux', '/ux/', '/ux/index.html') or re.fullmatch(
-            r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})', path)
+        route_path = path.lower().rstrip('/') or '/'
+        app_route = route_path in ('/', '/ux', '/ux/index.html') or re.fullmatch(
+            r'/(?:stats|support|about|blog(?:/[a-z0-9-]{1,64})?|compare(?:/[a-z0-9-]{1,64}){1,7}|united-states(?:/[a-z0-9-]{1,64}){0,4})', route_path)
         if not app_route:
             return self.serve_asset(path)
         if path == '/':
