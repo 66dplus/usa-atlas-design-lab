@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="assets/fonts.css">
   <link rel="stylesheet" href="ui-tokens.css">
   <link rel="stylesheet" href="feedback.css">
-  <link rel="stylesheet" href="style.css?v=synthesis-1"><link rel="stylesheet" href="master.css"><link rel="stylesheet" href="ui-overhaul.css"><link rel="stylesheet" href="mobile-layout.css">
+  <link rel="stylesheet" href="style.css?v=synthesis-1"><link rel="stylesheet" href="master.css?v=2026-10-25-mobile-674e5b8"><link rel="stylesheet" href="ui-overhaul.css"><link rel="stylesheet" href="mobile-layout.css?v=674e5b8">
   <script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script>
   <script src="../node_modules/d3/dist/d3.min.js"></script>
   <script src="../node_modules/topojson-client/dist/topojson-client.min.js"></script>
@@ -48,6 +48,21 @@
         <div class="pane-footer" id="footer-b"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="b" aria-label="Open statistical source, coverage and method"></button></div>
         </div>
       </section>
+      <section id="desktop-compare-card" class="desktop-compare-card" hidden aria-label="Compare places">
+        <div class="desktop-compare-places">
+          <div class="desktop-compare-place">
+            <button class="desktop-compare-name" data-pane-place="a" aria-label="Choose first place"><span id="desktop-compare-name-a"></span><span aria-hidden="true">⌄</span></button>
+            <div class="desktop-compare-value"><button data-pane-metric="a" aria-label="Choose indicator for first place"><span id="desktop-compare-metric-a"></span></button><strong id="desktop-compare-value-a"></strong></div>
+          </div>
+          <span class="desktop-compare-vs">VS</span>
+          <div class="desktop-compare-place">
+            <button class="desktop-compare-name" data-pane-place="b" aria-label="Choose second place"><span id="desktop-compare-name-b"></span><span aria-hidden="true">⌄</span></button>
+            <div class="desktop-compare-value"><button data-pane-metric="b" aria-label="Choose indicator for second place"><span id="desktop-compare-metric-b"></span></button><strong id="desktop-compare-value-b"></strong></div>
+          </div>
+        </div>
+        <div class="desktop-compare-scale" id="desktop-compare-scale"></div>
+        <div class="desktop-compare-source-row"><button class="indicator-legend-source" data-source="a">Source, coverage &amp; method</button><div id="compare-desktop-osm-slot"></div></div>
+      </section>
     </div>
     <div class="map-actions"><button id="stories-open" hidden aria-expanded="false">Browse stories <span aria-hidden="true">↗</span></button></div>
     <div id="region-jumps" class="region-jumps"><button data-jump="02">Alaska</button><button data-jump="15">Hawaii</button></div>
@@ -77,6 +92,6 @@
 <a class="osm-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a><p id="mobile-comparison-source" class="mobile-comparison-source"></p><section id="reading-page" class="reading-page" hidden aria-label="Atlas page"></section><div id="source-backdrop" hidden></div><section id="source-popup" class="source-popup" hidden role="dialog" aria-modal="true" aria-labelledby="source-heading"></section><aside id="search-sheet" class="drawer" aria-label="Search" hidden><div class="drawer-top"><h2>Search</h2><button data-close="search-sheet" aria-label="Close search">×</button></div><p>What would you like to find?</p><button data-pane-metric="a" class="search-choice"><svg data-brand-icon="indicators" aria-hidden="true"></svg>Indicators <span>Choose what the map shows</span></button><button data-pane-place="a" class="search-choice"><svg data-ui-icon="map" aria-hidden="true"></svg>Locations <span>Find a state or county</span></button></aside><div id="toast" role="status" hidden></div><section id="loading" role="status" aria-live="polite" aria-busy="true"><div class="startup-card"><div class="startup-copy"><h1 id="startup-title">Loading<span class="startup-dots" aria-hidden="true"><i></i><i></i><i></i></span></h1><p id="startup-message" aria-hidden="true">Gathering statistics across the states</p><span class="startup-accessible">Loading the U.S. map and published statistics.</span></div><button id="startup-retry" hidden>Try again</button></div></section>
 <noscript><p>Enable JavaScript to explore the interactive atlas. <a href="./?page=info">About USA X-Ray</a> · <a href="./?page=support">Support the project</a></p></noscript>
 <script src="startup-guard.js" defer></script>
-<script type="module" src="app.js?v=2026-10-01"></script>
+<script type="module" src="app.js?v=2026-10-25-mobile-674e5b8"></script>
 </body>
 </html>

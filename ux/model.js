@@ -10,9 +10,11 @@ export function loadedMapMetrics(metrics) {
 }
 
 export function collectedMapIndicators(metrics) {
-  // The adapter keeps the original indicator ID on its default series; variants use --.
-  // Keep variants for existing data cards, but do not turn them into extra picker fields.
-  return loadedMapMetrics(metrics).filter(metric=>!metric.id.includes('--'));
+  // Keep primary indicators and the requested standalone race/ethnicity lenses.
+  // Other ACS columns and internal series variants remain data sources, not
+  // hundreds of extra user-facing indicators.
+  const raceVariants=new Set(metrics.filter(metric=>metric.switchGroup==='race-ethnicity').map(metric=>metric.id));
+  return loadedMapMetrics(metrics).filter(metric=>!metric.id.includes('--')||raceVariants.has(metric.id));
 }
 
 // Rendering may use a source-defined period label; the store/API retain the native period.

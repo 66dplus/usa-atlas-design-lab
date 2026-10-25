@@ -1,5 +1,5 @@
 /** @typedef {'min'|'half'|'expanded'} SheetSnap */
-/** @typedef {{initial?: SheetSnap, onSnap?: (snap: SheetSnap) => void}} SheetOptions */
+/** @typedef {{initial?: SheetSnap, maxSnap?: SheetSnap, fitContent?: boolean, freeDrag?: boolean, onSnap?: (snap: SheetSnap, offset: number, freePosition: boolean) => void}} SheetOptions */
 const mobile = matchMedia('(max-width:760px)');
 const reduced = matchMedia('(prefers-reduced-motion:reduce)');
 const controllers = new WeakMap();
@@ -21,7 +21,7 @@ export function sheetContent(root) {
 }
 
 /** @param {HTMLElement} root @param {SheetOptions} options */
-export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
+export function bottomSheet(root, {initial = 'half', maxSnap = 'expanded', fitContent = false, freeDrag = false, onSnap = () => {}} = {}) {
   if (controllers.has(root)) return controllers.get(root);
   const content = sheetContent(root);
   const handle = document.createElement('button');
@@ -31,24 +31,27 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
   handle.innerHTML = '<span aria-hidden="true"></span>';
   root.prepend(handle);
   root.classList.add('mobile-sheet');
-  let snap = initial, positions = [0, 0, 0], offset = 0, drag, animation, suppressClick = false;
-  let touch, frame, summaryAnimation;
+  const firstSnap = names.indexOf(maxSnap);
+  let snap = names.indexOf(initial) < firstSnap ? maxSnap : initial, positions = [0, 0, 0], offset = 0, customOffset = null, drag, animation, suppressClick = false;
+  let touch, frame, summaryAnimation, contentAnimation;
   const summaryOpacity = value => clamp(1 - (positions[2] - value) / 64, 0, 1);
   const style = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
   const viewport = () => window.visualViewport?.height || window.innerHeight;
 
   function paint(value) {
-    offset = clamp(value, positions[0], positions[2]);
+    offset = clamp(value, positions[firstSnap], positions[2]);
     root.style.setProperty('--sheet-offset', `${offset}px`);
     root.style.setProperty('--sheet-cut', `${offset}px`);
     root.style.setProperty('--summary-opacity', String(summaryOpacity(offset)));
     root.dataset.dragging = String(Boolean(drag));
   }
   function interrupt() {
-    if (!animation) return;
-    const matrix = new DOMMatrixReadOnly(getComputedStyle(root).transform);
-    const current = matrix.m42;
-    animation.cancel(); animation = null; summaryAnimation?.cancel(); summaryAnimation = null;
+    if (!animation && !summaryAnimation && !contentAnimation) return;
+    const matrix = animation ? new DOMMatrixReadOnly(getComputedStyle(root).transform) : null;
+    const current = matrix?.m42 ?? offset;
+    animation?.cancel(); animation = null;
+    summaryAnimation?.cancel(); summaryAnimation = null;
+    contentAnimation?.cancel(); contentAnimation = null;
     root.dataset.settling = 'false'; paint(current);
   }
   function geometry() {
@@ -57,13 +60,33 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     if (window.visualViewport && Math.abs(window.visualViewport.scale - 1) > .01) return;
     interrupt(); drag = null; touch = null;
     const height = viewport(), footer = style('--nav-height') + style('--safe-bottom');
-    const top = Math.max(height * .18, style('--safe-top') + 72);
+    const top = freeDrag && mobile.matches ? Math.max(70, style('--safe-top') + 72) : Math.max(height * .18, style('--safe-top') + 72);
     const maximum = Math.max(100, height - footer - top);
-    positions = [0, clamp(height * .44 - top, 0, maximum - 100), Math.max(0, maximum - 100)];
+    let half = height * .44 - top;
+    if (fitContent) {
+      const children = [...content.children].map(node => node.getBoundingClientRect()).filter(box => box.height > 0);
+      if (children.length) {
+        const first = content.children[0], last = content.children[content.children.length - 1];
+        const contentStyle = getComputedStyle(content), rootStyle = getComputedStyle(root);
+        const firstStyle = getComputedStyle(first), lastStyle = getComputedStyle(last);
+        const contentHeight = Math.max(...children.map(box => box.bottom)) - Math.min(...children.map(box => box.top));
+        const fitHeight = handle.getBoundingClientRect().height + contentHeight
+          + (parseFloat(contentStyle.paddingTop) || 0) + (parseFloat(contentStyle.paddingBottom) || 0)
+          + (parseFloat(firstStyle.marginTop) || 0) + (parseFloat(lastStyle.marginBottom) || 0)
+          + (parseFloat(rootStyle.borderTopWidth) || 0);
+        half = maximum - fitHeight;
+      }
+    }
+    positions = [0, clamp(half, 0, maximum - 100), Math.max(0, maximum - 100)];
     root.style.setProperty('--sheet-top', `${top}px`);
     root.style.setProperty('--sheet-height', `${maximum}px`);
     root.style.setProperty('--sheet-footer', `${footer}px`);
-    paint(positions[names.indexOf(snap)]);
+    if (customOffset !== null) {
+      customOffset = clamp(customOffset, positions[firstSnap], positions[2]);
+      content.inert = mobile.matches && style('--sheet-top') + customOffset > height * .78;
+    }
+    const position = customOffset ?? positions[names.indexOf(snap)];
+    paint(position); onSnap(snap,position,customOffset!==null);
   }
   /** Commit a visible snap; minimum never dismisses the sheet. */
   function setSnap(next, animate = true) {
@@ -71,6 +94,9 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     interrupt(); drag = null; touch = null;
     const start = offset;
     snap = next;
+    if(names.indexOf(snap) < firstSnap) snap = maxSnap;
+    customOffset = null;
+    root.dataset.userPosition = 'false';
     const end = positions[names.indexOf(snap)];
     root.dataset.snap = snap;
     handle.setAttribute('aria-label', snap === 'expanded' ? 'Return to compact sheet' : 'Expand sheet');
@@ -78,18 +104,21 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     content.inert = mobile.matches && snap === 'min';
     syncSummary();
     if (snap !== 'expanded') content.scrollTop = 0;
-    paint(end); onSnap(snap);
+    paint(end); onSnap(snap,end,false);
     root.dataset.settling = 'false';
     if (!mobile.matches || !animate || reduced.matches || Math.abs(start - end) < .5) return;
     root.dataset.settling = 'true';
     const summary = root.querySelector(':scope > .mobile-indicator-summary');
     summaryAnimation = summary?.animate([{opacity: summaryOpacity(start)}, {opacity: summaryOpacity(end)}], {duration: style('--sheet-duration') || 260, easing: 'cubic-bezier(.16,1,.3,1)'});
+    contentAnimation = summary ? content.animate([{opacity: 1 - summaryOpacity(start)}, {opacity: 1 - summaryOpacity(end)}], {duration: style('--sheet-duration') || 260, easing: 'cubic-bezier(.16,1,.3,1)'}) : null;
     animation = root.animate([
       {transform: `translateY(${start}px)`, clipPath: `inset(0 0 ${start}px 0)`},
       {transform: `translateY(${end}px)`, clipPath: `inset(0 0 ${end}px 0)`}
     ], {duration: style('--sheet-duration') || 260, easing: 'cubic-bezier(.16,1,.3,1)'});
     const current = animation;
-    current.finished.then(() => {if (animation === current) {animation = null; root.dataset.settling = 'false'; summaryAnimation = null;}}).catch(() => {});
+    Promise.allSettled([current,summaryAnimation,contentAnimation].filter(Boolean).map(item=>item.finished)).then(() => {
+      if (animation === current) {animation = null; summaryAnimation = null; contentAnimation = null; root.dataset.settling = 'false';}
+    }).catch(() => {});
   }
   function begin(y, time) {
     interrupt();
@@ -114,31 +143,61 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
     const gesture = drag, current = offset;
     drag = null;
     suppressClick = gesture.moved;
-    if (cancelled || !gesture.moved) {setSnap(snap); return;}
+    if (cancelled || !gesture.moved) {if(customOffset!==null){content.inert=mobile.matches&&style('--sheet-top')+customOffset>viewport()*.78;syncSummary();paint(customOffset);return;}setSnap(snap); return;}
     const velocity = time - gesture.lastTime > 100 ? 0 : gesture.velocity;
-    const projected = clamp(current + velocity * 170, positions[0], positions[2]);
-    let index = positions.reduce((best, value, i) => Math.abs(value - projected) < Math.abs(positions[best] - projected) ? i : best, 0);
+    const projected = clamp(current + velocity * 170, positions[firstSnap], positions[2]);
+    let index = positions.reduce((best, value, i) => i < firstSnap ? best : Math.abs(value - projected) < Math.abs(positions[best] - projected) ? i : best, firstSnap);
     // A deliberate short flick advances one snap even before crossing its midpoint.
-    if (Math.abs(velocity) > .45 && index === names.indexOf(snap)) index = clamp(index + Math.sign(velocity), 0, 2);
+    if (Math.abs(velocity) > .45 && index === names.indexOf(snap)) index = clamp(index + Math.sign(velocity), firstSnap, 2);
+    if (freeDrag && mobile.matches) {
+      index = positions.reduce((best, value, i) => i < firstSnap ? best : Math.abs(value - current) < Math.abs(positions[best] - current) ? i : best, firstSnap);
+      snap = names[index];
+      const freePosition = Math.abs(positions[index] - current) >= .5;
+      customOffset = freePosition ? current : null; root.dataset.userPosition = String(freePosition);
+      root.dataset.snap = snap;
+      handle.setAttribute('aria-label', snap === 'expanded' ? 'Return to compact sheet' : 'Expand sheet');
+      handle.setAttribute('aria-expanded', String(snap === 'expanded'));
+      const top = style('--sheet-top') + current;
+      content.inert = freePosition ? top > viewport() * .78 : snap === 'min';
+      syncSummary(); paint(current); onSnap(snap,current,freePosition); root.dataset.settling = 'false';
+      return;
+    }
     setSnap(names[index]);
   }
-  handle.addEventListener('pointerdown', event => {
-    if (!mobile.matches || event.button !== 0 || event.isPrimary === false) return;
-    begin(event.clientY, event.timeStamp); handle.setPointerCapture(event.pointerId);
-  });
-  handle.addEventListener('pointermove', event => {if (drag) move(event.clientY, event.timeStamp);});
-  handle.addEventListener('pointerup', event => finish(false, event.timeStamp));
-  handle.addEventListener('pointercancel', () => finish(true));
-  handle.addEventListener('lostpointercapture', () => {if (drag) finish(true);});
+  const dragTargets=[handle];
+  for(const target of dragTargets){
+    target.addEventListener('pointerdown', event => {
+      if (!mobile.matches || event.button !== 0 || event.isPrimary === false) return;
+      begin(event.clientY, event.timeStamp); target.setPointerCapture(event.pointerId);
+    });
+    target.addEventListener('pointermove', event => {if (drag) move(event.clientY, event.timeStamp);});
+    target.addEventListener('pointerup', event => finish(false, event.timeStamp));
+    target.addEventListener('pointercancel', () => finish(true));
+    target.addEventListener('lostpointercapture', () => {if (drag) finish(true);});
+    if(target!==handle)target.addEventListener('click',event=>{if(suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}});
+  }
+  if(freeDrag){
+    root.addEventListener('pointerdown',event=>{
+      const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;
+      if(!target||!root.contains(target)||!mobile.matches||event.button!==0||event.isPrimary===false)return;
+      begin(event.clientY,event.timeStamp);target.setPointerCapture(event.pointerId);drag.target=target;
+    });
+    root.addEventListener('pointermove',event=>{if(drag?.target&&event.target===drag.target)move(event.clientY,event.timeStamp);});
+    root.addEventListener('pointerup',event=>{if(drag?.target&&event.target===drag.target)finish(false,event.timeStamp);});
+    root.addEventListener('pointercancel',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
+    root.addEventListener('lostpointercapture',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
+    root.addEventListener('click',event=>{const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;if(target&&suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}});
+  }
   handle.addEventListener('click', event => {
     if (suppressClick && event.detail > 0) {suppressClick = false; return;}
-    setSnap(snap === 'min' ? 'half' : snap === 'half' ? 'expanded' : 'half');
+    const next = snap === 'expanded' ? 'half' : snap === 'half' ? 'expanded' : 'half';
+    setSnap(names[Math.max(firstSnap, names.indexOf(next))]);
   });
   handle.addEventListener('keydown', event => {
     if (!['ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
     event.preventDefault();
     const index = names.indexOf(snap);
-    setSnap(event.key === 'Home' ? 'expanded' : event.key === 'End' ? 'min' : names[clamp(index + (event.key === 'ArrowUp' ? -1 : 1), 0, 2)]);
+    setSnap(event.key === 'Home' ? maxSnap : event.key === 'End' ? 'min' : names[clamp(index + (event.key === 'ArrowUp' ? -1 : 1), firstSnap, 2)]);
   });
   function canScrollTowardTop(target){
     if(content.scrollTop>0)return true;
@@ -178,7 +237,7 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
   content.addEventListener('touchcancel', () => {if (touch?.owned) finish(true); touch = null;});
   // Keyboard focus must never disappear into the clipped half of a compact sheet.
   content.addEventListener('focusin', event => {
-    if (mobile.matches && snap !== 'expanded' && event.target.getBoundingClientRect().bottom > viewport() - style('--nav-height') - style('--safe-bottom')) setSnap('expanded');
+    if (mobile.matches && snap !== maxSnap && event.target.getBoundingClientRect().bottom > viewport() - style('--nav-height') - style('--safe-bottom')) setSnap(maxSnap);
   });
   function resize() {cancelAnimationFrame(frame); frame = requestAnimationFrame(geometry);}
   window.addEventListener('resize', resize);
@@ -192,4 +251,4 @@ export function bottomSheet(root, {initial = 'half', onSnap = () => {}} = {}) {
 }
 
 /** Return the actual scrolling owner at the current breakpoint. */
-export const sheetScroll = root => mobile.matches ? sheetContent(root) : root;
+export const sheetScroll = root => mobile.matches || root.id==='explore-panel' || root.classList.contains('has-map-footer') ? sheetContent(root) : root;

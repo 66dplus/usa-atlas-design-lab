@@ -1,0 +1,1171 @@
+{
+  "release": "20261025-mobile-indicator-674e5b8",
+  "sourceBaseCommit": "dd3d97d829e85e341b051538707298bd943dea31",
+  "appliedCommit": "674e5b8361d3bc856d68c5c318d3273a4cd7427e",
+  "manifest": "public-build.json",
+  "recoveredFiles": [
+    {
+      "group": "sourceSha256",
+      "path": "ux/index.html",
+      "sha256": "c32e7ff105f13640e694fc5a905f697e44b6bca59d8be3a79f14307acac924cc",
+      "recoveredFrom": "ops/releases/20261025-mobile-indicator-674e5b8/ux/index.html",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/app.js",
+      "sha256": "cd10744ee1e5e6c67b939ff20ba35d37d1c87fc93ff7353f693967d8e77305d0",
+      "recoveredFrom": "ops/releases/20261025-mobile-indicator-674e5b8/ux/app.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/bottom-sheet.js",
+      "sha256": "447f656f19791426573a3e3bbb859c12ebf8cb0b207e4b132664eed6d161512a",
+      "recoveredFrom": "ops/releases/20261025-mobile-indicator-674e5b8/ux/bottom-sheet.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/viewport.js",
+      "sha256": "6fad4a6b3fec1dfa4e3af12afcc01bfed20d49950aaf778f9db47a2428f12484",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/viewport.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/ui-tokens.css",
+      "sha256": "2ca6ce959c5c2511024372db4cbe8e2f38c8bddd65a0eceff9d898838e60c0da",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/ui-tokens.css",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/mobile-layout.css",
+      "sha256": "6b317fec53ecb6b1ad00996f79568dc86a2ec9d65614203b0ce530c9667d39c8",
+      "recoveredFrom": "ops/releases/20261025-mobile-indicator-674e5b8/ux/mobile-layout.css",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/map.js",
+      "sha256": "2786f26cadb629439a8ba43894a544c186ac404510178cb94c7c3a4ed173a1db",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/map.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/flat-map.js",
+      "sha256": "6c1155be89df74481d5ee9832ed9e41740de32b74fecec1b0d89b067fbe36e40",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/flat-map.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/indicator-visibility.js",
+      "sha256": "1cb820440d59dfbe7a08433e688741377ba030dc4514cee25738e0854eb47feb",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/indicator-visibility.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/model.js",
+      "sha256": "52c34fbe5e5d33aef75afc42af3a191960f15129e60c54b10887a3b7172d57ff",
+      "recoveredFrom": "ops/releases/20261025-indicator-picker/package/ux/model.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/motion.js",
+      "sha256": "596f2517c2dcea5138d98bce41cdd6109e3f8e6c35264c28ca59234b5e147a4b",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/motion.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/master.css",
+      "sha256": "60c031571c40c38a7b07f317ac8af2a8d1fdeefc08d19df8e23f366cc9cea23d",
+      "recoveredFrom": "ops/releases/20261025-mobile-indicator-674e5b8/ux/master.css",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/ui-overhaul.css",
+      "sha256": "420e1a76e80995848191a0d9ee67a6414fc100bf8ab2a35f02ae9aaf9f6e78fa",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/ui-overhaul.css",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/startup-guard.js",
+      "sha256": "3dba978698a6bc60bfbc1159d8cbe91d28b99525332ba9426fad682bf3abf45c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/startup-guard.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/pages.js",
+      "sha256": "0b48db80956c2b760e7c7b0e036cbd50f6a06ac5e58e182cc005be0b188a725c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/pages.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/icons.js",
+      "sha256": "4bae0ff41de390c57dde45204de033698a5feaf4767885778e19f96f5526e623",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/icons.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/approved-icons.js",
+      "sha256": "4a504d77a41ff138682ccf842bc70e61f6e0ce0c7f76216ffc08d09fcb4669bd",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/approved-icons.js",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "sourceSha256",
+      "path": "ux/style.css",
+      "sha256": "ef3bf624ad41940555b1354f52a1748b873c12fbe2339d62d4e9597142823aa7",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/style.css",
+      "groups": [
+        "sourceSha256",
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/d3/dist/d3.min.js",
+      "sha256": "f2094bbf6141b359722c4fe454eb6c4b0f0e42cc10cc7af921fc158fceb86539",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/d3/dist/d3.min.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/build/three.core.js",
+      "sha256": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/build/three.core.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/build/three.module.js",
+      "sha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/build/three.module.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/examples/jsm/controls/OrbitControls.js",
+      "sha256": "3d79d07ecb686b4e5d93232eedab255331c1beef711e13164eaa1f68655a5f2b",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/examples/jsm/controls/OrbitControls.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/examples/jsm/lines/LineMaterial.js",
+      "sha256": "d4517001f9d7b3e885ea5baa930de0077351e885db52ef4565cde4c7dd17eb23",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/examples/jsm/lines/LineMaterial.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/examples/jsm/lines/LineSegments2.js",
+      "sha256": "fcbc20f576e88343cea12131f49b7003d7ab44ede422fcb694e567456022f7a0",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/examples/jsm/lines/LineSegments2.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js",
+      "sha256": "471f0a954a0c9c59d3d151392f424142a9164a722802f63b371971378a84a1b1",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/three/examples/jsm/utils/BufferGeometryUtils.js",
+      "sha256": "9fb63427ce6641fa14fd0baff9cc4d1b5f9c3d85fd084bf2e90e803c44ec1797",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/topojson-client/dist/topojson-client.min.js",
+      "sha256": "25cd02ae486cc5063e0215a4e4cfb15de83700c87ac48bac4d57dc6aaf3ebb89",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/topojson-client/dist/topojson-client.min.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/us-atlas/counties-10m.json",
+      "sha256": "145aaf5d1433352a6a1d8e86b5f149c7c653f9171baf14aaf75ee66575def1b0",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/us-atlas/counties-10m.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "node_modules/world-atlas/countries-110m.json",
+      "sha256": "2516c915867c7baf18ddec727aec46c315541a07cfb3d79a6559b05d5e94eee8",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/node_modules/world-atlas/countries-110m.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/advertise.html",
+      "sha256": "b6711a1d984ce04cf9e3cbd476a129463b4afa8340a4202306e52037f3ba212e",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/advertise.html",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/advertising/creative.js",
+      "sha256": "48094ffafd62381cbad7bb864a4c87fc97a79654e628dd1c4d75c6a047e02235",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/advertising/creative.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/advertising/request.js",
+      "sha256": "ffa52ffebeb56fa4e9f313e8a5843844d123cd5b09af81e16d4cca19db15a8fe",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/advertising/request.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/analytics.js",
+      "sha256": "d72f8faed9ebd40fb5cd8e74dababd45c25573b22fccd4e02d1310eefd207b42",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/analytics.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/articles/electricity-initial.jpg",
+      "sha256": "c2b74860dd155b3c3d1a0a29e267d38ec1909d428bc025eab4cb7eb4684f6baa",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/articles/electricity-initial.jpg",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/articles/electricity-mobile.jpg",
+      "sha256": "0ee538231e4c4fcfb64c098ddf5cd853f2e037c4c171a90c89b3f71223bfafe5",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/articles/electricity-mobile.jpg",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/articles/ms-initial.jpg",
+      "sha256": "b9c8636d893586281ece42e397a1e8682d556224ca902eb7e731d684310f36b1",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/articles/ms-initial.jpg",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/articles/ms-mobile.jpg",
+      "sha256": "23792c0a91118e8d069b4f4abec875016a8ec13917e03abdff13e5d744ca9a53",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/articles/ms-mobile.jpg",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/back.png",
+      "sha256": "fd607d412f163a17289a83f7475725ef88cd5818ba8e3b7775110720381a00d2",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/back.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/check.png",
+      "sha256": "c4894bb84b9893e2416f0d6e817b613b12786221754c69edcb2becd10bf1d63c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/check.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/chevron-down.png",
+      "sha256": "a4aa7a9446908b97b5627a899e22890d126ab36694459f94cb2ad436daa88e90",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/chevron-down.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/close.png",
+      "sha256": "93afda3af50e59120d3f1114780ca16afeac631a6448edfd86d5fa6505d96d5b",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/close.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/compare.png",
+      "sha256": "14a182ebb346a57085fd36aaa9e53af68fc57d2362c74d30e261f44e4edf8b2c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/compare.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/explorer.png",
+      "sha256": "d486e30fa7b5ded0fd046036bcb030cd2abb2ae8b55514276df3d5152d959652",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/explorer.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/forward.png",
+      "sha256": "1c8c7af4a4d3ff79cfe59bba6be12e9e65430176f631c0e5469a619f5340bdd3",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/forward.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/house.png",
+      "sha256": "8e0626af61aea299ea7d7e2e9a1e51860ce5187c0509cad2600e674cdf1afede",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/house.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/indicators.png",
+      "sha256": "ed130b4903d6cf7849a0cd4847bf3bf23a94b6710dc16e7c38e4da77f6d9752d",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/indicators.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/location.png",
+      "sha256": "3e43f5692d4b3f61648a379c8392a32447cc543a4a6e9f009b7fbce9fbd67d21",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/location.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/minus.png",
+      "sha256": "7f6b38d7ff9a850e8730315ceb498edfe08847551742dcb7c725eb5ae7600682",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/minus.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/plus.png",
+      "sha256": "4264b42d3d99bc92d519516e758b2ae01d724fb0287639f744583f44acd9f732",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/plus.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/saved.png",
+      "sha256": "0a257c9e59036257d40096e2f55d28ed8b2ffb06a8cefb12cb683e4eec8f059d",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/saved.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/search.png",
+      "sha256": "954564feb364e49faad6da8583eb551c5b8455bc190ff4d1bc9a22f4fc244b28",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/search.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/share.png",
+      "sha256": "cc648a417d18d69e48bcf0e2384f142e9430a7b480d342fda04c68c4a354becb",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/share.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/brand-icons/shuffle.png",
+      "sha256": "61515b54aaad9396d19b28416ab5e0523da4149d10b04a106071d21613268b66",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/brand-icons/shuffle.png",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/fonts.css",
+      "sha256": "23038c0758d55a5b412501e6660fe32c5769b33f81175d9b91d3e15315ecdc0e",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/fonts.css",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/geist-400.ttf",
+      "sha256": "ccce59465ae5c61930ada5453834f60500fbd95084d85db63e0e65fad0125455",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/geist-400.ttf",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/geist-500.ttf",
+      "sha256": "a8eefb873ba9c9020665f8a98302697ce1f3b79ab2deef6ee508c0ca6a82e876",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/geist-500.ttf",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/geist-600.ttf",
+      "sha256": "7171f481b121803d007f5c6c76cd9988c0d41cce4202db9a18dff9945505d36d",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/geist-600.ttf",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/geist-700.ttf",
+      "sha256": "1a9874b3be0fc168692a3d2327bccb4d28835653d3b91537a755296a467a83e3",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/geist-700.ttf",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/assets/san-francisco-photo.jpg",
+      "sha256": "84e8920eaab4dc5fba86d54410dfa869ae7fb0ab0403be036175096604509f71",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/assets/san-francisco-photo.jpg",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/01.json",
+      "sha256": "db57d4047357abf9ddf39678b8d0a81876f932e5d712f14c665808563c9ed19b",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/01.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/02.json",
+      "sha256": "9dd9632a0544e73ddba11cd3971b24ccf1041e4e5536c4079ff6402e4282bdf8",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/02.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/04.json",
+      "sha256": "34b1f416f6fb510658bc69e95c333a1be024be0267991758bb1de18fb3bef3d8",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/04.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/05.json",
+      "sha256": "8c0280722c0939f7425fae1a03486bf24535d8bbea694cdd5526966563b7f9ee",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/05.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/06.json",
+      "sha256": "e7229bf2a7c864e31eb25169998f01eecea91736aa4a71b59083c60d64d07ca6",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/06.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/08.json",
+      "sha256": "a7c98833aca0b060115f56d7e83528561775f3f07f1165b36a8d04d3a20188a0",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/08.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/09.json",
+      "sha256": "131c0dad6c295ae3e42ac32cecd3b8856987766ef5c0c9865b77ee10da295680",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/09.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/10.json",
+      "sha256": "642b35ec830bf4cfc46ee2e2cb28b45dac7e6dd22eda5cfc2a859c17fd4f6e5d",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/10.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/11.json",
+      "sha256": "3f7d0b24c29981417551531a28c170afd3c46200c377448a4a1a59e9fef0b2a6",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/11.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/12.json",
+      "sha256": "7627be1d2f253023e81b03d9d9ab926b29edfcfe398a6362d8d42633876d8cb4",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/12.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/13.json",
+      "sha256": "552b30cc2bce3d1f106bdf0eb21d6e1b1ace71f913532a3361b2aef359d92fee",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/13.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/15.json",
+      "sha256": "69b0b942e53c4ac682f10d870913341db5dfb766ce9d2afbdb8c0a6f3476c981",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/15.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/16.json",
+      "sha256": "c0989256c02916757387136987ee86da600ccf85f25a348812cca2d8f446e412",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/16.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/17.json",
+      "sha256": "17e7b8b25074bf9ebcdb1ded8777fd43157adaf8663ce156d409b0d7e1e8a2b2",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/17.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/18.json",
+      "sha256": "1451221920f41e192d19f55f5dae10b06f4a69eda0c554837c2ea8d0ff74b416",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/18.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/19.json",
+      "sha256": "caa218db91377260afdb921676fd4eaa37391dc79e9a816ac94843fe0153f092",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/19.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/20.json",
+      "sha256": "4e83ab6a2bca19f06724ac6739659ee4b54b5f4eb756e17808280a2a74404a67",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/20.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/21.json",
+      "sha256": "f1836af7c9d549df5a811a2b6e72b087e71b5fe8d1c4ecdb374c910bd926cea6",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/21.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/22.json",
+      "sha256": "8a2ce9e2430fd1852b4d266b85e8335defe0bced2ca0f8349a0048f1b16ba16a",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/22.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/23.json",
+      "sha256": "aa5becf2e9230279e6f80f880a0a0e6e9945f9d38772ffe22ae7a4d2429f726f",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/23.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/24.json",
+      "sha256": "25769fab2099a230eefced05d6eb8b4d804df3d502f0da0b8a82745726350e9a",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/24.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/25.json",
+      "sha256": "eb3fad37f6b64e1c665e6a14bb121e632d75e711c0c4eee9185eb0688f62784d",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/25.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/26.json",
+      "sha256": "cb9ffc44e02647ce416f288def22e88d7cc580666ffe95ed112dd13a896e4b5e",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/26.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/27.json",
+      "sha256": "2ff9130f54eaabfe04d9c514a95e652a8c07b63e8e791fef693efff04f6cdd95",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/27.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/28.json",
+      "sha256": "7c2b19acd72c10a5bf7130bc70e317d5dabaedf9f289146e5f89bb5565b54291",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/28.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/29.json",
+      "sha256": "16196d6b0906284ec584d88119393bd59444f46f183e95bdba12b38c90ff3bce",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/29.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/30.json",
+      "sha256": "6ea8f41fbb5f0bc3743fd3353a15eba188baacef76b0503df00cbec8be8941e5",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/30.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/31.json",
+      "sha256": "80849ac65a972c7848a5d34cd5f1d65c5a73d2ccb016f658b0f265da074e5e85",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/31.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/32.json",
+      "sha256": "a0242c9b405e90103133c4c51ea6e14a8fd47a1dc50bfca03c6e7268cccbe1cf",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/32.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/33.json",
+      "sha256": "2a48565ef00981c9c64bfe2d0353a0f6bca5f30bdbb0d69eb88eda57f24ee9d4",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/33.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/34.json",
+      "sha256": "1cad998b7ea8bf714a84b0f253dffdb345b6befabb054a846059b3b63693354c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/34.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/35.json",
+      "sha256": "a078c6e8e9730b616bc245a39d98112929f8cc95eb405817ef23ac73054564a0",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/35.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/36.json",
+      "sha256": "8ef1aa30ff2db64e899b58a7fca2a0f618b72dced777735831b47c5530199fb8",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/36.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/37.json",
+      "sha256": "0635f9132c67ee4731b16ccab5b551c3c8af8ceee2ce4c0a248f8dd5070724ce",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/37.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/38.json",
+      "sha256": "93af975b5ee5602b12f0f5394657e2bf46f7a51a20a1fe24e81a5a0a86f458db",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/38.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/39.json",
+      "sha256": "20e1e6e8cb43e1e4f48b76c8387940d86415455c96fe27a37cef08b87392942c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/39.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/40.json",
+      "sha256": "343c02aa4e3fdd3936045bb1cf6afc08f6040a73781b222f47d0d004e1be5915",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/40.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/41.json",
+      "sha256": "9fd21ca4ff15c052c7904951299ecf42e74243d916180c7f1a51c0cc2ce51bb1",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/41.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/42.json",
+      "sha256": "9286d786045578469ec6105f4b2cd2a6b738f13a455979453aad5e3f744445fe",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/42.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/44.json",
+      "sha256": "96ca607c7c3500fb3eccef1ce32aba79c9acfcd5585e44321453fafeeb6f3d6f",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/44.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/45.json",
+      "sha256": "e4c3e971be6e929cec573c809c036b289e65918f970547c597224613864cf5fc",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/45.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/46.json",
+      "sha256": "6d30347ea78d3c2bde6217268ce83d1c365a4f10967c59fcc411ab25a24aa24c",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/46.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/47.json",
+      "sha256": "03676f0ca82aba8208945e8e84066149e6c2b9d7a0292ec4299866f18fb75495",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/47.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/48.json",
+      "sha256": "c69a17015db2831b3b8615a4bf297274993eb3bff9f8e8a9a42b63598a31a3fe",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/48.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/49.json",
+      "sha256": "44674666006c30788083ff694e897d57c95a8c834d39cbc7f3e97c62e3009fd2",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/49.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/50.json",
+      "sha256": "58542dc54adc5f1b53aaeba4d7af951b64d579b0fcb7aae78d1f8cf1fd6c720e",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/50.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/51.json",
+      "sha256": "c862b131dc61b5b058743eb9391b95407039a3ddd164ba1cf7c27724587ebac6",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/51.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/53.json",
+      "sha256": "71e98adf929295544f3148f2ad02f86379290f823ac7e3a14f046b9cfd412e89",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/53.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/54.json",
+      "sha256": "b4957dc549a8de0af5f3dd10725c909265e0f06ba0944e3414701494c1a548b9",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/54.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/55.json",
+      "sha256": "0ac12a3cc4d08dc89fa517517480da27f018cfb564ceb208f95bcc3e3d9dc7f5",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/55.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/boundaries/56.json",
+      "sha256": "c608c0500a9aaff4292b477ad53587c1bdd6a16f09687aef7d2ea0d39ee37ddc",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/boundaries/56.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/cities.json",
+      "sha256": "3845250dc1c60d297ccedcbb1d84224b8e161cf77446825f20c5f7cb19577cc8",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/cities.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/county-boundary-repair.json",
+      "sha256": "227dd81c5167a89c16445674aaa35c0c217f19847f37ce70b8e230501adb7bc4",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/county-boundary-repair.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/geometry.js",
+      "sha256": "0de71023313dea0357bec265da24002b5dba119d0f745546da88f3744916e8a2",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/geometry.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/journal-view.js",
+      "sha256": "fd7b4f07bc9f9ba58df2e155dac54386a0d77c5ba9f832df83072eb124a471ba",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/journal-view.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/journal.js",
+      "sha256": "942d4c53d76ab1cb424bd8af528c0536cd3687e6368e2f110f6804fdae80393f",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/journal.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/settings.js",
+      "sha256": "51b7974397b55050955617765cb1246d67f4ba8663d39c3f64afe53d7d79fdf8",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/settings.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json",
+      "sha256": "76667e6982095ecceb002305927a210ae600b5f82667e83cd03f28b06c8209ba",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/studio.css",
+      "sha256": "727a93c94067f88f3679490403115edf9f24de262451f3c00e330d8915310930",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/studio.css",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/studio.js",
+      "sha256": "245ed5aabd0b56f8d6272e91791fa271da46f461a0082c8bd297597ec03d5e1e",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/studio.js",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "assetSha256",
+      "path": "ux/view-settings.json",
+      "sha256": "b4980c82e4afcce3220c5c9194b73a6a83a73af087622a94a134fbfff9d326a5",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/view-settings.json",
+      "groups": [
+        "assetSha256"
+      ]
+    },
+    {
+      "group": "dataContractSha256",
+      "path": "scripts/atlas_data.py",
+      "sha256": "85914d98a01bc95f58f939e3254a107ddb9ac718ff50034df5241691f1305f4b",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/scripts/atlas_data.py",
+      "groups": [
+        "dataContractSha256"
+      ]
+    },
+    {
+      "group": "dataContractSha256",
+      "path": "scripts/preview_server.py",
+      "sha256": "50837cd230b71f48690b0e3bc3477dde9b3e58dab5a52f6e09a3754c159f194b",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/scripts/preview_server.py",
+      "groups": [
+        "dataContractSha256"
+      ]
+    },
+    {
+      "group": "dataContractSha256",
+      "path": "ux/acs-series.json",
+      "sha256": "a2c35310101c54717f3a8330419f3c491e431cc8fa2d2b9aad027b2b20785562",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/acs-series.json",
+      "groups": [
+        "dataContractSha256"
+      ]
+    },
+    {
+      "group": "dataContractSha256",
+      "path": "ux/catalog-v2.json",
+      "sha256": "e40b4bc445222f4321661348e8232302b3b17222d8f9be5831de6ac81ba4678a",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/catalog-v2.json",
+      "groups": [
+        "dataContractSha256"
+      ]
+    },
+    {
+      "group": "dataContractSha256",
+      "path": "ux/metric-definitions.json",
+      "sha256": "ec021c275dcf288d6510eb71838ee3c818bcc1cb20bd30019f0e4cf1104ff650",
+      "recoveredFrom": ".worktrees/mobile-ui-architecture-20261023/ux/metric-definitions.json",
+      "groups": [
+        "dataContractSha256"
+      ]
+    }
+  ],
+  "localSourceTransforms": {
+    "ux/index.html": [
+      "retained packaged data-runtime=\"preview\" marker because build recognizes it and would otherwise insert it in a different attribute position",
+      "restored <link rel=\"stylesheet\" href=\"feedback.css\"> removed by packaging"
+    ],
+    "ux/app.js": [
+      "restored if(reviewOn){ from packaged if(false){"
+    ]
+  },
+  "verification": "A fresh scripts/build_temporary_preview.py package matched all 125 sourceSha256, assetSha256, and dataContractSha256 entries.",
+  "liveContainerImageDigest": "sha256:09e7604b94b8e1c9e41000d088c647abdc6d02543b8e6fffc6681bb5cbcecd54",
+  "additionalRequiredInputs": {
+    "Dockerfile": "3e6f50b994594e939e23a5bc55d9354222f4745dc6eb32649a4d7bb1dc807d20",
+    "ux/catalog.json": "f290cd229c91263bd943fe03102a6c558b5813f48d6a09c1beee4964951708ec",
+    "ux/catalog-proposals.json": "bb4948a885618c660a0f04c66bf094f61ae099454268de87f7f8918ec3166b17"
+  },
+  "historicalImageExtras": "The old image also contained Mac AppleDouble files, Python __pycache__ artifacts, deploy.py, and postdeploy-remote.py. These are historical packaging extras, not application input requirements, and may be intentionally excluded from later packages.",
+  "additionalInputSources": {
+    "Dockerfile": "deploy/temporary-preview/Dockerfile"
+  }
+}

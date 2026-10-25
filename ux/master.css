@@ -481,6 +481,11 @@ body[data-theme=light] .creative.banner .creative-body .creative-cta{color:var(-
 .metric-switch{display:flex;flex-wrap:wrap;gap:6px;padding:10px 17px 0}
 .metric-switch button{padding:6px 11px;font-size:11px;line-height:1.3;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink)}
 .metric-switch button[aria-pressed=true]{background:var(--accent);color:#171A1D}
+.metric-explanation{margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}
+.metric-explanation h3{font-size:13px;line-height:18px;letter-spacing:0}
+.metric-explanation p{margin:4px 0 0;color:var(--ink);font-size:12px;line-height:18px}
+.rank-map-note{margin:-5px 0 10px;color:var(--muted);font-size:11px;line-height:16px}
+.explore-panel .profile-actions:has(> #compare-place:only-child){grid-template-columns:minmax(0,1fr)}
 .quick-card .metric-switch,.data-card .metric-switch{padding:0 0 10px}
 .library-list{list-style:none;padding:0;margin-top:12px}
 .library-list li{display:grid;gap:4px;padding:14px 0;border-bottom:1px solid var(--line)}
@@ -510,6 +515,13 @@ body[data-theme=light] .creative.banner .creative-body .creative-cta{color:var(-
    viewport and no side field is exposed next to it. */
 .explore-panel{display:flex;flex-direction:column;overflow:hidden}
 .explore-panel .profile-content{flex:1 1 auto;min-height:0;overflow:auto}
+@media(min-width:761px){
+.drawer.has-map-footer{display:flex;flex-direction:column;overflow:hidden;padding:0;scrollbar-gutter:auto}
+.drawer.has-map-footer>.sheet-content{display:block;flex:1 1 auto;min-height:0;padding:18px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.sheet-map-footer{position:relative;z-index:2;flex:0 0 auto;background:var(--panel)}
+#metric-library>.sheet-map-footer,#place-library>.sheet-map-footer,#search-sheet>.sheet-map-footer{padding:0 17px 2px;border-top:1px solid var(--line)}
+body :is(#metric-library,#place-library,#search-sheet)>.sheet-map-footer>.osm-attribution[data-placement=source]{margin:0}
+}
 .explore-panel>.sheet-content>.profile-heading{order:1}
 .explore-panel>.sheet-content>.place-photo{order:2}
 .explore-panel>.sheet-content>.mobile-metric-overview{order:3}
@@ -572,9 +584,12 @@ body:not([data-concept=compare]) .map-footer{display:none}
   .explore-panel>.sheet-content>.mobile-indicator-summary{order:0}
   .explore-panel>.sheet-content>.mobile-metric-overview{order:1;flex:0 0 auto;min-height:0;overflow:visible;padding:20px 20px 0}
   .mobile-metric-overview .indicator-chooser{width:100%;min-height:58px;}
+  .mobile-metric-overview .indicator-chooser{display:grid;grid-template-columns:24px 1px minmax(0,1fr) 16px;gap:12px;user-select:none;-webkit-user-select:none;}
+  .mobile-metric-overview .indicator-search-icon{width:24px;min-width:24px;flex:none;}
   .mobile-metric-overview .indicator-search-divider{width:1px;min-width:1px;}
   .mobile-metric-overview .indicator-chooser-copy{flex:1 1 auto;min-width:0;}
   .mobile-metric-overview .indicator-chooser-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mobile-metric-overview .indicator-chooser>svg:last-child{width:16px;height:16px;}
   .mobile-metric-overview .profile-value{margin-top:12px;}
   .explore-panel>.sheet-content>.profile-heading{order:2;flex:0 0 auto;}
   .explore-panel>.sheet-content>.place-photo{display:none!important;}
@@ -602,6 +617,7 @@ body:not([data-concept=compare]) .map-footer{display:none}
   .panel-collapsed .mobile-summary-copy{flex:1 1 0;}
   .panel-collapsed .mobile-summary-value{max-width:38%;overflow:hidden;text-overflow:ellipsis;}
   .panel-collapsed .concept-tabs{left:0;right:0;}
+  .panel-collapsed .concept-tabs{border-radius:0;}
   .panel-collapsed:not([data-concept=compare]):not(.embedded-map) .maps{
     top:0!important;right:0!important;bottom:0!important;left:0!important;height:auto!important;max-height:none!important;
   }
@@ -780,4 +796,22 @@ body:not([data-concept=compare]) .map-footer{display:none}
   body[data-concept=compare] .pane-footer .legend-labels{font-size:8px;line-height:11px;gap:8px}
   body[data-concept=compare] .pane-footer .indicator-legend-source{margin-top:3px;font-size:8px;line-height:12px}
   body[data-concept=compare] .pane-footer .osm-attribution{margin-top:3px;font-size:8px;line-height:12px}
+}
+
+/* Align desktop indicator and place selectors on the same three columns. */
+@media(min-width:761px){
+  .desktop-indicator{padding:9px 17px 6px!important}
+  .explore-panel .desktop-indicator .indicator-heading,.explore-panel .place-chooser{display:grid;grid-template-columns:17px minmax(0,1fr) 13px;align-items:center;gap:9px;width:100%;min-height:35px;padding:0;text-align:left}
+  .explore-panel .desktop-indicator .indicator-heading>b,.explore-panel .place-chooser>strong{min-width:0;margin:0;font-size:14px;font-weight:600;line-height:20px;letter-spacing:0;overflow-wrap:anywhere}
+  .explore-panel .desktop-indicator .indicator-icon,.explore-panel .place-chooser>svg:first-child{display:block;width:17px;height:17px;color:var(--accent)}
+  .explore-panel .desktop-indicator .indicator-icon svg{display:block;width:17px;height:17px}
+  .explore-panel .desktop-indicator .indicator-heading>svg:last-child,.explore-panel .place-chooser>svg:last-child{display:block;width:13px;height:13px;color:var(--muted);stroke-width:1.5}
+}
+
+/* One desktop content viewport; the existing source block stays below it. */
+@media(min-width:761px){
+  .explore-panel>.sheet-content{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  .explore-panel .profile-content{flex:0 0 auto;min-height:0;overflow:visible}
+  .explore-panel .profile-heading{position:static}
+  :is(#explore-panel,#ranking-panel,#metric-library,#place-library,#search-sheet),:is(#explore-panel,#ranking-panel,#metric-library,#place-library,#search-sheet) *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }

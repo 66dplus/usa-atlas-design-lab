@@ -41,6 +41,10 @@ export async function loadGeography() {
   // Only other countries form the backdrop; a coarse US coast would protrude into detailed bays.
   context.features=context.features.filter(f=>f.id!=='840');
   const geo={states:s,counties:c,byId:new Map([...s,...c].map(f=>[f.id,f])),projection,path,cities:cities.map(c=>({...c,point:projection([c.lon,c.lat])})),world:context,collection,detailStates:new Set()};
+  geo.prepareFocus=id=>{
+    const feature=geo.byId.get(id);
+    if(feature&&feature.id.length===5&&!feature.focusBounds)Object.assign(feature,decorate(feature.feature));
+  };
   const pending=new Map();
   geo.loadDetail=async id=>{
     const parent=id?.slice(0,2);if(!parent||geo.detailStates.has(parent))return;
@@ -62,8 +66,8 @@ export async function loadGeography() {
 }
 
 export class ExplorerMap {
-  constructor(host,geo,{onSelect=()=>{},onError=()=>{},onHover=()=>{}}={}) {
-    Object.assign(this,{host,geo,onSelect,onError,onHover});
+  constructor(host,geo,{onSelect=()=>{},onRankSelect=()=>{},onError=()=>{},onHover=()=>{}}={}) {
+    Object.assign(this,{host,geo,onSelect,onRankSelect,onError,onHover});
     this.state={mode:'2d',selectedId:null,values:new Map(),dark:false};
     this.svg=d3.select(host).append('svg').attr('viewBox',`0 0 ${WIDTH} ${HEIGHT}`).attr('class','geo-svg').attr('aria-label','United States interactive map');
     this.labelLayer=this.svg.append('g').attr('pointer-events','none');
@@ -230,7 +234,7 @@ export class ExplorerMap {
     this.host.dataset.renderer=this.state.mode==='3d'?'webgl3d':this.flatActive?'webgl':'unavailable';
   }
   fitScale(){const b=this.bounds();return Math.max(.8,Math.min(400,.82/Math.max((b[1][0]-b[0][0])/WIDTH,(b[1][1]-b[0][1])/HEIGHT)));}
-  focusFeature(id=this.state.selectedId){const feature=id?this.geo.byId.get(id):null;return feature?.id.length===5?this.geo.byId.get(feature.stateId):feature;}
+  focusFeature(id=this.state.selectedId){return id?this.geo.byId.get(id)||null:null;}
   bounds() {if(this.state.ranks?.length){const bounds=[[[45,20],[1155,720]],...this.state.ranks.map(row=>this.geo.byId.get(row.id).focusBounds)];return [[Math.min(...bounds.map(b=>b[0][0])),Math.min(...bounds.map(b=>b[0][1]))],[Math.max(...bounds.map(b=>b[1][0])),Math.max(...bounds.map(b=>b[1][1]))]];}const focus=this.focusFeature();return focus?focus.focusBounds:[[45,20],[1155,720]];}
   renderLabels() {
     if(this.state.mode!=='2d'||!this.viewportSize?.[0])return;
@@ -353,15 +357,30 @@ export class ExplorerMap {
   }
   renderRankMarkers(){
     if(!this.rankMarkers){this.rankMarkers=document.createElement('div');this.rankMarkers.className='rank-markers';this.host.append(this.rankMarkers);}
-    const rows=this.state.ranks||[],key=JSON.stringify(rows);
-    if(this.rankKey!==key){this.rankKey=key;this.rankMarkers.replaceChildren(...rows.map(row=>{const button=document.createElement('button');button.className='rank-marker';button.textContent=row.rank+' · '+this.geo.byId.get(row.id).name;button.setAttribute('aria-label','Open '+this.geo.byId.get(row.id).name);button.onclick=()=>this.onSelect(row.id);return button;}));}
+    const rows=this.state.rankMarkers||this.state.ranks||[],key=JSON.stringify(rows);
+    if(this.rankKey!==key){this.rankKey=key;this.rankMarkers.replaceChildren(...rows.map(row=>{const button=document.createElement('button');button.className='rank-marker';button.dataset.rankMarkerPlace=row.id;button.textContent=row.rank+' · '+(row.label||this.geo.byId.get(row.id).name);button.setAttribute('aria-label','Zoom to '+(row.label||this.geo.byId.get(row.id).name));button.onclick=()=>this.onRankSelect(row.id);return button;}));}
+    const rankingPanel=this.host.ownerDocument.querySelector('#ranking-panel'),mobile=this.host.ownerDocument.defaultView.innerWidth<=760;
+    const panelVisible=rankingPanel&&!rankingPanel.hidden&&!rankingPanel.inert&&rankingPanel.getClientRects().length;
+    const sheetTop=mobile&&panelVisible?rankingPanel.getBoundingClientRect().top:Infinity,panelRect=!mobile&&panelVisible?rankingPanel.getBoundingClientRect():null;
     const occupied=[];
     rows.forEach((row,i)=>{
       const f=this.geo.byId.get(row.id),el=this.rankMarkers.children[i],w=this.viewportSize?.[0]||0,h=this.viewportSize?.[1]||0;let x,y,visible=true;
       if(this.state.mode==='3d'&&this.camera){const parent=this.stateGroups?.get(f.stateId);const altitude=(.0015+(this.state.heightValues?.get(row.id)??0)*(parent?.userData.height??RELIEF))*(this.heightScale??1);const p=new THREE.Vector3(f.point[0]/100-6,altitude+.002,f.point[1]/100-3.75).project(this.camera);x=(p.x+1)*w/2;y=(1-p.y)*h/2;visible=p.z>=-1&&p.z<=1;}
       else {const scale=Math.min(w/WIDTH,h/HEIGHT),p=d3.zoomTransform(this.svg.node()).apply(f.point);x=p[0]*scale+(w-WIDTH*scale)/2;y=p[1]*scale+(h-HEIGHT*scale)/2;}
-      el.hidden=!visible||x<0||x>w||y<0||y>h;let offset=0;const width=Math.min(w,el.textContent.length*5.8+20);
-      if(!el.hidden){while(occupied.some(b=>x-width/2<b.right&&x+width/2>b.left&&y-offset-27<b.bottom&&y-offset>b.top))offset+=30;occupied.push({left:x-width/2,right:x+width/2,top:y-offset-27,bottom:y-offset});}
+      el.hidden=!visible||x<0||x>w||y<0||y>h;let offset=0;const width=Math.min(w,el.textContent.length*5.8+20),anchorX=x,anchorY=y;
+      if(!el.hidden){
+        if(Number.isFinite(sheetTop))offset=Math.max(offset,y-sheetTop+8);
+        const markerWidth=el.offsetWidth||width,markerHeight=el.offsetHeight||27;let horizontalLeader=false;
+        if(panelRect&&x+markerWidth/2>panelRect.left&&x-markerWidth/2<panelRect.right&&y-offset>panelRect.top&&y-offset-markerHeight<panelRect.bottom){
+          const right=panelRect.right+markerWidth/2+8,left=panelRect.left-markerWidth/2-8;
+          x=right+markerWidth/2<=w-4?right:left;
+          horizontalLeader=true;
+        }
+        while(occupied.some(b=>x-markerWidth/2<b.right&&x+markerWidth/2>b.left&&y-offset-markerHeight<b.bottom&&y-offset>b.top))offset+=30;
+        occupied.push({left:x-markerWidth/2,right:x+markerWidth/2,top:y-offset-markerHeight,bottom:y-offset});
+        if(horizontalLeader){const dx=anchorX-x,dy=anchorY-(y-offset),length=Math.hypot(dx,dy);el.dataset.leader='horizontal';el.style.setProperty('--leader-length',length+'px');el.style.setProperty('--leader-angle',Math.atan2(dy,dx)+'rad');}
+        else delete el.dataset.leader;
+      }
       el.style.left=x+'px';el.style.top=(y-offset)+'px';el.style.setProperty('--leader',offset+'px');
     });
   }

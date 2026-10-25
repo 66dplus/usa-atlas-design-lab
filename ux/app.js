@@ -1,4 +1,4 @@
-import {bottomSheet,sheetContent,sheetScroll} from './bottom-sheet.js';
+import {bottomSheet,sheetContent,sheetScroll} from './bottom-sheet.js?v=674e5b8';
 import {initViewport} from './viewport.js';
 import {initPages} from './pages.js';
 import {showSurface,slidePill,isSurfaceOpen,captureMapLayout,animateMapLayout} from './motion.js';
@@ -18,6 +18,7 @@ let placeSheet;
 const drawerSheets=new WeakMap();
 const mobileLayout=()=>matchMedia('(max-width:760px)').matches;
 function showOverlay(node,open){
+  if(!mobileLayout()&&['ranking-panel','metric-library','place-library','search-sheet'].includes(node.id)){node.hidden=!open;node.inert=!open;return Promise.resolve(true);}
   if(mobileLayout()&&node.classList.contains('mobile-sheet')){node.hidden=!open;node.inert=!open;return Promise.resolve(true);}
   return showSurface(node,open,{axis:'y'});
 }
@@ -46,7 +47,7 @@ const stories=[
  {title:'Where work is changing',description:'Explore employment, place by place.',metric:'unemployment',place:'48',action:'Explore Texas'},
  {title:'A closer look at city life',description:'San Francisco, from state to city & county.',metric:'unemployment',place:'06075',action:'Explore San Francisco'}
 ];
-let pages,explorationPose,geo,catalog,metricById,library,mapA,mapB,viewSettings,dataStore,toastTimer,returnFocus,returnFocusSelector;
+let pages,explorationPose,rankFocus=null,geo,catalog,metricById,library,mapA,mapB,viewSettings,dataStore,toastTimer,returnFocus,returnFocusSelector;
 let pinned=['unemployment--03-06-employment','unemployment--03-06-labor-force','unemployment--03-06-unemployment'];
 const availableIndicatorId=(id,fallback)=>catalog.find(m=>m.id===id)?.id||metricById?.get(id)?.id||catalog.find(m=>m.id===fallback)?.id||catalog[0].id;
 const metric=()=>metricById.get(state.metric);
@@ -55,7 +56,8 @@ const layer=m=>displayLayer(dataStore.get(m));
 const heights=m=>layer(m).heightValues||new Map();
 function metricSwitchMarkup(m){
   if(!m?.switchOptions)return '';
-  return `<div class="metric-switch" role="group" aria-label="${escapeHTML(m.switchLabel||'Measure')}">${m.switchOptions.map(option=>`<button type="button" data-switch-metric="${option.id}" aria-pressed="${option.id===m.id}">${escapeHTML(option.label)}</button>`).join('')}</div>`;
+  const race=m.switchGroup==='race-ethnicity';
+  return `<div class="metric-switch${race?' metric-switch--race':''}" role="group" aria-label="${escapeHTML(m.switchLabel||'Measure')}">${m.switchOptions.map(option=>`<button type="button" data-switch-metric="${option.id}" aria-pressed="${option.id===m.id}">${escapeHTML(option.label)}</button>`).join('')}</div>`;
 }
 const values=m=>layer(m).values;
 const needed=()=>[...new Set([state.metric,...(state.concept==='compare'?[metricB()?.id]:[]),...(state.selected?pinned:[])])].map(id=>metricById.get(id)).filter(Boolean);
@@ -95,11 +97,27 @@ function syncPlaceChrome(){
 }
 // Keep one copyright link: mobile chrome must stay outside transformed sheets.
 function syncAttribution(){
+  const explorer=$('#explore-panel'),content=sheetContent(explorer),fixedLegend=explorer.querySelector(':scope > .indicator-legend'),contentLegend=content.querySelector(':scope > .indicator-legend');
+  if(mobileLayout()){
+    if(fixedLegend){if(contentLegend)fixedLegend.remove();else content.append(fixedLegend);}
+  }else if(contentLegend){fixedLegend?.remove();explorer.append(contentLegend);}
   let target=document.body;
-  if(!mobileLayout()&&!embedded&&!document.body.classList.contains('reading')&&!document.body.classList.contains('left-replaced')){
-    target=state.concept==='compare'?$('#footer-a'):$('#explore-panel .indicator-legend');
+  const reading=document.body.classList.contains('reading');
+  if(!mobileLayout()&&!embedded&&!reading&&state.concept==='compare')target=$('#compare-desktop-osm-slot');
+  else if(!mobileLayout()&&!embedded&&!reading&&state.concept!=='compare'){
+    const panel=[...document.querySelectorAll('.drawer:not([hidden]):not([inert])')].find(node=>['ranking-panel','metric-library','place-library','search-sheet'].includes(node.id));
+    if(panel){
+      panel.classList.add('has-map-footer');
+      let footer=panel.querySelector(':scope > .sheet-map-footer');
+      if(!footer){footer=document.createElement('footer');footer.className='sheet-map-footer';footer.setAttribute('aria-label','Map source and OpenStreetMap attribution');panel.append(footer);}
+      if(panel.id==='ranking-panel'){
+        sheetContent(panel).querySelector(':scope > .indicator-legend')?.remove();
+        let legend=footer.querySelector(':scope > .indicator-legend');
+        if(!legend){legend=$('#explore-panel .indicator-legend').cloneNode(true);legend.querySelector('.osm-attribution')?.remove();footer.append(legend);}
+        target=legend;
+      }else target=footer;
+    }else if(!document.body.classList.contains('left-replaced'))target=$('#explore-panel .indicator-legend')||document.body;
   }
-  target||=document.body;
   mapAttribution.dataset.placement=target===document.body?'floating':'source';
   if(mapAttribution.parentElement!==target)target.append(mapAttribution);
 }
@@ -122,13 +140,13 @@ function rememberExploration(){
   if(explorationPose||state.concept!=='explorer'||!mapA)return;
   explorationPose={selected:state.selected,metric:state.metric,mode:state.mode,rank:state.rank,rankOpen:isSurfaceOpen($('#ranking-panel')),rankScroll:sheetScroll($('#ranking-panel')).scrollTop,profileScroll:sheetScroll($('#explore-panel')).scrollTop,camera:mapA.captureView(),sheet:document.body.classList.contains('place-expanded')?'expanded':document.body.classList.contains('panel-collapsed')?'dismissed':'half'};
 }
-function closeDrawers(restore=true){
+function closeDrawers(restore=true,preserveRank=false){
   const request=++overlayRequest;
   if(comparisonDraft){comparisonDraft=null;document.body.classList.remove('comparison-setup');if(explorationPose){setPlaceSheet(explorationPose.sheet);explorationPose=null;}}
   const hadRanks=isSurfaceOpen($('#ranking-panel'));document.body.classList.remove('sheet-expanded');
   const replaced=document.body.classList.contains('left-replaced');document.body.classList.remove('left-replaced');$('#explore-panel').inert=false;if(replaced)sheetScroll($('#explore-panel')).scrollTop=leftScroll;leftScroll=0;
   const closing=[...document.querySelectorAll('.drawer:not([hidden]):not([inert]),#view-settings-panel:not([hidden])')].map(el=>showOverlay(el,false).then(()=>syncOverlayOwners()));
-  if(hadRanks&&geo&&dataStore){state.rank=null;persist();updateMaps();}
+  if(hadRanks&&geo&&dataStore&&!preserveRank){state.rank=null;rankFocus=null;persist();updateMaps();}
   document.querySelectorAll('[aria-expanded=true]').forEach(el=>el.setAttribute('aria-expanded','false'));
   syncPlaceChrome();
   if(restore){
@@ -143,14 +161,16 @@ function closeDrawers(restore=true){
 }
 function openDrawer(id,trigger=document.activeElement,side='a',edge=side==='b'?'right':'left'){
   const panel=$('#'+id),wasOpen=isSurfaceOpen(panel)&&returnFocus===trigger;
+  if(!mobileLayout()&&['ranking-panel','metric-library','place-library','search-sheet'].includes(id))panel.classList.add('has-map-footer');
   closeDrawers(false);if(wasOpen){trigger?.focus();return;}
-  returnFocus=trigger;returnFocusSelector=trigger?.id?'#'+trigger.id:trigger?.dataset.paneMetric?`[data-pane-metric="${side}"]`:trigger?.dataset.panePlace?`[data-pane-place="${side}"]`:null;panel.dataset.edge=edge;setPlaceSheet(document.body.classList.contains('panel-collapsed')?'dismissed':'half');panel.classList.remove('expanded');drawerSheets.get(panel)?.setSnap('half',false);if(!mobileLayout()&&!panel.querySelector('[data-expand-sheet]')){const expand=document.createElement('button');expand.dataset.expandSheet=id;expand.className='expand-sheet';expand.setAttribute('aria-label','Expand '+panel.getAttribute('aria-label'));expand.innerHTML=icon('expand');panel.prepend(expand);}
+  returnFocus=trigger;returnFocusSelector=trigger?.id?'#'+trigger.id:trigger?.dataset.paneMetric?`[data-pane-metric="${side}"]`:trigger?.dataset.panePlace?`[data-pane-place="${side}"]`:null;panel.dataset.edge=edge;if(mobileLayout())setPlaceSheet('min');else setPlaceSheet(document.body.classList.contains('panel-collapsed')?'dismissed':'half');panel.classList.remove('expanded');drawerSheets.get(panel)?.setSnap(id==='metric-library'&&mobileLayout()?'expanded':'min',false);
   if(trigger?.matches('#quick-stats .source-button'))returnFocusSelector='#quick-stats .source-button';
   // The visual side belongs to the clicked pane, even when both panes share a metric/place.
   (id==='compare-results'?$('.map-workspace'):$('#pane-'+side)).append(panel);
   if(id!=='inspector'&&id!=='compare-results'){leftScroll=sheetScroll($('#explore-panel')).scrollTop;document.body.classList.add('left-replaced');$('#explore-panel').inert=true;}
   syncPlaceChrome();
   showOverlay(panel,true);trigger?.setAttribute('aria-expanded','true');
+  if(mobileLayout())requestAnimationFrame(()=>{if(!isSurfaceOpen(panel))return;const sheet=drawerSheets.get(panel);if(id==='metric-library'){sheet?.refresh();sheet?.setSnap('expanded',false);}else if(panel.dataset.snap==='min'){sheet?.refresh();sheet?.setSnap('half');}});
   syncOverlayOwners();
   if(id==='inspector'||id==='compare-results')analytics.action('sources_open',{side});
   [...panel.querySelectorAll('input,button')].find(control=>control.getClientRects().length&&!control.disabled)?.focus();
@@ -164,14 +184,16 @@ function rememberState(id){
 }
 async function choosePlace(id,side='a') {
   const target=side==='b'&&state.concept==='compare'&&state.comparison==='places'?'b':'a';
-  const request=++selectionRequest[target];closeDrawers();
-  try{await geo.loadDetail(id);}catch(error){toast(error.message);return;}
-  if(request!==selectionRequest[target])return false;
+  const request=++selectionRequest[target];rankFocus=null;closeDrawers();
   const previous=side==='b'&&state.concept==='compare'&&state.comparison==='places'?state.second:state.selected;
   if(side==='b'&&state.concept==='compare'&&state.comparison==='places'){state.second=id;secondExplicit=true;comparisonPrepared=true;}
   else state.selected=id;
+  geo.prepareFocus(id);
   rememberState(id);
-  setPlaceSheet(id?'half':'dismissed');closeDrawers();render();if(previous!==id){if(id&&matchMedia('(max-width:760px)').matches)animateSelectedMetric();const place=placeContext(id);analytics.action('place_select',{selected_place_id:place.place_id,selected_place_type:place.place_type,selected_state_id:place.state_id});}return true;
+  setPlaceSheet(mobileLayout()?'min':id?'half':'dismissed');closeDrawers(false);render();
+  if(previous!==id){if(id&&mobileLayout())animateSelectedMetric();const selectedPlace=placeContext(id);analytics.action('place_select',{selected_place_id:selectedPlace.place_id,selected_place_type:selectedPlace.place_type,selected_state_id:selectedPlace.state_id});}
+  geo.loadDetail(id).then(()=>{if(request===selectionRequest[target])render();}).catch(error=>{if(request===selectionRequest[target])toast(error.message);});
+  return true;
 }
 function animateSelectedMetric(){
   const value=$('#explore-panel .profile-value strong');
@@ -286,22 +308,47 @@ const prompts=[
 let shareTimer,saveTimer,leftScroll=0;
 function sourceLink(m,f){const data=layer(m),url=observation(m,f?.id)?.sourceUrl||data.observations.values().next().value?.sourceUrl||m.sourceUrl;return url?`<a href="${escapeHTML(url)}" target="_blank" rel="noreferrer">${escapeHTML(data.source||m.source)} ↗</a>`:escapeHTML(data.source||m.source);}
 function rankData(){
-  const m=metric(),data=layer(m),county=state.selected?.length===5,parent=state.selected?.slice(0,2);
-  const group=county?geo.counties.filter(f=>f.stateId===parent):geo.states.filter(f=>f.id!=='11');
+  const rankedPlace=rankFocus?.origin??state.selected,m=metric(),data=layer(m),selectedCounty=rankedPlace?.length===5;
+  const countyOnly=m.countySupported&&!m.stateSupported,county=selectedCounty||countyOnly;
+  const parent=selectedCounty?rankedPlace.slice(0,2):countyOnly&&rankedPlace?.length===2?rankedPlace:null;
+  const group=county?geo.counties.filter(f=>parent?f.stateId===parent:f.stateId!=='11'):geo.states.filter(f=>f.id!=='11');
   const available=group.map(f=>({id:f.id,name:f.name,value:value(m,f.id)})).filter(f=>f.value!=null);
   const ascending=[...available].sort((a,b)=>a.value-b.value||a.name.localeCompare(b.name));
   const descending=[...available].sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));
   const direction=state.rank==='lowest'?ascending:descending;
-  const rows=direction.slice(0,5).map(row=>({...row,rank:direction.findIndex(x=>x.value===row.value)+1,tied:available.filter(x=>x.value===row.value).length>1}));
-  return {rows,total:group.length,count:available.length,group:county?place(parent).name+' counties':'50 US states · DC excluded',min:ascending[0]?.value??0,max:ascending.at(-1)?.value??0,cutoffTie:direction.length>5&&direction[4].value===direction[5].value,data};
+  const rows=direction.slice(0,5).map(row=>({...row,rank:direction.findIndex(x=>x.value===row.value)+1,tied:available.filter(x=>x.value===row.value).length>1,label:county&&!parent?`${row.name} · ${place(row.id.slice(0,2)).name}`:row.name}));
+  if(county)rows.forEach(row=>geo.prepareFocus(row.id));
+  return {rows,total:group.length,count:available.length,group:county?(parent?place(parent).name+' counties':'U.S. counties · DC excluded'):'50 US states · DC excluded',min:ascending[0]?.value??0,max:ascending.at(-1)?.value??0,cutoffTie:direction.length>5&&direction[4].value===direction[5].value,data};
 }
 function rankingMarkup(){
   const r=rankData(),range=r.max-r.min;
-  return `<div class="rank-tabs"><button data-rank="highest" aria-pressed="${state.rank==='highest'}">Highest 5</button><button data-rank="lowest" aria-pressed="${state.rank==='lowest'}">Lowest 5</button></div><p class="rank-context">${escapeHTML(r.group)} · ${r.count}/${r.total} with data</p>${r.rows.length?`<ol class="rank-list">${r.rows.map(row=>`<li><button data-rank-place="${row.id}"><span class="rank-number">${row.rank}${row.tied?'=':''}</span><span class="rank-name">${escapeHTML(row.name)}<span class="rank-bar" style="width:${range?12+88*(row.value-r.min)/range:100}%"></span></span><b>${formatValue(row.value,r.data.unit)}</b></button><button class="rank-compare" data-rank-compare="${row.id}" aria-label="Compare ${escapeHTML(row.name)}" title="Add to comparison">${icon('plus')}</button></li>`).join('')}</ol>`:`<p class="empty-note">${['loading','idle'].includes(r.data.status)?'Loading this indicator…':'No comparable observations in this group.'}</p>`}<p class="rank-foot">${escapeHTML(formatPeriod(r.data.period)||'No loaded period')} · ${escapeHTML(r.data.unit||'—')} · Shared range ${formatValue(r.min,r.data.unit)}–${formatValue(r.max,r.data.unit)}${r.cutoffTie?' · More places share the cutoff value.':''}${r.rows.some(x=>x.tied)?' = tied rank.':''}</p>`;
+  const mapNote=r.rows[0]?.id?.length===2&&metric().stateSupported&&metric().countySupported?'This list ranks state observations; the map colors county observations.':'';
+  return `<div class="rank-tabs"><span class="segment-pill" aria-hidden="true"></span><button data-rank="highest" aria-pressed="${state.rank==='highest'}">Highest 5</button><button data-rank="lowest" aria-pressed="${state.rank==='lowest'}">Lowest 5</button></div><p class="rank-context">${escapeHTML(r.group)} · ${r.count}/${r.total} with data</p>${mapNote?`<p class="rank-map-note">${mapNote}</p>`:''}${r.rows.length?`<ol class="rank-list">${r.rows.map(row=>`<li><button data-rank-place="${row.id}"><span class="rank-number">${row.rank}</span><span class="rank-name">${escapeHTML(row.label)}<span class="rank-bar" style="width:${range?12+88*(row.value-r.min)/range:100}%"></span></span><b>${formatValue(row.value,r.data.unit)}</b></button><button class="rank-compare" data-rank-compare="${row.id}" aria-label="Compare ${escapeHTML(row.label)}" title="Add to comparison">${icon('plus')}</button></li>`).join('')}</ol>`:`<p class="empty-note">${['loading','idle'].includes(r.data.status)?'Loading this indicator…':'No comparable observations in this group.'}</p>`}<p class="rank-foot">${escapeHTML(formatPeriod(r.data.period)||'No loaded period')} · ${escapeHTML(r.data.unit||'—')} · Shared range ${formatValue(r.min,r.data.unit)}–${formatValue(r.max,r.data.unit)}${r.cutoffTie?' · More places share the cutoff value.':''}${r.rows.some(x=>x.tied)?' · Equal values share a rank.':''}</p>`;
 }
+function syncRankPill(){const group=$('#ranking-panel .rank-tabs');if(group)slidePill(group,group.querySelector('[data-rank][aria-pressed=true]'));}
 function openRank(direction){
-  state.rank=direction;persist();sheetContent($('#ranking-panel')).innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. One source period. Missing values are excluded; both lists use the same scale.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;
+  if(rankFocus){state.selected=rankFocus.origin;rankFocus=null;}
+  state.rank=direction;persist();sheetContent($('#ranking-panel')).innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. One source period. Missing values are excluded; both lists use the same scale.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;syncRankPill();
   openDrawer('ranking-panel',document.activeElement);renderLegend(state.concept==='compare',layer(metric()),layer(metricB()));updateMaps();
+}
+function selectRankPlace(id){
+  const origin=rankFocus?.origin??state.selected,direction=state.rank;
+  if(!direction)return choosePlace(id);
+  rankFocus={origin,direction,id};const request=++selectionRequest.a;
+  if(mobileLayout()){closeDrawers(false,true);setPlaceSheet('min');}
+  state.selected=id;geo.prepareFocus(id);render();
+  geo.loadDetail(id).then(()=>{if(request===selectionRequest.a)render();}).catch(error=>{if(request===selectionRequest.a)toast(error.message);});
+}
+function handleMapSelection(id){
+  if(rankFocus){
+    const {origin,id:focusedId}=rankFocus,parent=focusedId?.slice(0,2);
+    if(!id||id===origin||(focusedId?.length===5&&id===parent)){
+      const request=++selectionRequest.a;state.selected=origin;rankFocus=null;setPlaceSheet('min');render();
+      geo.loadDetail(origin).then(()=>{if(request===selectionRequest.a)render();}).catch(error=>{if(request===selectionRequest.a)toast(error.message);});return;
+    }
+    rankFocus=null;state.rank=null;
+  }
+  choosePlace(id);
 }
 function photoMarkup(f){
   if(!f?.id.startsWith('06'))return '';
@@ -315,10 +362,18 @@ function renderExplorer(){
   const nationalUnit=data.unit&&data.unit!=='%'?' '+data.unit:'';
   const nationalRange=nationalGap&&data.min!=null&&data.max!=null?`${formatValue(data.min,data.unit)} – ${formatValue(data.max,data.unit)}${nationalUnit}`:'';
   const rangeLevel=m.countySupported?'County':'State';
-  const averageLabel=f?.name?`${f.name} · State`:nationalGap?(nationalRange?`${rangeLevel} range · ${formatPeriod(data.period)||'Latest available'}`:`No observations · ${formatPeriod(data.period)||'Latest available'}`):`U.S. average · ${formatPeriod(data.period)||'Latest available'}`;
+  const averageLabel=f?.name?`${f.name} · ${f.id.length===5?'County':'State'}`:nationalGap?(nationalRange?`${rangeLevel} range · ${formatPeriod(data.period)||'Latest available'}`:`No observations · ${formatPeriod(data.period)||'Latest available'}`):`U.S. average · ${formatPeriod(data.period)||'Latest available'}`;
   const mobileValue=nationalGap?(nationalRange||'No data'):v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit);
-  sheetContent(panel).innerHTML=`<button class="mobile-indicator-summary" data-pane-metric="a" aria-label="Search indicators · ${escapeHTML(m.name)} · ${escapeHTML(averageLabel)} · ${escapeHTML(mobileValue)}" aria-expanded="false"><span class="mobile-summary-grip" aria-hidden="true"></span><span class="mobile-summary-search">${icon('search')}</span><span class="mobile-summary-divider" aria-hidden="true"></span><span class="mobile-summary-copy"><b>${escapeHTML(m.name)}</b><small>${escapeHTML(averageLabel)}</small></span><strong class="mobile-summary-value${nationalRange?' is-range':''}">${escapeHTML(mobileValue)}</strong></button><div class="mobile-metric-overview profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span class="indicator-search-icon" aria-hidden="true">${icon('search')}</span><span class="indicator-search-divider" aria-hidden="true"></span><span class="indicator-chooser-copy"><small class="indicator-label">Indicator</small><small class="mobile-indicator-hint">Search indicators</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong class="${nationalRange?'is-range':''}">${nationalGap?escapeHTML(nationalRange||'No data'):v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div></div><div class="profile-heading"><button class="place-sheet-back" data-dismiss-place="true" aria-label="Dismiss place card">${icon('back')}</button><button class="place-chooser" data-pane-place="a" aria-expanded="false">${brandIcon('location')}<strong>${escapeHTML(f?.name||'Find a place')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content">${metricSwitchMarkup(m)}<p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}</p>${v==null?`<p class="missing-note">${escapeHTML(nationalGap?(nationalRange?'No national total is published for this series. The map shows individual places; select one to see its own observation. No national average is substituted.':'This release has no state observations for this series. No national value is substituted.'):missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">${icon('compare')} Compare</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div></div><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="a" aria-label="Open statistical source, coverage and method"></button></div>`;
+  sheetContent(panel).innerHTML=`<button class="mobile-indicator-summary" data-mobile-search aria-label="Search places and indicators · ${escapeHTML(m.name)} · ${escapeHTML(averageLabel)} · ${escapeHTML(mobileValue)}" aria-expanded="false"><span class="mobile-summary-grip" aria-hidden="true"></span><span class="mobile-summary-search">${icon('search')}</span><span class="mobile-summary-divider" aria-hidden="true"></span><span class="mobile-summary-copy"><b>${escapeHTML(m.name)}</b><small>${escapeHTML(averageLabel)}</small></span><strong class="mobile-summary-value${nationalRange?' is-range':''}">${escapeHTML(mobileValue)}</strong></button><div class="mobile-metric-overview profile-content"><button class="indicator-chooser" data-pane-metric="a" aria-expanded="false"><span class="indicator-search-icon" aria-hidden="true">${icon('search')}</span><span class="indicator-search-divider" aria-hidden="true"></span><span class="indicator-chooser-copy"><small class="indicator-label">Indicator</small><small class="mobile-indicator-hint">Search indicators</small><b>${escapeHTML(m.name)}</b></span>${icon('down')}</button><div class="profile-value"><strong class="${nationalRange?'is-range':''}">${nationalGap?escapeHTML(nationalRange||'No data'):v==null?['idle','loading'].includes(data.status)?'Loading…':m.plannedState==='proposed'?'Planned':'No data':formatValue(v,data.unit)}</strong>${v!=null&&data.unit!=='%'?`<span>${escapeHTML(data.unit)}</span>`:''}<button id="save-view" aria-label="Save this exploration" title="Save this exploration">${icon('bookmark')}</button></div></div><div class="profile-heading"><button class="place-sheet-back" data-dismiss-place="true" aria-label="Dismiss place card">${icon('back')}</button><button class="place-chooser" data-pane-place="a" aria-expanded="false">${brandIcon('location')}<strong>${escapeHTML(f?.name||'Find a place')}</strong>${icon('down')}</button><div class="place-path">${crumbs}</div></div>${photoMarkup(f)}<div class="profile-content">${metricSwitchMarkup(m)}<p class="value-source">${sourceLink(m,f)} · ${escapeHTML(formatPeriod(data.period)||(m.plannedState==='proposed'?'No published period':'Not loaded'))}</p>${v==null?`<p class="missing-note">${escapeHTML(nationalGap?(nationalRange?'No national total is published for this series. The map shows individual places; select one to see its own observation. No national average is substituted.':'This release has no state observations for this series. No national value is substituted.'):missingReason(m,f,data))}</p>${data.status==='error'?`<button data-retry="${m.id}" class="outline-button">Retry data</button>`:''}`:''}<div class="ranking-shortcuts"><button data-open-rank="highest">${icon('uptrend')} Highest 5</button><button data-open-rank="lowest">${icon('downtrend')} Lowest 5</button></div><div class="profile-actions"><button class="primary-button" id="compare-place">${icon('compare')} Compare</button><button class="outline-button" id="explore-more">Explore more ${icon('arrow')}</button></div><div class="explore-next"><h3>Explore next</h3>${f?.id==='06'?`<button data-open-place="06075"><span><b>San Francisco</b><small>Go from state to city & county</small></span>${icon('arrow')}</button>`:`<button data-open-prompt="1"><span><b>California & Texas</b><small>One indicator. Two perspectives.</small></span>${icon('arrow')}</button>`}<button data-open-prompt="3"><span><b>Where does a dollar go further?</b><small>Compare the cost of living</small></span>${icon('arrow')}</button></div></div><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="a" aria-label="Open statistical source, coverage and method"></button></div>`;
   const content=sheetContent(panel),summary=content.querySelector('.mobile-indicator-summary');
+  content.querySelector('#save-view')?.remove();
+  content.querySelector('#explore-more')?.remove();
+  const explanation=m.definition?.method||data.definition?.method||data.methodologyNote||m.method||'';
+  if(explanation){
+    const note=document.createElement('section');note.className='metric-explanation';note.setAttribute('aria-label','What this number means');
+    note.innerHTML=`<h3>What this number means</h3><p>${escapeHTML(explanation)}</p>`;
+    content.querySelector('.mobile-metric-overview')?.append(note);
+  }
   const previous=panel.querySelector(':scope > .mobile-indicator-summary');
   if(previous)previous.replaceWith(summary);else panel.append(summary);
   placeSheet.syncSummary();
@@ -372,12 +427,23 @@ function renderCompare(){
   const rows=isMetrics?[metric(),metricB()]:[metric(),...pinned.filter(id=>id!==state.metric).slice(0,2).map(id=>metricById.get(id))];
   sheetContent($('#compare-results')).innerHTML=`<div class="drawer-top"><h2>${isMetrics?'Two lenses on '+escapeHTML(a?.name||'United States'):'The same questions, side by side'}</h2><button data-close="compare-results" aria-label="Close comparison data" class="icon-button">×</button></div><p class="library-note">${isMetrics?'Each indicator has its own unit, period and colour/height range.':'Both maps use the same indicator snapshot and colour/height range.'}</p><div class="comparison-data"><table><thead><tr><th>Indicator · period</th><th>${escapeHTML(a?.name||'US')}</th>${!isMetrics?`<th>${escapeHTML(b?.name||'US')}</th><th>Difference</th>`:'<th>Unit</th>'}</tr></thead><tbody>${rows.map(m=>{const data=layer(m),va=value(m,a?.id),vb=value(m,b?.id),canCompare=comparable(data,data,a,b)&&va!=null&&vb!=null;return `<tr><th>${escapeHTML(m.name)}<small class="data-period">${escapeHTML(formatPeriod(data.period)||'No observation')}</small></th><td>${formatValue(va,data.unit)}</td>${!isMetrics?`<td>${formatValue(vb,data.unit)}</td><td>${canCompare?formatValue(va-vb,data.unit==='%'?'':data.unit)+' '+escapeHTML(data.unit==='%'?'percentage points':data.unit):'—'}</td>`:`<td>${escapeHTML(data.unit||'—')}</td>`}</tr>`;}).join('')}</tbody></table></div><p class="comparison-note">Original source values. Differences require the same series, period, release, unit and geographic level. A dash means no comparable observation.</p>`;
 }
+function renderDesktopCompareCard(){
+  const card=$('#desktop-compare-card'),desktop=!mobileLayout()&&!embedded&&state.concept==='compare';
+  card.hidden=!desktop;if(!desktop)return;
+  const a=selected(),b=selectedB(),ma=metric(),mb=metricB(),da=layer(ma),db=layer(mb);
+  $('#desktop-compare-name-a').textContent=a?.name||'United States';$('#desktop-compare-name-b').textContent=b?.name||'United States';
+  $('#desktop-compare-metric-a').textContent=ma.name;$('#desktop-compare-metric-b').textContent=mb.name;
+  $('#desktop-compare-value-a').textContent=number(ma,a?.id);$('#desktop-compare-value-b').textContent=number(mb,b?.id);
+  const scale=(data,title)=>{const domain=data.domain||[0,0],sample=rampColor(paletteFor(data));return `<div class="desktop-compare-scale-item"><div class="desktop-compare-scale-title">${escapeHTML(title)}</div><div class="desktop-compare-ramp" title="${escapeHTML(data.scale||'linear')} scale" style="background:linear-gradient(90deg,${Array.from({length:25},(_,index)=>`${sample(index/24)} ${(index*100/24).toFixed(2)}%`).join(',')})"></div><div class="desktop-compare-range"><span>${escapeHTML(formatValue(domain[0],data.unit))}</span><span>${escapeHTML(formatValue(domain[1],data.unit))}</span></div></div>`;};
+  $('#desktop-compare-scale').innerHTML=state.comparison==='metrics'?`${scale(da,ma.name)}${scale(db,mb.name)}`:scale(da,`${ma.name} · ${da.unit||'No data'} · Shared range`);
+}
 function updateMaps(){
   const dark=document.body.dataset.theme==='dark';
   const handleError=message=>{toast(message);if(state.mode==='3d'){state.mode='2d';render();}};
   const entry={animateEntry:mapSplitEntry};
-  if(!mapA)mapA=new ExplorerMap($('#map-a'),geo,{onSelect:id=>choosePlace(id),onError:handleError,onHover:info=>hover('a',info)});
-  const updateA=()=>mapA.update({...entry,layoutKey:state.concept,mode:state.mode,selectedId:isSurfaceOpen($('#ranking-panel'))&&state.rank?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),heightValues:heights(metric()),countySupported:metric().countySupported,palette:paletteFor(layer(metric())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:isSurfaceOpen($('#ranking-panel'))&&state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank})=>({id,rank})):[]});
+  if(!mapA)mapA=new ExplorerMap($('#map-a'),geo,{onSelect:handleMapSelection,onRankSelect:selectRankPlace,onError:handleError,onHover:info=>hover('a',info)});
+  const rankRows=state.rank&&state.concept!=='compare'?rankData().rows.map(({id,rank,label})=>({id,rank,label})):[];
+  const updateA=()=>mapA.update({...entry,layoutKey:state.concept,mode:state.mode,selectedId:state.rank&&!rankFocus&&isSurfaceOpen($('#ranking-panel'))?(state.selected?.length===5?state.selected.slice(0,2):null):state.selected,metricKey:state.metric,values:values(metric()),heightValues:heights(metric()),countySupported:metric().countySupported,palette:paletteFor(layer(metric())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:rankRows.length&&!rankFocus?rankRows:[],rankMarkers:rankRows.filter(row=>row.id!==rankFocus?.id)});
   if(state.concept==='compare'){
     if(!mapB)mapB=new ExplorerMap($('#map-b'),geo,{onSelect:id=>choosePlace(id,'b'),onError:handleError,onHover:info=>hover('b',info)});
     const updateB=()=>mapB.update({...entry,layoutKey:state.concept,mode:state.mode,selectedId:state.comparison==='metrics'?state.selected:state.second,metricKey:metricB().id,values:values(metricB()),heightValues:heights(metricB()),countySupported:metricB().countySupported,palette:paletteFor(layer(metricB())),dark,cleanBackdrop:embedded,background:embedded?(dark?'#25292D':'#FFFFFF'):(dark?'#171A1D':'#EEF0F3'),settings:viewSettings,ranks:[]});
@@ -444,10 +510,10 @@ function render(){
   syncPlaceChrome();
   const sharedPlace=state.comparison==='metrics';
   const sharedControl=$('#mobile-compare-metric');
-  sharedControl.innerHTML=`<span>${escapeHTML(sharedPlace?(selected()?.name||'United States'):metric().name.replace(/ rate$/,''))}</span>${icon('down')}`;
+  sharedControl.innerHTML=`<span class="mobile-compare-label">${escapeHTML(sharedPlace?(selected()?.name||'United States'):metric().name.replace(/ rate$/,''))}</span>${icon('down')}`;
   sharedControl.dataset.panePlace=sharedPlace?'a':'';
   sharedControl.dataset.paneMetric=sharedPlace?'':'a';
-  sharedControl.setAttribute('aria-label',sharedPlace?'Choose the comparison place':'Choose the comparison indicator');
+  sharedControl.setAttribute('aria-label',sharedPlace?'Choose the comparison place for both maps':'Choose the comparison indicator for both maps');
   const comparisonSource=$('#mobile-comparison-source');comparisonSource.innerHTML=`${sourceLink(metric(),selected())} · ${escapeHTML(formatPeriod(layer(metric()).period)||'No observation')} <button data-source="a" aria-label="Open comparison indicator source"> · Source ${icon('info')}</button>`;
   const data=layer(metric()),other=layer(metricB());
   $('#pane-b').hidden=!compare;$('#compare-toolbar').hidden=!compare;$('#stories-open').hidden=!story;
@@ -459,8 +525,10 @@ function render(){
   if(state.mode==='2d'&&$('#view-settings-panel')&&isSurfaceOpen($('#view-settings-panel'))){showSurface($('#view-settings-panel'),false);settingsTrigger?.setAttribute('aria-expanded','false');}
   $('.dimension-control').dataset.ready='true';
   $('#story-list').innerHTML=stories.map((s,i)=>`<button class="story-item" data-story="${i}" aria-pressed="${s.metric===state.metric&&s.place===state.selected?.slice(0,2)}"><strong>${s.title}</strong><small>${s.description}</small><span class="story-action">${s.action} →</span></button>`).join('');
-  renderMapHeads();renderBreadcrumbs();renderInspector();renderExplorer();if(compare)renderCompare();if(isSurfaceOpen($('#ranking-panel'))){const scroll=sheetScroll($('#ranking-panel')).scrollTop;sheetContent($('#ranking-panel')).innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;sheetScroll($('#ranking-panel')).scrollTop=scroll;}persist();updateMaps();
+  renderMapHeads();renderBreadcrumbs();renderInspector();renderExplorer();if(compare)renderCompare();if(isSurfaceOpen($('#ranking-panel'))){const scroll=sheetScroll($('#ranking-panel')).scrollTop;sheetContent($('#ranking-panel')).innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to ${escapeHTML(selected()?.name||'Explorer')}</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;sheetScroll($('#ranking-panel')).scrollTop=scroll;syncRankPill();}persist();updateMaps();
   renderLegend(compare,data,other);
+  renderDesktopCompareCard();
+  syncAttribution();
   if($('.drawer:not([hidden]):not([inert])')&&returnFocusSelector)$(returnFocusSelector)?.setAttribute('aria-expanded','true');
   if(focusSelector&&!focused.isConnected)$(focusSelector)?.focus();
   pages?.refreshSources();
@@ -479,16 +547,17 @@ async function changeConcept(concept,{refresh=false}={}){
   const returning=state.concept==='compare'&&concept==='explorer'&&explorationPose;
   if(returning){state.selected=returning.selected;state.metric=returning.metric;state.mode=returning.mode;state.rank=returning.rank;}
   closeDrawers(false);state.concept=concept;
-  if(returning)setPlaceSheet(returning.sheet);
-  if(concept==='compare'){setPlaceSheet('half');prepareComparison(state.selected);if(!state.selected)state.selected='06';}
+  if(concept!=='explorer'){rankFocus=null;state.rank=null;}
+  if(returning)setPlaceSheet(mobileLayout()?'min':returning.sheet);
+  if(concept==='compare'){setPlaceSheet(mobileLayout()?'min':'half');prepareComparison(state.selected);if(!state.selected)state.selected='06';}
   else if(concept==='stories')state.mode='3d';
-  try{await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);}catch(error){toast(error.message);}
-  if(request!==conceptRequest)return;
+  geo.prepareFocus(state.selected);if(concept==='compare')geo.prepareFocus(state.second);
   conceptLoading=0;
   mapSplitEntry=changedLayout&&concept==='compare';try{render();}finally{mapSplitEntry=false;}
   if(returning){sheetScroll($('#explore-panel')).scrollTop=returning.profileScroll||0;if(returning.rankOpen&&returning.rank){openRank(returning.rank);sheetScroll($('#ranking-panel')).scrollTop=returning.rankScroll||0;}mapA.restoreView(returning.camera);explorationPose=null;mapB?.cancelMotion();}
   animateMapLayout($('#maps'),layout,{entering:concept==='compare',pane:$('#pane-b')});
   analytics.action('view_select');if(concept==='stories')openDrawer('story-rail',$('#stories-open'));
+  Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]).then(()=>{if(request===conceptRequest)render();}).catch(error=>{if(request===conceptRequest)toast(error.message);});
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button||!catalog)return;
@@ -497,9 +566,9 @@ document.addEventListener('click',event=>{
    if(button.dataset.comparisonPlace){comparisonDraft.second=button.dataset.comparisonPlace;comparisonDraft.explicit=true;comparisonDraft.choosing=false;renderComparisonDraft();return;}
    if(button.hasAttribute('data-comparison-confirm')){state.second=comparisonDraft.second;secondExplicit=secondExplicit||Boolean(comparisonDraft.explicit);comparisonPrepared=true;comparisonDefaultFor=comparisonDraft.first;state.comparison='places';comparisonDraft=null;document.body.classList.remove('comparison-setup');closeDrawers(false);pages.navigate('compare');return;}
   if(button.dataset.openRank){openRank(button.dataset.openRank);return;}
-  if(button.dataset.rank){state.rank=button.dataset.rank;persist();const scroll=sheetScroll($('#ranking-panel')).scrollTop;$('#ranking-panel').querySelector('.rank-tabs').parentElement.innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to map</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;sheetScroll($('#ranking-panel')).scrollTop=scroll;renderLegend(state.concept==='compare',layer(metric()),layer(metricB()));updateMaps();return;}
-  if(button.dataset.rankPlace){state.rank=null;choosePlace(button.dataset.rankPlace);return;}
-   if(button.dataset.rankCompare){rememberExploration();const id=button.dataset.rankCompare;state.second=id;secondExplicit=true;comparisonPrepared=true;state.comparison='places';state.rank=null;if(!state.selected||state.selected===id)state.selected=rankData().rows.find(x=>x.id!==id)?.id||(id==='06'?'48':'06');changeConcept('compare',{refresh:true});return;}
+  if(button.dataset.rank){if(rankFocus){state.selected=rankFocus.origin;rankFocus=null;}state.rank=button.dataset.rank;persist();const scroll=sheetScroll($('#ranking-panel')).scrollTop;$('#ranking-panel').querySelector('.rank-tabs').parentElement.innerHTML=`<button class="panel-back" data-close="ranking-panel">${icon('back')} Back to map</button><h2>${escapeHTML(metric().name)}</h2>${rankingMarkup()}<p class="library-note">${sourceLink(metric(),selected())}. Missing values excluded. Same scale for both lists.</p><div class="indicator-legend"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><a class="indicator-legend-source" href="https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html" target="_blank" rel="noreferrer">Census 2017 boundaries</a></div>`;sheetScroll($('#ranking-panel')).scrollTop=scroll;syncRankPill();renderLegend(state.concept==='compare',layer(metric()),layer(metricB()));updateMaps();return;}
+  if(button.dataset.rankPlace){state.rank=null;rankFocus=null;choosePlace(button.dataset.rankPlace);return;}
+  if(button.dataset.rankCompare){rememberExploration();const id=button.dataset.rankCompare;state.second=id;secondExplicit=true;comparisonPrepared=true;state.comparison='places';state.rank=null;rankFocus=null;if(!state.selected||state.selected===id)state.selected=rankData().rows.find(x=>x.id!==id)?.id||(id==='06'?'48':'06');changeConcept('compare',{refresh:true});return;}
   if(button.dataset.openPlace){state.rank=null;choosePlace(button.dataset.openPlace);return;}
   if(button.dataset.photo){state.photoExpanded=!state.photoExpanded;renderExplorer();return;}
   if(button.dataset.openPrompt!==undefined){openPrompt(+button.dataset.openPrompt);return;}
@@ -533,6 +602,7 @@ document.addEventListener('click',event=>{
   if(button.dataset.inspectMetric){const previous=state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics'?state.secondMetric:state.metric;if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();if(previous!==button.dataset.inspectMetric)analytics.action('indicator_select',{selected_indicator_id:button.dataset.inspectMetric});return;}
   if(button.dataset.story){const previous=state.metric,s=stories[+button.dataset.story];state.metric=s.metric;state.rank=null;state.concept='explorer';choosePlace(s.place).then(ok=>{if(ok){if(previous!==s.metric)analytics.action('indicator_select');analytics.action('view_select',{entry:'story'});}});return;}
   if(button.dataset.compare){const previous=state.comparison;closeDrawers(false);selectionRequest.a++;selectionRequest.b++;state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();if(previous!==state.comparison)analytics.action('comparison_mode_select');return;}
+  if(button.hasAttribute('data-mobile-search')){openDrawer('search-sheet',button);return;}
   if(button.dataset.panePlace){showPlaceLibrary(button.dataset.panePlace);return;}
   if(button.dataset.paneMetric){showMetricLibrary(button.dataset.paneMetric);return;}
   if(button.dataset.source){showStatSource(button.dataset.source);return;}
@@ -546,26 +616,25 @@ document.addEventListener('click',event=>{
     case 'edit-card':showMetricLibrary(state.inspectorSide||'a',true);break;
     case 'stories-open':openDrawer('story-rail',button);break;
     case 'saved-open':showSaved();break;
-    case 'save-view':saveView();break;
     case 'save-current':saveView();closeDrawers(false);showSaved();break;
-    case 'explore-more':showPlaceLibrary('a',Boolean(state.selected));break;
     case 'mobile-panel':closeDrawers(false);setPlaceSheet(document.body.classList.contains('place-expanded')?'half':'expanded');break;
   }
 });
 document.addEventListener('input',event=>{if(event.target.id==='comparison-place-search'&&comparisonDraft){const cursor=event.target.selectionStart;comparisonDraft.query=event.target.value;renderComparisonDraft();const input=$('#comparison-place-search');input.focus();input.setSelectionRange(cursor,cursor);}});
 $('#metric-search').addEventListener('input',renderMetrics);$('#place-search').addEventListener('input',renderPlaces);
-matchMedia('(max-width:760px)').addEventListener('change',()=>{setPlaceSheet(document.body.classList.contains('place-expanded')?'expanded':state.selected?'half':'dismissed');if(geo&&isSurfaceOpen($('#place-library')))renderPlaces();if(geo&&isSurfaceOpen($('#inspector')))renderInspector();});
+matchMedia('(max-width:760px)').addEventListener('change',()=>{setPlaceSheet(mobileLayout()?'min':document.body.classList.contains('place-expanded')?'expanded':state.selected?'half':'dismissed');if(geo&&isSurfaceOpen($('#place-library')))renderPlaces();if(geo&&isSurfaceOpen($('#inspector')))renderInspector();});
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&$('.drawer:not([hidden]):not([inert])')){event.stopImmediatePropagation();closeDrawers();}
   else if(event.key==='Escape'&&!document.body.classList.contains('reading')&&!isSurfaceOpen($('#source-popup'))&&matchMedia('(max-width:760px)').matches&&!document.body.classList.contains('panel-collapsed')){event.stopImmediatePropagation();setPlaceSheet(document.body.classList.contains('place-expanded')?'half':'dismissed');}
 });
 async function copyLink(){const button=$('#share');if(!button)return;clearTimeout(shareTimer);try{await navigator.clipboard.writeText(location.href);analytics.action('share_success');button.querySelector('span').textContent='Link copied';button.setAttribute('aria-label','Link copied');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}catch{button.querySelector('span').textContent='Copy failed';button.setAttribute('aria-label','Copy failed. Copy the browser address.');shareTimer=setTimeout(()=>{button.querySelector('span').textContent='Share';button.setAttribute('aria-label','Share');},5000);}}
-placeSheet=bottomSheet($('#explore-panel'),{initial:state.selected?'half':'min',onSnap:snap=>{
-  document.body.classList.toggle('place-expanded',snap==='expanded');
-  document.body.classList.toggle('panel-collapsed',snap==='min'&&mobileLayout());
+placeSheet=bottomSheet($('#explore-panel'),{initial:mobileLayout()?'min':state.selected?'half':'min',freeDrag:true,onSnap:(snap,offset,freePosition)=>{
+  const mobile=mobileLayout(),top=(parseFloat($('#explore-panel').style.getPropertyValue('--sheet-top'))||0)+offset;
+  document.body.classList.toggle('place-expanded',freePosition?mobile&&top<innerHeight*.62:snap==='expanded');
+  document.body.classList.toggle('panel-collapsed',freePosition?mobile&&top>innerHeight*.78:snap==='min'&&mobile);
   syncPlaceChrome();
 }});
-for(const panel of document.querySelectorAll('.drawer'))drawerSheets.set(panel,bottomSheet(panel,{onSnap:snap=>{
+for(const panel of document.querySelectorAll('.drawer'))drawerSheets.set(panel,bottomSheet(panel,{maxSnap:panel.id==='search-sheet'?'half':'expanded',fitContent:panel.id==='search-sheet',onSnap:snap=>{
   panel.classList.toggle('expanded',snap==='expanded');
 }}));
 pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept});

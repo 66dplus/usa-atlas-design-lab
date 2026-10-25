@@ -126,6 +126,7 @@ def apply_definition(metric, definition, field_id, label, unit, geography, formu
 def variant_definition(base, variant):
     definition = {**base, 'label': variant['label'], 'fieldId': variant['fieldId'],
                   'formula': variant['formula'], 'unit': variant.get('unit', base['unit']),
+                  'method': variant.get('method', base['method']),
                   'variants': None}
     derived = {**base['derived'], 'numerator': variant['numerator']}
     if 'denominator' in variant:

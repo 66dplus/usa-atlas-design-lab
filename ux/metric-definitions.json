@@ -19,7 +19,7 @@
       "fieldId": "01.01:B01003_001E",
       "formula": "B01003_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "The ACS estimate counts residents at this place during the 2020–2024 survey period. It is a population count, not a population density or growth rate."
     },
     {
       "id": "age",
@@ -38,7 +38,7 @@
       "fieldId": "01.02:B01002_001E",
       "formula": "B01002_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "The ACS estimates the age at the midpoint of the population at this place during 2020–2024. Half the population is younger than this age and half is older."
     },
     {
       "id": "sex",
@@ -97,7 +97,7 @@
       "fieldId": "01.04:derived:hispanic",
       "formula": "B03002_012E / B03002_001E * 100",
       "minDenominator": 100,
-      "method": "Hispanic or Latino residents divided by total residents, multiplied by 100.",
+      "method": "Hispanic or Latino residents divided by all residents, multiplied by 100. This is the share of the total population that is Hispanic or Latino; Hispanic origin can be of any race.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -137,7 +137,7 @@
       "fieldId": "01.05:derived",
       "formula": "B05002_013E / B05002_001E * 100",
       "minDenominator": 100,
-      "method": "Foreign-born residents divided by total residents, multiplied by 100.",
+      "method": "Residents born outside the United States divided by all residents, multiplied by 100. This is the share of the population that is foreign-born.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -177,7 +177,7 @@
       "fieldId": "01.06:derived",
       "formula": "B05006_139E / B05006_001E * 100",
       "minDenominator": 100,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "Residents born in Latin America divided by foreign-born residents, multiplied by 100. This is the share of foreign-born residents born in Latin America."
     },
     {
       "id": "citizenship",
@@ -236,7 +236,7 @@
       "fieldId": "01.08:derived",
       "formula": "B05005_004E / B05002_013E * 100",
       "minDenominator": 100,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "Foreign-born residents who arrived in 2010 or later divided by all foreign-born residents, multiplied by 100. This is the share of foreign-born residents who arrived during that period."
     },
     {
       "id": "median-household-income",
@@ -255,7 +255,7 @@
       "fieldId": "02.01:B19013_001E",
       "formula": "B19013_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "The ACS estimates the midpoint of household incomes at this place over 2020–2024: half of households had a higher income and half had a lower income. This is a household measure, not income per person."
     },
     {
       "id": "per-capita-income",
@@ -274,7 +274,7 @@
       "fieldId": "02.02:B19301_001E",
       "formula": "B19301_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "Total income in the past 12 months divided by the total population. This is the average dollar income per person, not a household income figure."
     },
     {
       "id": "median-rent",
@@ -293,7 +293,7 @@
       "fieldId": "02.03:B25064_001E",
       "formula": "B25064_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "The ACS estimates the midpoint of monthly gross rents for renter-occupied homes paying cash rent. Half of these rents are higher and half are lower."
     },
     {
       "id": "median-home-value",
@@ -312,7 +312,7 @@
       "fieldId": "02.04:B25077_001E",
       "formula": "B25077_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "The ACS estimates the midpoint of reported home values for owner-occupied homes. Half of the estimated values are higher and half are lower."
     },
     {
       "id": "mortgage-selected-monthly-owner-costs",
@@ -331,7 +331,7 @@
       "fieldId": "02.05:B25088_001E",
       "formula": "B25088_001E",
       "minDenominator": null,
-      "method": "U.S. Census Bureau American Community Survey 5-year estimate. One latest period and release; no allocation, averaging, or older-place fallback."
+      "method": "The ACS estimates selected monthly costs for owner-occupied homes, including housing expenses such as mortgage payments, taxes, insurance, utilities, and fuels. This is a housing-cost measure, not a home price."
     },
     {
       "id": "rent-as-of-income-rent-burden",
@@ -455,7 +455,7 @@
       "fieldId": "02.08:derived",
       "formula": "B17001_002E / B17001_001E * 100",
       "minDenominator": 100,
-      "method": "People below the poverty level divided by the population for whom poverty status is determined, multiplied by 100.",
+      "method": "People whose income is below the Census poverty threshold divided by the population for whom poverty status is determined, multiplied by 100. It is the share of that population below the threshold; it is not a measure of how far below it their incomes are.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -863,7 +863,7 @@
       "fieldId": "03.06:unemployment_rate",
       "formula": "03.06:unemployment_rate",
       "minDenominator": null,
-      "method": "BLS Local Area Unemployment Statistics unemployment rate. One latest month and release; no annual averaging."
+      "method": "Unemployed people divided by the civilian labor force, multiplied by 100. The labor force includes employed people and unemployed people who are available for work and actively looking, or on temporary layoff. This is a share of the labor force, not of all residents."
     },
     {
       "id": "work-from-home-share",
@@ -882,7 +882,7 @@
       "fieldId": "03.09:derived",
       "formula": "B08301_021E / B08301_001E * 100",
       "minDenominator": 100,
-      "method": "Workers who worked from home divided by all workers, multiplied by 100.",
+      "method": "Workers age 16 and older who worked from home divided by all workers age 16 and older, multiplied by 100. It is the share of workers whose commute mode was working from home.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1586,6 +1586,7 @@
         "label": "White non-Hispanic share",
         "fieldId": "01.04:derived:white",
         "formula": "B03002_003E / B03002_001E * 100",
+        "method": "People who are White alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.",
         "numerator": [
           {
             "field": "01.04:B03002_003E",
@@ -1596,9 +1597,10 @@
       },
       {
         "id": "race-ethnicity--black",
-        "label": "Black share",
+        "label": "Black non-Hispanic share",
         "fieldId": "01.04:derived:black",
         "formula": "B03002_004E / B03002_001E * 100",
+        "method": "People who are Black or African American alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.",
         "numerator": [
           {
             "field": "01.04:B03002_004E",
@@ -1609,9 +1611,10 @@
       },
       {
         "id": "race-ethnicity--asian",
-        "label": "Asian share",
+        "label": "Asian non-Hispanic share",
         "fieldId": "01.04:derived:asian",
         "formula": "B03002_006E / B03002_001E * 100",
+        "method": "People who are Asian alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.",
         "numerator": [
           {
             "field": "01.04:B03002_006E",
