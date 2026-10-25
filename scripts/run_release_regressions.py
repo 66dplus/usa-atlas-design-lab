@@ -66,6 +66,19 @@ def main():
         print(webgl.stderr, file=sys.stderr, end="")
     if webgl.returncode:
         raise SystemExit(webgl.returncode)
+    # Exercise native React ownership and the shipped editor against this same
+    # runtime. These are full matrices; no ambient viewport filters are retained.
+    for name, script in (("react-ui", "check-react-ui.mjs"),
+                         ("studio", "check-studio-react.mjs"),
+                         ("http-seo", "check-http-seo.mjs")):
+        native = subprocess.run(["node", str(ROOT / "ux" / script)], cwd=ROOT,
+                                env=browser_env(env, output / name),
+                                capture_output=True, text=True, timeout=900)
+        print(native.stdout, end="")
+        if native.stderr:
+            print(native.stderr, file=sys.stderr, end="")
+        if native.returncode:
+            raise SystemExit(native.returncode)
     mutation = execute(env, output / "negative-footer", "legacy-footer")
     negative_result = output / "negative-footer/results.json"
     evidence = require_footer_failure(mutation, negative_result)

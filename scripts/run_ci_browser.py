@@ -35,7 +35,8 @@ def main():
     env.update({"ATLAS_TEST_URL": f"http://127.0.0.1:{port}",
                 "ATLAS_TEST_BROWSER": "chrome", "ATLAS_TEST_OUTPUT": str(output),
                 "PGAPPNAME": "usa_atlas_ci_runtime", "PLAYWRIGHT_MODULE": "playwright"})
-    server = subprocess.Popen([sys.executable, str(entrypoint), "--host", "127.0.0.1", "--port", str(port)],
+    server = subprocess.Popen([sys.executable, str(entrypoint), "--host", "127.0.0.1", "--port", str(port),
+                               "--reports-dir", str(temporary / "private-reports")],
                               cwd=package, env=env, stdout=subprocess.DEVNULL,
                               stderr=subprocess.DEVNULL)
     try:

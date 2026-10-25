@@ -69,7 +69,7 @@ You need Node.js with npm and Python 3. For real data you also need <code>psql</
 ~~~sh
 git clone https://github.com/66dplus/usa-atlas-design-lab.git
 cd usa-atlas-design-lab
-npm ci
+npm ci --ignore-scripts
 npm start
 ~~~
 
@@ -119,7 +119,7 @@ A release is built from this repository with the read-only packaging script, whi
 also records the binding in `ux/build.json`:
 
 ~~~sh
-python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release-id>
+python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release-id> --previous-release <current-release> --previous-build-sha256 <raw-build-sha256>
 ~~~
 
 `ux/build.json` carries the exact `sourceCommit` the build was built from, the
@@ -176,3 +176,9 @@ When changing data, keep the original values, units, period, source release and 
 ## License
 
 Project source code and documentation are available under the [MIT license](LICENSE). Copyright © 2026 Dmitrii Rybkin. Third-party fonts, photographs, cartographic assets and libraries keep their own terms of use; their provenance is listed in [ux/assets/SOURCES.md](ux/assets/SOURCES.md) and in the licenses of npm dependencies.
+
+## Maintained React frontend
+
+The production atlas and advertiser editor are native React + TypeScript in `ux/react/`. `npm start` compiles their pinned esbuild bundles before starting the local server. Run `npm run typecheck`, `npm run build`, and `npm run check:source`; the canonical Chrome runner additionally exercises React lifecycle, Support/About, report states, editor drafts and actual HTTP SEO against the built runtime. The gallery remains a historical local study, outside the maintained production package.
+
+See [component and state ownership](docs/application/react-typescript.md), [candidate evaluation](docs/application/react-typescript-evaluation-20261026.md), and [unified release](docs/unified-release.md). Use `npm run start:review -- --port PORT --feedback-dir /tmp/atlas-feedback` for local review captures; the normal production build excludes that tool. Bug reports require a separate private durable directory; see [Support/About](docs/application/support-about-implementation.md).

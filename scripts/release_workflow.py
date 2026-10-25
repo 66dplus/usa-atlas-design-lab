@@ -536,7 +536,59 @@ class DockerBackend:
                 'readOnlyRoot': bool(obj.get('HostConfig', {}).get('ReadonlyRootfs', False)),
                 'user': obj.get('Config', {}).get('User'), 'state': obj.get('State', {}).get('Status')}
 
-    def _mount_args(self, identity):
+    def _reports_mount(self):
+        """Resolve explicitly provisioned storage without recording its source."""
+        storage = self.config.get('reportsStorage')
+        if storage is None:
+            return None
+        if (not isinstance(storage, dict) or set(storage) != {'type', 'sourceEnv', 'destination'} or
+                storage['type'] not in ('bind', 'volume') or
+                storage['destination'] != '/var/lib/usa-atlas/reports' or
+                not re.fullmatch(r'[A-Z][A-Z0-9_]{0,79}', str(storage['sourceEnv']))):
+            raise ReleaseError('invalid private reports storage configuration')
+        source = os.environ.get(storage['sourceEnv'], '')
+        if not source or ',' in source or any(ord(char) < 32 for char in source):
+            raise ReleaseError('private reports storage source is not configured')
+        if storage['type'] == 'volume':
+            if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}', source):
+                raise ReleaseError('invalid private reports volume identity')
+            try:
+                volumes = docker_json(['volume', 'inspect', source])
+            except ReleaseError:
+                raise ReleaseError('private reports volume must be provisioned before staging') from None
+            if len(volumes) != 1 or volumes[0].get('Name') != source or not volumes[0].get('Mountpoint'):
+                raise ReleaseError('private reports volume must be provisioned before staging')
+            mount = {'Type': 'volume', 'Name': source, 'Source': volumes[0]['Mountpoint']}
+        else:
+            directory = Path(source)
+            if not directory.is_absolute() or not directory.is_dir():
+                raise ReleaseError('private reports bind directory must be provisioned before staging')
+            mount = {'Type': 'bind', 'Source': str(directory.resolve())}
+        mount.update(Destination=storage['destination'], RW=True)
+        return mount
+
+    def _runtime_args(self):
+        args = ['--port', str(self.config['port'])]
+        if self.config.get('reportsStorage') is not None:
+            args += ['--reports-dir', '/var/lib/usa-atlas/reports']
+        import ipaddress
+        for value in self.config.get('trustedProxyNetworks', []):
+            try:
+                network = ipaddress.ip_network(value, strict=False)
+            except (ValueError, TypeError):
+                raise ReleaseError('invalid trusted proxy network configuration') from None
+            args += ['--trusted-proxy', str(network)]
+        return args
+
+    @staticmethod
+    def _reject_unapproved_writes(mounts, expected=()):
+        approved = {m['destination']: m for m in expected}
+        for mount in mounts:
+            if not mount['readOnly'] and (mount['destination'] != '/var/lib/usa-atlas/reports' or
+                    mount != approved.get(mount['destination'])):
+                raise ReleaseError('runtime has an unapproved writable mount')
+
+    def _mount_args(self, identity, reports_mount=None, inherit_reports=True):
         old = self.inspect(identity['containerId'])
         args = []
         for mount in old.get('Mounts', []):
@@ -548,10 +600,24 @@ class DockerBackend:
                     args += ['--mount', f"type=bind,src={mount['Source']},dst={dest},readonly"]
                 elif mount.get('Type') == 'volume':
                     args += ['--mount', f"type=volume,src={mount['Name']},dst={dest},readonly"]
+                else:
+                    raise ReleaseError(f'unsupported required read-only mount type at {dest}')
+            elif dest == '/var/lib/usa-atlas/reports' and reports_mount is None and inherit_reports:
+                # Rollback clones inherit the archived runtime's exact storage.
+                expected = next((m for m in identity['mounts'] if m['destination'] == dest), None)
+                if expected != self._mount_identity(mount) or not mount.get('RW'):
+                    raise ReleaseError('archived private reports mount identity changed')
+                source = mount['Source'] if mount['Type'] == 'bind' else mount.get('Name')
+                if mount['Type'] not in ('bind', 'volume') or not source:
+                    raise ReleaseError('unsupported archived private reports storage')
+                args += ['--mount', f"type={mount['Type']},src={source},dst={dest}"]
         destinations = {m['destination'] for m in identity['mounts']}
         for dest in (self.config['readerSecretDestination'], self.config['databaseDestination']):
             if dest not in destinations:
                 raise ReleaseError(f'primary container lacks required read-only mount: {dest}')
+        if reports_mount is not None:
+            source = reports_mount['Source'] if reports_mount['Type'] == 'bind' else reports_mount['Name']
+            args += ['--mount', f"type={reports_mount['Type']},src={source},dst={reports_mount['Destination']}"]
         return args
 
     def ensure_stage_address_free(self):
@@ -566,6 +632,8 @@ class DockerBackend:
 
     def stage(self, package, release_id, prior, archive_dir=None):
         self.ensure_stage_address_free()
+        reports_mount = self._reports_mount()
+        runtime_args = self._runtime_args()
         image = f"usa-atlas-release:{release_id}"
         build_sha = json_sha(Path(package) / 'ux/build.json')
         source_commit = read_json(Path(package) / 'ux/build.json')['sourceCommit']
@@ -589,7 +657,7 @@ class DockerBackend:
                 '--ip', self.config['stageAddress'], '--user', self.config['runtimeUser'],
                 '--read-only', '--memory', self.config.get('memory', '384m'),
                 '--cpus', self.config.get('cpus', '1'), '--pids-limit', str(self.config.get('pidsLimit', 64)),
-                *self._mount_args(prior), image_id]
+                *self._mount_args(prior, reports_mount=reports_mount, inherit_reports=False), image_id, *runtime_args]
         cid = run(args).stdout.strip()
         inventory = package_inventory(package)
         runtime_files = {**inventory['files'], 'ux/build.json': inventory['buildSha256'],
@@ -603,7 +671,8 @@ class DockerBackend:
                 'imageArchive': str(image_archive) if archive_dir is not None else None,
                 'imageArchiveSha256': json_sha(image_archive) if archive_dir is not None else None,
                 'expectedMounts': [m for m in prior['mounts'] if m['destination'] in
-                    (self.config['readerSecretDestination'], self.config['databaseDestination'])],
+                    (self.config['readerSecretDestination'], self.config['databaseDestination'])] +
+                    ([self._mount_identity(reports_mount)] if reports_mount is not None else []),
                 'status': 'running'}
 
     def stage_identity(self, stage):
@@ -621,6 +690,7 @@ class DockerBackend:
         actual_mounts = {m['destination']: m for m in mounts}
         if any(actual_mounts.get(dest) != expected for dest, expected in expected_mounts.items()):
             raise ReleaseError('staged required mount source identity differs from primary')
+        self._reject_unapproved_writes(mounts, expected_mounts.values())
         network = (obj.get('NetworkSettings', {}).get('Networks', {}).get(self.config['network']) or {})
         if network.get('IPAddress') != self.config['stageAddress']:
             raise ReleaseError('staged container private network/IP does not match release policy')
@@ -644,6 +714,7 @@ class DockerBackend:
         return {'containerId': obj['Id'], 'name': obj['Name'].lstrip('/'), 'imageId': obj['Image'],
                 'status': obj['State']['Status'], 'user': obj.get('Config', {}).get('User'),
                 'readOnlyRoot': True, 'mounts': sorted(mounts, key=lambda m: m['destination']),
+                'expectedMounts': list(expected_mounts.values()),
                 'network': self.config['network'], 'networkAddress': network['IPAddress'],
                 'releaseId': labels.get('org.usa-atlas.release-id'),
                 'buildSha256': labels.get('org.usa-atlas.build-sha256'),
@@ -817,12 +888,18 @@ class DockerBackend:
                    '--ip', self.config['stageAddress'], '--user', self.config['runtimeUser'],
                    '--read-only', '--memory', self.config.get('memory', '384m'),
                    '--cpus', self.config.get('cpus', '1'), '--pids-limit', str(self.config.get('pidsLimit', 64)),
-                   *self._mount_args(prior), image_id]).stdout.strip()
+                   *self._mount_args(prior), image_id,
+                   *(self.inspect(prior['containerId']).get('Config', {}).get('Cmd') or [])]).stdout.strip()
         obj = self.inspect(cid)
         mounts = [self._mount_identity(m) for m in obj.get('Mounts', [])]
         expected_mounts = {m['destination']: m for m in prior.get('mounts', [])
-                           if m['destination'] in (self.config['readerSecretDestination'], self.config['databaseDestination'])}
+                           if m['destination'] in (self.config['readerSecretDestination'], self.config['databaseDestination'], '/var/lib/usa-atlas/reports')}
         actual_mounts = {m['destination']: m for m in mounts}
+        try:
+            self._reject_unapproved_writes(mounts, expected_mounts.values())
+        except ReleaseError:
+            self.remove_stage({'containerId': cid})
+            raise
         network = (obj.get('NetworkSettings', {}).get('Networks', {}).get(self.config['network']) or {})
         if (obj.get('Image') != image_id or obj.get('Config', {}).get('User') != self.config['runtimeUser'] or
                 not obj.get('HostConfig', {}).get('ReadonlyRootfs') or
@@ -935,6 +1012,9 @@ class Coordinator:
                 mount_rows = {m['destination']: m for m in current.get('mounts', [])}
                 if not required_mounts.issubset(mount_rows) or any(not mount_rows[m]['readOnly'] for m in required_mounts):
                     raise ReleaseError('primary required mounts are absent or writable')
+                if hasattr(self.backend, '_reject_unapproved_writes'):
+                    self.backend._reject_unapproved_writes(current.get('mounts', []),
+                        [m for m in current.get('mounts', []) if m['destination'] == '/var/lib/usa-atlas/reports'])
             inv = package_inventory(package)
             if inv['sourceCommit'] != plan.get('targetCommit'):
                 raise ReleaseError('package sourceCommit differs from the reviewed plan targetCommit')
@@ -1096,6 +1176,12 @@ class Coordinator:
                             live.get('user') != config['runtimeUser'] or live.get('readOnlyRoot') is not True or
                             not required_mounts.issubset(mounts) or any(not mounts[m]['readOnly'] for m in required_mounts)):
                         raise ReleaseError('activated container runtime configuration does not match release policy')
+                    if hasattr(self.backend, '_reject_unapproved_writes'):
+                        expected_mounts = record['stageIdentity'].get('expectedMounts', [])
+                        self.backend._reject_unapproved_writes(live.get('mounts', []), expected_mounts)
+                        actual_mounts = {m['destination']: m for m in live.get('mounts', [])}
+                        if any(actual_mounts.get(m['destination']) != m for m in expected_mounts):
+                            raise ReleaseError('activated private storage or read-only mount identity changed')
             except BaseException as error:
                 try:
                     now = self.backend.live_identity()

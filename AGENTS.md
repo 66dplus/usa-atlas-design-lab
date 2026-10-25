@@ -21,7 +21,8 @@ This is the English-language application repository. The deployed Paper runtime 
 - Reuse semantic tokens, button/search/segmented patterns, and `ux/icons.js`. Extend canonical patterns before adding local variants. Keep maps mounted independently of sheet snaps; `ux/viewport.js` owns visible viewport and theme metadata.
 - 2D geography uses WebGL only. Do not restore the SVG geographic renderer or fallback. Keep geographic paths out of SVG gesture/text overlays. Report WebGL failures with retry, including after mode changes. Cache city membership by state feature; do not test detailed polygons on camera frames.
 - Preserve desktop anchored drawers, embedded maps, and comparison geometry.
-- Do not begin the separate React/TypeScript migration until every mandatory evaluation is recorded PASS. It requires a separate task and small PRs.
+- The separately authorized React/TypeScript migration follows the completed E1–E11 evaluation. Production UI lives in `ux/react/`; build both entries with `npm run build`. See `docs/application/react-typescript.md` for state/component ownership. Keep cohesive review boundaries and protected integration.
+- For the owner-authorized 26 October React task, one `gpt-6.1-sol` worker at `xhigh`, default configured service tier, Fast/Ultrafast off supersedes the older Luna preference. No nested agents, Codex processes, SSH or secrets. This task exception does not change global configuration.
 - Save screenshots, browser output, and test feedback under `/tmp`; never overwrite the owner's feedback directory.
 
 ## Validation

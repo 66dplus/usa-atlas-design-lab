@@ -12,8 +12,7 @@ preview packaging transformations. Binding evidence is in
 
 Keep the existing map renderer, source observations, selected-state camera,
 controls, four navigation destinations, typography, colors, advertising and
-reading pages. This is a plain JavaScript application; no framework migration or
-API change is required. Paper masters remain the design authority; this change
+reading pages. This section records the original plain JavaScript refactor. The separately authorized React migration now owns UI and state in `ux/react/`; see [the current responsibility map](application/react-typescript.md). The API contract is preserved. Paper masters remain the design authority; this change
 does not edit or promote Paper frames.
 
 ## Audit before implementation
@@ -53,8 +52,7 @@ flowchart TD
 `bottom-sheet.js` owns mobile snap geometry, drag ownership, velocity settlement,
 interruption, resize and grip semantics. `mobile-layout.css` owns its structural
 layout and shared mobile navigation. `viewport.js` owns viewport measurements and
-browser theme color. `app.js` owns application data, selected places and overlay
-visibility; it must not implement another drag handler.
+browser theme color. `ux/react/use-atlas.ts` now owns application data, selected places and overlay visibility. `ux/react/sheet.tsx` portals React children into `sheetContent` and uses `sheetScroll` for restoration; it must not implement another drag handler.
 
 Intentional variants: desktop drawers retain their existing anchored geometry;
 embedded maps omit app chrome; comparison maps retain their two-pane composition;
@@ -185,3 +183,7 @@ and desktop/mobile breakpoint transitions. All checks still use isolated feedbac
 and screenshots under `/tmp`; physical iPhone Safari remains a separate check.
 
 Desktop Compare now groups each place, indicator and observation in one compact card, 28px above the map edge. The observation shares the indicator row; the smaller colour key and statistical source follow below. The separate Compare data trigger is removed. Place, indicator, observation/statistics and source interactions retain their existing handlers. Desktop navigation and Explorer layout are unchanged.
+
+## React lifecycle boundary — 26 October 2026
+
+`Sheet` creates one persistent host, grip and scroll viewport per drawer. React updates the content portal; `bottomSheet` alone handles pointer/touch, free positions, transforms and settlement. Its `destroy` method aborts listeners and frames on unmount. Summary click suppression runs in capture before React receives the resulting click. `Maps` keeps each WebGL adapter alive across navigation, theme and sheet changes; the second map is created lazily and retained. The new browser suite asserts exact node identity for map/canvas/grip/scroll/credit, native grip Escape, summary drag suppression, modal focus/history and embedded theme isolation. Physical iPhone/native pinch remains a separate device gate.

@@ -10,12 +10,11 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC = '''robots.txt sitemap.xml ux/routes.js ux/seo.js ux/index.html ux/advertise.html ux/app.js ux/bottom-sheet.js ux/viewport.js ux/ui-tokens.css ux/mobile-layout.css ux/studio.js ux/pages.js ux/support-about-views.js ux/support-data.js ux/project-content.json ux/support-about.css ux/settings.js ux/model.js ux/map.js ux/flat-map.js ux/geometry.js ux/motion.js ux/icons.js ux/analytics.js ux/advertising/creative.js ux/advertising/request.js ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/studio.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
-THREE = '''build/three.module.js build/three.core.js examples/jsm/controls/OrbitControls.js examples/jsm/lines/LineSegments2.js examples/jsm/lines/LineSegmentsGeometry.js examples/jsm/lines/LineMaterial.js examples/jsm/utils/BufferGeometryUtils.js'''.split()
-PRIVATE = 'scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
+PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
+PRIVATE = 'ux/journal.js scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
 STATES = '01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56'.split()
 ICONS = 'search back saved check compare house shuffle close plus minus chevron-down location forward share indicators explorer'.split()
-SOURCE_NAMES = '''robots.txt sitemap.xml ux/index.html ux/app.js ux/routes.js ux/seo.js ux/bottom-sheet.js ux/viewport.js ux/ui-tokens.css ux/mobile-layout.css ux/map.js ux/flat-map.js ux/indicator-visibility.js ux/model.js ux/motion.js ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/pages.js ux/support-about-views.js ux/support-data.js ux/project-content.json ux/support-about.css scripts/preview_server.py scripts/bug_reports.py ux/journal-view.js ux/icons.js ux/approved-icons.js ux/style.css'''.split()
+SOURCE_NAMES = '''robots.txt sitemap.xml ux/index.html ux/app.js ux/studio.js ux/ui-tokens.css ux/mobile-layout.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css scripts/preview_server.py scripts/bug_reports.py ux/style.css'''.split()
 
 
 def build(destination, release, source_commit=None, previous_release=None,
@@ -39,20 +38,23 @@ def build(destination, release, source_commit=None, previous_release=None,
     if dirty:
         raise ValueError('Packaging requires a clean committed checkout')
     destination.mkdir(parents=True)
-    public = PUBLIC + ['ux/journal.js', 'ux/journal-view.js']
+    frontend = subprocess.run(['node', str(ROOT / 'scripts/build-frontend.mjs'), str(destination / 'ux'), '--inputs'], cwd=ROOT, capture_output=True, text=True)
+    if frontend.returncode:
+        raise ValueError('Frontend compilation failed: ' + frontend.stderr)
+    frontend_inputs = json.loads(frontend.stdout)['inputs']
+    compiled = ['ux/app.js', 'ux/studio.js']
+    public = PUBLIC + compiled
     public += [f'ux/assets/articles/{name}.jpg' for name in
                ('ms-initial', 'ms-mobile', 'electricity-initial', 'electricity-mobile')]
-    public += ['node_modules/three/' + name for name in THREE]
     public += [f'ux/boundaries/{state}.json' for state in STATES]
     public += [f'ux/assets/brand-icons/{icon}.png' for icon in ICONS]
-    public.append('ux/indicator-visibility.js')
-    public.append('ux/approved-icons.js')
     manifest = {}
     shipped = list(dict.fromkeys(public + PRIVATE))
     for relative in shipped:
         source, target = ROOT / relative, destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target)
+        if relative not in compiled:
+            shutil.copyfile(source, target)
         if relative in public:
             manifest['/' + relative] = relative
     index = destination / 'ux/index.html'
@@ -60,15 +62,12 @@ def build(destination, release, source_commit=None, previous_release=None,
     if 'data-runtime="preview"' not in text:
         text = text.replace('<body ', '<body data-runtime="preview" ', 1)
     index.write_text(text.replace('  <link rel="stylesheet" href="feedback.css">\n', ''))
-    # The public release has no local review panel: the hook is removed, not hidden.
-    app = destination / 'ux/app.js'
-    app_text = app.read_text()
-    if 'if(reviewOn){' not in app_text:
-        raise ValueError('The local review hook is missing from ux/app.js')
-    app.write_text(app_text.replace('if(reviewOn){', 'if(false){', 1))
+    # The production define removes local review imports during compilation.
+    if b'feedback.js' in (destination / 'ux/app.js').read_bytes():
+        raise ValueError('Local review code must not enter the compiled public frontend')
     manifest['/ux/'] = 'ux/index.html'
     flags = dict(re.findall(r"'([0-9.]+)': (true|false)",
-                            (destination / 'ux/indicator-visibility.js').read_text()))
+                            (ROOT / 'ux/indicator-visibility.js').read_text()))
     metadata = {
         'release': release,
         'previousRelease': previous_release,
@@ -79,6 +78,7 @@ def build(destination, release, source_commit=None, previous_release=None,
         'sourceBaseCommit': head,
         'sourceCommit': head,
         'renderer2dDefault': 'webgl',
+        'frontendFramework': 'react-typescript',
         'visibleFieldCount': sum(value == 'true' for value in flags.values()),
         'medicalFields': [key for key in ('11.01', '11.02', '11.03')
                           if flags.get(key) == 'true'],
@@ -119,6 +119,12 @@ def build(destination, release, source_commit=None, previous_release=None,
     }
     metadata['shippedSha256']['Dockerfile'] = hashlib.sha256(
         (destination / 'Dockerfile').read_bytes()).hexdigest()
+    metadata['frontendSourceSha256'] = {
+        name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+        for name in frontend_inputs
+    }
+    metadata['toolchainSha256']['frontendBuildSha256'] = hashlib.sha256(
+        (ROOT / 'scripts/build-frontend.mjs').read_bytes()).hexdigest()
     metadata['toolchainSha256']['previewTransformSha256'] = hashlib.sha256(
         Path(__file__).read_bytes()).hexdigest()
     (destination / 'ux/build.json').write_text(json.dumps(metadata, indent=2) + '\n')

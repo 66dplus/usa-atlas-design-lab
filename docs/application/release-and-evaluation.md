@@ -92,3 +92,7 @@ Do not migrate during versioning or release integration. After all mandatory eva
 | Mobile drawer snaps, drag, and scroll restoration | `ux/bottom-sheet.js` and `ux/viewport.js` | Controller remains the only gesture and transform owner |
 | Panels, search, selectors, metric rows, legends, and status surfaces | `ux/app.js`, `ux/pages.js`, `ux/journal-view.js`, `ux/index.html` | Reusable components retain existing semantic patterns and DOM behavior |
 | Loading, error, retry, and empty states | `ux/startup-guard.js`, `ux/app.js`, and the route/data boundary | Explicit state mapping; failed data remains visible and retryable |
+
+## Separately authorized React candidate
+
+The E1–E11 normalization above is historical acceptance and is not rerun by the migration. The owner explicitly assigns a single Sol 6.1 (`gpt-6.1-sol`, `xhigh`, configured default tier, Fast/Ultrafast off) implementation and verification worker for this task, superseding the older Luna preference. No independent agent review is used. [React architecture](react-typescript.md) and [before/after candidate evaluation](react-typescript-evaluation-20261026.md) distinguish local proof from coordinator-only protected merge, current-main image/stage receipts and production activation.
