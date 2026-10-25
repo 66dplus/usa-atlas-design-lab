@@ -2,6 +2,8 @@
 """Package the named read-only runtime assets, including the flat WebGL module."""
 import argparse
 from datetime import datetime, timezone
+from html.parser import HTMLParser
+from urllib.parse import urljoin, urlsplit
 import hashlib
 import json
 from pathlib import Path
@@ -10,11 +12,43 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
+PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/studio.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
 PRIVATE = 'ux/journal.js scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
 STATES = '01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56'.split()
 ICONS = 'search back saved check compare house shuffle close plus minus chevron-down location forward share indicators explorer'.split()
 SOURCE_NAMES = '''robots.txt sitemap.xml ux/index.html ux/app.js ux/studio.js ux/ui-tokens.css ux/mobile-layout.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css scripts/preview_server.py scripts/bug_reports.py ux/style.css'''.split()
+
+
+class EntryAssets(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.references = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'script' and attrs.get('src'):
+            self.references.append(attrs['src'])
+        if tag == 'link' and attrs.get('rel') == 'stylesheet' and attrs.get('href'):
+            self.references.append(attrs['href'])
+
+
+def validate_entry_assets(destination, manifest):
+    """Fail packaging when an entry's stylesheet/script/font is not publicly mapped."""
+    for relative in sorted(set(manifest.values())):
+        references = []
+        if relative.endswith('.html'):
+            parser = EntryAssets()
+            parser.feed((destination / relative).read_text())
+            references = parser.references
+        elif relative.endswith('.css'):
+            references = re.findall(r'url\(([^)]+)\)', (destination / relative).read_text())
+        for reference in references:
+            reference = reference.strip().strip("\"'")
+            if reference.startswith('data:'):
+                continue
+            resolved = urlsplit(urljoin('https://package.invalid/' + relative, reference))
+            if resolved.netloc != 'package.invalid' or resolved.path not in manifest:
+                raise ValueError(f'Unmapped entry asset in {relative}: {reference}')
 
 
 def build(destination, release, source_commit=None, previous_release=None,
@@ -66,6 +100,7 @@ def build(destination, release, source_commit=None, previous_release=None,
     if b'feedback.js' in (destination / 'ux/app.js').read_bytes():
         raise ValueError('Local review code must not enter the compiled public frontend')
     manifest['/ux/'] = 'ux/index.html'
+    validate_entry_assets(destination, manifest)
     flags = dict(re.findall(r"'([0-9.]+)': (true|false)",
                             (ROOT / 'ux/indicator-visibility.js').read_text()))
     metadata = {
