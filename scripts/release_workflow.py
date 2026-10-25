@@ -410,6 +410,8 @@ def verify_receipt(receipt, lock_path, *, release_id, operation, image_digest, b
                           **identity}.items():
         if receipt.get(key) != expected:
             raise ReleaseError(f'acceptance receipt {key} mismatch')
+    if not re.fullmatch(r'[0-9a-f]{40}', str(receipt.get('acceptanceSourceCommit') or '')):
+        raise ReleaseError('acceptance receipt acceptanceSourceCommit must be a full Git SHA')
     if receipt.get('runtimeReleaseId') != (runtime_release_id or release_id):
         raise ReleaseError('acceptance receipt runtimeReleaseId mismatch')
     checks = receipt.get('mandatorySuccessfulCheckIDs')
@@ -893,6 +895,15 @@ class Coordinator:
         self.suite_identity, self.mandatory_checks = suite_identity, tuple(mandatory_checks)
         self.root.mkdir(parents=True, exist_ok=True)
 
+    def _require_current_acceptance_source(self, receipt, *, expected=None):
+        runner_commit = receipt.get('acceptanceSourceCommit') if isinstance(receipt, dict) else None
+        if not isinstance(runner_commit, str) or not re.fullmatch(r'[0-9a-f]{40}', runner_commit):
+            raise ReleaseError('acceptance receipt acceptanceSourceCommit must be a full Git SHA')
+        if expected is not None and runner_commit != expected:
+            raise ReleaseError('acceptance runner source is not the accepted release source commit')
+        if not self.is_main_accepted(runner_commit):
+            raise ReleaseError('acceptance runner source is not exact current public remote main SHA')
+
     def _record(self, release_id):
         if not re.fullmatch(r'[A-Za-z0-9._-]{1,80}', release_id):
             raise ReleaseError('invalid release identity')
@@ -1032,6 +1043,7 @@ class Coordinator:
                 raise ReleaseError('release is not staged')
             if not self.is_main_accepted(record['sourceCommit']):
                 raise ReleaseError('activation source is not exact current public remote main SHA')
+            self._require_current_acceptance_source(receipt, expected=record['sourceCommit'])
             prior = record['baselineAtOperationStart']
             if self.backend.live_identity() != prior:
                 raise ReleaseError('production baseline changed since stage')
@@ -1185,6 +1197,7 @@ class Coordinator:
             record = read_json(path)
             if record['status'] != 'active':
                 raise ReleaseError('only an active release can be rolled back')
+            self._require_current_acceptance_source(receipt)
             live = self.backend.live_identity()
             if live != record['liveIdentity']:
                 raise ReleaseError('live identity changed; rollback would overwrite another writer')

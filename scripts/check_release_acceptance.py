@@ -53,6 +53,22 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def runner_commit(root=ROOT):
+    """Return HEAD only when the acceptance runner checkout is clean."""
+    head = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"],
+                          capture_output=True, text=True, timeout=15)
+    status = subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--untracked-files=normal"],
+                            capture_output=True, text=True, timeout=15)
+    if head.returncode or status.returncode:
+        raise RuntimeError("acceptance runner Git provenance could not be read")
+    commit = head.stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise RuntimeError("acceptance runner HEAD is not a full Git commit SHA")
+    if status.stdout.strip():
+        raise RuntimeError("acceptance runner checkout is dirty")
+    return commit
+
+
 def verify_package(package: Path, *, release_id: str, source_commit: str, build_sha256: str,
                    lock_sha256: str, schema_fingerprint: str):
     errors = []
@@ -102,7 +118,7 @@ def verify_package(package: Path, *, release_id: str, source_commit: str, build_
 
 def build_receipt(*, args, lock_sha, schema_fingerprint, policy, checks, failures,
                   successful, evidence_directory, tested_at, operation_baseline=None,
-                  runtime_release_id=None):
+                  runtime_release_id=None, acceptance_source_commit=None):
     receipt = {
         "format": "usa_atlas_release_acceptance",
         "releaseId": args.release_id,
@@ -114,6 +130,7 @@ def build_receipt(*, args, lock_sha, schema_fingerprint, policy, checks, failure
         "testedImageDigest": args.image_digest,
         "buildSha256": args.build_sha256,
         "sourceCommit": args.source_commit,
+        "acceptanceSourceCommit": acceptance_source_commit,
         "readerLockSha256": lock_sha,
         "readerSchemaFingerprint": schema_fingerprint,
         "runtimeReleaseId": runtime_release_id or args.release_id,
@@ -168,6 +185,13 @@ def main():
         parser.error("--reader-lock and --stage-evidence must name existing files")
 
     started = datetime.now(timezone.utc)
+    try:
+        initial_runner_commit = runner_commit()
+    except (OSError, subprocess.SubprocessError, RuntimeError) as error:
+        initial_runner_commit = ""
+        runner_start_error = str(error)
+    else:
+        runner_start_error = None
     receipt_path = args.receipt or OUT_ROOT / f"receipt-{args.release_id}-{args.build_sha256[:12]}-{started.strftime('%Y%m%dT%H%M%S%fZ')}.json"
     if receipt_path.exists():
         parser.error("receipt destination already exists; acceptance receipts are immutable")
@@ -180,6 +204,8 @@ def main():
     env.setdefault("PLAYWRIGHT_MODULE", "playwright")
     env["ATLAS_DISABLE_SECRET_FILE"] = "1"
     failures, checks, successful = [], {}, []
+    if runner_start_error:
+        failures.append(f"acceptance runner provenance check failed: {runner_start_error}")
     server = None
     base_url = args.staged_url.rstrip("/") if args.staged_url else None
     lock = {}
@@ -427,13 +453,24 @@ def main():
     finally:
         terminate(server)
 
+    try:
+        final_runner_commit = runner_commit()
+        if final_runner_commit != initial_runner_commit:
+            failures.append("acceptance runner HEAD changed while acceptance checks were running")
+    except (OSError, subprocess.SubprocessError, RuntimeError) as error:
+        final_runner_commit = ""
+        failures.append(f"acceptance runner provenance check failed after checks: {error}")
+
     tested_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     receipt = build_receipt(args=args, lock_sha=lock_sha, schema_fingerprint=schema_fingerprint,
                             policy=policy, checks=checks, failures=failures, successful=successful,
                             evidence_directory=workdir, tested_at=tested_at,
                             operation_baseline=baseline if args.operation == "rollback" else None,
                             runtime_release_id=(stage.get("targetRelease") if args.operation == "rollback"
-                                                else args.release_id))
+                                                else args.release_id),
+                            acceptance_source_commit=(initial_runner_commit
+                                                      if initial_runner_commit and
+                                                      initial_runner_commit == final_runner_commit else None))
     receipt_path.write_text(json.dumps(receipt, indent=2) + "\n")
     print(json.dumps({"status": receipt["status"], "receipt": str(receipt_path), "failures": failures}, indent=2))
     return 1 if failures else 0

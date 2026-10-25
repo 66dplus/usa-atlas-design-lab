@@ -30,6 +30,16 @@ class AcceptanceProtocolTests(unittest.TestCase):
                 bind_test_target(env, observed_url)
                 self.assertEqual(env["ATLAS_TEST_URL"], observed_url)
 
+    def test_runner_commit_requires_clean_checkout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            subprocess.run(["git", "init", "-q", directory], check=True)
+            subprocess.run(["git", "-C", directory, "-c", "user.name=Test", "-c",
+                            "user.email=test@example.test", "commit", "--allow-empty", "-qm", "base"], check=True)
+            self.assertRegex(check_release_acceptance.runner_commit(Path(directory)), r"^[0-9a-f]{40}$")
+            (Path(directory) / "dirty.txt").write_text("uncommitted\n")
+            with self.assertRaisesRegex(RuntimeError, "checkout is dirty"):
+                check_release_acceptance.runner_commit(Path(directory))
+
     def integration_fixture(self, directory, operation="activate"):
         lock = json.loads(LOCK.read_text())
         lock_sha = hashlib.sha256(LOCK.read_bytes()).hexdigest()
@@ -94,7 +104,7 @@ class AcceptanceProtocolTests(unittest.TestCase):
         argv.extend(["--receipt", str(receipt_path)])
         return argv, stage, build_raw, receipt_path, release_id, image_digest, build_sha, source_commit
 
-    def run_main_with_evidence(self, directory, operation="activate", mutate=None):
+    def run_main_with_evidence(self, directory, operation="activate", mutate=None, runner_commits=None):
         (argv, stage, build_raw, receipt_path, release_id, image_digest,
          build_sha, source_commit) = self.integration_fixture(directory, operation)
         if mutate:
@@ -112,11 +122,19 @@ class AcceptanceProtocolTests(unittest.TestCase):
             return {"command": command, "exitCode": 0, "stdout": "", "stderr": ""}
 
         output = io.StringIO()
+        real_subprocess_run = subprocess.run
+        def git_provenance(command, **kwargs):
+            if command[:2] == ["git", "-C"] and command[2] == str(ROOT):
+                return real_subprocess_run(command, **kwargs)
+            return Namespace(returncode=0, stdout="", stderr="")
+
         with patch.object(sys, "argv", argv), \
+             patch.object(check_release_acceptance, "runner_commit",
+                          side_effect=runner_commits or [source_commit, source_commit]), \
              patch.object(check_release_acceptance, "read_url", side_effect=read_url), \
              patch.object(check_release_acceptance, "run", side_effect=successful_check), \
              patch.object(check_release_acceptance.subprocess, "run",
-                          return_value=Namespace(returncode=0, stdout="", stderr="")), \
+                          side_effect=git_provenance), \
              contextlib.redirect_stdout(output):
             result = check_release_acceptance.main()
         receipt = json.loads(receipt_path.read_text())
@@ -150,6 +168,35 @@ class AcceptanceProtocolTests(unittest.TestCase):
             self.assertEqual(receipt["status"], "fail")
             self.assertTrue(any("stageVerifiedIdentity containerId" in failure
                                 for failure in receipt["failures"]))
+
+    def test_main_fails_receipt_when_runner_head_changes_during_checks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            current = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                                     capture_output=True, text=True, check=True).stdout.strip()
+            result, receipt, *_ = self.run_main_with_evidence(
+                directory, runner_commits=[current, "f" * 40])
+            self.assertEqual(result, 1)
+            self.assertEqual(receipt["status"], "fail")
+            self.assertTrue(any("HEAD changed" in failure for failure in receipt["failures"]))
+
+    def test_main_fails_receipt_for_dirty_runner_checkout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result, receipt, *_ = self.run_main_with_evidence(
+                directory, runner_commits=[RuntimeError("acceptance runner checkout is dirty"),
+                                           RuntimeError("acceptance runner checkout is dirty")])
+            self.assertEqual(result, 1)
+            self.assertEqual(receipt["status"], "fail")
+            self.assertIsNone(receipt["acceptanceSourceCommit"])
+            self.assertTrue(any("checkout is dirty" in failure for failure in receipt["failures"]))
+
+    def test_runner_can_mint_clean_proposed_merge_receipt_without_main_lookup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proposed_merge = "f" * 40
+            result, receipt, *_ = self.run_main_with_evidence(
+                directory, runner_commits=[proposed_merge, proposed_merge])
+            self.assertEqual(result, 0)
+            self.assertEqual(receipt["status"], "pass")
+            self.assertEqual(receipt["acceptanceSourceCommit"], proposed_merge)
 
     def test_main_rejects_missing_activation_stage_container_id(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -223,6 +270,7 @@ class AcceptanceProtocolTests(unittest.TestCase):
             evidence_directory=Path(tempfile.gettempdir()) / "protocol-fixture",
             tested_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             operation_baseline=baseline, runtime_release_id=runtime_release,
+            acceptance_source_commit="a" * 40,
         )
         return args, receipt
 
@@ -248,6 +296,17 @@ class AcceptanceProtocolTests(unittest.TestCase):
                        suite_identity=POLICY["suiteIdentity"], mandatory_checks=MANDATORY,
                        vendored_artifact="contracts/reader/v1/contract.json",
                        runtime_release_id="releaseA")
+
+    def test_verifier_rejects_legacy_receipt_without_runner_provenance(self):
+        args, receipt = self.runner_receipt("activate")
+        receipt.pop("acceptanceSourceCommit")
+        with self.assertRaisesRegex(ReleaseError, "acceptanceSourceCommit"):
+            verify_receipt(receipt, LOCK, release_id=args.release_id, operation="activate",
+                           image_digest=args.image_digest, build_sha=args.build_sha256,
+                           source_commit=args.source_commit,
+                           started_at=(datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat(),
+                           suite_identity=POLICY["suiteIdentity"], mandatory_checks=MANDATORY,
+                           vendored_artifact="contracts/reader/v1/contract.json")
 
 if __name__ == "__main__":
     unittest.main()

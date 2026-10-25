@@ -2,7 +2,7 @@
 // Run with node ux/check-release-regressions.mjs against an isolated read-only server.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
 const require=createRequire(import.meta.url);
@@ -219,6 +219,59 @@ async function metricDefinition(page,name){
   }
   await page.keyboard.press('Escape');
 }
+async function startupDefinitionBeforeRefresh(){
+  const name='startup-definition-before-refresh';
+  const context=await browser.newContext({viewport:{width:360,height:640},isMobile:true,hasTouch:true});
+  const errors=[],expectedNetwork={urls:new Set(),consoleMessages:new Set()};let page,releaseResponse,apiResponse,apiFailure;
+  const responseHeld=new Promise(resolve=>{apiResponse=resolve;});
+  const responseGate=new Promise(resolve=>{releaseResponse=resolve;});
+  const item={name,pass:false};results.checks.push(item);
+  try{
+    const definitions=JSON.parse(await readFile(new URL('./metric-definitions.json',import.meta.url),'utf8'));
+    const canonical=definitions.metrics.find(metric=>metric.id==='unemployment')?.method;
+    assert.ok(canonical,'canonical unemployment definition is present');
+    await context.addInitScript(()=>{try{localStorage.setItem('usa-atlas-theme','light');}catch{}});
+    page=await context.newPage();currentPage=page;addPageListeners(page,errors,expectedNetwork);
+    await page.route('**/api/atlas/observations?field=*',async route=>{
+      const requestURL=new URL(route.request().url());
+      if(requestURL.searchParams.get('field')!=='03.06:unemployment_rate')return route.continue();
+      try{
+        const response=await route.fetch();
+        apiResponse({status:response.status(),ok:response.ok()});
+        await responseGate;
+        await route.fulfill({response});
+      }catch(error){apiFailure=error;apiResponse({error:String(error)});await route.abort();}
+    });
+    await page.goto(`${base}/united-states/california/unemployment`,{waitUntil:'domcontentloaded'});
+    await ready(page);
+    let startupTimeout;
+    const live=await Promise.race([responseHeld,new Promise((resolve,reject)=>{
+      startupTimeout=setTimeout(()=>reject(new Error(`${name}: real observations request never reached its held response`)),60000);
+    })]).finally(()=>clearTimeout(startupTimeout));
+    assert.equal(live.ok,true,`real observations API returned HTTP ${live.status}`);
+    const sheet=page.locator('#explore-panel'),handle=sheet.locator(':scope > .sheet-handle');
+    if(await sheet.getAttribute('data-snap')==='min')await handle.click();
+    if(await sheet.getAttribute('data-snap')==='half')await handle.click();
+    await sheet.locator(':scope > .sheet-content').evaluate(element=>element.scrollTop=element.scrollHeight);
+    await page.locator('#explore-panel [data-source="a"]').last().click();
+    await page.locator('#source-popup').waitFor({state:'visible'});
+    const startupText=await page.locator('#source-popup').innerText();
+    assert.ok(startupText.includes(canonical),`${name}: full canonical explanation is visible while the real API response is held`);
+    assert.equal(apiFailure,undefined,'holding the real API response did not produce a network error');
+    const deliveredResponse=page.waitForResponse(response=>{
+      const responseURL=new URL(response.url());
+      return responseURL.pathname==='/api/atlas/observations'&&responseURL.searchParams.get('field')==='03.06:unemployment_rate';
+    },{timeout:60000});
+    releaseResponse();
+    const response=await deliveredResponse;
+    assert.equal(response.ok(),true,'the held real observations API response is delivered successfully');
+    const responseBody=await response.body();
+    assert.ok(responseBody.length>0,'the held real observations API response body is complete');
+    JSON.parse(responseBody.toString('utf8'));
+    await checkConsole(errors,name);item.pass=true;
+  }catch(error){item.error=error.stack||String(error);recordFailure(name,error);await capture(page,name,'failure');throw error;
+  }finally{releaseResponse?.();await capture(page,name,item.pass?'pass':'failure');await context.close();currentPage=null;}
+}
 async function runMatrixCase(viewport,theme){
   const name=`chrome-${viewport.width}x${viewport.height}-${theme}`;const context=await browser.newContext({viewport,isMobile:viewport.width<=760,hasTouch:viewport.width<=760});
   const errors=[],expectedNetwork={urls:new Set()};let page;
@@ -275,6 +328,7 @@ async function apiFailureAndRetry(){
 try{
   assert.ok(!mutation||mutation==='legacy-footer',`Unsupported test mutation: ${mutation}`);
   browser=await chromium.launch({channel:'chrome'});
+  await startupDefinitionBeforeRefresh();
   for(const viewport of viewports)for(const theme of themes)await runMatrixCase(viewport,theme);
   await apiFailureAndRetry();
 }catch(error){if(!results.failures.length)recordFailure('suite',error);}
