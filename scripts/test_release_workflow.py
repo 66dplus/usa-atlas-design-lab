@@ -8,7 +8,8 @@ from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from scripts.release_workflow import (Coordinator, DockerBackend, ReleaseError,
-    create_plan, deployment_lock, digest, json_sha, package_inventory, require_clean_checkout)
+    atomic_json, create_plan, deployment_lock, digest, json_sha, package_inventory,
+    require_clean_checkout)
 
 
 def write_json(path, data):
@@ -49,6 +50,7 @@ class FakeBackend:
                      'user': '10001:10001', 'sourceCommit':'b'*40, 'release':'base', 'state': 'running'}
         self.live['requiredFileSha256'] = {}
         self.stage_state = None
+        self.removed_stages = []
         self.fail_after_switch = False
         self.change_identity = False
 
@@ -91,12 +93,15 @@ class FakeBackend:
         return dict(self.live)
 
     def restore(self, prior, expected):
-        if self.live != expected:
-            raise RuntimeError('another writer owns live')
-        self.live = dict(prior)
+        if self.live.get('containerId') not in (expected.get('containerId'), prior.get('containerId')):
+            raise ReleaseError('another writer owns live')
+        if self.live.get('containerId') != prior.get('containerId'):
+            self.live = dict(prior)
 
     def remove_stage(self, stage):
-        self.stage_state = None
+        self.removed_stages.append(stage['containerId'])
+        if self.stage_state and self.stage_state['containerId'] == stage['containerId']:
+            self.stage_state = None
 
 
 class WorkflowTests(unittest.TestCase):
@@ -128,6 +133,9 @@ class WorkflowTests(unittest.TestCase):
         target_metadata['previousBuildSha256'] = self.baseline_sha
         write_json(self.target/'ux/build.json', target_metadata)
         self.target_sha = json_sha(self.target/'ux/build.json')
+        self.reconstructed = (package_inventory(self.target),
+                              (self.target/'ux/build.json').read_bytes(),
+                              (self.target/'preview-assets.json').read_bytes())
         self.policy = self.root/'policy.json'
         write_json(self.policy, {'schema':1,'revokedImageDigests':[], 'revokedBuildSha256':[]})
         self.registry=self.root/'registry.json'
@@ -143,7 +151,8 @@ class WorkflowTests(unittest.TestCase):
         self.lockfile = self.root/'deploy.lock'
         self.coordinator = Coordinator(self.records, self.backend, self.policy, self.lock,
             self.lockfile, lambda commit: commit == 'a'*40, self.registry,
-            'usa-atlas-application-acceptance-v1', ['application.staged-build-identity','application.staged-runtime-api','application.reader-contract','application.geography-contract','application.seo-static','application.source-checks','application.chrome-regressions'])
+            'usa-atlas-application-acceptance-v1', ['application.staged-build-identity','application.staged-runtime-api','application.reader-contract','application.geography-contract','application.seo-static','application.source-checks','application.chrome-regressions'],
+            source_repo=self.root, source_reconstructor=lambda *args: self.reconstructed)
         self.plan_path = self.root/'plan.json'
         self.snapshot=self.root/'baseline-snapshot.json'
         write_json(self.snapshot, {'release':'base','buildSha256':self.baseline_sha,
@@ -175,6 +184,66 @@ class WorkflowTests(unittest.TestCase):
 
     def stage(self, release='r1'):
         return self.coordinator.stage(release, self.target, self.plan, self.baseline_sha)
+
+    def test_atomic_json_fsyncs_parent_directory_after_replace(self):
+        import os
+        import stat
+        from scripts import release_workflow
+        events = []
+        real_fsync, real_replace = os.fsync, os.replace
+        def fsync(fd):
+            events.append(('fsync', stat.S_ISDIR(os.fstat(fd).st_mode)))
+            return real_fsync(fd)
+        def replace(source, destination):
+            events.append(('replace', None))
+            return real_replace(source, destination)
+        with patch.object(release_workflow.os, 'fsync', side_effect=fsync), \
+             patch.object(release_workflow.os, 'replace', side_effect=replace):
+            atomic_json(self.root/'durable'/'record.json', {'status':'activating'})
+        self.assertEqual([event[0] for event in events], ['fsync', 'replace', 'fsync'])
+        self.assertEqual(events[-1], ('fsync', True))
+
+    def test_early_recovery_retries_with_prior_primary_and_retires_exact_candidate(self):
+        self.stage()
+        record = json.loads((self.records/'r1.json').read_text())
+        record['status'] = 'activating'
+        record['activationTransaction'] = {'status':'pending-recovery',
+            'priorIdentity': record['baselineAtOperationStart'],
+            'candidateIdentity': record['stageIdentity']}
+        write_json(self.records/'r1.json', record)
+        remove_stage = self.backend.remove_stage
+        attempts = []
+        def interrupted_cleanup(stage):
+            attempts.append(stage['containerId'])
+            if len(attempts) == 1:
+                raise RuntimeError('simulated interruption after prior verification')
+            remove_stage(stage)
+        self.backend.remove_stage = interrupted_cleanup
+        with self.assertRaisesRegex(RuntimeError, 'simulated interruption'):
+            self.coordinator.recover('r1')
+        self.assertEqual(self.backend.live['containerId'], 'container-old')
+        self.assertEqual(self.backend.stage_state['containerId'], 'stage-r1')
+        self.assertEqual(json.loads((self.records/'r1.json').read_text())['activationTransaction']['status'],
+                         'recovery-failed')
+        result = self.coordinator.recover('r1')
+        self.assertEqual(result['status'], 'activation-failed-restored')
+        self.assertEqual(attempts, ['stage-r1', 'stage-r1'])
+        self.assertEqual(self.backend.removed_stages, ['stage-r1'])
+        self.assertIsNone(self.backend.stage_state)
+        with self.assertRaisesRegex(ReleaseError, 'no interrupted activation transaction'):
+            self.coordinator.recover('r1')
+
+    def test_recovery_does_not_remove_prior_when_recorded_candidate_id_matches(self):
+        record = {'status':'activating', 'activationTransaction': {
+            'status':'pending-recovery',
+            'priorIdentity': {'containerId':'container-old'},
+            'candidateIdentity': {'containerId':'container-old'}}}
+        self.records.mkdir(exist_ok=True)
+        write_json(self.records/'r1.json', record)
+        result = self.coordinator.recover('r1')
+        self.assertEqual(result['status'], 'activation-failed-restored')
+        self.assertEqual(self.backend.live['containerId'], 'container-old')
+        self.assertEqual(self.backend.removed_stages, [])
 
     def test_baseline_identity_uses_raw_build_json_and_plan_full_diff(self):
         changed = json.loads((self.base/'preview-assets.json').read_text())
@@ -243,6 +312,81 @@ class WorkflowTests(unittest.TestCase):
         self.plan['declaredChanges']=[]
         with self.assertRaisesRegex(ReleaseError,'declared diff does not match'):
             self.stage()
+
+    def test_removed_or_altered_content_diff_rejected_with_valid_inventories(self):
+        for value in ({}, {'ux/index.html': 'edited review text'}):
+            plan = dict(self.plan, contentDiff=value)
+            with self.assertRaisesRegex(ReleaseError, 'reviewed contentDiff'):
+                self.coordinator.stage('r1', self.target, plan, self.baseline_sha)
+
+    def test_self_consistent_main_claiming_package_tampering_fails_source_proof(self):
+        source = self.target/'ux/map.js'
+        source.write_text('const mapVersion = 99;\n')
+        metadata = json.loads((self.target/'ux/build.json').read_text())
+        metadata['shippedSha256']['ux/map.js'] = digest(source.read_bytes())
+        write_json(self.target/'ux/build.json', metadata)
+        # Rewrite both reviewed inventories to make this a valid self-declared package.
+        from scripts.release_workflow import create_plan
+        plan = create_plan(self.snapshot, self.target, 'base', self.baseline_sha,
+                           ['ux/build.json', 'ux/index.html', 'ux/map.js'], self.plan_path)
+        with self.assertRaisesRegex(ReleaseError, 'exact committed-source reconstruction'):
+            self.coordinator.stage('r1', self.target, plan, self.baseline_sha)
+
+    def test_activation_transaction_is_durable_before_backend_mutation(self):
+        self.stage()
+        def inspect_persisted(stage, prior):
+            record = json.loads((self.records/'r1.json').read_text())
+            self.assertEqual(record['status'], 'activating')
+            self.assertEqual(record['activationTransaction']['priorIdentity']['containerId'], 'container-old')
+            self.assertEqual(record['activationTransaction']['candidateIdentity']['containerId'], 'stage-r1')
+            raise RuntimeError('simulated process interruption')
+        self.backend.activate = inspect_persisted
+        with self.assertRaisesRegex(RuntimeError, 'process interruption'):
+            self.coordinator.activate('r1', self.receipt('activate', build=self.target_sha))
+        persisted = json.loads((self.records/'r1.json').read_text())
+        self.assertEqual(persisted['activationTransaction']['status'], 'restored')
+
+    def test_explicit_recovery_restores_prior_and_preserves_foreign_owner(self):
+        self.stage()
+        self.coordinator.activate('r1', self.receipt('activate', build=self.target_sha))
+        record = json.loads((self.records/'r1.json').read_text())
+        record['status'] = 'activating'
+        record['activationTransaction'] = {'status':'pending-recovery',
+            'priorIdentity': record['baselineAtOperationStart'],
+            'candidateIdentity': record['stageIdentity']}
+        write_json(self.records/'r1.json', record)
+        result = self.coordinator.recover('r1')
+        self.assertEqual(result['status'], 'activation-failed-restored')
+        self.assertEqual(self.backend.live['containerId'], 'container-old')
+        self.assertEqual(self.backend.removed_stages, ['stage-r1'])
+        self.assertIsNone(self.backend.stage_state)
+        record = json.loads((self.records/'r1.json').read_text())
+        record['status'] = 'activating'
+        record['activationTransaction'] = {'status':'pending-recovery',
+            'priorIdentity': record['baselineAtOperationStart'],
+            'candidateIdentity': record['stageIdentity']}
+        write_json(self.records/'r1.json', record)
+        self.backend.live = dict(self.backend.live, containerId='foreign-writer')
+        with self.assertRaisesRegex(ReleaseError, 'another writer owns live'):
+            self.coordinator.recover('r1')
+        self.assertEqual(self.backend.live['containerId'], 'foreign-writer')
+
+    def test_rollback_stage_captures_live_baseline_while_holding_global_lock(self):
+        self.stage()
+        self.coordinator.activate('r1', self.receipt('activate', build=self.target_sha))
+        captured = {}
+        def stage_target(prior, current, release_id, identity, lock, artifact):
+            import fcntl
+            with self.lockfile.open('a+') as stream:
+                with self.assertRaises(BlockingIOError):
+                    fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            captured.update(current=current, prior=prior)
+            return {'containerId':'rollback-stage'}
+        self.backend.stage_rollback_target = stage_target
+        output = self.root/'rollback-stage.json'
+        self.coordinator.stage_rollback('r1', output)
+        self.assertEqual(captured['current']['containerId'], 'stage-r1')
+        self.assertEqual(captured['prior']['containerId'], 'container-old')
 
     def test_self_consistent_unplanned_map_change_is_not_hidden_by_seo_paths(self):
         map_file = self.target/'ux/map.js'
