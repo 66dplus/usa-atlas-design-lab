@@ -5,13 +5,16 @@ import {indicatorVisibility} from './indicator-visibility.js';
 export function loadedMapMetrics(metrics) {
   // Native ZIP/monitor/tract data alone cannot be shown on the state/county map.
   // Observation totals may be null when the production inventory is uncounted.
-  return metrics.filter(metric=>indicatorVisibility[metric.catalogId]===true&&metric.fieldId&&(metric.stateSupported||metric.countySupported));
+  // A normalization definition describes a series; it does not prove it is loaded.
+  return metrics.filter(metric=>indicatorVisibility[metric.catalogId]===true&&metric.hasObservations!==false&&metric.fieldId&&(metric.stateSupported||metric.countySupported));
 }
 
 export function collectedMapIndicators(metrics) {
-  // The adapter keeps the original indicator ID on its default series; variants use --.
-  // Keep variants for existing data cards, but do not turn them into extra picker fields.
-  return loadedMapMetrics(metrics).filter(metric=>!metric.id.includes('--'));
+  // Keep primary indicators and the requested standalone race/ethnicity lenses.
+  // Other ACS columns and internal series variants remain data sources, not
+  // hundreds of extra user-facing indicators.
+  const raceVariants=new Set(metrics.filter(metric=>metric.switchGroup==='race-ethnicity').map(metric=>metric.id));
+  return loadedMapMetrics(metrics).filter(metric=>!metric.id.includes('--')||raceVariants.has(metric.id));
 }
 
 // Rendering may use a source-defined period label; the store/API retain the native period.
@@ -47,25 +50,26 @@ export function prepareLayer(data,geo) {
     if(!Number.isFinite(row.value)||observations.has(row.id))throw new Error('The series has invalid or ambiguous observations.');
     observations.set(row.id,row);
   }
-  const numbers=[...observations].filter(([id])=>id!=='US').map(([,row])=>row.value);
+  // County values define the colour domain when the series maps counties.
+  // State totals stay in the store for the state cards but never compress a county map.
+  const countyNumbers=[...observations].filter(([id])=>id.length===5).map(([,row])=>row.value);
+  const stateNumbers=[...observations].filter(([id])=>id!=='US').map(([,row])=>row.value);
+  const numbers=countyNumbers.length?countyNumbers:stateNumbers;
   const min=numbers.length?Math.min(...numbers):null,max=numbers.length?Math.max(...numbers):null;
-  const scale=data.scale==='diverging'?'diverging':data.scale==='quantile5'?'quantile5':'quantile7';
-  const bins=scale==='quantile5'?5:7,breaks=[];
-  if(numbers.length){
-    const sorted=[...numbers].sort((a,b)=>a-b);
-    const at=position=>{const spot=(sorted.length-1)*position,low=Math.floor(spot),high=Math.ceil(spot);return sorted[low]+(sorted[high]-sorted[low])*(spot-low);};
-    for(let index=0;index<=bins;index++)breaks.push(at(index/bins));
-  }
+  const requested=data.scale==='log'?'log':data.scale==='diverging'?'diverging':'linear';
+  const scale=requested==='log'&&!(min>0)?'linear':requested;
+  const domain=scale==='diverging'?[85,115]:[min,max];
   const normalize=value=>{
     if(value==null)return null;
-    if(scale==='diverging')return Math.min(1,Math.max(0,(value-85)/30));
-    let bin=0;while(bin<bins-1&&value>breaks[bin+1])bin++;
-    return (bin+.5)/bins;
+    const [low,high]=domain;
+    if(!(high>low))return .5;
+    if(scale==='log')return Math.min(1,Math.max(0,(Math.log(value)-Math.log(low))/(Math.log(high)-Math.log(low))));
+    return Math.min(1,Math.max(0,(value-low)/(high-low)));
   };
-  const height=value=>value==null?null:max===min?.5:(value-min)/(max-min);
+  const height=value=>value==null?null:domain[1]===domain[0]?.5:Math.min(1,Math.max(0,(value-domain[0])/(domain[1]-domain[0])));
   const values=new Map([...geo.byId.keys()].map(id=>[id,normalize(observations.get(id)?.value)]));
   const heightValues=new Map([...geo.byId.keys()].map(id=>[id,height(observations.get(id)?.value)]));
-  return {...data,status:'ready',observations,values,heightValues,breaks,bins,scale,min,max,suppressed,excludedGeographies:excluded};
+  return {...data,status:'ready',observations,values,heightValues,scale,domain,min,max,suppressed,excludedGeographies:excluded};
 }
 
 export function createDataStore(geo,onChange,request=fetch) {
@@ -74,25 +78,38 @@ export function createDataStore(geo,onChange,request=fetch) {
     if(!layers.has(metric.id))layers.set(metric.id,{status:metric.fieldId?'idle':'unavailable',values:new Map(),observations:new Map()});
     return layers.get(metric.id);
   }
-  function load(metric){
+  function load(metric,{refresh=false}={}){
     if(pending.has(metric.id))return pending.get(metric.id);
     const current=get(metric);
-    if(!metric.fieldId||current.status==='ready'||current.status==='error')return Promise.resolve(current);
-    layers.set(metric.id,{...current,status:'loading'});
+    if(!metric.fieldId||(!refresh&&(current.status==='ready'||current.status==='error')))return Promise.resolve(current);
+    const fallback=current.status==='ready'?current:null;
+    if(fallback)layers.set(metric.id,{...fallback,refreshing:true,refreshError:null});
+    else layers.set(metric.id,{...current,status:'loading'});
     const promise=(async()=>{
       await Promise.resolve(); // Install request ownership before callbacks, including synchronous fetch failures.
       try{
         const data=await readAtlasJSON('/api/atlas/observations?field='+encodeURIComponent(metric.fieldId),request);
         if(data.fieldId!==metric.fieldId)throw new Error('The server returned a different series.');
-        layers.set(metric.id,prepareLayer(data,geo));
-      }catch(error){layers.set(metric.id,{status:'error',error:error.message,values:new Map(),observations:new Map()});}
+        const next=prepareLayer(data,geo);
+        delete next.refreshing;delete next.refreshError;
+        layers.set(metric.id,next);
+      }catch(error){
+        layers.set(metric.id,fallback?{...fallback,refreshing:false,refreshError:error.message}:{status:'error',error:error.message,values:new Map(),observations:new Map()});
+      }
       finally{pending.delete(metric.id);onChange(metric.id);}
       return layers.get(metric.id);
     })();
-    pending.set(metric.id,promise);return promise;
+    pending.set(metric.id,promise);
+    if(fallback)onChange(metric.id);
+    return promise;
   }
   function retry(metric){layers.delete(metric.id);return load(metric);}
-  return {get,load,retry};
+  function seed(metric,data){
+    if(!metric?.fieldId||data?.fieldId!==metric.fieldId)return false;
+    layers.set(metric.id,prepareLayer(data,geo));return true;
+  }
+  function refresh(metric){return load(metric,{refresh:true});}
+  return {get,load,retry,seed,refresh};
 }
 
 export function missingReason(metric,feature,layer) {

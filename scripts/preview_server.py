@@ -8,6 +8,7 @@ import json
 import mimetypes
 import os
 from pathlib import Path
+import re
 import socket
 from socketserver import ThreadingMixIn
 import threading
@@ -15,6 +16,7 @@ import time
 from urllib.parse import parse_qs, urlsplit
 
 import atlas_data
+from seo_render import articles, geography, metric_labels, redirect_target, render_route
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -142,11 +144,42 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 pass  # No persistence or retry is implied by a disconnected read.
 
     def do_GET(self):
-        if len(self.path) > 2048 or self.headers.get('Host') != '127.0.0.1:4429':
+        if len(self.path) > 2048 or self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
             return self.reply(400, {'error': 'Invalid request'})
         path = urlsplit(self.path).path
-        if path in ('/', '/ux'):
-            return self.reply(302, b'', extra={'Location': '/ux/'})
+        app_route = path in ('/', '/ux', '/ux/', '/ux/index.html') or re.fullmatch(
+            r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})', path)
+        if not app_route:
+            return self.serve_asset(path)
+        if path == '/':
+            return self.reply(301, b'', extra={'Location': '/united-states/unemployment'},
+                              cache_control='public, max-age=86400')
+        try:
+            topology = self.server.assets['/node_modules/us-atlas/counties-10m.json']
+            definitions = ROOT / 'ux/metric-definitions.json'
+            journal = ROOT / 'ux/journal.js'
+            target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
+                                     articles(str(journal)))
+            if target:
+                return self.reply(301, b'', extra={'Location': target},
+                                  cache_control='public, max-age=86400')
+            if path in ('/ux', '/ux/'):
+                try:
+                    catalog = self.server.cache.get('catalog', atlas_data.catalog)
+                except (Busy, atlas_data.DatabaseUnavailable):
+                    catalog = None
+                target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
+                                         articles(str(journal)), catalog)
+                if target:
+                    return self.reply(301, b'', extra={'Location': target},
+                                      cache_control='public, max-age=86400')
+                return self.reply(404, {'error': 'Legacy atlas URL could not be resolved'})
+        except KeyError:
+            return self.reply(503, {'error': 'The route index is unavailable'}, extra={'Retry-After': '2'})
+        return self.serve_asset(path, app_route=True, topology=topology,
+                                definitions=definitions, journal=journal)
+
+    def serve_asset(self, path, app_route=False, topology=None, definitions=None, journal=None):
         try:
             if path == '/api/atlas/catalog':
                 return self.reply(200, self.server.cache.get('catalog', atlas_data.catalog))
@@ -164,12 +197,28 @@ class PreviewHandler(BaseHTTPRequestHandler):
             if path == '/api/view-settings':
                 defaults = json.loads((ROOT / 'ux/view-settings.json').read_text())
                 return self.reply(200, {**defaults, 'savedAt': None})
-            asset = self.server.assets.get(path)
+            asset = self.server.assets.get('/ux/index.html') if app_route else self.server.assets.get(path)
             if asset is None:
                 return self.reply(404, {'error': 'Not found'})
             content = asset.read_bytes()
             content_type = mimetypes.guess_type(asset.name)[0] or 'application/octet-stream'
             if asset.suffix == '.html':
+                if app_route:
+                    status, rendered = render_route(content, self.path, topology, definitions, journal)
+                    if status == 404:
+                        try:
+                            catalog = self.server.cache.get('catalog', atlas_data.catalog)
+                        except (Busy, atlas_data.DatabaseUnavailable):
+                            catalog = None
+                        if catalog:
+                            target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
+                                                     articles(str(journal)), catalog)
+                            if target:
+                                return self.reply(301, b'', extra={'Location': target},
+                                                  cache_control='public, max-age=86400')
+                            status, rendered = render_route(content, self.path, topology, definitions, journal, catalog)
+                    content = rendered
+                    return self.reply(status, content, content_type)
                 return self.reply(200, content, content_type)
             # Revalidate every time: unchanged large geometry/fonts/icons can use
             # browser-cached bytes, while a changed build never serves stale code.
@@ -209,9 +258,20 @@ def load_assets(root=ROOT):
 
 
 if __name__ == '__main__':
-    os.environ['PGPASSWORD'] = Path('/run/secrets/reader_password').read_text().strip()
-    # Only this isolated container listens on all interfaces. Its host binding is
-    # loopback-only; cloudflared supplies the fixed origin Host header above.
-    server = PreviewServer(('0.0.0.0', 4429), load_assets())
-    print('Temporary read-only Atlas preview listening', flush=True)
-    server.serve_forever()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--host', default='0.0.0.0')
+    parser.add_argument('--port', type=int, default=4429)
+    parser.add_argument('--secret-file', type=Path, default=Path('/run/secrets/reader_password'))
+    args = parser.parse_args()
+    if (os.environ.get('ATLAS_DISABLE_SECRET_FILE') != '1' and
+            not os.environ.get('PGPASSWORD') and args.secret_file.is_file()):
+        os.environ['PGPASSWORD'] = args.secret_file.read_text().strip()
+    server = PreviewServer((args.host, args.port), load_assets())
+    print(f'Temporary read-only Atlas preview listening on {args.host}:{server.server_port}', flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()

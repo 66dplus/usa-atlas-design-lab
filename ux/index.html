@@ -1,27 +1,36 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#e9ebee"><title>USA Atlas — Explore the map</title>
+  <base href="/ux/">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e9ebee">
+  <meta name="description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website"><meta property="og:title" content="USA X-Ray — Explore the map">
+  <meta property="og:description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
+  <meta property="og:site_name" content="USA X-Ray"><meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="USA X-Ray — Explore the map">
+  <meta name="twitter:description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
+  <title>USA X-Ray — Explore the map</title>
+  <script id="atlas-jsonld" type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"USA X-Ray","url":"https://usa-xray.online","description":"Explore U.S. places through source-based maps, geographic comparisons and public data.","inLanguage":"en-US"}</script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='18' fill='%236e2449'/%3E%3Cpath d='M7 20h26M20 2a30 30 0 0 0 0 36M20 2a30 30 0 0 1 0 36' fill='none' stroke='%23fff2b1'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="assets/fonts.css">
   <link rel="stylesheet" href="feedback.css">
-  <link rel="stylesheet" href="style.css?v=synthesis-1"><link rel="stylesheet" href="master.css">
+  <link rel="stylesheet" href="ui-tokens.css">
+  <link rel="stylesheet" href="style.css?v=synthesis-1"><link rel="stylesheet" href="master.css?v=2026-10-25-mobile-674e5b8"><link rel="stylesheet" href="ui-overhaul.css"><link rel="stylesheet" href="mobile-layout.css?v=674e5b8">
   <script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script>
   <script src="../node_modules/d3/dist/d3.min.js"></script>
   <script src="../node_modules/topojson-client/dist/topojson-client.min.js"></script>
 </head>
-<body data-runtime="preview" data-concept="explorer" data-theme="light" data-page="map">
+<body data-atlas-status="loading" data-runtime="preview" data-concept="explorer" data-theme="light" data-page="map">
 <!-- The map is the workspace. Each map owns its controls; tools slide over it without changing its size. -->
 <header class="app-header">
   <div class="navigation-cluster">
-    <a class="brand" href="./" aria-label="USA Atlas home"><svg data-brand-icon="explorer" aria-hidden="true"></svg><span>USA <b>Atlas</b></span></a>
-    <button id="saved-open" class="saved-trigger" aria-expanded="false"><svg data-brand-icon="saved" aria-hidden="true"></svg>Saved</button><nav class="concept-tabs" aria-label="Explore modes"><span class="nav-pill" aria-hidden="true"></span><button data-page="map" data-concept="explorer">Map</button><button data-page="compare" data-concept="compare">Compare</button><button data-page="stats">Stats</button><button data-page="blog">Blog</button></nav>
+    <a class="brand" href="/united-states/unemployment" aria-label="USA X-Ray home"><svg data-brand-icon="explorer" aria-hidden="true"></svg><span>USA <b>X-Ray</b></span></a>
+    <nav class="concept-tabs" aria-label="Explore modes"><span class="nav-pill" aria-hidden="true"></span><a href="/united-states/unemployment" data-page="map" data-concept="explorer">Map</a><a href="/compare/places/unemployment/california/vs/texas" data-page="compare" data-concept="compare">Compare</a><a href="/stats" data-page="stats">Stats</a><a href="/blog" data-page="blog">Blog</a></nav>
   </div>
-  <button id="mobile-search" class="chrome-circle" aria-label="Search places and indicators"><svg data-brand-icon="search" aria-hidden="true"></svg></button><button id="mobile-compare-metric" class="mobile-compare-metric" data-pane-metric="a"></button><button id="support-open" class="support-trigger" aria-label="Support"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>Support</span></button><button id="info-open" class="chrome-circle" aria-label="About USA Atlas"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg></button><div class="workspace-bar">
+  <button id="mobile-search" class="chrome-circle" aria-label="Search places and indicators"><svg data-brand-icon="search" aria-hidden="true"></svg></button><button id="mobile-compare-metric" class="mobile-compare-metric" data-pane-metric="a"></button><a id="support-open" class="support-trigger" href="/support" aria-label="Support USA X-Ray"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>Support</span></a><a id="info-open" class="chrome-circle" href="/about" aria-label="About USA X-Ray"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg></a><div class="workspace-bar">
     <div class="dimension-control sliding-control" aria-label="Map view"><span class="segment-pill" aria-hidden="true"></span><button data-mode="2d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m2 5 5-2 6 2 5-2v12l-5 2-6-2-5 2V5ZM7 3v12M13 5v12"/></svg><span>2D</span></button><button data-mode="3d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 4v8l-7 4-7-4V6l7-4ZM3 6l7 4 7-4M10 10v8"/></svg><span>3D</span></button><button id="mobile-view-toggle" data-pill="skip" class="mobile-view-toggle" aria-label="Switch to 2D"></button></div>
-    <button id="view-settings-open" class="icon-button" aria-label="Map settings" title="Map settings" aria-expanded="false"><svg data-brand-icon="indicators" aria-hidden="true"></svg></button>
-    <button id="share" class="share-button" aria-label="Share" title="Copy view link"><svg data-brand-icon="share" aria-hidden="true"></svg><span>Share</span></button>
   </div>
 </header>
 <aside id="explore-panel" class="explore-panel" aria-label="Explore this place"></aside>
@@ -33,20 +42,39 @@
     <div id="maps" class="maps">
       <section class="map-pane" id="pane-a" aria-label="Primary map">
         <div id="map-a" class="map-host"></div>
-        <div class="pane-heading" id="heading-a"></div>
         <nav id="breadcrumbs" aria-label="Geographic location"></nav>
         <div class="map-intro" id="map-intro"><h1>Every place<br>has a story.</h1><p>Choose a state. See what changes.</p></div>
-        <div class="camera-tools" id="camera-a" aria-label="Primary camera"></div>
+        <div class="compare-map-card">
+        <div class="pane-heading" id="heading-a"></div>
         <button class="map-summary" id="summary-a" data-statistics="a" aria-expanded="false"></button>
+        <div class="pane-footer" id="footer-a"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="a" aria-label="Open statistical source, coverage and method"></button></div>
+        </div>
       </section>
       <section class="map-pane" id="pane-b" aria-label="Comparison map" hidden>
-        <div id="map-b" class="map-host"></div><div class="pane-heading" id="heading-b"></div>
-        <div class="camera-tools" id="camera-b" aria-label="Comparison camera"></div>
+        <div id="map-b" class="map-host"></div>
+        <div class="compare-map-card">
+        <div class="pane-heading" id="heading-b"></div>
         <button class="map-summary" id="summary-b" data-statistics="b" aria-expanded="false"></button>
+        <div class="pane-footer" id="footer-b"><div class="legend"><strong class="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button class="indicator-legend-source" data-source="b" aria-label="Open statistical source, coverage and method"></button></div>
+        </div>
+      </section>
+      <section id="desktop-compare-card" class="desktop-compare-card" hidden aria-label="Compare places">
+        <div class="desktop-compare-places">
+          <div class="desktop-compare-place">
+            <button class="desktop-compare-name" data-pane-place="a" aria-label="Choose first place"><span id="desktop-compare-name-a"></span><span aria-hidden="true">⌄</span></button>
+            <div class="desktop-compare-value"><button data-pane-metric="a" aria-label="Choose indicator for first place"><span id="desktop-compare-metric-a"></span></button><strong id="desktop-compare-value-a"></strong></div>
+          </div>
+          <span class="desktop-compare-vs">VS</span>
+          <div class="desktop-compare-place">
+            <button class="desktop-compare-name" data-pane-place="b" aria-label="Choose second place"><span id="desktop-compare-name-b"></span><span aria-hidden="true">⌄</span></button>
+            <div class="desktop-compare-value"><button data-pane-metric="b" aria-label="Choose indicator for second place"><span id="desktop-compare-metric-b"></span></button><strong id="desktop-compare-value-b"></strong></div>
+          </div>
+        </div>
+        <div class="desktop-compare-scale" id="desktop-compare-scale"></div>
+        <div class="desktop-compare-source-row"><button class="indicator-legend-source" data-source="a">Source, coverage &amp; method</button><div id="compare-desktop-osm-slot"></div></div>
       </section>
     </div>
-    <div class="map-actions"><button id="stories-open" hidden aria-expanded="false">Browse stories <span aria-hidden="true">↗</span></button><button id="compare-data-open" hidden aria-expanded="false">Compare data <span aria-hidden="true">↑</span></button></div>
-    <div class="map-footer"><div class="legend"><strong id="legend-title">Source observations</strong><div class="color-ramp"></div><div class="legend-labels"><span>Lower</span><span>Higher</span><span class="no-data-key">No data</span></div></div><button id="map-sources" class="map-provenance" aria-label="Open map geometry sources">Census 2017 boundaries · Sources</button></div>
+    <div class="map-actions"><button id="stories-open" hidden aria-expanded="false">Browse stories <span aria-hidden="true">↗</span></button></div>
     <div id="region-jumps" class="region-jumps"><button data-jump="02">Alaska</button><button data-jump="15">Hawaii</button></div>
     <span id="map-hint" class="map-hint"></span>
   </section>
@@ -63,7 +91,7 @@
 <section id="metric-library" class="drawer" aria-label="Choose an indicator" hidden>
   <div class="drawer-top"><div><p id="metric-library-context" class="panel-context"></p><h2>Choose an indicator</h2></div><button data-close="metric-library" aria-label="Close metric library" class="icon-button">×</button></div>
   <label class="search-field"><svg data-brand-icon="search" aria-hidden="true"></svg><input id="metric-search" type="search" placeholder="Income, rent, homelessness…" aria-label="Search indicators"></label>
-  <div id="category-list" class="category-list" aria-label="Metric categories"></div><p id="catalog-status" class="library-note">Loading the database catalog…</p><div id="metric-list" class="metric-list"></div><div id="popular-metrics"></div>
+  <div id="category-list" class="category-list" aria-label="Metric categories"></div><p id="catalog-status" class="library-note">Loading the database catalog…</p><div id="metric-list" class="metric-list"></div>
 </section>
 <section id="place-library" class="drawer place-drawer" aria-label="Choose a place" hidden>
   <div class="drawer-top"><div><p id="place-library-context" class="panel-context"></p><h2 id="place-library-title">Find your place</h2></div><button data-close="place-library" aria-label="Close place search" class="icon-button">×</button></div>
@@ -71,8 +99,9 @@
 </section>
 <aside id="saved-panel" class="drawer" aria-label="Saved explorations" hidden></aside>
 <aside id="ranking-panel" class="drawer" aria-label="Highest and lowest" hidden></aside>
-<footer class="surprise-bar" aria-label="Explore topics and advertising"><div class="surprise-window"><div id="surprise-track"></div></div><button id="surprise-pause" aria-label="Pause suggestions" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10M13 5v10"/></svg></button></footer>
-<a class="osm-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a><p id="mobile-comparison-source" class="mobile-comparison-source"></p><section id="reading-page" class="reading-page" hidden aria-label="Atlas page"></section><div id="source-backdrop" hidden></div><section id="source-popup" class="source-popup" hidden role="dialog" aria-modal="true" aria-labelledby="source-heading"></section><aside id="search-sheet" class="drawer" aria-label="Search" hidden><div class="drawer-top"><h2>Search</h2><button data-close="search-sheet" aria-label="Close search">×</button></div><p>What would you like to find?</p><button data-pane-metric="a" class="search-choice"><svg data-brand-icon="indicators" aria-hidden="true"></svg>Indicators <span>Choose what the map shows</span></button><button data-pane-place="a" class="search-choice"><svg data-ui-icon="map" aria-hidden="true"></svg>Locations <span>Find a state or county</span></button></aside><div id="toast" role="status" hidden></div><div id="loading" role="status">Preparing all 50 states…</div>
-<script type="module" src="app.js?v=2026-10-01"></script>
+<a class="osm-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a><p id="mobile-comparison-source" class="mobile-comparison-source"></p><section id="reading-page" class="reading-page" hidden aria-label="Atlas page"></section><div id="source-backdrop" hidden></div><section id="source-popup" class="source-popup" hidden role="dialog" aria-modal="true" aria-labelledby="source-heading"></section><aside id="search-sheet" class="drawer" aria-label="Search" hidden><div class="drawer-top"><h2>Search</h2><button data-close="search-sheet" aria-label="Close search">×</button></div><p>What would you like to find?</p><button data-pane-metric="a" class="search-choice"><svg data-brand-icon="indicators" aria-hidden="true"></svg>Indicators <span>Choose what the map shows</span></button><button data-pane-place="a" class="search-choice"><svg data-ui-icon="map" aria-hidden="true"></svg>Locations <span>Find a state or county</span></button></aside><div id="toast" role="status" hidden></div><section id="loading" role="status" aria-live="polite" aria-busy="true"><div class="startup-card"><div class="startup-copy"><h1 id="startup-title">Loading<span class="startup-dots" aria-hidden="true"><i></i><i></i><i></i></span></h1><p id="startup-message" aria-hidden="true">Gathering statistics across the states</p><span class="startup-accessible">Loading the U.S. map and published statistics.</span></div><button id="startup-retry" hidden>Try again</button></div></section>
+<noscript><p>Enable JavaScript to explore the interactive atlas. <a href="/about">About USA X-Ray</a> · <a href="/support">Support the project</a></p></noscript>
+<script src="startup-guard.js" defer></script>
+<script type="module" src="app.js?v=seo-current-live-20261025"></script>
 </body>
 </html>

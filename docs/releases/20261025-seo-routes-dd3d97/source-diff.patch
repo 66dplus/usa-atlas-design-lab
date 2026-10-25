@@ -1,0 +1,1437 @@
+--- a/ux/index.html
++++ b/ux/index.html
+@@ -1,12 +1,22 @@
+ <!doctype html>
+ <html lang="en">
+ <head>
++  <base href="/ux/">
+   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+-  <meta name="theme-color" content="#e9ebee"><title>USA X-Ray — Explore the map</title>
++  <meta name="theme-color" content="#e9ebee">
++  <meta name="description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
++  <meta name="robots" content="index,follow">
++  <meta property="og:type" content="website"><meta property="og:title" content="USA X-Ray — Explore the map">
++  <meta property="og:description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
++  <meta property="og:site_name" content="USA X-Ray"><meta property="og:locale" content="en_US">
++  <meta name="twitter:card" content="summary"><meta name="twitter:title" content="USA X-Ray — Explore the map">
++  <meta name="twitter:description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
++  <title>USA X-Ray — Explore the map</title>
++  <script id="atlas-jsonld" type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"USA X-Ray","url":"https://usa-xray.online","description":"Explore U.S. places through source-based maps, geographic comparisons and public data.","inLanguage":"en-US"}</script>
+   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='18' fill='%236e2449'/%3E%3Cpath d='M7 20h26M20 2a30 30 0 0 0 0 36M20 2a30 30 0 0 1 0 36' fill='none' stroke='%23fff2b1'/%3E%3C/svg%3E">
+   <link rel="stylesheet" href="assets/fonts.css">
++  <link rel="stylesheet" href="feedback.css">
+   <link rel="stylesheet" href="ui-tokens.css">
+-  <link rel="stylesheet" href="feedback.css">
+   <link rel="stylesheet" href="style.css?v=synthesis-1"><link rel="stylesheet" href="master.css?v=2026-10-25-mobile-674e5b8"><link rel="stylesheet" href="ui-overhaul.css"><link rel="stylesheet" href="mobile-layout.css?v=674e5b8">
+   <script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script>
+   <script src="../node_modules/d3/dist/d3.min.js"></script>
+@@ -16,10 +26,10 @@
+ <!-- The map is the workspace. Each map owns its controls; tools slide over it without changing its size. -->
+ <header class="app-header">
+   <div class="navigation-cluster">
+-    <a class="brand" href="./" aria-label="USA X-Ray home"><svg data-brand-icon="explorer" aria-hidden="true"></svg><span>USA <b>X-Ray</b></span></a>
+-    <nav class="concept-tabs" aria-label="Explore modes"><span class="nav-pill" aria-hidden="true"></span><button data-page="map" data-concept="explorer">Map</button><button data-page="compare" data-concept="compare">Compare</button><button data-page="stats">Stats</button><button data-page="blog">Blog</button></nav>
++    <a class="brand" href="/united-states/unemployment" aria-label="USA X-Ray home"><svg data-brand-icon="explorer" aria-hidden="true"></svg><span>USA <b>X-Ray</b></span></a>
++    <nav class="concept-tabs" aria-label="Explore modes"><span class="nav-pill" aria-hidden="true"></span><a href="/united-states/unemployment" data-page="map" data-concept="explorer">Map</a><a href="/compare/places/unemployment/california/vs/texas" data-page="compare" data-concept="compare">Compare</a><a href="/stats" data-page="stats">Stats</a><a href="/blog" data-page="blog">Blog</a></nav>
+   </div>
+-  <button id="mobile-search" class="chrome-circle" aria-label="Search places and indicators"><svg data-brand-icon="search" aria-hidden="true"></svg></button><button id="mobile-compare-metric" class="mobile-compare-metric" data-pane-metric="a"></button><button id="support-open" class="support-trigger" aria-label="Support USA X-Ray"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>Support</span></button><button id="info-open" class="chrome-circle" aria-label="About USA X-Ray"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg></button><div class="workspace-bar">
++  <button id="mobile-search" class="chrome-circle" aria-label="Search places and indicators"><svg data-brand-icon="search" aria-hidden="true"></svg></button><button id="mobile-compare-metric" class="mobile-compare-metric" data-pane-metric="a"></button><a id="support-open" class="support-trigger" href="/support" aria-label="Support USA X-Ray"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>Support</span></a><a id="info-open" class="chrome-circle" href="/about" aria-label="About USA X-Ray"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg></a><div class="workspace-bar">
+     <div class="dimension-control sliding-control" aria-label="Map view"><span class="segment-pill" aria-hidden="true"></span><button data-mode="2d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m2 5 5-2 6 2 5-2v12l-5 2-6-2-5 2V5ZM7 3v12M13 5v12"/></svg><span>2D</span></button><button data-mode="3d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 4v8l-7 4-7-4V6l7-4ZM3 6l7 4 7-4M10 10v8"/></svg><span>3D</span></button><button id="mobile-view-toggle" data-pill="skip" class="mobile-view-toggle" aria-label="Switch to 2D"></button></div>
+   </div>
+ </header>
+@@ -90,8 +100,8 @@
+ <aside id="saved-panel" class="drawer" aria-label="Saved explorations" hidden></aside>
+ <aside id="ranking-panel" class="drawer" aria-label="Highest and lowest" hidden></aside>
+ <a class="osm-attribution" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a><p id="mobile-comparison-source" class="mobile-comparison-source"></p><section id="reading-page" class="reading-page" hidden aria-label="Atlas page"></section><div id="source-backdrop" hidden></div><section id="source-popup" class="source-popup" hidden role="dialog" aria-modal="true" aria-labelledby="source-heading"></section><aside id="search-sheet" class="drawer" aria-label="Search" hidden><div class="drawer-top"><h2>Search</h2><button data-close="search-sheet" aria-label="Close search">×</button></div><p>What would you like to find?</p><button data-pane-metric="a" class="search-choice"><svg data-brand-icon="indicators" aria-hidden="true"></svg>Indicators <span>Choose what the map shows</span></button><button data-pane-place="a" class="search-choice"><svg data-ui-icon="map" aria-hidden="true"></svg>Locations <span>Find a state or county</span></button></aside><div id="toast" role="status" hidden></div><section id="loading" role="status" aria-live="polite" aria-busy="true"><div class="startup-card"><div class="startup-copy"><h1 id="startup-title">Loading<span class="startup-dots" aria-hidden="true"><i></i><i></i><i></i></span></h1><p id="startup-message" aria-hidden="true">Gathering statistics across the states</p><span class="startup-accessible">Loading the U.S. map and published statistics.</span></div><button id="startup-retry" hidden>Try again</button></div></section>
+-<noscript><p>Enable JavaScript to explore the interactive atlas. <a href="./?page=info">About USA X-Ray</a> · <a href="./?page=support">Support the project</a></p></noscript>
++<noscript><p>Enable JavaScript to explore the interactive atlas. <a href="/about">About USA X-Ray</a> · <a href="/support">Support the project</a></p></noscript>
+ <script src="startup-guard.js" defer></script>
+-<script type="module" src="app.js?v=2026-10-25-mobile-674e5b8"></script>
++<script type="module" src="app.js?v=seo-current-live-20261025"></script>
+ </body>
+ </html>
+--- a/ux/app.js
++++ b/ux/app.js
+@@ -1,6 +1,8 @@
+ import {bottomSheet,sheetContent,sheetScroll} from './bottom-sheet.js?v=674e5b8';
+ import {initViewport} from './viewport.js';
+ import {initPages} from './pages.js';
++import {buildPlaceIndex,canonicalPath,parsePath,resolveRoute,routeParams} from './routes.js';
++import {applyPageMetadata,mapPageMetadata,screenPageMetadata} from './seo.js';
+ import {showSurface,slidePill,isSurfaceOpen,captureMapLayout,animateMapLayout} from './motion.js';
+ import {ExplorerMap,loadGeography,rampColor,EMBER,DIVERGING} from './map.js';
+ import {createDataStore,readAtlasJSON,loadedMapMetrics,collectedMapIndicators,displayLayer,formatValue,formatPeriod,missingReason,comparable} from './model.js?v=postgres-1';
+@@ -31,11 +33,15 @@
+ document.querySelectorAll('[data-brand-icon]').forEach(node=>{node.outerHTML=brandIcon(node.dataset.brandIcon);});
+ document.querySelectorAll('[data-ui-icon]').forEach(node=>{node.outerHTML=icon(node.dataset.uiIcon);});
+ const params=new URLSearchParams(location.search);
++const initialPathRoute=parsePath(location.pathname);
++const initialPathPage=initialPathRoute?.kind==='screen'?({stats:'stats',support:'support',about:'info',blog:'blog'}[initialPathRoute.screen]):initialPathRoute?.kind==='article'?'article':initialPathRoute?.kind==='comparison'?'compare':null;
++const initialPathArticle=initialPathRoute?.kind==='article'?initialPathRoute.article:null;
++const initialRoutePage=initialPathPage||(initialPathRoute?.kind==='root'||initialPathRoute?.kind==='map'?'map':null);
+ const embedded=params.get('embed')==='1';
+ document.body.classList.toggle('embedded-map',embedded);
+ window.addEventListener('message',event=>{if(embedded&&event.origin===location.origin&&event.source===parent&&event.data?.type==='atlas-embed-theme'&&['light','dark'].includes(event.data.theme)){document.body.dataset.theme=event.data.theme;if(dataStore)updateMaps();}});
+ const concepts=['explorer','stories','compare'];
+-const initialConcept=params.get('page')==='map'?'explorer':params.get('page')==='compare'?'compare':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
++const initialConcept=initialPathPage==='compare'||params.get('page')==='compare'?'compare':params.get('page')==='map'?'explorer':concepts.includes(params.get('concept'))?params.get('concept'):'explorer';
+ const state={concept:initialConcept,mode:params.get('view')||'2d',selected:params.get('place')||null,second:params.get('other')==='US'?null:params.get('other')||'48',metric:params.get('metric')||'unemployment',secondMetric:params.get('metric2')||'population',comparison:params.get('comparison')==='metrics'?'metrics':'places',category:'All',metricTarget:'a',placeTarget:'a',cardMode:false,rank:['highest','lowest'].includes(params.get('rank'))?params.get('rank'):null};
+ if(!['2d','3d'].includes(state.mode))state.mode='2d';
+ document.body.dataset.view=state.mode;
+@@ -47,7 +53,8 @@
+  {title:'Where work is changing',description:'Explore employment, place by place.',metric:'unemployment',place:'48',action:'Explore Texas'},
+  {title:'A closer look at city life',description:'San Francisco, from state to city & county.',metric:'unemployment',place:'06075',action:'Explore San Francisco'}
+ ];
+-let pages,explorationPose,rankFocus=null,geo,catalog,metricById,library,mapA,mapB,viewSettings,dataStore,toastTimer,returnFocus,returnFocusSelector;
++let pages,explorationPose,rankFocus=null,geo,catalog,metricById,library,mapA,mapB,viewSettings,dataStore,toastTimer,returnFocus,returnFocusSelector,routeIndex=null,locationRouteValid=Boolean(initialPathRoute)||['/ux','/ux/'].includes(location.pathname),appReady=false;
++let activeArticle=initialPathArticle||params.get('article')||null;
+ let pinned=['unemployment--03-06-employment','unemployment--03-06-labor-force','unemployment--03-06-unemployment'];
+ const availableIndicatorId=(id,fallback)=>catalog.find(m=>m.id===id)?.id||metricById?.get(id)?.id||catalog.find(m=>m.id===fallback)?.id||catalog[0].id;
+ const metric=()=>metricById.get(state.metric);
+@@ -68,15 +75,33 @@
+ const value=(m,id)=>observation(m,id)?.value??null;
+ const number=(m,id)=>formatValue(value(m,id),layer(m).unit);
+ const compactNumber=(m,id)=>{const v=value(m,id),unit=layer(m).unit;return v!=null&&unit==='people'&&Math.abs(v)>=1000?new Intl.NumberFormat('en-US',{notation:'compact',minimumFractionDigits:Math.abs(v)>=1e6?2:1,maximumFractionDigits:Math.abs(v)>=1e6?2:1}).format(v):number(m,id);};
+-function persist() {
+-  const q=new URLSearchParams({concept:state.concept,view:state.mode,metric:state.metric,metric2:state.secondMetric,comparison:state.comparison});
+-  if(secondExplicit||comparisonPrepared||state.concept==='compare')q.set('other',state.second||'US');
+-  for(const key of ['page','preview','expanded','embed','theme','article']){const v=new URLSearchParams(location.search).get(key);if(v)q.set(key,v);}
+-  q.delete('renderer');
+-  q.set('page',document.body.dataset.page);
+-  if(state.selected)q.set('place',state.selected);if(state.rank)q.set('rank',state.rank);
+-  history.replaceState(null,'',`${location.pathname}?${q}`);
+-}
++function beginRouteHistory(){history.pushState(null,'',location.pathname+location.search);}
++function updateLocation(options={}){
++  if(!routeIndex)return;
++  const page=options.page||document.body.dataset.page||'map';
++  if(page==='article'&&options.article)activeArticle=options.article;
++  const article=page==='article'?(options.article||activeArticle):null;
++  const path=canonicalPath({...state,page,article},routeIndex)||'/united-states/unemployment';
++  const retained=routeParams(new URLSearchParams(location.search));
++  const next=path+(retained?'?'+retained:'');
++  if(next!==location.pathname+location.search)history.replaceState(null,'',next);
++}
++function applyMapSEO(){
++  const page=document.body.dataset.page||'map';
++  if(!['map','compare'].includes(page)||!routeIndex)return;
++  const path=canonicalPath({...state,page},routeIndex);
++  const query=new URLSearchParams(location.search);
++  const noindex=!locationRouteValid||!path||query.has('preview')||query.has('review')||query.get('embed')==='1';
++  const canonicalFallback=location.pathname.startsWith('/ux/')?'/ux/':location.pathname;
++  applyPageMetadata(mapPageMetadata({state:{...state,secondMetricName:metricB()?.name,secondName:selectedB()?.name},index:routeIndex,metricName:metric()?.name,placeName:selected()?.name||'the United States',path:path||canonicalFallback,noindex}));
++}
++function syncPageSEO({page,article=null,title=null,description=null,noindex=false}={}){
++  if(page==='map'||page==='compare'){applyMapSEO();return;}
++  const path=canonicalPath({page,article},routeIndex)||'/';
++  const query=new URLSearchParams(location.search);
++  applyPageMetadata(screenPageMetadata(page,path,{article:title?{title,description}:null,noindex:noindex||query.has('preview')||query.has('review')||query.get('embed')==='1'}));
++}
++function persist(){updateLocation();applyMapSEO();}
+ function toast(text){clearTimeout(toastTimer);$('#toast').textContent=text;showSurface($('#toast'),true,{distance:8,duration:180});toastTimer=setTimeout(()=>showSurface($('#toast'),false,{distance:8,duration:180}),3500);}
+ function setPlaceSheet(mode){
+   const snap=mode==='dismissed'?'min':mode;
+@@ -186,6 +211,7 @@
+   const target=side==='b'&&state.concept==='compare'&&state.comparison==='places'?'b':'a';
+   const request=++selectionRequest[target];rankFocus=null;closeDrawers();
+   const previous=side==='b'&&state.concept==='compare'&&state.comparison==='places'?state.second:state.selected;
++  if(previous!==id)beginRouteHistory();
+   if(side==='b'&&state.concept==='compare'&&state.comparison==='places'){state.second=id;secondExplicit=true;comparisonPrepared=true;}
+   else state.selected=id;
+   geo.prepareFocus(id);
+@@ -503,7 +529,7 @@
+   document.body.dataset.concept=state.concept;
+   document.body.dataset.comparison=state.comparison;
+   pages?.syncConcept(state.concept);
+-  if(!document.body.classList.contains('reading')){document.querySelectorAll('.concept-tabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===(state.concept==='compare'?'compare':'map'))));slidePill($('.concept-tabs'),$('.concept-tabs button[aria-pressed=true]'));}
++  if(!document.body.classList.contains('reading')){const page=state.concept==='compare'?'compare':'map';document.querySelectorAll('.concept-tabs a[data-page]').forEach(link=>{if(link.dataset.page===page)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});slidePill($('.concept-tabs'),$('.concept-tabs a[aria-current="page"]'));}
+   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
+   if(!$('#compare-toolbar .segment-pill'))$('#compare-toolbar .segmented').insertAdjacentHTML('afterbegin','<span class="segment-pill" aria-hidden="true"></span>');
+   document.body.dataset.view=state.mode;const mobileView=$('#mobile-view-toggle');const mobileTarget=state.mode==='2d'?'3d':'2d';mobileView.innerHTML=$(`.dimension-control [data-mode="${mobileTarget}"]`).innerHTML;mobileView.setAttribute('aria-label',`Switch to ${mobileTarget.toUpperCase()}`);slidePill($('.dimension-control'),$(`.dimension-control [data-mode="${state.mode}"]`));
+@@ -588,6 +614,7 @@
+   if(button.dataset.category){state.category=button.dataset.category;for(const chip of $('#category-list').querySelectorAll('[data-category]'))chip.setAttribute('aria-pressed',String(chip.dataset.category===state.category));button.scrollIntoView({block:'nearest',inline:'nearest'});renderMetrics();return;}
+   if(button.dataset.switchMetric){
+     const id=button.dataset.switchMetric,previous=state.metricTarget==='b'?state.secondMetric:state.metric;
++    if(previous!==id)beginRouteHistory();
+     if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;render();
+     if(previous!==id)analytics.action('indicator_select',{selected_indicator_id:id});return;
+   }
+@@ -595,13 +622,14 @@
+     const id=button.dataset.metric;
+     if(state.cardMode){dataStore.load(metricById.get(id));if(pinned.includes(id)){if(pinned.length>1)pinned=pinned.filter(p=>p!==id);else toast('Keep at least one field in the card.');}else if(pinned.length<5)pinned.push(id);else toast('Your card can show up to 5 fields. Remove one first.');renderMetrics();renderInspector();renderExplorer();return;}
+     const previous=state.metricTarget==='b'?state.secondMetric:state.metric;
++    if(previous!==id)beginRouteHistory();
+     if(state.metricTarget==='b')state.secondMetric=id;else state.metric=id;state.rank=null;closeDrawers();render();if(previous!==id)analytics.action('indicator_select',{selected_indicator_id:id});return;
+   }
+   if(button.dataset.retry){dataStore.retry(metricById.get(button.dataset.retry));render();return;}
+   if(button.dataset.place){choosePlace(button.dataset.place,state.placeTarget);return;}
+-  if(button.dataset.inspectMetric){const previous=state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics'?state.secondMetric:state.metric;if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();if(previous!==button.dataset.inspectMetric)analytics.action('indicator_select',{selected_indicator_id:button.dataset.inspectMetric});return;}
++  if(button.dataset.inspectMetric){const previous=state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics'?state.secondMetric:state.metric;if(previous!==button.dataset.inspectMetric)beginRouteHistory();if(state.inspectorSide==='b'&&state.concept==='compare'&&state.comparison==='metrics')state.secondMetric=button.dataset.inspectMetric;else state.metric=button.dataset.inspectMetric;render();if(previous!==button.dataset.inspectMetric)analytics.action('indicator_select',{selected_indicator_id:button.dataset.inspectMetric});return;}
+   if(button.dataset.story){const previous=state.metric,s=stories[+button.dataset.story];state.metric=s.metric;state.rank=null;state.concept='explorer';choosePlace(s.place).then(ok=>{if(ok){if(previous!==s.metric)analytics.action('indicator_select');analytics.action('view_select',{entry:'story'});}});return;}
+-  if(button.dataset.compare){const previous=state.comparison;closeDrawers(false);selectionRequest.a++;selectionRequest.b++;state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();if(previous!==state.comparison)analytics.action('comparison_mode_select');return;}
++  if(button.dataset.compare){const previous=state.comparison;if(previous!==button.dataset.compare)beginRouteHistory();closeDrawers(false);selectionRequest.a++;selectionRequest.b++;state.comparison=button.dataset.compare;if(!state.selected)state.selected='06';if(state.comparison==='metrics'&&state.secondMetric===state.metric)state.secondMetric=state.metric==='unemployment'?'obesity-rate':'unemployment';render();if(previous!==state.comparison)analytics.action('comparison_mode_select');return;}
+   if(button.hasAttribute('data-mobile-search')){openDrawer('search-sheet',button);return;}
+   if(button.dataset.panePlace){showPlaceLibrary(button.dataset.panePlace);return;}
+   if(button.dataset.paneMetric){showMetricLibrary(button.dataset.paneMetric);return;}
+@@ -637,7 +665,33 @@
+ for(const panel of document.querySelectorAll('.drawer'))drawerSheets.set(panel,bottomSheet(panel,{maxSnap:panel.id==='search-sheet'?'half':'expanded',fitContent:panel.id==='search-sheet',onSnap:snap=>{
+   panel.classList.toggle('expanded',snap==='expanded');
+ }}));
+-pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept});
++pages=initPages({changeConcept,renderMaps:()=>{if(dataStore)render();},getCatalog:()=>catalog||[],getLibrary:()=>library||[],getGeography:()=>geo,openSearch:()=>{if(catalog)openDrawer('search-sheet',$('#mobile-search'));},closePlaceSheet:()=>setPlaceSheet('half'),closeOverlays:()=>closeDrawers(false),syncChrome:syncPlaceChrome,getConcept:()=>state.concept,initialArticle:initialPathArticle,syncURL:updateLocation,beginHistory:beginRouteHistory,setSEO:syncPageSEO});
++function applyResolvedRoute(resolved){
++  if(!resolved)return;
++  if(resolved.concept){
++    state.concept=resolved.concept;
++    state.selected=resolved.place||null;
++    state.second=resolved.second||null;
++    state.metric=availableIndicatorId(resolved.metric||'unemployment','unemployment');
++    state.secondMetric=availableIndicatorId(resolved.secondMetric||'population',catalog.find(item=>item.id!==state.metric)?.id);
++    state.comparison=resolved.comparison||'places';
++    secondExplicit=Boolean(resolved.page==='compare'&&resolved.comparison==='places');
++    comparisonPrepared=resolved.page==='compare';
++    comparisonDefaultFor=null;
++    state.rank=null;
++  }
++  if(resolved.page)document.body.dataset.page=resolved.page;
++  if(resolved.article)activeArticle=resolved.article;
++}
++async function restoreLocation(){
++  if(!geo||!catalog||!metricById||!routeIndex)return;
++  const route=parsePath(location.pathname),resolved=route&&resolveRoute(route,routeIndex,new Set(metricById.keys()));
++  if(route&&!resolved)locationRouteValid=false;else locationRouteValid=true;
++  if(resolved)applyResolvedRoute(resolved);
++  await pages.navigate(resolved?.page||'map',resolved?.article,{replace:true,force:true,fromPopState:true});
++  if(state.rank)openRank(state.rank);
++}
++window.addEventListener('popstate',()=>{if(appReady)void restoreLocation();});
+ // The local review panel is a development tool: it is enabled only on request.
+ const reviewOn=['1','true','yes','on'].includes(String(params.get('review')??'').toLowerCase());
+ if(reviewOn){document.body.dataset.review='1';import('./feedback.js').then(({initFeedback})=>initFeedback({onStart:()=>[mapA,mapB].filter(Boolean).forEach(map=>map.settle()),getContext:point=>({settings:{...viewSettings},view:{page:document.body.dataset.page,theme:document.body.dataset.theme,concept:state.concept,mode:state.mode,selected:state.selected,second:state.second,metric:state.metric,secondMetric:state.secondMetric,comparison:state.comparison,pinned:[...pinned]},maps:[mapA,mapB].filter(Boolean).map(map=>map.feedbackSnapshot(point))})}));}
+@@ -649,7 +703,10 @@
+   if(document.body.dataset.page==='compare')state.concept='compare';
+   geo=geography;catalog=collectedMapIndicators(payload.metrics);library=payload.library||[];
+   if(!catalog.length)throw new Error('No map indicators have been loaded yet. Please retry later.');
+-  metricById=new Map(loadedMapMetrics(payload.metrics).map(m=>[m.id,m]));pinned=pinned.filter(id=>metricById.has(id));
++  metricById=new Map(loadedMapMetrics(payload.metrics).map(m=>[m.id,m]));routeIndex=buildPlaceIndex(geo.states,geo.counties);pinned=pinned.filter(id=>metricById.has(id));
++  const bootResolved=initialPathRoute&&resolveRoute(initialPathRoute,routeIndex,new Set(metricById.keys()));
++  if(initialPathRoute&&!bootResolved)locationRouteValid=false;
++  if(bootResolved)applyResolvedRoute(bootResolved);
+   dataStore=createDataStore(geo,id=>{if(needed().some(m=>m.id===id))render();});
+   const startupMetric=metricById.get('unemployment');
+   const seeded=startupSnapshot?.snapshotVersion==='BLS-LAUS-2024/2024-M12'&&startupSnapshot.metricId==='unemployment'&&startupSnapshot.fieldId==='03.06:unemployment_rate'&&startupSnapshot.data?.sourceRelease==='BLS-LAUS-2024'&&startupSnapshot.data?.period==='2024-M12'&&state.metric==='unemployment'&&dataStore.seed(startupMetric,startupSnapshot.data);
+@@ -658,11 +715,14 @@
+   state.metric=availableIndicatorId(state.metric,'unemployment');
+   state.secondMetric=availableIndicatorId(state.secondMetric,catalog.find(m=>m.id!==state.metric)?.id);
+   if(!geo.byId.has(state.selected))state.selected=null;if(state.second&&!geo.byId.has(state.second))state.second='48';
+-  if(state.concept==='compare'){prepareComparison(state.selected);if(!state.selected)state.selected='06';}
++  if(state.concept==='compare'){prepareComparison(state.selected);if(!state.selected&&!bootResolved&&state.comparison==='places')state.selected='06';}
+   await Promise.all([geo.loadDetail(state.selected),state.concept==='compare'?geo.loadDetail(state.second):null]);
+   rememberState(state.selected);
+ 
+-  render();await Promise.all([mapA?.whenReady(),mapB?.whenReady()]);window.dispatchEvent(new Event('atlas:startup-ready'));
++  render();await Promise.all([mapA?.whenReady(),mapB?.whenReady()]);
++  if(bootResolved?.page&&bootResolved.page!=='map')await pages.navigate(bootResolved.page,bootResolved.article,{replace:true,force:true});
++  else {updateLocation();applyMapSEO();}
++  appReady=true;window.dispatchEvent(new Event('atlas:startup-ready'));
+   if(seeded)dataStore.refresh(startupMetric);
+   if(state.concept==='stories')openDrawer('story-rail',$('.concept-tabs [data-concept=stories]'));else if(state.rank)openRank(state.rank);
+ } catch(error) {console.error(error);window.dispatchEvent(new CustomEvent('atlas:startup-error',{detail:{message:'Map boundaries or indicator data could not be reached. Check your connection and try again. About and Support are available.'}}));}
+--- a/ux/master.css
++++ b/ux/master.css
+@@ -80,6 +80,11 @@
+   .article-body>h2{font-size:28px;line-height:35px;margin-top:40px}.article-map{width:100%;margin:28px 0}
+   .article-map h2{font-size:22px;line-height:30px}.article-map figcaption{font-size:14px;line-height:22px}
+ }
++
++/* Crawlable navigation links keep the same animated tab treatment as buttons. */
++.concept-tabs a{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-height:34px;padding:5px 12px;border-radius:28px;background:none!important;color:var(--ink)!important;text-decoration:none;font-size:12px;font-weight:500}
++.concept-tabs a[aria-current="page"]{color:#171A1D!important}
++.support-trigger,#info-open{text-decoration:none}
+ .indicator-icon{display:flex;flex:0 0 20px;color:var(--accent)}
+ .indicator-icon svg{width:20px;height:20px}
+ .metric-copy{flex:1;min-width:0}
+--- a/ux/mobile-layout.css
++++ b/ux/mobile-layout.css
+@@ -199,3 +199,6 @@
+   }
+   body[data-concept=compare] #mobile-compare-metric>svg:last-child {width:13px;height:13px;flex:none;color:#FFFFFF;filter:drop-shadow(0 1px 2px #171A1D);}
+ }
++
++@media(max-width:760px){.concept-tabs a{min-height:44px;padding:8px 4px;font-size:12px}}
++
+--- a/ux/motion.js
++++ b/ux/motion.js
+@@ -15,9 +15,9 @@
+   return animation.finished.then(()=>{if(running.get(node)!==animation)return false;node.hidden=!open;animation.cancel();running.delete(node);return true;}).catch(()=>false);
+ }
+ export function slidePill(group, selected) {
+-  const buttons=[...group.querySelectorAll(':scope > button')].filter(button=>button.dataset?.pill!=='skip'),index=buttons.indexOf(selected);
++  const items=[...group.querySelectorAll(':scope > button, :scope > a[data-page]')].filter(button=>button.dataset?.pill!=='skip'),index=items.indexOf(selected);
+   if(index<0)return;
+-  group.style.setProperty('--slot',index);group.style.setProperty('--slots',buttons.length);
++  group.style.setProperty('--slot',index);group.style.setProperty('--slots',items.length);
+ }
+ export function animateReplacement(node, change) {
+   running.get(node)?.cancel();
+--- a/ux/pages.js
++++ b/ux/pages.js
+@@ -1,16 +1,17 @@
+ import {showSurface,slidePill,animateReplacement,isSurfaceOpen,reducedMotion} from './motion.js';
+ import {indicatorIcon} from './icons.js';
+-import {articleExists,articleView,journalView,featureView,features} from './journal-view.js';
++import {articleExists,articleMetadata,articleView,journalView,featureView,features,hasPublishedArticles} from './journal-view.js';
+ const $=s=>document.querySelector(s);
+ const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const empty=(title,copy)=>`<div class="empty-state"><h3>${title}</h3><p>${copy}</p></div>`;
+-export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeography,openSearch,closePlaceSheet,closeOverlays,syncChrome,getConcept}) {
++export function initPages({changeConcept,renderMaps,getCatalog,getLibrary,getGeography,openSearch,closePlaceSheet,closeOverlays,syncChrome,getConcept,initialPage=null,initialArticle=null,syncURL=()=>{},beginHistory=()=>{},setSEO=()=>{}}) {
+   const host=$('#reading-page'),cache=new Map(),scrolls=new Map();
+   const returns=[];
+-  let articleSlug=new URLSearchParams(location.search).get('article')||'mississippi',featureIndex=0;
++  let articleSlug=initialArticle||new URLSearchParams(location.search).get('article')||'mississippi',featureIndex=0;
+   const preview=document.body.dataset.runtime==='preview';
+   const pageKey=page=>page==='article'?'article:'+articleSlug:page;
+-  let current=getConcept()==='compare'?'compare':'map',prior=current,contentPage,theme='light',sourceFocus,sourceFocusSelector,navigation=0,infoTab='about';
++  let current=initialPage|| (getConcept()==='compare'?'compare':'map'),prior=current,contentPage,theme='light',sourceFocus,sourceFocusSelector,navigation=0,infoTab='about';
++  document.body.dataset.page=current;
+   try{theme=localStorage.getItem('usa-atlas-theme')==='dark'?'dark':'light';}catch{}
+   const requestedTheme=new URLSearchParams(location.search).get('theme');if(['light','dark'].includes(requestedTheme))theme=requestedTheme;
+   document.body.dataset.theme=theme;
+@@ -41,6 +42,7 @@
+   const blog=()=>preview?journalView(theme):`<p class="page-eyebrow">THE JOURNAL</p><h1>Look closer. See the whole picture.</h1><p class="page-intro">Thoughtful stories about the numbers and places behind the map.</p>${empty('The journal is taking shape','There are no published articles yet. Editorial drafts remain private until approved for publication.')}<button class="primary-button" data-page="map">Explore the map →</button>`;
+   const article=()=>preview&&articleExists(articleSlug)?articleView(articleSlug):`<button class="article-back" data-page="blog">← Blog</button><h1>Article unavailable</h1>${empty('No published article at this address','Return to the journal or explore the source observations on the map.')}<button class="outline-button" data-page="blog">Return to Blog</button>`;
+   const markup={stats,info,support,blog,article};
++  document.body.classList.toggle('reading',Boolean(markup[current]));
+   function syncJournalTheme(){host.querySelectorAll('.journal-map').forEach(frame=>frame.contentWindow?.postMessage({type:'atlas-embed-theme',theme},location.origin));}
+   // A cached iframe may reload its original URL when its fragment is restored.
+   // Reapply the current theme after that load as well as on an active theme change.
+@@ -55,10 +57,11 @@
+     host.scrollTop=0;
+   }
+   function cacheContent(){if(!contentPage)return;scrolls.set(contentPage,host.scrollTop);const fragment=document.createDocumentFragment();fragment.append(...host.childNodes);cache.set(contentPage,fragment);contentPage=null;}
+-  async function navigate(page,slug){
++  async function navigate(page,slug,{replace=false,force=false,fromPopState=false}={}){
+     if(!['map','compare',...Object.keys(markup)].includes(page))page='map';
+     const nextSlug=page==='article'?(slug||articleSlug):articleSlug;
+-    if(current===page&&nextSlug===articleSlug)return;
++    if(current===page&&nextSlug===articleSlug&&!force)return;
++    if(!replace&&!fromPopState&&(current!==page||nextSlug!==articleSlug))beginHistory();
+     articleSlug=nextSlug;
+     const outgoing=current,request=++navigation;
+     // Popping a return destination preserves nested Info → Support → Info → Map.
+@@ -74,14 +77,19 @@
+     const pageName=page==='article'?(host.querySelector('h1')?.textContent||'Article'):({map:'Explore the map',compare:'Compare',stats:'Stats',info:'About',support:'Support',blog:'Journal'}[page]||'Explore the map');
+     document.title=`USA X-Ray — ${pageName}`;
+     const navPage=['info','support'].includes(page)?null:page==='article'?'blog':page;
+-    $('.concept-tabs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===navPage)));
++    $('.concept-tabs').querySelectorAll('a[data-page]').forEach(link=>{
++      if(link.dataset.page===navPage)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
++    });
+     $('.concept-tabs>.nav-pill').hidden=navPage===null;
+-    slidePill($('.concept-tabs'),$('.concept-tabs button[aria-pressed=true]'));
++    slidePill($('.concept-tabs'),$('.concept-tabs a[aria-current="page"]'));
+     syncChrome();
+     $('#sheet-back').setAttribute('aria-label',page==='article'?'Return to Blog':'Return to previous page');
+-    const q=new URLSearchParams(location.search);q.set('page',page);if(page==='article')q.set('article',articleSlug);else q.delete('article');history.replaceState(null,'',location.pathname+'?'+q);
+     if(reading){host.setAttribute('tabindex','-1');host.focus({preventScroll:true});}
+-    else await changeConcept(page==='compare'?'compare':'explorer');
++    else await changeConcept(page==='compare'?'compare':'explorer',{refresh:force});
++    syncURL({page,article:page==='article'?articleSlug:null});
++    const articleInfo=page==='article'?articleMetadata(articleSlug):null;
++    setSEO({page,article:articleSlug,title:articleInfo?.title,description:articleInfo?.description,
++      noindex:page==='stats'||(page==='blog'&&!hasPublishedArticles)||(page==='article'&&(!articleInfo||articleInfo.draft))});
+   }
+   function closeSource(){
+     showSurface($('#source-popup'),false);showSurface($('#source-backdrop'),false,{distance:0});
+@@ -106,11 +114,17 @@
+   function refreshSources(){const map=host.querySelector('#audience-geography')||cache.get('stats')?.querySelector('#audience-geography');if(map&&!map.firstChild)map.innerHTML=audienceGeography();const list=host.querySelector('#info-sources-list')||cache.get('info')?.querySelector('#info-sources-list');if(list){const html=sourceRows();if(list.innerHTML!==html)list.innerHTML=html;}const libraryList=host.querySelector('#info-library-list')||cache.get('info')?.querySelector('#info-library-list');if(libraryList){const html=libraryRows();if(libraryList.innerHTML!==html)libraryList.innerHTML=html;}}
+   $('#source-backdrop').onclick=closeSource;
+   document.addEventListener('click',e=>{
++    const link=e.target.closest('a[data-page],a#info-open,a#support-open');
++    if(link?.getAttribute('aria-disabled')==='true'){e.preventDefault();return;}
++    if(link&&e.button===0&&!e.metaKey&&!e.ctrlKey&&!e.shiftKey&&!e.altKey){
++      e.preventDefault();
++      if(link.id==='info-open'){navigate(current==='info'?prior:'info');return;}
++      if(link.id==='support-open'){navigate(current==='support'?prior:'support');return;}
++      navigate(link.dataset.page,link.dataset.article);return;
++    }
+     const b=e.target.closest('button');if(!b)return;
+     if(b.dataset.page){navigate(b.dataset.page,b.dataset.article);return;}
+     if(b.dataset.feature){featureIndex=(featureIndex+(b.dataset.feature==='next'?1:-1)+features.length)%features.length;animateReplacement($('#journal-feature'),()=>{$('#journal-feature').innerHTML=featureView(featureIndex,theme);});return;}
+-    if(b.id==='info-open'){navigate(current==='info'?prior:'info');return;}
+-    if(b.id==='support-open'){navigate(current==='support'?prior:'support');return;}
+     if(b.id==='sheet-back'){if(document.body.classList.contains('place-expanded')&&!markup[current])closePlaceSheet();else navigate(current==='article'?'blog':prior);return;}
+     if(b.id==='mobile-search')openSearch();
+     if(b.id==='source-close')closeSource();
+@@ -123,11 +137,12 @@
+   document.addEventListener('keydown',e=>{
+     if(isSurfaceOpen($('#source-popup'))){if(e.key==='Escape'){e.stopImmediatePropagation();closeSource();}if(e.key==='Tab'){const list=[...$('#source-popup').querySelectorAll('a,button,input,summary')].filter(el=>el.getClientRects().length&&(!el.closest('details')||el.tagName==='SUMMARY'||el.closest('details').open));const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}}
+     else if(e.key==='Escape'&&markup[current])navigate(current==='article'?'blog':prior);
+-    const group=e.target.closest('.concept-tabs,.segmented');if(group&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){const buttons=[...group.querySelectorAll('button:not(:disabled)')],index=buttons.indexOf(e.target);const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();buttons[next].click();}
++    const group=e.target.closest('.concept-tabs,.segmented');if(group&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){const buttons=[...group.querySelectorAll(group.matches('.concept-tabs')?'a[data-page]':'button:not(:disabled)')],index=buttons.indexOf(e.target);if(!buttons.length||index<0)return;const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;e.preventDefault();buttons[next].focus();buttons[next].click();}
+   });
+   document.addEventListener('submit',event=>{if(event.target.id==='info-contact')event.preventDefault();});
+   const themeControl=document.createElement('button');themeControl.id='theme-toggle';themeControl.className='theme-toggle';themeControl.textContent=theme==='dark'?'Light theme':'Dark theme';$('#info-open').after(themeControl);
+-  const initial=new URLSearchParams(location.search).get('page');if(initial&&initial!==current)navigate(initial);else{document.body.dataset.page=current;$('.concept-tabs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.page===current)));slidePill($('.concept-tabs'),$('.concept-tabs button[data-page='+current+']'));}
++  $('.concept-tabs').querySelectorAll('a[data-page]').forEach(link=>{if(link.dataset.page===current)link.setAttribute('aria-current','page');});
++  slidePill($('.concept-tabs'),$('.concept-tabs a[aria-current="page"]'));
+   function syncConcept(concept){if(!markup[current]){current=concept==='compare'?'compare':'map';document.body.dataset.page=current;}}
+   return {navigate,showSource,closeSource,syncConcept,refreshSources};
+ }
+--- a/ux/journal-view.js
++++ b/ux/journal-view.js
+@@ -1,11 +1,19 @@
+ import {articles} from './journal.js';
+ const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const headings=new Set(['What USDA means by low access','Thirty counties reached at least 25%','Start with a county, then read the definition','What this historical map cannot answer','Sources and calculation notes','The same sector, year and unit','How large was the gap?','What equal electricity use would cost','The price table does not explain the causes','Check the observation before comparing']);
++const explorePaths={electricity:'/compare/places/electricity-price-residential/california/vs/texas'};
++const explorePath=slug=>explorePaths[slug]||`/blog/${slug}`;
+ export const articleExists=slug=>Object.hasOwn(articles,slug);
++export const hasPublishedArticles=Object.values(articles).some(article=>!(/owner review pending/i.test(article.meta||'')));
++export function articleMetadata(slug){
++  const article=articles[slug];
++  return article?{title:article.title,description:article.description,draft:/owner review pending/i.test(article.meta||'')}:null;
++}
+ export function articleView(slug){
+   const article=articles[slug];if(!article)return null;
+-  const href='./?'+new URLSearchParams({...article.atlasView,page:article.atlasView.concept==='compare'?'compare':'map'});
+-  const map=`<figure class="article-map"><h2>Explore the data</h2><picture><source media="(max-width:760px)" srcset="${article.mapMobileImage}"><img src="${article.mapImage}" alt="Historical ${escape(article.period)} source-data map preview" loading="lazy"></picture><figcaption>${escape(article.caption)}</figcaption><a href="${escape(href)}">${escape(article.mapLink)}</a></figure>`;
++  const href=explorePaths[slug];
++  const mapAction=href?`<a href="${escape(href)}">${escape(article.mapLink)}</a>`:'<p class="article-map-note">This historical indicator is not available in the live atlas yet.</p>';
++  const map=`<figure class="article-map"><h2>${href?'Explore the data':'Historical map preview'}</h2><picture><source media="(max-width:760px)" srcset="${article.mapMobileImage}"><img src="${article.mapImage}" alt="Historical ${escape(article.period)} source-data map preview" loading="lazy"></picture><figcaption>${escape(article.caption)}</figcaption>${mapAction}</figure>`;
+   const blockMarkup=block=>block==='__MAP__'?map:headings.has(block)?`<h2>${escape(block)}</h2>`:`<p>${escape(block)}</p>`;
+   // The electricity master places this whole passage beside its map on Desktop.
+   // Mobile reads the passage first and then the same figure, without duplicating copy.
+@@ -23,7 +31,7 @@
+   {label:'ENERGY & PLACE · DRAFT',...articles.electricity,slug:'electricity',snapshotCaption:'California and Texas · residential electricity price · 2024 · EIA-electricity-retail-sales-2024',atlasView:articles.electricity.atlasView}
+ ];
+ export function featureView(index,theme){
+-  const feature=features[index],query=new URLSearchParams({...feature.atlasView,page:feature.atlasView.concept==='compare'?'compare':'map'}),alt=`${feature.title} · ${feature.snapshotCaption}`;
+-  return `<a class="journal-preview-link" href="./?${escape(query)}" aria-label="Open interactive map: ${escape(feature.title)}"><img class="journal-map" src="${escape(feature.mapImage)}" alt="${escape(alt)}" loading="lazy"></a><div class="feature-copy"><p class="page-eyebrow">${escape(feature.label)}</p><h2>${escape(feature.title)}</h2><p>${escape(feature.description)}</p><p class="snapshot-caption">${escape(feature.snapshotCaption)} · ${escape(feature.sources[0].role)}</p><button data-page="article" data-article="${feature.slug}">Read the draft →</button><div class="feature-controls"><span>FEATURED · ${String(index+1).padStart(2,'0')} / ${features.length}</span><button data-feature="previous" aria-label="Previous featured story">‹</button><button data-feature="next" aria-label="Next featured story">›</button></div></div>`;
++  const feature=features[index],alt=`${feature.title} · ${feature.snapshotCaption}`,path=explorePath(feature.slug),action=explorePaths[feature.slug]?'Open interactive map':'Read the draft';
++  return `<a class="journal-preview-link" href="${escape(path)}" aria-label="${action}: ${escape(feature.title)}"><img class="journal-map" src="${escape(feature.mapImage)}" alt="${escape(alt)}" loading="lazy"></a><div class="feature-copy"><p class="page-eyebrow">${escape(feature.label)}</p><h2>${escape(feature.title)}</h2><p>${escape(feature.description)}</p><p class="snapshot-caption">${escape(feature.snapshotCaption)} · ${escape(feature.sources[0].role)}</p><button data-page="article" data-article="${feature.slug}">Read the draft →</button><div class="feature-controls"><span>FEATURED · ${String(index+1).padStart(2,'0')} / ${features.length}</span><button data-feature="previous" aria-label="Previous featured story">‹</button><button data-feature="next" aria-label="Next featured story">›</button></div></div>`;
+ }
+-export function journalView(theme){const electricity=articles.electricity,mississippi=articles.mississippi;const query=view=>new URLSearchParams({...view,page:view.concept==='compare'?'compare':'map'});return `<p class="page-eyebrow">The USA X-Ray journal</p><h1>Look closer. See the whole picture.</h1><p class="page-intro">Thoughtful stories about the numbers and places behind the map.</p><section id="journal-feature" class="journal-feature">${featureView(0,theme)}</section><h2 class="more-heading">More to explore</h2><div class="journal-cards"><article><a class="journal-preview-link" href="./?${escape(query(electricity.atlasView))}" aria-label="Open interactive map: California and Texas electricity prices"><img class="journal-card-map" src="${escape(electricity.mapImage)}" alt="California and Texas · ${escape(electricity.caption)}" loading="lazy"></a><p class="snapshot-caption">${escape(electricity.caption)} · EIA-electricity-retail-sales-2024</p><p class="page-eyebrow">COMPARISONS</p><h3>California and Texas, side by side</h3><p>A careful comparison starts with the same measure, geography and reference period.</p><button data-page="article" data-article="electricity">Read the electricity draft →</button></article><article><a class="journal-preview-link" href="./?${escape(query(mississippi.atlasView))}" aria-label="Open interactive map: Mississippi grocery access"><img class="journal-card-map" src="${escape(mississippi.mapImage)}" alt="Mississippi · ${escape(mississippi.caption)}" loading="lazy"></a><p class="snapshot-caption">${escape(mississippi.caption)} · USDA-FEA-2025</p><p class="page-eyebrow">METHODS</p><h3>Reading a map without losing the source</h3><p>Displayed values keep their unit, date and source.</p><button data-page="info">Read about the sources →</button></article><article><img src="assets/san-francisco-photo.jpg" alt="San Francisco skyline and Golden Gate Bridge" loading="lazy"><p class="photo-credit">San Francisco, California · Daniel L. Lu · CC BY-SA 4.0</p><p class="page-eyebrow">PLACES</p><h3>A closer look at San Francisco</h3><p>One city scene offers place context without standing in for the whole state.</p><a href="./?place=06075&metric=unemployment&view=3d">Explore San Francisco →</a></article></div><p class="journal-review-note">Temporary review preview · article drafts remain owner review pending; no final journal publication is implied.</p>`;}
++export function journalView(theme){const electricity=articles.electricity,mississippi=articles.mississippi;return `<p class="page-eyebrow">The USA X-Ray journal</p><h1>Look closer. See the whole picture.</h1><p class="page-intro">Thoughtful stories about the numbers and places behind the map.</p><section id="journal-feature" class="journal-feature">${featureView(0,theme)}</section><h2 class="more-heading">More to explore</h2><div class="journal-cards"><article><a class="journal-preview-link" href="${escape(explorePath('electricity'))}" aria-label="Open interactive map: California and Texas electricity prices"><img class="journal-card-map" src="${escape(electricity.mapImage)}" alt="California and Texas · ${escape(electricity.caption)}" loading="lazy"></a><p class="snapshot-caption">${escape(electricity.caption)} · EIA-electricity-retail-sales-2024</p><p class="page-eyebrow">COMPARISONS</p><h3>California and Texas, side by side</h3><p>A careful comparison starts with the same measure, geography and reference period.</p><button data-page="article" data-article="electricity">Read the electricity draft →</button></article><article><a class="journal-preview-link" href="${escape(explorePath('mississippi'))}" aria-label="Read the draft: Mississippi grocery access"><img class="journal-card-map" src="${escape(mississippi.mapImage)}" alt="Mississippi · ${escape(mississippi.caption)}" loading="lazy"></a><p class="snapshot-caption">${escape(mississippi.caption)} · USDA-FEA-2025</p><p class="page-eyebrow">METHODS</p><h3>Reading a map without losing the source</h3><p>Displayed values keep their unit, date and source.</p><button data-page="info">Read about the sources →</button></article><article><img src="assets/san-francisco-photo.jpg" alt="San Francisco skyline and Golden Gate Bridge" loading="lazy"><p class="photo-credit">San Francisco, California · Daniel L. Lu · CC BY-SA 4.0</p><p class="page-eyebrow">PLACES</p><h3>A closer look at San Francisco</h3><p>One city scene offers place context without standing in for the whole state.</p><a href="/united-states/california/san-francisco-county/unemployment">Explore San Francisco →</a></article></div><p class="journal-review-note">Temporary review preview · article drafts remain owner review pending; no final journal publication is implied.</p>`;}
+--- a/scripts/preview_server.py
++++ b/scripts/preview_server.py
+@@ -8,6 +8,7 @@
+ import mimetypes
+ import os
+ from pathlib import Path
++import re
+ import socket
+ from socketserver import ThreadingMixIn
+ import threading
+@@ -15,6 +16,7 @@
+ from urllib.parse import parse_qs, urlsplit
+ 
+ import atlas_data
++from seo_render import articles, geography, metric_labels, redirect_target, render_route
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+ 
+@@ -145,8 +147,32 @@
+         if len(self.path) > 2048 or self.headers.get('Host') != '127.0.0.1:4429':
+             return self.reply(400, {'error': 'Invalid request'})
+         path = urlsplit(self.path).path
+-        if path in ('/', '/ux'):
+-            return self.reply(302, b'', extra={'Location': '/ux/'})
++        if path == '/':
++            return self.reply(301, b'', extra={'Location': '/united-states/unemployment'},
++                              cache_control='public, max-age=86400')
++        try:
++            topology = self.server.assets['/node_modules/us-atlas/counties-10m.json']
++            definitions = ROOT / 'ux/metric-definitions.json'
++            journal = ROOT / 'ux/journal.js'
++            target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
++                                     articles(str(journal)))
++            if target:
++                return self.reply(301, b'', extra={'Location': target},
++                                  cache_control='public, max-age=86400')
++            if path in ('/ux', '/ux/'):
++                try:
++                    catalog = self.server.cache.get('catalog', atlas_data.catalog)
++                except (Busy, atlas_data.DatabaseUnavailable):
++                    catalog = None
++                target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
++                                         articles(str(journal)), catalog)
++                if target:
++                    return self.reply(301, b'', extra={'Location': target},
++                                      cache_control='public, max-age=86400')
++                return self.reply(404, {'error': 'Legacy atlas URL could not be resolved'})
++        except KeyError:
++            return self.reply(503, {'error': 'The route index is unavailable'}, extra={'Retry-After': '2'})
++        app_route = re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})', path)
+         try:
+             if path == '/api/atlas/catalog':
+                 return self.reply(200, self.server.cache.get('catalog', atlas_data.catalog))
+@@ -164,12 +190,28 @@
+             if path == '/api/view-settings':
+                 defaults = json.loads((ROOT / 'ux/view-settings.json').read_text())
+                 return self.reply(200, {**defaults, 'savedAt': None})
+-            asset = self.server.assets.get(path)
++            asset = self.server.assets.get('/ux/index.html') if app_route else self.server.assets.get(path)
+             if asset is None:
+                 return self.reply(404, {'error': 'Not found'})
+             content = asset.read_bytes()
+             content_type = mimetypes.guess_type(asset.name)[0] or 'application/octet-stream'
+             if asset.suffix == '.html':
++                if app_route:
++                    status, rendered = render_route(content, self.path, topology, definitions, journal)
++                    if status == 404:
++                        try:
++                            catalog = self.server.cache.get('catalog', atlas_data.catalog)
++                        except (Busy, atlas_data.DatabaseUnavailable):
++                            catalog = None
++                        if catalog:
++                            target = redirect_target(self.path, geography(str(topology)), metric_labels(str(definitions)),
++                                                     articles(str(journal)), catalog)
++                            if target:
++                                return self.reply(301, b'', extra={'Location': target},
++                                                  cache_control='public, max-age=86400')
++                            status, rendered = render_route(content, self.path, topology, definitions, journal, catalog)
++                    content = rendered
++                    return self.reply(status, content, content_type)
+                 return self.reply(200, content, content_type)
+             # Revalidate every time: unchanged large geometry/fonts/icons can use
+             # browser-cached bytes, while a changed build never serves stale code.
+--- /dev/null
++++ b/robots.txt
+@@ -0,0 +1,3 @@
++User-agent: *
++Disallow: /api/
++Sitemap: https://usa-xray.online/sitemap.xml
+--- /dev/null
++++ b/sitemap.xml
+@@ -0,0 +1,60 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
++  <url><loc>https://usa-xray.online/united-states/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/compare/places/unemployment/california/vs/texas</loc></url>
++  <url><loc>https://usa-xray.online/compare/places/electricity-price-residential/california/vs/texas</loc></url>
++  <url><loc>https://usa-xray.online/compare/indicators/unemployment-vs-adjusted-gross-income-agi</loc></url>
++  <url><loc>https://usa-xray.online/united-states/alabama/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/alaska/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/arizona/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/arkansas/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/california/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/colorado/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/connecticut/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/delaware/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/florida/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/georgia/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/hawaii/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/idaho/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/illinois/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/indiana/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/iowa/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/kansas/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/kentucky/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/louisiana/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/maine/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/maryland/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/massachusetts/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/michigan/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/minnesota/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/mississippi/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/missouri/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/montana/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/nebraska/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/nevada/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/new-hampshire/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/new-jersey/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/new-mexico/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/new-york/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/north-carolina/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/north-dakota/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/ohio/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/oklahoma/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/oregon/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/pennsylvania/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/rhode-island/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/south-carolina/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/south-dakota/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/tennessee/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/texas/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/utah/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/vermont/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/virginia/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/washington/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/west-virginia/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/wisconsin/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/wyoming/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/united-states/district-of-columbia/unemployment</loc></url>
++  <url><loc>https://usa-xray.online/support</loc></url>
++  <url><loc>https://usa-xray.online/about</loc></url>
++</urlset>
+--- /dev/null
++++ b/ux/routes.js
+@@ -0,0 +1,297 @@
++// Human-readable atlas routes. This module is DOM-free so route behavior can
++// be checked directly in Node.
++//
++// Maps:
++//   /united-states/{indicator}
++//   /united-states/{state}/{indicator}
++//   /united-states/{state}/{county}/{indicator}
++// Comparisons:
++//   /compare/places/{indicator}/{state}-vs-{state}
++//   /compare/places/{indicator}/{state}/{county}/vs/{state}/{county}
++//   /compare/indicators/{indicator}-vs-{indicator}[/in/{state}/{county}]
++// Reading pages: /stats /support /about /blog /blog/{article-slug}
++
++const SEGMENT = /^[a-z0-9-]{1,64}$/;
++const ROOT_SEGMENT = 'united-states';
++const COUNTRY_SEGMENT = 'united-states';
++export const SCREEN_PATHS = {stats: '/stats', support: '/support', about: '/about', blog: '/blog'};
++export const SCREEN_PAGES = {stats: 'stats', support: 'support', about: 'info', blog: 'blog'};
++export const DEFAULT_INDICATOR = 'unemployment';
++export const COMPARE_SEPARATOR = '-vs-';
++const INDICATOR_ALIASES = {
++  'adjusted-gross-income-agi--per-resident': 'adjusted-gross-income-agi-per-resident',
++  'crime-trends--04-09-aggravated-assault-yoy': 'crime-trends-aggravated-assault-year-over-year',
++  'crime-trends--04-09-burglary-yoy': 'crime-trends-burglary-year-over-year',
++  'crime-trends--04-09-homicide-yoy': 'crime-trends-homicide-year-over-year',
++  'crime-trends--04-09-motor-vehicle-theft-yoy': 'crime-trends-motor-vehicle-theft-year-over-year',
++  'crime-trends--04-09-rape-yoy': 'crime-trends-rape-year-over-year',
++  'crime-trends--04-09-robbery-yoy': 'crime-trends-robbery-year-over-year',
++  'electricity-price--08-05-sector-com': 'electricity-price-commercial',
++  'electricity-price--08-05-sector-ind': 'electricity-price-industrial',
++  'electricity-price--08-05-sector-res': 'electricity-price-residential',
++  'electricity-price--08-05-sector-tra': 'electricity-price-transportation',
++  'unemployment--03-06-employment': 'unemployment-employment',
++  'unemployment--03-06-labor-force': 'unemployment-labor-force',
++  'unemployment--03-06-unemployment': 'unemployment-count',
++  'access-to-a-grocery-store--09-02-count': 'access-to-a-grocery-store-count',
++};
++const INDICATOR_IDS_BY_SLUG = Object.fromEntries(Object.entries(INDICATOR_ALIASES).map(([id, slug]) => [slug, id]));
++
++// Six county equivalents share a base name with an independent city. FIPS
++// keeps those names distinct in their state without exposing a bare ID.
++const CITY_COUNTY_SLUGS = {
++  '24510': 'baltimore-city-county',
++  '29510': 'st-louis-city-county',
++  '51600': 'fairfax-city-county',
++  '51620': 'franklin-city-county',
++  '51680': 'roanoke-city-county',
++  '51760': 'richmond-city-county',
++};
++
++export function slugify(text) {
++  return String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
++}
++
++export function countySlug(name, fipsId = null) {
++  if (fipsId && CITY_COUNTY_SLUGS[fipsId]) return CITY_COUNTY_SLUGS[fipsId];
++  return slugify(name) + '-county';
++}
++
++export function validSegment(text) {
++  return typeof text === 'string' && SEGMENT.test(text);
++}
++
++function splitPair(token) {
++  const parts = String(token || '').split(COMPARE_SEPARATOR);
++  return parts.length === 2 && parts.every(Boolean) ? parts : null;
++}
++
++function putUniqueCounty(index, slug, county) {
++  const current = index.uniqueCounties.get(slug);
++  if (!index.uniqueCounties.has(slug)) index.uniqueCounties.set(slug, county);
++  else if (current && current.id !== county.id) index.uniqueCounties.set(slug, null);
++}
++
++// Build the resolution index once geography is loaded. Every county route
++// carries its state; rare duplicate names within a state gain a short FIPS
++// suffix so no valid selection has to fall back to a query-string URL.
++export function buildPlaceIndex(states, counties) {
++  const index = {byStateSlug: new Map(), countiesByState: new Map(), uniqueCounties: new Map(), slugByPlaceId: new Map()};
++  for (const state of states) {
++    const slug = slugify(state.name);
++    if (!validSegment(slug) || index.byStateSlug.has(slug)) continue;
++    index.byStateSlug.set(slug, state);
++    index.countiesByState.set(state.id, new Map());
++    index.slugByPlaceId.set(state.id, slug);
++  }
++  for (const county of counties) {
++    const scope = index.countiesByState.get(county.stateId);
++    if (!scope) continue;
++    const base = countySlug(county.name, county.id);
++    if (!validSegment(base)) continue;
++    let slug = base;
++    const previous = scope.get(base);
++    if (previous) {
++      scope.delete(base);
++      // A bare slug is ambiguous once a second county in this state collides.
++      index.uniqueCounties.delete(base);
++      const previousSlug = `${base}-${previous.id}`;
++      const currentSlug = `${base}-${county.id}`;
++      scope.set(previousSlug, previous);
++      scope.set(currentSlug, county);
++      index.slugByPlaceId.set(previous.id, previousSlug);
++      index.slugByPlaceId.set(county.id, currentSlug);
++      putUniqueCounty(index, previousSlug, previous);
++      putUniqueCounty(index, currentSlug, county);
++      continue;
++    }
++    slug = base;
++    scope.set(slug, county);
++    index.slugByPlaceId.set(county.id, slug);
++    putUniqueCounty(index, slug, county);
++  }
++  index.uniqueCounties.clear();
++  for (const scope of index.countiesByState.values()) {
++    for (const [slug, county] of scope) putUniqueCounty(index, slug, county);
++  }
++  for (const [slug, value] of [...index.uniqueCounties]) if (!value) index.uniqueCounties.delete(slug);
++  return index;
++}
++
++// Structural parse. Route vocabulary is resolved later against geography and
++// the currently admitted indicator catalogue.
++export function parsePath(pathname) {
++  let path = String(pathname || '');
++  if (path.length > 512) return null;
++  try {path = decodeURI(path);} catch {return null;}
++  if (path !== '/') path = path.replace(/\/+$/, '') || '/';
++  const segments = path.split('/').filter(Boolean).map(segment => {
++    try {return decodeURIComponent(segment).toLowerCase();} catch {return '\u0000invalid';}
++  });
++  if (!segments.length) return {kind: 'root'};
++  if (segments[0] === 'blog') {
++    if (segments.length === 1) return {kind: 'screen', screen: 'blog'};
++    if (segments.length === 2 && validSegment(segments[1])) return {kind: 'article', article: segments[1]};
++    return null;
++  }
++  if (segments.length === 1 && SCREEN_PATHS[segments[0]]) return {kind: 'screen', screen: segments[0]};
++  if (segments[0] === 'compare') {
++    if (segments[1] === 'places' && segments.length >= 6) {
++      const vs = segments.indexOf('vs', 3);
++      if (vs < 0) return null;
++      const left = segments.slice(3, vs), right = segments.slice(vs + 1);
++      if (![1, 2].includes(left.length) || ![1, 2].includes(right.length)) return null;
++      if (![segments[2], ...left, ...right].every(validSegment)) return null;
++      return {kind: 'comparison', comparison: 'places', metric: segments[2], left, right};
++    }
++    if (segments[1] === 'indicators') {
++      const pair = splitPair(segments[2]);
++      if (!pair || !pair.every(validSegment)) return null;
++      if (segments.length === 3) return {kind: 'comparison', comparison: 'metrics', metrics: pair, place: []};
++      if (segments[3] !== 'in') return null;
++      const place = segments.slice(4);
++      if (![1, 2].includes(place.length) || !place.every(validSegment)) return null;
++      return {kind: 'comparison', comparison: 'metrics', metrics: pair, place};
++    }
++    return null;
++  }
++  if (segments[0] !== ROOT_SEGMENT) return null;
++  return segments.slice(1).every(validSegment) ? {kind: 'map', segments: segments.slice(1)} : null;
++}
++
++function resolveLocation(parts, index) {
++  if (!Array.isArray(parts)) return null;
++  if (parts.length === 0) return {valid: true, id: null};
++  if (parts.length === 1) {
++    if (parts[0] === COUNTRY_SEGMENT) return {valid: true, id: null};
++    const state = index.byStateSlug.get(parts[0]);
++    if (state) return {valid: true, id: state.id};
++    const county = index.uniqueCounties.get(parts[0]);
++    return county ? {valid: true, id: county.id} : null;
++  }
++  if (parts.length === 2) {
++    const state = index.byStateSlug.get(parts[0]);
++    const county = state && index.countiesByState.get(state.id)?.get(parts[1]);
++    return county ? {valid: true, id: county.id} : null;
++  }
++  return null;
++}
++
++// Resolve a route against the loaded place index and admitted metric IDs.
++export function resolveRoute(route, index, admitted) {
++  if (!route || !index) return null;
++  if (route.kind === 'screen') return {page: SCREEN_PAGES[route.screen]};
++  if (route.kind === 'article') return route.article ? {page: 'article', article: route.article} : null;
++  const metricIds = admitted && admitted.size ? admitted : null;
++  const metricForSlug = slug => {
++    const id = INDICATOR_IDS_BY_SLUG[slug] || slug;
++    return metricIds?.has(id) ? id : null;
++  };
++  if (route.kind === 'comparison') {
++    if (route.comparison === 'metrics') {
++      const [metricSlug, secondSlug] = route.metrics || [];
++      const metric = metricForSlug(metricSlug), secondMetric = metricForSlug(secondSlug);
++      const place = resolveLocation(route.place, index);
++      if (!metric || !secondMetric || metric === secondMetric || !place) return null;
++      return {page: 'compare', concept: 'compare', comparison: 'metrics', place: place.id, metric, secondMetric};
++    }
++    if (route.comparison === 'places') {
++      const left = resolveLocation(route.left, index), right = resolveLocation(route.right, index);
++      const metric = metricForSlug(route.metric);
++      if (!metric || !left || !right || left.id === right.id) return null;
++      return {page: 'compare', concept: 'compare', comparison: 'places', place: left.id, second: right.id, metric};
++    }
++    return null;
++  }
++  if (route.kind !== 'map') return null;
++
++  const segments = [...route.segments];
++  const requestedMetric = segments.length ? metricForSlug(segments.at(-1)) : null;
++  const metric = requestedMetric || DEFAULT_INDICATOR;
++  if (requestedMetric) segments.pop();
++
++  // Read old clean comparison paths and rewrite them to the explicit /compare/ form.
++  const metricPair = segments.length ? splitPair(segments.at(-1)) : null;
++  const metricPairIds = metricPair?.map(metricForSlug);
++  if (metricPairIds?.every(Boolean)) {
++    const scope = segments.slice(0, -1);
++    const place = scope.length ? resolveLocation(scope, index) : {valid: true, id: null};
++    if (scope.length <= 2 && place && metricPairIds[0] !== metricPairIds[1]) return {page: 'compare', concept: 'compare', comparison: 'metrics', place: place.id, metric: metricPairIds[0], secondMetric: metricPairIds[1]};
++  }
++
++  if (segments.length === 0) return {page: 'map', concept: 'explorer', place: null, metric};
++  if (segments.length === 1) {
++    const [token] = segments;
++    const pair = splitPair(token);
++    if (pair) {
++      const left = resolveLocation([pair[0]], index), right = resolveLocation([pair[1]], index);
++      if (left && right && left.id !== right.id) return {page: 'compare', concept: 'compare', comparison: 'places', place: left.id, second: right.id, metric};
++      return null;
++    }
++    const place = resolveLocation([token], index);
++    return place ? {page: 'map', concept: 'explorer', place: place.id, metric} : null;
++  }
++  if (segments.length === 2) {
++    const place = resolveLocation(segments, index);
++    return place ? {page: 'map', concept: 'explorer', place: place.id, metric} : null;
++  }
++  return null;
++}
++
++function indicatorSegment(metricId) {
++  const slug = INDICATOR_ALIASES[metricId] || metricId;
++  return validSegment(slug ?? '') ? slug : null;
++}
++
++function describePlace(place, index) {
++  if (!place || place === 'US') return [COUNTRY_SEGMENT];
++  if (place.length === 2) {
++    const slug = index.slugByPlaceId.get(place);
++    return slug ? [slug] : null;
++  }
++  const stateSlug = index.slugByPlaceId.get(place.slice(0, 2));
++  const countySlug = index.slugByPlaceId.get(place);
++  const county = index.countiesByState.get(place.slice(0, 2))?.get(countySlug);
++  return stateSlug && countySlug && county?.id === place ? [stateSlug, countySlug] : null;
++}
++
++// Canonical URL for the current screen and selection. Normal routes never
++// serialize application navigation state into query parameters.
++export function canonicalPath(state, index) {
++  if (!state) return `/${ROOT_SEGMENT}/${DEFAULT_INDICATOR}`;
++  const page = state.page || 'map';
++  if (page === 'stats') return SCREEN_PATHS.stats;
++  if (page === 'support') return SCREEN_PATHS.support;
++  if (page === 'info') return '/about';
++  if (page === 'blog') return SCREEN_PATHS.blog;
++  if (page === 'article') return state.article ? `${SCREEN_PATHS.blog}/${encodeURIComponent(state.article)}` : null;
++  if (!index) return null;
++  const metric = indicatorSegment(state.metric || DEFAULT_INDICATOR) || DEFAULT_INDICATOR;
++  const placeId = state.place ?? state.selected ?? null;
++  if (state.concept === 'compare') {
++    if (state.comparison === 'metrics') {
++      const a = indicatorSegment(state.metric), b = indicatorSegment(state.secondMetric);
++      if (!a || !b || a === b) return null;
++      const scope = placeId && placeId !== 'US' ? describePlace(placeId, index) : [];
++      if (placeId && placeId !== 'US' && !scope) return null;
++      return `/compare/indicators/${a}${COMPARE_SEPARATOR}${b}${scope?.length ? '/in/' + scope.join('/') : ''}`;
++    }
++    const left = describePlace(placeId, index), right = describePlace(state.second, index);
++    if (!left || !right || placeId === state.second) return null;
++    return `/compare/places/${metric}/${left.join('/')}/vs/${right.join('/')}`;
++  }
++  if (!placeId || placeId === 'US') return `/${ROOT_SEGMENT}/${metric}`;
++  const place = describePlace(placeId, index);
++  return place ? `/${ROOT_SEGMENT}/${place.join('/')}/${metric}` : null;
++}
++
++// Keep only non-content operational flags. Indicator, geography and page are
++// always represented by the path; presentation preferences do not create URLs.
++export function routeParams(params) {
++  const keep = new URLSearchParams();
++  for (const key of ['embed', 'review', 'preview']) {
++    const value = params?.get(key);
++    if (value) keep.set(key, value);
++  }
++  return keep.toString();
++}
+--- /dev/null
++++ b/ux/seo.js
+@@ -0,0 +1,122 @@
++export const SITE_ORIGIN = 'https://usa-xray.online';
++export const SITE_NAME = 'USA X-Ray';
++export const SITE_DESCRIPTION = 'Explore U.S. places through source-based maps, geographic comparisons and public data.';
++
++export function createPageMetadata({title, description, path, type = 'website', noindex = false, structuredData = null}) {
++  const canonicalPath = typeof path === 'string' && path.startsWith('/') ? path.split(/[?#]/, 1)[0] || '/' : '/';
++  const canonical = new URL(canonicalPath, SITE_ORIGIN).href;
++  return {
++    title: title || `${SITE_NAME} — Explore the map`,
++    description: description || SITE_DESCRIPTION,
++    canonical,
++    robots: noindex ? 'noindex,follow' : 'index,follow',
++    openGraph: {type, title: title || SITE_NAME, description: description || SITE_DESCRIPTION, url: canonical, siteName: SITE_NAME, locale: 'en_US'},
++    twitter: {card: 'summary', title: title || SITE_NAME, description: description || SITE_DESCRIPTION},
++    structuredData: structuredData || {
++      '@context': 'https://schema.org',
++      '@type': 'WebPage',
++      name: title || `${SITE_NAME} — Explore the map`,
++      description: description || SITE_DESCRIPTION,
++      url: canonical,
++      isPartOf: {'@type': 'WebSite', name: SITE_NAME, url: SITE_ORIGIN},
++    },
++  };
++}
++
++function upsertMeta(document, key, value, property = false) {
++  const attribute = property ? 'property' : 'name';
++  let node = document.head.querySelector(`meta[${attribute}="${key}"]`);
++  if (!node) {
++    node = document.createElement('meta');
++    node.setAttribute(attribute, key);
++    document.head.append(node);
++  }
++  node.content = value;
++}
++
++export function applyPageMetadata(metadata, document = globalThis.document) {
++  if (!document?.head || !metadata) return;
++  document.title = metadata.title;
++  upsertMeta(document, 'description', metadata.description);
++  upsertMeta(document, 'robots', metadata.robots);
++  upsertMeta(document, 'og:type', metadata.openGraph.type, true);
++  upsertMeta(document, 'og:title', metadata.openGraph.title, true);
++  upsertMeta(document, 'og:description', metadata.openGraph.description, true);
++  upsertMeta(document, 'og:url', metadata.openGraph.url, true);
++  upsertMeta(document, 'og:site_name', metadata.openGraph.siteName, true);
++  upsertMeta(document, 'og:locale', metadata.openGraph.locale, true);
++  upsertMeta(document, 'twitter:card', metadata.twitter.card);
++  upsertMeta(document, 'twitter:title', metadata.twitter.title);
++  upsertMeta(document, 'twitter:description', metadata.twitter.description);
++  let canonical = document.head.querySelector('link[rel="canonical"]');
++  if (!canonical) {
++    canonical = document.createElement('link');
++    canonical.rel = 'canonical';
++    document.head.append(canonical);
++  }
++  canonical.href = metadata.canonical;
++  let schema = document.head.querySelector('#atlas-jsonld');
++  if (!schema) {
++    schema = document.createElement('script');
++    schema.id = 'atlas-jsonld';
++    schema.type = 'application/ld+json';
++    document.head.append(schema);
++  }
++  schema.textContent = JSON.stringify(metadata.structuredData);
++}
++
++export function mapPageMetadata({state, index, metricName, placeName, path, noindex = false}) {
++  const metric = metricName || 'Public data';
++  const place = placeName || 'the United States';
++  let title;
++  let description;
++  if (state?.concept === 'compare' && state.comparison === 'metrics') {
++    const otherMetric = state.secondMetricName || 'another indicator';
++    const scoped = Boolean(state.selected || state.place);
++    title = `${metric} vs ${otherMetric}${scoped ? ` in ${place}` : ''} | ${SITE_NAME}`;
++    description = `Compare ${metric} and ${otherMetric}${scoped ? ` in ${place}` : ' across the United States'} using the atlas’s source, period and geography details.`;
++  } else if (state?.concept === 'compare') {
++    const other = state.secondName || 'the United States';
++    title = `${metric}: ${place} vs ${other} | ${SITE_NAME}`;
++    description = `Compare ${metric} for ${place} and ${other}. Explore published observations with their source, reference period and geographic coverage.`;
++  } else {
++    title = `${metric} in ${place} | ${SITE_NAME}`;
++    description = `Explore ${metric} in ${place} with source-based observations, reference periods and geographic coverage on the USA X-Ray map.`;
++  }
++  return createPageMetadata({title, description, path, noindex});
++}
++
++export function screenPageMetadata(page, path, {article = null, noindex = false} = {}) {
++  const pages = {
++    stats: ['Atlas statistics | USA X-Ray', 'Explore how visitors use USA X-Ray. Visitor analytics are not connected yet.'],
++    support: ['Support USA X-Ray | USA X-Ray', 'Learn how to support the maps, data and stories behind USA X-Ray. Contributions are not open yet.'],
++    info: ['About USA X-Ray | USA X-Ray', 'Learn how USA X-Ray maps public data to places, preserves source units and periods, and handles gaps.'],
++    blog: ['USA X-Ray journal | USA X-Ray', 'Explore stories about public data, places and the sources behind the map.'],
++    article: [article?.title ? `${article.title} | USA X-Ray` : 'Article | USA X-Ray', article?.description || 'A USA X-Ray journal article.'],
++  };
++  const [title, description] = pages[page] || ['USA X-Ray — Explore the map', SITE_DESCRIPTION];
++  const canonical = new URL(path, SITE_ORIGIN).href;
++  const structuredData = page === 'article' ? {
++    '@context': 'https://schema.org',
++    '@type': 'Article',
++    headline: title,
++    description,
++    mainEntityOfPage: canonical,
++    publisher: {'@type': 'Organization', name: SITE_NAME, url: SITE_ORIGIN},
++  } : page === 'blog' ? {
++    '@context': 'https://schema.org',
++    '@type': 'Blog',
++    name: SITE_NAME + ' journal',
++    description,
++    url: canonical,
++    publisher: {'@type': 'Organization', name: SITE_NAME, url: SITE_ORIGIN},
++  } : {
++    '@context': 'https://schema.org',
++    '@type': 'WebPage',
++    name: title,
++    description,
++    url: canonical,
++    isPartOf: {'@type': 'WebSite', name: SITE_NAME, url: SITE_ORIGIN},
++  };
++  return createPageMetadata({title, description, path, type: page === 'article' ? 'article' : 'website', noindex, structuredData});
++}
+--- /dev/null
++++ b/scripts/seo_render.py
+@@ -0,0 +1,441 @@
++"""Server-rendered route metadata and permanent legacy URL normalization."""
++from functools import lru_cache
++from html import escape
++import json
++from pathlib import Path
++import re
++from urllib.parse import parse_qs, urlencode, urlsplit
++
++SITE_ORIGIN = 'https://usa-xray.online'
++SITE_NAME = 'USA X-Ray'
++SITE_DESCRIPTION = 'Explore U.S. places through source-based maps, geographic comparisons and public data.'
++DEFAULT_PATH = '/united-states/unemployment'
++INDICATOR_ALIASES = {
++    'adjusted-gross-income-agi--per-resident': 'adjusted-gross-income-agi-per-resident',
++    'crime-trends--04-09-aggravated-assault-yoy': 'crime-trends-aggravated-assault-year-over-year',
++    'crime-trends--04-09-burglary-yoy': 'crime-trends-burglary-year-over-year',
++    'crime-trends--04-09-homicide-yoy': 'crime-trends-homicide-year-over-year',
++    'crime-trends--04-09-motor-vehicle-theft-yoy': 'crime-trends-motor-vehicle-theft-year-over-year',
++    'crime-trends--04-09-rape-yoy': 'crime-trends-rape-year-over-year',
++    'crime-trends--04-09-robbery-yoy': 'crime-trends-robbery-year-over-year',
++    'electricity-price--08-05-sector-com': 'electricity-price-commercial',
++    'electricity-price--08-05-sector-ind': 'electricity-price-industrial',
++    'electricity-price--08-05-sector-res': 'electricity-price-residential',
++    'electricity-price--08-05-sector-tra': 'electricity-price-transportation',
++    'unemployment--03-06-employment': 'unemployment-employment',
++    'unemployment--03-06-labor-force': 'unemployment-labor-force',
++    'unemployment--03-06-unemployment': 'unemployment-count',
++    'access-to-a-grocery-store--09-02-count': 'access-to-a-grocery-store-count',
++}
++INDICATOR_IDS_BY_SLUG = {slug: identifier for identifier, slug in INDICATOR_ALIASES.items()}
++CITY_COUNTY_SLUGS = {
++    '24510': 'baltimore-city-county', '29510': 'st-louis-city-county',
++    '51600': 'fairfax-city-county', '51620': 'franklin-city-county',
++    '51680': 'roanoke-city-county', '51760': 'richmond-city-county',
++}
++OPERATIONAL_QUERY_KEYS = ('embed', 'review', 'preview')
++
++
++def slugify(text):
++    return re.sub(r'[^a-z0-9]+', '-', str(text).lower()).strip('-')
++
++
++def _county_base(name, identifier):
++    return CITY_COUNTY_SLUGS.get(identifier, slugify(name) + '-county')
++
++
++@lru_cache(maxsize=4)
++def geography(topology_path):
++    """Read the same published state/county names and slug rules used by routes.js."""
++    data = json.loads(Path(topology_path).read_text())
++    states = {}
++    for item in data['objects']['states']['geometries']:
++        identifier = str(item.get('id', '')).zfill(2)
++        name = item.get('properties', {}).get('name')
++        if identifier.isdigit() and int(identifier) < 60 and name:
++            states[slugify(name)] = {'id': identifier, 'name': name, 'slug': slugify(name)}
++    county_rows = []
++    for item in data['objects']['counties']['geometries']:
++        identifier = str(item.get('id', '')).zfill(5)
++        name = item.get('properties', {}).get('name')
++        if len(identifier) == 5 and identifier[:2] in {state['id'] for state in states.values()} and name:
++            county_rows.append({'id': identifier, 'name': name, 'stateId': identifier[:2],
++                                'base': _county_base(name, identifier)})
++    grouped = {}
++    for row in county_rows:
++        grouped.setdefault((row['stateId'], row['base']), []).append(row)
++    counties_by_state, counties_by_id, unique_counties = {}, {}, {}
++    for (state_id, base), rows in grouped.items():
++        scope = counties_by_state.setdefault(state_id, {})
++        for row in rows:
++            row['slug'] = base if len(rows) == 1 else f"{base}-{row['id']}"
++            row['stateSlug'] = next((slug for slug, state in states.items() if state['id'] == state_id), None)
++            scope[row['slug']] = row
++            counties_by_id[row['id']] = row
++            unique_counties.setdefault(row['slug'], []).append(row)
++    unique_counties = {slug: rows[0] for slug, rows in unique_counties.items() if len(rows) == 1}
++    states_by_id = {state['id']: state for state in states.values()}
++    return {'states': states, 'statesById': states_by_id, 'countiesByState': counties_by_state,
++            'countiesById': counties_by_id, 'uniqueCounties': unique_counties}
++
++
++@lru_cache(maxsize=4)
++def metric_labels(definitions_path):
++    data = json.loads(Path(definitions_path).read_text())
++    labels, slugs = {}, {}
++    for metric in data.get('metrics', []):
++        if metric.get('id') and metric.get('label'):
++            labels[metric['id']] = metric['label']
++    for identifier, variants in data.get('variants', {}).items():
++        for variant in variants:
++            if variant.get('id') and variant.get('label'):
++                labels[variant['id']] = variant['label']
++    for identifier, slug in INDICATOR_ALIASES.items():
++        slugs[slug] = identifier
++    labels.update({
++        'electricity-price--08-05-sector-com': 'Average electricity price · Commercial',
++        'electricity-price--08-05-sector-ind': 'Average electricity price · Industrial',
++        'electricity-price--08-05-sector-res': 'Average electricity price · Residential',
++        'electricity-price--08-05-sector-tra': 'Average electricity price · Transportation',
++        'unemployment--03-06-employment': 'Employment · people',
++        'unemployment--03-06-labor-force': 'Labor force · people',
++        'unemployment--03-06-unemployment': 'Unemployment · people',
++        'access-to-a-grocery-store--09-02-count': 'Low access to a grocery store · population',
++        'crime-trends--04-09-aggravated-assault-yoy': 'Crime trends · aggravated assault · year over year',
++        'crime-trends--04-09-burglary-yoy': 'Crime trends · burglary · year over year',
++        'crime-trends--04-09-homicide-yoy': 'Crime trends · homicide · year over year',
++        'crime-trends--04-09-motor-vehicle-theft-yoy': 'Crime trends · motor vehicle theft · year over year',
++        'crime-trends--04-09-rape-yoy': 'Crime trends · rape · year over year',
++        'crime-trends--04-09-robbery-yoy': 'Crime trends · robbery · year over year',
++    })
++    return {'labels': labels, 'idsBySlug': slugs, 'slugsById': INDICATOR_ALIASES}
++
++
++def _catalog_metrics(metrics, catalog):
++    if not catalog or not isinstance(catalog, dict):
++        return metrics
++    merged = {key: dict(value) if isinstance(value, dict) else value for key, value in metrics.items()}
++    merged['labels'] = dict(metrics['labels'])
++    for item in catalog.get('metrics', []):
++        if (item.get('availability') == 'loaded' and item.get('fieldId') and
++                (item.get('stateSupported') or item.get('countySupported')) and item.get('id') and item.get('name')):
++            merged['labels'][item['id']] = item['name']
++    return merged
++
++
++@lru_cache(maxsize=2)
++def articles(journal_path):
++    source = Path(journal_path).read_text()
++    match = re.search(r'^export const articles=(\{.*\});\s*$', source, re.S | re.M)
++    if not match:
++        return {}
++    try:
++        return json.loads(match.group(1))
++    except json.JSONDecodeError:
++        return {}
++
++
++def _location(parts, geo):
++    parts = list(parts or [])
++    if not parts or parts == ['united-states']:
++        return {'id': None, 'name': 'the United States', 'parts': []}
++    if len(parts) == 1:
++        state = geo['states'].get(parts[0])
++        if state:
++            return {'id': state['id'], 'name': state['name'], 'parts': [state['slug']]}
++        county = geo['uniqueCounties'].get(parts[0])
++        if county:
++            return {'id': county['id'], 'name': county['name'],
++                    'parts': [county['stateSlug'], county['slug']]}
++        return None
++    if len(parts) == 2:
++        state = geo['states'].get(parts[0])
++        county = geo['countiesByState'].get(state['id'], {}).get(parts[1]) if state else None
++        if county:
++            return {'id': county['id'], 'name': county['name'], 'parts': [state['slug'], county['slug']]}
++    return None
++
++
++def _metric(segment, metrics):
++    if not segment:
++        return None
++    identifier = metrics['idsBySlug'].get(segment, segment)
++    if identifier not in metrics['labels']:
++        return None
++    return {'id': identifier, 'slug': metrics['slugsById'].get(identifier, identifier),
++            'name': metrics['labels'][identifier]}
++
++
++def _pair(segment):
++    bits = str(segment or '').split('-vs-')
++    return bits if len(bits) == 2 and all(bits) else None
++
++
++def _parse_app_route(path, geo, metrics, article_data):
++    path = path.rstrip('/') or '/'
++    bits = path.strip('/').split('/') if path != '/' else []
++    if path in ('/stats', '/support', '/about', '/blog'):
++        return {'kind': 'screen', 'page': {'/stats': 'stats', '/support': 'support', '/about': 'info', '/blog': 'blog'}[path], 'canonical': path}
++    if path.startswith('/blog/') and len(bits) == 2 and bits[1] in article_data:
++        return {'kind': 'article', 'slug': bits[1], 'canonical': path}
++    if bits and bits[0] == 'compare':
++        if len(bits) >= 6 and bits[1] == 'places':
++            try:
++                vs = bits.index('vs', 3)
++            except ValueError:
++                vs = -1
++            left, right = (bits[3:vs], bits[vs + 1:]) if vs >= 0 else ([], [])
++            metric = _metric(bits[2], metrics)
++            a, b = _location(left, geo), _location(right, geo)
++            if metric and a and b and a['id'] != b['id']:
++                canonical = f"/compare/places/{metric['slug']}/{'/'.join(a['parts'] or ['united-states'])}/vs/{'/'.join(b['parts'] or ['united-states'])}"
++                return {'kind': 'compare-places', 'metric': metric, 'left': a, 'right': b, 'canonical': canonical}
++            return None
++        if len(bits) in (3, 5, 6) and bits[1] == 'indicators':
++            pair = _pair(bits[2])
++            if pair:
++                a, b = _metric(pair[0], metrics), _metric(pair[1], metrics)
++                place = _location(bits[4:], geo) if len(bits) >= 5 and bits[3] == 'in' else ({'id': None, 'name': 'the United States', 'parts': []} if len(bits) == 3 else None)
++                if a and b and a['id'] != b['id'] and place:
++                    canonical = f"/compare/indicators/{a['slug']}-vs-{b['slug']}" + (f"/in/{'/'.join(place['parts'])}" if place['parts'] else '')
++                    return {'kind': 'compare-metrics', 'metric': a, 'secondMetric': b, 'place': place, 'canonical': canonical}
++            return None
++        return None
++    if not bits or bits[0] != 'united-states':
++        return None
++    segments = bits[1:]
++    if not segments:
++        loc, metric = _location([], geo), _metric('unemployment', metrics)
++        return {'kind': 'map', 'place': loc, 'metric': metric, 'canonical': DEFAULT_PATH} if metric else None
++
++    # Read the old clean place-comparison paths and redirect them to /compare/.
++    last_pair = _pair(segments[-1])
++    if last_pair:
++        indicators = [_metric(token, metrics) for token in last_pair]
++        if all(indicators) and indicators[0]['id'] != indicators[1]['id']:
++            place = _location(segments[:-1], geo)
++            if place:
++                canonical = f"/compare/indicators/{indicators[0]['slug']}-vs-{indicators[1]['slug']}" + (f"/in/{'/'.join(place['parts'])}" if place['parts'] else '')
++                return {'kind': 'compare-metrics', 'metric': indicators[0], 'secondMetric': indicators[1], 'place': place, 'canonical': canonical}
++
++    metric = _metric(segments[-1], metrics)
++    place_parts = segments[:-1] if metric else segments
++    if metric:
++        # Old /united-states/california-vs-texas/unemployment aliases.
++        pair = _pair(place_parts[-1]) if place_parts else None
++        if pair and len(place_parts) == 1:
++            left, right = _location([pair[0]], geo), _location([pair[1]], geo)
++            if left and right and left['id'] != right['id']:
++                canonical = f"/compare/places/{metric['slug']}/{'/'.join(left['parts'] or ['united-states'])}/vs/{'/'.join(right['parts'] or ['united-states'])}"
++                return {'kind': 'compare-places', 'metric': metric, 'left': left, 'right': right, 'canonical': canonical}
++    else:
++        metric = _metric('unemployment', metrics)
++    place = _location(place_parts, geo)
++    if not metric or not place:
++        return None
++    canonical = f"/united-states/{'/'.join(place['parts']) + '/' if place['parts'] else ''}{metric['slug']}"
++    return {'kind': 'map', 'place': place, 'metric': metric, 'canonical': canonical}
++
++
++def _legacy_query_route(query, geo, metrics, article_data):
++    try:
++        params = parse_qs(query, keep_blank_values=True, max_num_fields=32)
++    except ValueError:
++        return None
++    one = lambda key, default=None: params.get(key, [default])[0]
++    page, article = one('page'), one('article')
++    if article and article in article_data:
++        return f'/blog/{article}'
++    page_path = {'stats': '/stats', 'support': '/support', 'info': '/about', 'about': '/about', 'blog': '/blog'}
++    if page in page_path:
++        return page_path[page]
++    def id_to_loc(value):
++        if not value or value == 'US':
++            return {'id': None, 'name': 'the United States', 'parts': []}
++        state = geo['statesById'].get(value)
++        if state:
++            return {'id': state['id'], 'name': state['name'], 'parts': [state['slug']]}
++        county = geo['countiesById'].get(value)
++        if county:
++            return {'id': county['id'], 'name': county['name'],
++                    'parts': [county['stateSlug'], county['slug']]}
++        return None
++    concept = one('concept')
++    if page == 'compare' or concept == 'compare':
++        metric = _metric(one('metric') or 'unemployment', metrics) or _metric('unemployment', metrics)
++        if one('comparison') == 'metrics':
++            a, b = metric, _metric(one('metric2'), metrics)
++            place = id_to_loc(one('place'))
++            if a and b and a['id'] != b['id'] and place:
++                return f"/compare/indicators/{a['slug']}-vs-{b['slug']}" + (f"/in/{'/'.join(place['parts'])}" if place['parts'] else '')
++            return None
++        left = id_to_loc(one('place'))
++        right = id_to_loc(one('other') or '48')
++        if not one('place'):
++            left = id_to_loc('06')
++        if metric and left and right and left['id'] != right['id']:
++            return f"/compare/places/{metric['slug']}/{'/'.join(left['parts'] or ['united-states'])}/vs/{'/'.join(right['parts'] or ['united-states'])}"
++        return None
++    metric = _metric(one('metric') or 'unemployment', metrics)
++    place = id_to_loc(one('place'))
++    if metric and place:
++        return f"/united-states/{'/'.join(place['parts']) + '/' if place['parts'] else ''}{metric['slug']}"
++    if not one('metric') and not one('place'):
++        return DEFAULT_PATH
++    return None
++
++
++def redirect_target(request_target, geo, metrics, article_data, catalog=None):
++    """Return a 301 destination for old app URLs and noncanonical route spellings."""
++    metrics = _catalog_metrics(metrics, catalog)
++    split = urlsplit(request_target)
++    path = split.path or '/'
++    if path in ('/', '/ux', '/ux/', '/ux/index.html'):
++        target_path = _legacy_query_route(split.query, geo, metrics, article_data) if split.query else DEFAULT_PATH
++        if target_path:
++            try:
++                old_params = parse_qs(split.query, keep_blank_values=True, max_num_fields=32)
++            except ValueError:
++                old_params = {}
++            retained = {key: old_params[key][0] for key in OPERATIONAL_QUERY_KEYS
++                        if old_params.get(key) and old_params[key][0]}
++            query = urlencode(retained)
++            if query:
++                target_path += '?' + query
++            return target_path
++        return None
++    if path.startswith('/ux/'):
++        return None
++    route = _parse_app_route(path.lower(), geo, metrics, article_data)
++    if not route:
++        return None
++    retained = {}
++    try:
++        params = parse_qs(split.query, keep_blank_values=True, max_num_fields=32)
++    except ValueError:
++        params = {}
++    for key in OPERATIONAL_QUERY_KEYS:
++        value = params.get(key, [None])[0]
++        if value:
++            retained[key] = value
++    query = urlencode(retained)
++    target = route['canonical'] + (f'?{query}' if query else '')
++    if target != request_target:
++        return target
++    return None
++
++
++def _map_metadata(route):
++    metric = route['metric']['name']
++    if route['kind'] == 'compare-metrics':
++        place = route['place']['name']
++        second = route['secondMetric']['name']
++        scoped = bool(route['place']['parts'])
++        return (f"{metric} vs {second}{f' in {place}' if scoped else ''} | {SITE_NAME}",
++                f"Compare {metric} and {second}{f' in {place}' if scoped else ' across the United States'} using the atlas’s source, period and geography details.")
++    if route['kind'] == 'compare-places':
++        left, right = route['left']['name'], route['right']['name']
++        return (f"{metric}: {left} vs {right} | {SITE_NAME}",
++                f"Compare {metric} for {left} and {right}. Explore published observations with their source, reference period and geographic coverage.")
++    place = route['place']['name']
++    return (f"{metric} in {place} | {SITE_NAME}",
++            f"Explore {metric} in {place} with source-based observations, reference periods and geographic coverage on the USA X-Ray map.")
++
++
++def metadata_for(path, query, route, article_data):
++    noindex = any(key in parse_qs(query, keep_blank_values=True) for key in ('review', 'preview')) or parse_qs(query, keep_blank_values=True).get('embed') == ['1']
++    if route['kind'] in ('map', 'compare-metrics', 'compare-places'):
++        title, description = _map_metadata(route)
++        canonical = SITE_ORIGIN + route['canonical']
++        schema = {'@context': 'https://schema.org', '@type': 'WebPage', 'name': title,
++                  'description': description, 'url': canonical,
++                  'isPartOf': {'@type': 'WebSite', 'name': SITE_NAME, 'url': SITE_ORIGIN}}
++        return _metadata(title, description, canonical, noindex, schema)
++    if route['kind'] == 'screen':
++        pages = {
++            'stats': ('Atlas statistics | USA X-Ray', 'Explore how visitors use USA X-Ray. Visitor analytics are not connected yet.'),
++            'support': ('Support USA X-Ray | USA X-Ray', 'Learn how to support the maps, data and stories behind USA X-Ray. Contributions are not open yet.'),
++            'info': ('About USA X-Ray | USA X-Ray', 'Learn how USA X-Ray maps public data to places, preserves source units and periods, and handles gaps.'),
++            'blog': ('USA X-Ray journal | USA X-Ray', 'Explore stories about public data, places and the sources behind the map.'),
++        }
++        title, description = pages[route['page']]
++        canonical = SITE_ORIGIN + route['canonical']
++        if route['page'] == 'blog':
++            schema = {'@context': 'https://schema.org', '@type': 'Blog', 'name': SITE_NAME + ' journal',
++                      'description': description, 'url': canonical,
++                      'publisher': {'@type': 'Organization', 'name': SITE_NAME, 'url': SITE_ORIGIN}}
++        else:
++            schema = {'@context': 'https://schema.org', '@type': 'WebPage', 'name': title,
++                      'description': description, 'url': canonical,
++                      'isPartOf': {'@type': 'WebSite', 'name': SITE_NAME, 'url': SITE_ORIGIN}}
++        page_noindex = noindex or route['page'] == 'stats' or (
++            route['page'] == 'blog' and not any(
++                not re.search(r'owner review pending', item.get('meta', ''), re.I)
++                for item in article_data.values()))
++        return _metadata(title, description, canonical, page_noindex, schema,
++                         'article' if route['page'] == 'article' else 'website')
++    article = article_data.get(route.get('slug'), {})
++    title = f"{article.get('title', 'Article')} | {SITE_NAME}"
++    description = article.get('description') or 'A USA X-Ray journal article.'
++    draft = bool(re.search(r'owner review pending', article.get('meta', ''), re.I))
++    canonical = SITE_ORIGIN + route['canonical']
++    schema = {'@context': 'https://schema.org', '@type': 'Article', 'headline': title,
++              'description': description, 'mainEntityOfPage': canonical,
++              'publisher': {'@type': 'Organization', 'name': SITE_NAME, 'url': SITE_ORIGIN}}
++    return _metadata(title, description, canonical, noindex or draft, schema, 'article')
++
++
++def _metadata(title, description, canonical, noindex, schema, page_type='website'):
++    return {'title': title, 'description': description, 'canonical': canonical,
++            'robots': 'noindex,follow' if noindex else 'index,follow',
++            'ogType': page_type, 'schema': schema}
++
++
++def _set_meta(document, attribute, name, value):
++    escaped_value = escape(str(value), quote=True)
++    escaped_name = escape(str(name), quote=True)
++    pattern = re.compile(r'<meta\b(?=[^>]*\b' + re.escape(attribute) + r'=["\']' + re.escape(name) + r'["\'])[^>]*>', re.I)
++    tag = f'<meta {attribute}="{escaped_name}" content="{escaped_value}">'
++    if pattern.search(document):
++        return pattern.sub(tag, document, count=1)
++    return document.replace('</head>', '  ' + tag + '\n</head>', 1)
++
++
++def render_html(document, metadata):
++    if isinstance(document, bytes):
++        document = document.decode('utf-8')
++    document = re.sub(r'<title\b[^>]*>.*?</title>', '<title>' + escape(metadata['title']) + '</title>', document, count=1, flags=re.I | re.S)
++    names = {'description': metadata['description'], 'robots': metadata['robots'],
++             'twitter:card': 'summary', 'twitter:title': metadata['title'], 'twitter:description': metadata['description']}
++    properties = {'og:type': metadata['ogType'], 'og:title': metadata['title'],
++                  'og:description': metadata['description'], 'og:url': metadata['canonical'],
++                  'og:site_name': SITE_NAME, 'og:locale': 'en_US'}
++    for key, value in names.items():
++        document = _set_meta(document, 'name', key, value)
++    for key, value in properties.items():
++        document = _set_meta(document, 'property', key, value)
++    document = re.sub(r'<link\b(?=[^>]*\brel=["\']canonical["\'])[^>]*>\s*', '', document, flags=re.I)
++    canonical = '<link rel="canonical" href="' + escape(metadata['canonical'], quote=True) + '">\n'
++    document = document.replace('</head>', '  ' + canonical + '</head>', 1)
++    schema = json.dumps(metadata['schema'], ensure_ascii=False, separators=(',', ':')).replace('<', r'\u003c')
++    script = '<script id="atlas-jsonld" type="application/ld+json">' + schema + '</script>'
++    pattern = re.compile(r'<script\b(?=[^>]*\bid=["\']atlas-jsonld["\'])[^>]*>.*?</script>', re.I | re.S)
++    if pattern.search(document):
++        document = pattern.sub(script, document, count=1)
++    else:
++        document = document.replace('</head>', '  ' + script + '\n</head>', 1)
++    return document.encode('utf-8') if isinstance(document, str) else document
++
++
++def render_route(document, request_target, topology_path, definitions_path, journal_path, catalog=None):
++    split = urlsplit(request_target)
++    geo, metrics, article_data = geography(str(topology_path)), metric_labels(str(definitions_path)), articles(str(journal_path))
++    metrics = _catalog_metrics(metrics, catalog)
++    route = _parse_app_route(split.path, geo, metrics, article_data)
++    if not route:
++        canonical = SITE_ORIGIN + (split.path or '/')
++        return 404, render_html(document, _metadata('Page not found | USA X-Ray', SITE_DESCRIPTION,
++            canonical, True, {'@context': 'https://schema.org', '@type': 'WebPage',
++            'name': 'Page not found | USA X-Ray', 'url': canonical,
++            'isPartOf': {'@type': 'WebSite', 'name': SITE_NAME, 'url': SITE_ORIGIN}}))
++    return 200, render_html(document, metadata_for(split.path, split.query, route, article_data))

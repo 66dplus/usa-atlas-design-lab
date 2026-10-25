@@ -58,7 +58,7 @@ try {
   time=155000;documentEvents.get('visibilitychange')();
   time=160000;interval();
   assert.equal(sent.filter(e=>e.name==='atlas_active_time').reduce((sum,e)=>sum+e.data.active_ms,0),after+5000);
-  assert.ok(sent.every(e=>!e.url.includes('?')&&e.referrer===''&&e.title==='USA Atlas'));
+  assert.ok(sent.every(e=>!e.url.includes('?')&&e.referrer===''&&e.title==='USA X-Ray'));
   const count=sent.length;
   globalThis.fetch=async()=>({ok:true,json:async()=>({enabled:false})});
   const disabled=createAtlasAnalytics();disabled.observe(atlasContext(state),true);disabled.action('indicator_select');

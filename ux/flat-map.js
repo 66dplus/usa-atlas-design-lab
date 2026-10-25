@@ -65,11 +65,11 @@ export class FlatMapRenderer {
     try{
     this.scene=new THREE.Scene();this.camera=new THREE.OrthographicCamera(-6,6,3.75,-3.75,.01,100);this.camera.position.z=10;
     this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
-    this.renderer.debug.onShaderError=()=>{this.suspended=true;this.renderer.domElement.hidden=true;queueMicrotask(()=>{this.dispose();this.onFailure('WebGL could not draw the map; using SVG.');});};
+    this.renderer.debug.onShaderError=()=>{this.suspended=true;this.renderer.domElement.hidden=true;queueMicrotask(()=>{this.dispose();this.onFailure('WebGL could not draw the map. Try loading it again.');});};
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     const canvas=this.renderer.domElement;canvas.className='geo-canvas geo-flat-canvas';canvas.setAttribute('aria-label','Interactive 2D WebGL map');
     canvas.style.pointerEvents='none';host.prepend(canvas);
-    this.lost=event=>{event.preventDefault();this.suspended=true;cancelAnimationFrame(this.frame);this.frame=0;canvas.hidden=true;this.onFailure('WebGL interrupted; the SVG map is available.');};
+    this.lost=event=>{event.preventDefault();this.suspended=true;cancelAnimationFrame(this.frame);this.frame=0;canvas.hidden=true;this.onFailure('WebGL was interrupted. Try loading the map again.');};
     this.restored=()=>{this.suspended=false;this.onRestore();this.requestRender();};
     canvas.addEventListener('webglcontextlost',this.lost);canvas.addEventListener('webglcontextrestored',this.restored);
     this.worldGeometry=new THREE.ShapeGeometry(projectedShapes(geo.world,geo.projection,d3.geoStream),1);
@@ -85,7 +85,7 @@ export class FlatMapRenderer {
   }
   update(state,mappedValue,color,background){
     this.state=state;this.renderer.setClearColor(background,1);
-    const parent=state.selectedId?.slice(0,2),isolated=state.cleanBackdrop||this.host.ownerDocument.defaultView.innerWidth<=760;
+    const parent=state.selectedId?.slice(0,2),isolated=state.cleanBackdrop;
     for(const id of this.geo.states.map(f=>f.id)){
       let group=this.groups.get(id);
       const rows=this.geo.counties.filter(f=>f.stateId===id);
@@ -126,7 +126,12 @@ export class FlatMapRenderer {
     const dx=w/scale/t.k/200,dy=h/scale/t.k/200;
     Object.assign(this.camera,{left:x-dx,right:x+dx,top:y+dy,bottom:y-dy});this.camera.updateProjectionMatrix();this.requestRender();
   }
-  resize(w,h){if(!w||!h)return;this.size=[w,h];this.renderer.setSize(w,h);if(this.transform)this.setTransform(this.transform);this.requestRender();}
+  resize(w,h){
+    if(!w||!h)return;this.size=[w,h];this.renderer.setSize(w,h);if(this.transform)this.setTransform(this.transform);
+    // setSize empties the drawing buffer. Repaint it in the same tick, otherwise
+    // the page shows an empty canvas between the resize and the next frame.
+    this.renderNow();
+  }
   hit(event){
     const r=this.host.getBoundingClientRect(),[w,h]=this.size||[r.width,r.height],scale=Math.min(w/1200,h/750),t=this.transform;
     if(!t)return null;
@@ -154,7 +159,7 @@ export class FlatMapRenderer {
   renderNow(){
     if(this.disposed||this.suspended||!this.visible)return;
     try{this.renderer.render(this.scene,this.camera);this.stats.frames++;}
-    catch(error){this.suspended=true;this.dispose();queueMicrotask(()=>this.onFailure('WebGL draw failed; using SVG. '+error.message));}
+    catch(error){this.suspended=true;this.dispose();queueMicrotask(()=>this.onFailure('WebGL could not draw the map. Try loading it again.'));}
   }
   dispose(){
     if(this.disposed)return;

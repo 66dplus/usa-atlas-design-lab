@@ -73,7 +73,8 @@ class FeedbackIntegration(unittest.TestCase):
         self.assertEqual((directory / 'capture.png').read_bytes(), png())
         self.assertEqual(record['imageSha256'], hashlib.sha256(png()).hexdigest())
         self.assertEqual(record['sources'][0]['symbol'], 'renderInspector')
-        source = Path(__file__).resolve().parents[2] / record['sources'][0]['file']
+        relative_source = record['sources'][0]['file'].removeprefix('usa-atlas-design-lab/')
+        source = Path(__file__).resolve().parents[1] / relative_source
         self.assertIn('function renderInspector(', source.read_text().splitlines()[record['sources'][0]['line'] - 1])
         self.stop()
         self.start()
@@ -106,7 +107,11 @@ class FeedbackIntegration(unittest.TestCase):
     def test_unknown_api_and_source_keys_fail_closed(self):
         self.assertEqual(self.request('POST', '/api/other', self.payload())[0], 404)
         self.assertEqual(self.request('GET', '/api/feedback', headers={'Host': 'foreign.example'})[0], 403)
-        self.assertEqual(self.request('GET', '/ux/')[0], 200)
+        status, _ = self.request('GET', '/ux/')
+        self.assertEqual(status, 301)
+        status, body = self.request('GET', '/united-states/unemployment')
+        self.assertEqual(status, 200)
+        self.assertIn(b'<link rel="canonical"', body)
 
     def test_settings_defaults_save_restart_and_rejection(self):
         status, body = self.request('GET', '/api/view-settings')

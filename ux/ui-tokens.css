@@ -1,0 +1,48 @@
+/* Semantic aliases preserve the existing light/dark theme palette. */
+:root {
+  --type-body: 14px;
+  --type-caption: 12px;
+  --type-label: 13px;
+  --type-value: 52px;
+  --line-body: 1.5;
+  /* Mobile breakpoint: 760px; CSS media queries cannot read custom properties. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --control-height: 48px;
+  --control-compact: 44px;
+  --icon-size: 20px;
+  --radius-control: 14px;
+  --radius-sheet: 24px;
+  --shadow-sheet: 0 10px 30px #10182012;
+  --border-width: 1px;
+  --nav-height: 56px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --mobile-chrome-top: max(8px, var(--safe-top));
+  --sheet-duration: 260;
+  --motion-sheet: 260ms;
+  --motion-quick: 180ms;
+  --z-map: 1;
+  --z-sheet: 20;
+  --z-navigation: 32;
+  --z-modal: 60;
+}
+@media(prefers-reduced-motion:reduce) {
+  :root { --motion-sheet: 0ms; --motion-quick: 0ms; }
+}
+
+/* Resolve aliases at the same element as the body-owned dark theme. */
+body {
+  --surface-app: var(--bg);
+  --surface-panel: var(--panel);
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --border-subtle: var(--line);
+  --action-primary: var(--accent);
+}

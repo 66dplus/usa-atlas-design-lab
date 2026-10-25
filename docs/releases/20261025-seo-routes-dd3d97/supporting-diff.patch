@@ -1,0 +1,341 @@
+--- a/scripts/serve.py
++++ b/scripts/serve.py
+@@ -22,8 +22,21 @@
+ import atlas_data
+ import advertising
+ import analytics_config
++from seo_render import articles, geography, metric_labels, redirect_target, render_route
+ 
+ MAX_BODY = 16 * 1024 * 1024
++_SEO_CATALOG = None
++
++
++def seo_catalog():
++    global _SEO_CATALOG
++    if _SEO_CATALOG is not None:
++        return _SEO_CATALOG
++    try:
++        _SEO_CATALOG = atlas_data.catalog()
++    except atlas_data.DatabaseUnavailable:
++        return None
++    return _SEO_CATALOG
+ 
+ 
+ def invalid_constant(value):
+@@ -174,9 +187,54 @@
+         self.end_headers()
+         self.wfile.write(encoded)
+ 
++    def seo_route(self):
++        path = urlsplit(self.path).path
++        if path not in ('/ux', '/ux/', '/ux/index.html') and not re.fullmatch(
++                r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})',
++                path.rstrip('/') or '/'):
++            return False
++        topology = ROOT / 'node_modules/us-atlas/counties-10m.json'
++        definitions = ROOT / 'ux/metric-definitions.json'
++        journal = ROOT / 'ux/journal.js'
++        geo, metrics, article_data = geography(str(topology)), metric_labels(str(definitions)), articles(str(journal))
++        target = redirect_target(self.path, geo, metrics, article_data)
++        if target:
++            self.send_response(301)
++            self.send_header('Location', target)
++            self.send_header('Cache-Control', 'public, max-age=86400')
++            self.send_header('Content-Length', '0')
++            self.end_headers()
++            return True
++        index = ROOT / 'ux/index.html'
++        template = index.read_bytes()
++        status, body = render_route(template, self.path, topology, definitions, journal)
++        if status == 404:
++            catalog = seo_catalog()
++            if catalog:
++                target = redirect_target(self.path, geo, metrics, article_data, catalog)
++                if target:
++                    self.send_response(301)
++                    self.send_header('Location', target)
++                    self.send_header('Cache-Control', 'public, max-age=86400')
++                    self.send_header('Content-Length', '0')
++                    self.end_headers()
++                    return True
++                status, body = render_route(template, self.path, topology, definitions, journal, catalog)
++        self.send_response(status)
++        self.send_header('Content-Type', 'text/html; charset=utf-8')
++        self.send_header('Content-Length', str(len(body)))
++        self.send_header('Cache-Control', 'no-store')
++        self.send_header('X-Content-Type-Options', 'nosniff')
++        self.end_headers()
++        if self.command != 'HEAD':
++            self.wfile.write(body)
++        return True
++
+     def do_GET(self):
+         if not self.allowed_host():
+             return self.respond(403, {'error': 'Loopback Host required'})
++        if self.seo_route():
++            return
+         path = urlsplit(self.path).path
+         if path == '/api/analytics/config':
+             try:
+@@ -231,6 +289,10 @@
+             return
+         if path.startswith('/api/'):
+             return self.respond(404, {'error': 'Unknown endpoint'})
++        route_path=path.rstrip('/')
++        if re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})',route_path):
++            query=urlsplit(self.path).query
++            self.path='/ux/index.html'+('?' + query if query else '')
+         # Local edits can have an earlier mtime than a previously cached checkout.
+         # Always deliver the current UI, including after a data-model replacement.
+         if 'If-Modified-Since' in self.headers:
+@@ -241,9 +303,14 @@
+         if not self.allowed_host():
+             self.send_error(403, 'Loopback Host required')
+             return
++        if self.seo_route():
++            return
+         if urlsplit(self.path).path.startswith('/api/'):
+             self.send_error(405, 'Use GET for feedback')
+             return
++        route_path=urlsplit(self.path).path.rstrip('/')
++        if re.fullmatch(r'/(?:stats|support|about|blog(?:/[A-Za-z0-9-]{1,64})?|compare(?:/[A-Za-z0-9-]{1,64}){1,7}|united-states(?:/[A-Za-z0-9-]{1,64}){0,4})',route_path):
++            self.path='/ux/index.html'
+         super().do_HEAD()
+ 
+     def do_POST(self):
+--- /dev/null
++++ b/scripts/check_seo.py
+@@ -0,0 +1,115 @@
++#!/usr/bin/env python3
++"""Check route metadata, redirect policy, sitemap and the packaged SEO renderer."""
++import html
++import json
++from pathlib import Path
++import re
++import sys
++import xml.etree.ElementTree as ET
++
++ROOT = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(ROOT / 'scripts'))
++from seo_render import (INDICATOR_ALIASES, articles, geography, metric_labels,
++                        redirect_target, render_route)
++
++TOPOLOGY = ROOT / 'node_modules/us-atlas/counties-10m.json'
++DEFINITIONS = ROOT / 'ux/metric-definitions.json'
++JOURNAL = ROOT / 'ux/journal.js'
++INDEX = ROOT / 'ux/index.html'
++GEO = geography(str(TOPOLOGY))
++METRICS = metric_labels(str(DEFINITIONS))
++ARTICLES = articles(str(JOURNAL))
++
++
++def check(condition, message):
++    if not condition:
++        raise AssertionError(message)
++
++
++def meta(body, attribute, name):
++    pattern = re.compile(r'<meta\b(?=[^>]*\b' + attribute + r'=["\']' + re.escape(name) + r'["\'])[^>]*\bcontent=["\']([^"\']*)["\']', re.I)
++    found = pattern.search(body.decode())
++    return html.unescape(found.group(1)) if found else None
++
++
++def html_for(url):
++    return render_route(INDEX.read_bytes(), url, TOPOLOGY, DEFINITIONS, JOURNAL)
++
++
++check(len(GEO['statesById']) == 51 and len(GEO['countiesById']) == 3142,
++      'server URL index must match the browser geography (50 states, DC and 3,142 counties)')
++check(INDICATOR_ALIASES == dict(re.findall(
++    r"'([^']+)': '([^']+)'", re.search(r'const INDICATOR_ALIASES = \{(.*?)\n\};',
++    (ROOT / 'ux/routes.js').read_text(), re.S).group(1))),
++      'server and browser indicator aliases must stay in sync')
++
++for path, expected_title in [
++    ('/united-states/unemployment', 'Unemployment rate in the United States | USA X-Ray'),
++    ('/united-states/california/san-francisco-county/unemployment', 'Unemployment rate in San Francisco | USA X-Ray'),
++    ('/compare/places/unemployment/california/vs/texas', 'Unemployment rate: California vs Texas | USA X-Ray'),
++    ('/compare/indicators/unemployment-vs-adjusted-gross-income-agi', 'Unemployment rate vs Income before deductions | USA X-Ray'),
++    ('/support', 'Support USA X-Ray | USA X-Ray'),
++    ('/about', 'About USA X-Ray | USA X-Ray'),
++]:
++    status, body = html_for(path)
++    check(status == 200, f'{path} should return a successful route response')
++    check(f'<title>{expected_title}</title>'.encode() in body, f'{path} should have its route-specific title in initial HTML')
++    canonical = f'https://usa-xray.online{path}'
++    check(f'<link rel="canonical" href="{canonical}">'.encode() in body, f'{path} should have a self-referencing canonical')
++    check(meta(body, 'property', 'og:url') == canonical, f'{path} Open Graph URL should match its canonical')
++    check(meta(body, 'name', 'description'), f'{path} should have a non-empty description before JavaScript')
++    check(meta(body, 'name', 'robots') == 'index,follow', f'{path} should be indexable')
++    check(body.count(b'rel="canonical"') == 1 and body.count(b'id="atlas-jsonld"') == 1,
++          f'{path} should contain one canonical and one JSON-LD block')
++    jsonld = re.search(rb'<script id="atlas-jsonld" type="application/ld\+json">(.*?)</script>', body, re.S)
++    check(jsonld is not None and json.loads(jsonld.group(1)), f'{path} should contain valid JSON-LD')
++
++for path in ['/stats', '/blog', '/blog/mississippi', '/blog/electricity']:
++    status, body = html_for(path)
++    check(status == 200, f'{path} should resolve even while excluded from search')
++    check(meta(body, 'name', 'robots') == 'noindex,follow', f'{path} should be excluded until analytics/content is ready')
++
++check(html_for('/united-states/not-a-real-place/unemployment')[0] == 404,
++      'unknown places should return 404 instead of a soft-404 app shell')
++
++redirect_cases = {
++    '/ux/?place=06075&metric=unemployment&view=3d&theme=dark': '/united-states/california/san-francisco-county/unemployment',
++    '/ux/?place=06075&metric=unemployment&theme=dark&embed=1': '/united-states/california/san-francisco-county/unemployment?embed=1',
++    '/ux/?page=info&theme=dark': '/about',
++    '/ux/?page=stats': '/stats',
++    '/ux/?page=article&article=mississippi': '/blog/mississippi',
++    '/ux/?concept=compare&comparison=places&place=06&other=48&metric=unemployment&theme=dark': '/compare/places/unemployment/california/vs/texas',
++    '/united-states/california-vs-texas/unemployment/': '/compare/places/unemployment/california/vs/texas',
++    '/united-states/unemployment-vs-adjusted-gross-income-agi': '/compare/indicators/unemployment-vs-adjusted-gross-income-agi',
++    '/united-states/california/unemployment?theme=dark': '/united-states/california/unemployment',
++    '/UNIted-states/California/Unemployment/': '/united-states/california/unemployment',
++}
++for source, destination in redirect_cases.items():
++    check(redirect_target(source, GEO, METRICS, ARTICLES) == destination,
++          f'{source} should permanently redirect to {destination}')
++
++namespace = {'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
++sitemap = ET.parse(ROOT / 'sitemap.xml').getroot()
++urls = [node.text for node in sitemap.findall('.//sm:loc', namespace)]
++check(len(urls) == len(set(urls)) and urls, 'sitemap must have unique absolute URLs')
++for url in urls:
++    parsed_path = re.sub(r'^https://usa-xray\.online', '', url)
++    check(parsed_path.startswith('/') and '?' not in parsed_path, f'{url} must be an absolute clean URL')
++    check(redirect_target(parsed_path, GEO, METRICS, ARTICLES) is None,
++          f'{url} must already be canonical and must not redirect')
++    check(html_for(parsed_path)[0] == 200, f'{url} must resolve successfully')
++check('/stats' not in [re.sub(r'^https://usa-xray\.online', '', url) for url in urls],
++      'the disconnected analytics page must not be in the sitemap')
++check('/blog' not in [re.sub(r'^https://usa-xray\.online', '', url) for url in urls],
++      'the unpublished journal must not be in the sitemap')
++check(any(url.endswith('/support') for url in urls) and any(url.endswith('/about') for url in urls),
++      'public Support and About pages should remain in the sitemap')
++robots = (ROOT / 'robots.txt').read_text()
++check('Sitemap: https://usa-xray.online/sitemap.xml' in robots and 'Disallow: /api/' in robots,
++      'robots.txt must advertise the sitemap and keep data API endpoints out of crawling')
++
++builder = (ROOT / 'scripts/build_temporary_preview.py').read_text()
++check('scripts/seo_render.py' in builder and "'scripts/seo_render.py'" in builder,
++      'the server renderer must be packaged and included in release evidence')
++
++print(f'PASS: server metadata, canonical redirects, noindex policy, {len(urls)} sitemap routes and release packaging')
+--- /dev/null
++++ b/ux/check-routes.mjs
+@@ -0,0 +1,115 @@
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import {buildPlaceIndex,canonicalPath,countySlug,parsePath,resolveRoute,routeParams,slugify} from './routes.js';
++import {createPageMetadata,mapPageMetadata,screenPageMetadata} from './seo.js';
++
++const states=[
++  {id:'06',name:'California'},{id:'17',name:'Illinois'},{id:'24',name:'Maryland'},
++  {id:'28',name:'Mississippi'},{id:'29',name:'Missouri'},{id:'48',name:'Texas'},{id:'51',name:'Virginia'},
++];
++const counties=[
++  {id:'06075',stateId:'06',name:'San Francisco'},{id:'17031',stateId:'17',name:'Cook'},
++  {id:'24005',stateId:'24',name:'Baltimore'},{id:'24510',stateId:'24',name:'Baltimore city'},
++  {id:'29510',stateId:'29',name:'St. Louis city'},{id:'51059',stateId:'51',name:'Fairfax'},
++  {id:'51600',stateId:'51',name:'Fairfax city'},{id:'06001',stateId:'06',name:'Alpha'},
++  {id:'06003',stateId:'06',name:'Alpha'},
++];
++const index=buildPlaceIndex(states,counties);
++const metrics=new Set(['unemployment','adjusted-gross-income-agi','adjusted-gross-income-agi--per-resident','median-household-income','electricity-price','electricity-price--08-05-sector-res','access-to-a-grocery-store']);
++const resolve=path=>resolveRoute(parsePath(path),index,metrics);
++
++assert.equal(slugify('District of Columbia'),'district-of-columbia');
++assert.equal(countySlug('Baltimore city','24510'),'baltimore-city-county');
++assert.deepEqual(resolve('/united-states/unemployment'),{page:'map',concept:'explorer',place:null,metric:'unemployment'});
++assert.equal(resolve('/united-states/california/unemployment').place,'06');
++assert.equal(resolve('/united-states/california/san-francisco-county/unemployment').place,'06075');
++assert.equal(resolve('/united-states/maryland/baltimore-city-county/unemployment').place,'24510');
++assert.equal(resolve('/united-states/virginia/fairfax-city-county/unemployment').place,'51600');
++assert.deepEqual(resolve('/compare/places/unemployment/california/vs/texas'),{
++  page:'compare',concept:'compare',comparison:'places',place:'06',second:'48',metric:'unemployment',
++});
++assert.deepEqual(resolve('/compare/places/unemployment/california/san-francisco-county/vs/illinois/cook-county'),{
++  page:'compare',concept:'compare',comparison:'places',place:'06075',second:'17031',metric:'unemployment',
++});
++assert.deepEqual(resolve('/compare/places/unemployment/california/vs/united-states'),{
++  page:'compare',concept:'compare',comparison:'places',place:'06',second:null,metric:'unemployment',
++});
++assert.deepEqual(resolve('/compare/indicators/unemployment-vs-adjusted-gross-income-agi'),{
++  page:'compare',concept:'compare',comparison:'metrics',place:null,metric:'unemployment',secondMetric:'adjusted-gross-income-agi',
++});
++assert.equal(resolve('/compare/places/electricity-price-residential/california/vs/texas').metric,'electricity-price--08-05-sector-res');
++assert.equal(resolve('/united-states/california/electricity-price-residential').metric,'electricity-price--08-05-sector-res');
++assert.equal(resolve('/compare/indicators/unemployment-vs-adjusted-gross-income-agi-per-resident').secondMetric,'adjusted-gross-income-agi--per-resident');
++assert.equal(resolve('/united-states/mississippi/access-to-a-grocery-store').metric,'access-to-a-grocery-store');
++assert.equal(resolve('/compare/indicators/median-household-income-vs-adjusted-gross-income-agi/in/california').place,'06');
++assert.equal(resolve('/stats').page,'stats');
++assert.equal(resolve('/about').page,'info');
++assert.equal(resolve('/blog/mississippi').article,'mississippi');
++assert.equal(resolve('/united-states/california/alpha-county/unemployment'),null,'ambiguous in-state county slug must not resolve');
++assert.equal(resolve('/united-states/alpha-county/unemployment'),null,'ambiguous national county slug must not resolve');
++assert.equal(resolve('/united-states/california/alpha-county-06001/unemployment').place,'06001');
++assert.equal(resolve('/united-states/california/alpha-county-06003/unemployment').place,'06003');
++assert.equal(resolve('/united-states/california-vs-texas/unemployment').comparison,'places','old clean comparison paths remain resolvable');
++assert.equal(resolve('/united-states/unemployment-vs-adjusted-gross-income-agi').comparison,'metrics','old clean metric-comparison paths remain resolvable');
++assert.equal(parsePath('/united-states/california/%2F/unemployment'),null);
++
++assert.equal(canonicalPath({page:'map',metric:'unemployment'},index),'/united-states/unemployment');
++assert.equal(canonicalPath({page:'map',metric:'unemployment',place:'06'},index),'/united-states/california/unemployment');
++assert.equal(canonicalPath({page:'map',metric:'unemployment',selected:'06'},index),'/united-states/california/unemployment');
++assert.equal(canonicalPath({page:'map',metric:'unemployment',place:'06075'},index),'/united-states/california/san-francisco-county/unemployment');
++assert.equal(canonicalPath({page:'map',metric:'electricity-price--08-05-sector-res',place:'06'},index),'/united-states/california/electricity-price-residential');
++assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'places',metric:'unemployment',place:'06',second:'48'},index),'/compare/places/unemployment/california/vs/texas');
++assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'places',metric:'unemployment',place:'06075',second:'17031'},index),'/compare/places/unemployment/california/san-francisco-county/vs/illinois/cook-county');
++assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'places',metric:'unemployment',place:'06',second:null},index),'/compare/places/unemployment/california/vs/united-states');
++assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'places',metric:'electricity-price--08-05-sector-res',place:'06',second:'48'},index),'/compare/places/electricity-price-residential/california/vs/texas');
++assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'metrics',metric:'unemployment',secondMetric:'adjusted-gross-income-agi'},index),'/compare/indicators/unemployment-vs-adjusted-gross-income-agi');
++assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'metrics',metric:'unemployment',secondMetric:'adjusted-gross-income-agi',selected:'06'},index),'/compare/indicators/unemployment-vs-adjusted-gross-income-agi/in/california');
++assert.equal(canonicalPath({page:'stats'},null),'/stats');
++assert.equal(canonicalPath({page:'article',article:'mississippi'},null),'/blog/mississippi');
++
++const retained=routeParams(new URLSearchParams('place=06&metric=unemployment&theme=dark&renderer=svg&page=map&embed=1'));
++assert.equal(new URLSearchParams(retained).has('theme'),false);
++assert.equal(new URLSearchParams(retained).has('renderer'),false);
++assert.equal(new URLSearchParams(retained).get('embed'),'1');
++assert.equal(new URLSearchParams(retained).has('place'),false);
++assert.equal(routeParams(new URLSearchParams('review=1&preview=1&embed=1&expanded=1&view=3d&rank=highest')),'embed=1&review=1&preview=1');
++
++const metadata=createPageMetadata({title:'Unemployment in California | USA X-Ray',description:'Explore unemployment in California.',path:'/united-states/california/unemployment?theme=dark'});
++assert.equal(metadata.canonical,'https://usa-xray.online/united-states/california/unemployment');
++assert.equal(metadata.openGraph.url,metadata.canonical);
++assert.equal(metadata.robots,'index,follow');
++assert.equal(metadata.structuredData['@type'],'WebPage');
++assert.equal(metadata.structuredData.name,metadata.title);
++assert.equal(metadata.structuredData.description,metadata.description);
++assert.equal(mapPageMetadata({state:{concept:'compare',comparison:'places'},metricName:'Unemployment rate',placeName:'California',path:'/compare/places/unemployment/california/vs/united-states'}).title,'Unemployment rate: California vs the United States | USA X-Ray');
++assert.equal(createPageMetadata({path:'/blog/mississippi',noindex:true}).robots,'noindex,follow');
++const articleMetadata=screenPageMetadata('article','/blog/mississippi',{article:{title:'A Mississippi story',description:'County data from USDA.'},noindex:true});
++assert.equal(articleMetadata.structuredData['@type'],'Article');
++assert.equal(articleMetadata.structuredData.mainEntityOfPage,articleMetadata.canonical);
++assert.equal(articleMetadata.robots,'noindex,follow');
++assert.equal(screenPageMetadata('blog','/blog').structuredData['@type'],'Blog');
++assert.equal(screenPageMetadata('stats','/stats',{noindex:true}).robots,'noindex,follow');
++assert.equal(screenPageMetadata('blog','/blog',{noindex:true}).robots,'noindex,follow');
++
++const sitemap=fs.readFileSync(new URL('../sitemap.xml',import.meta.url),'utf8');
++assert.doesNotMatch(fs.readFileSync(new URL('./index.html',import.meta.url),'utf8'),/<meta property="og:url"/,'the app shell must not advertise one route as every page URL');
++const shell=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
++for(const href of ['/united-states/unemployment','/compare/places/unemployment/california/vs/texas','/stats','/blog','/support','/about'])assert.ok(shell.includes(`href="${href}"`),`${href} must be discoverable through a crawlable anchor`);
++assert.match(shell,/<a href="\/united-states\/unemployment" data-page="map"/);
++assert.match(shell,/<a href="\/compare\/places\/unemployment\/california\/vs\/texas" data-page="compare"/);
++assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/united-states\/unemployment<\/loc>/);
++assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/united-states\/california\/unemployment<\/loc>/);
++assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/compare\/places\/unemployment\/california\/vs\/texas<\/loc>/);
++assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/compare\/indicators\/unemployment-vs-adjusted-gross-income-agi<\/loc>/);
++assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/compare\/places\/electricity-price-residential\/california\/vs\/texas<\/loc>/);
++assert.doesNotMatch(sitemap,/<loc>https:\/\/usa-xray\.online\/(?:stats|blog)<\/loc>/,'empty analytics and unpublished journal pages must not be discoverable in the sitemap');
++assert.doesNotMatch(sitemap,/\/blog\/(?:mississippi|electricity)/,'editorial drafts must stay outside the sitemap');
++assert.match(fs.readFileSync(new URL('../robots.txt',import.meta.url),'utf8'),/Sitemap: https:\/\/usa-xray\.online\/sitemap\.xml/);
++
++const journal=fs.readFileSync(new URL('./journal-view.js',import.meta.url),'utf8');
++assert.doesNotMatch(journal,/href=["']\.\/\?/,'journal navigation should use readable paths rather than query URLs');
++assert.match(journal,/article-map-note/,'unavailable historical indicators should not link to a different live measure');
++assert.match(fs.readFileSync(new URL('../scripts/seo_render.py',import.meta.url),'utf8'),/def render_route\(/,'the server must render route metadata before JavaScript');
++assert.match(fs.readFileSync(new URL('../scripts/preview_server.py',import.meta.url),'utf8'),/redirect_target\(/,'the read-only runtime must permanently normalize legacy URLs');
++
++console.log('PASS: canonical routes, county ambiguity, metadata, server rendering, redirects and sitemap policy');

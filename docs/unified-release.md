@@ -1,0 +1,58 @@
+# Unified release workflow
+
+`scripts/release_workflow.py` is the standard-library release operator CLI and Docker backend. It discovers the running baseline from the primary container, packages a clean commit, computes a full shipped-content plan, builds one pending image, and promotes that exact staged container. It uses immutable Docker container IDs for mutations and a single nonblocking `flock` at `/opt/usa-atlas-releases/deployment.lock` for every release ID and operation.
+
+## Identity and package rules
+
+The baseline identity is SHA256 of the **raw `/app/ux/build.json` bytes**. `preview-assets.json` is separately hashed as package content and is never used as baseline identity. A snapshot includes release/source metadata, hashes for files declared by `shippedSha256` and legacy `sourceSha256`, `assetSha256`, and `dataContractSha256` maps, raw build SHA, route-manifest SHA, image ID, immutable container ID, UID, read-only-root state, network, and read-only mount destinations. Mount source paths and secret contents are never written to records or logs.
+
+Candidate packages must include `ux/build.json`, `preview-assets.json`, a hashed `Dockerfile`, `ux/catalog.json`, `ux/catalog-proposals.json`, and all files listed by `shippedSha256`. Legacy hash maps are validated and folded into the same inventory. Any file outside that inventory, symlink, unsafe path, conflicting hash, incorrect content hash, or `sitecustomize.py` rejects the package. Fingerprints bind exact raw build bytes, all shipped file bytes, and the separately recorded route manifest hash. Plans list every changed path with before/after SHA256 values and unified text diffs where source text is available. Snapshot plans require reviewable text for changed baseline text files.
+
+The `prepare` command (also available as `scripts/build_temporary_preview.py`) requires a clean checkout and source commit equal to `HEAD`. It also requires explicit `--previous-release` and `--previous-build-sha256` inputs. Build metadata records exact `sourceCommit` and an equal full-SHA `sourceBaseCommit`, the prior release and raw build hash, and the reader lock hash, contract version, and schema fingerprint. `builtAt` is the source commit time, so the same committed inputs produce reproducible metadata. Missing or unrelated base commits are rejected; they are never used as source identity fallbacks.
+
+## Operator commands
+
+Use the host's Docker context and the documented config locations. The example config names the current primary `usa-atlas-paper-runtime-20261009`, private network `usa-atlas-private`, primary IP `172.19.0.4`, staging IP `172.19.0.231`, and port `4429`. Stage IP `.231` avoids the SEO service at `.230`. Runtime containers keep UID/GID `10001:10001`, read-only root, and the read-only `/run/secrets/reader_password` and `/var/lib/postgresql/data` mounts, derived from the primary container without printing mount sources.
+
+```sh
+python3 scripts/release_workflow.py snapshot --output /opt/usa-atlas-releases/snapshots/BASELINE.json
+python3 scripts/release_workflow.py prepare --destination /tmp/release-package --release UNIQUE_ID --source-commit FULL_SHA --previous-release BASELINE_RELEASE --previous-build-sha256 RAW_BASELINE_BUILD_SHA
+python3 scripts/release_workflow.py plan --baseline /opt/usa-atlas-releases/snapshots/BASELINE.json --baseline-build-sha RAW_BUILD_SHA --baseline-release RELEASE --package /tmp/release-package --changes ux/build.json ux/index.html --output /tmp/release-plan.json
+python3 scripts/release_workflow.py stage --id UNIQUE_ID --package /tmp/release-package --plan /tmp/release-plan.json --baseline-build-sha RAW_BUILD_SHA
+```
+
+For nonproduction CI packaging, supply the prior identity explicitly too:
+`python3 scripts/build_temporary_preview.py /tmp/ci-package --release ci-fixture --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000`.
+
+The exact target SHA must equal the **current public remote `main` SHA** from `git ls-remote` before production stage and activation. The checkout must be clean. Staging builds a unique pending image and runs it at `.231` with the production UID, read-only root, resource limits, and required read-only mounts. It records the image ID (Docker's immutable image ID), raw build SHA, source SHA, exact package SHA, stage container ID, and baseline snapshot. It does not rebuild during activation.
+
+### Acceptance receipt interface
+
+The application `ops/acceptance-policy.json` is pinned by exact SHA256, suite identity, and mandatory check IDs in `ops/release-policy.json`. The release CLI refuses a missing or changed policy. The application acceptance runner exercises the stage container at the configured stage IP and port. It writes a JSON receipt for activation, then a distinct receipt for rollback. The release gate requires the runner format, an empty failures list, and passing per-check execution evidence as well as the bound receipt fields. Each receipt must contain:
+
+- `status: "pass"`, `releaseId`, `operation` (`activate` or `rollback`), `testedAt` in ISO-8601 UTC, the exact current `suiteIdentity`, and every current `mandatoryCheckIDs` value in `mandatorySuccessfulCheckIDs`.
+- `testedImageDigest` (the staged or rollback target Docker image ID), exact raw `buildSha256`, and `sourceCommit`.
+- `readerLockSha256` (SHA256 of the exact lock file) and `readerSchemaFingerprint`.
+- For rollback only, `operationBaselineContainerId` and `operationBaselineBuildSha256`, identifying the actual live release snapshot used by the regression run.
+
+The receipt must be generated after staging for activation and be no more than 15 minutes old for either operation; future timestamps are rejected. The coordinator stage record contains nested `stageIdentity` and `stageVerifiedIdentity` objects and a fresh `readerSchemaProof`. Before it records a successful stage, the runtime queries `information_schema.columns` inside an explicit read-only transaction using its mounted reader secret, validates the vendored contract's required object/column types, and emits no row data or credentials. The pinned suite is `usa-atlas-application-acceptance-v1` and requires the staged build, staged runtime API, reader, geography, SEO, source, and Chrome regression checks. Secrets, database rows/counts, and secret-derived values do not belong in receipts. In the reader lock, `artifactPath` remains the producer repository path (`database/reader/v1`); `readerContractArtifact` explicitly names its vendored application copy (`contracts/reader/v1/contract.json`). Release validation binds the lock's raw SHA and schema fingerprint to that vendored contract JSON and its read-only admission rule.
+
+```sh
+python3 scripts/release_workflow.py activate --id UNIQUE_ID --receipt /tmp/activate-receipt.json
+python3 scripts/release_workflow.py rollback-stage --id UNIQUE_ID --output /tmp/rollback-stage.json
+python3 -c 'import json; print(json.dumps(json.load(open("/tmp/rollback-stage.json"))["rollbackBaseline"], indent=2))' > /tmp/rollback-baseline.json
+python3 scripts/check_release_acceptance.py --staged-url "$(python3 -c 'import json; print(json.load(open("/tmp/rollback-stage.json"))["stageUrl"])')" --release-id UNIQUE_ID --operation rollback --image-digest "$(python3 -c 'import json; print(json.load(open("/tmp/rollback-stage.json"))["testedImageDigest"])')" --build-sha256 "$(python3 -c 'import json; print(json.load(open("/tmp/rollback-stage.json"))["buildSha256"])')" --source-commit "$(python3 -c 'import json; print(json.load(open("/tmp/rollback-stage.json"))["sourceCommit"])')" --reader-lock contracts/reader-contract.lock.json --stage-evidence /tmp/rollback-stage.json --rollback-baseline /tmp/rollback-baseline.json --receipt /tmp/rollback-receipt.json
+python3 scripts/release_workflow.py rollback --id UNIQUE_ID --receipt /tmp/rollback-receipt.json --stage-evidence /tmp/rollback-stage.json
+```
+
+Before activation, the exact `{buildSha256,imageDigest}` pair must be approved in the external mutable registry at `/opt/usa-atlas-releases/approved-artifacts.json`. The committed `ops/release-policy.json` is the immutable revocation source; it blocks known-bad image digests regardless of labels. The historical SEO digest `sha256:f6ede23c5fed55dcf9bda27d7796b4d19571d9affba098eb50e45889362116ea` remains revoked. Historical Git commits and manifests are preserved.
+
+Activation rechecks remote main, the current full baseline identity (including hashed mount source identities), staged immutable container/image labels and actual runtime file bytes, current artifact approval, revocations, current reader lock, and receipt while holding the global lock. Docker runs the staged container by immutable image ID. Promotion disconnects staging before attaching the primary IP, checks HTTP `/ux/build.json` after the network switch, and compares actual primary alias ownership before every recovery mutation. Recovery can resume from the old container stopped/renamed, candidate renamed, or network switched states; foreign alias owners are preserved.
+
+Rollback requires a clean checkout at current public `main` and captures the actual live baseline at rollback operation start. It targets the prior container only when its exact image/build pair remains approved in the current registry, is not revoked, and has a fresh regression receipt bound to the live operation baseline and current reader schema. Historical CI status alone cannot authorize rollback.
+
+## Local verification and scope
+
+Run `python3 -m unittest scripts.test_release_workflow` for temporary-directory, in-memory backend, and mocked Docker adapter checks. These tests make no remote Git query, Docker mutation, SSH connection, or production request. They cover dirty/stale source and baseline rejection, legacy hashes, package metadata/UI tampering, extra files/symlinks/unsafe paths, mount source identity, receipt freshness/policy binding, denied rollback, lock contention, activation races, immutable container IDs, and preservation of a foreign primary owner. Real Docker failure injection and production rollback rehearsals remain part of parent integration review.
+
+No E1–E11 acceptance claim is made by this tooling change. Parent integration owns real runtime baseline capture, reader-lock production, the acceptance runner, production registry approval, and all deployment/SSH operations.

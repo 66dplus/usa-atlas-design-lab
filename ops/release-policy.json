@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "acceptancePolicy": {
+    "suiteIdentity": "usa-atlas-application-acceptance-v1",
+    "sha256": "f7b9c38c8f4b9159081f20abc169bcfdc5235bdfdd6759d2941805d9c1ef5c8b",
+    "mandatoryCheckIDs": [
+      "application.staged-build-identity",
+      "application.staged-runtime-api",
+      "application.reader-contract",
+      "application.geography-contract",
+      "application.seo-static",
+      "application.source-checks",
+      "application.chrome-regressions"
+    ]
+  },
+  "revokedImageDigests": [
+    "sha256:f6ede23c5fed55dcf9bda27d7796b4d19571d9affba098eb50e45889362116ea"
+  ],
+  "revocations": [
+    {
+      "reason": "Historical 20261025 SEO deployment was rejected; revocation is bound to image digest.",
+      "releaseLabelForAuditOnly": "20261025-seo-routes",
+      "imageDigest": "sha256:f6ede23c5fed55dcf9bda27d7796b4d19571d9affba098eb50e45889362116ea"
+    }
+  ],
+  "revokedBuildSha256": []
+}

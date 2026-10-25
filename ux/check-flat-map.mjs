@@ -38,8 +38,8 @@ const map=Object.create(FlatMapRenderer.prototype);Object.assign(map,{camera:new
 const t=d3.zoomIdentity.translate(-200,300).scale(4);map.setTransform(t);
 assert.ok(Math.abs((map.camera.left+map.camera.right)/2-((600-t.x)/t.k/100-6))<1e-12);
 assert.ok(Math.abs((map.camera.top+map.camera.bottom)/2-(3.75-(375-t.y)/t.k/100))<1e-12);
-assert.ok(Math.abs((map.camera.right-map.camera.left)/(map.camera.top-map.camera.bottom)-.9)<1e-12,'orthographic frame preserves SVG letterboxing');
-console.log(JSON.stringify({result:'PASS',counties,vertices,holes,islands,checks:'full flat topology and FIPS, cap areas, independent Compare lifetimes, detail invalidation, hole/background picking and orthographic SVG camera parity'}));
+assert.ok(Math.abs((map.camera.right-map.camera.left)/(map.camera.top-map.camera.bottom)-.9)<1e-12,'orthographic frame preserves the geographic viewport');
+console.log(JSON.stringify({result:'PASS',counties,vertices,holes,islands,checks:'full flat topology and FIPS, cap areas, independent Compare lifetimes, detail invalidation, hole/background picking and orthographic camera geometry'}));
 // Demand rendering has one pending frame, no idle loop, and catches drawing failure.
 let sequence=0;const queue=new Map();globalThis.requestAnimationFrame=callback=>{queue.set(++sequence,callback);return sequence;};globalThis.cancelAnimationFrame=id=>queue.delete(id);
 const demand=Object.create(FlatMapRenderer.prototype);let draws=0;
@@ -48,5 +48,5 @@ demand.requestRender();demand.requestRender();assert.equal(queue.size,1);
 const callback=[...queue.values()][0];queue.clear();callback();assert.equal(draws,1);assert.equal(queue.size,0);
 demand.requestRender();demand.setVisible(false);assert.equal(queue.size,0);assert.equal(draws,1);
 let failure;Object.assign(demand,{visible:true,disposed:false,renderer:{render(){throw new Error('GPU draw interruption');}},dispose(){this.disposed=true;},onFailure:message=>{failure=message;}});
-demand.renderNow();await Promise.resolve();assert.ok(demand.disposed);assert.match(failure,/using SVG/);
-console.log('PASS: demand frames coalesce, idle/hidden views stop, and drawing failures dispose and recover.');
+demand.renderNow();await Promise.resolve();assert.ok(demand.disposed);assert.match(failure,/Try loading it again/);
+console.log('PASS: demand frames coalesce, idle/hidden views stop, and drawing failures dispose and report an explicit retry.');

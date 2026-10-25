@@ -26,9 +26,17 @@ The same atlas on a phone:
   <img src="docs/screenshots/03-mobile-compare-2d.png" width="31%" alt="Mobile compare: two stacked place maps">
 </p>
 
-## 2D renderer: owner decision, 14 October 2026
+## 2D renderer: owner decision, 24 October 2026
 
-Standard 2D maps render in WebGL; links without a `renderer` parameter serve WebGL. Saved views and links with an explicit `renderer=svg` keep using SVG, and newly saved or shared links always record the selected renderer in the URL. SVG remains the automatic fallback when WebGL is unavailable, a draw fails, or the context is lost. The 3D renderer is unchanged. The local SVG-vs-WebGL comparison over a frozen set of observations is described in [docs/webgl-comparison-2026-10-11.md](docs/webgl-comparison-2026-10-11.md); the preference for WebGL came from the owner after a local comparison and is not a performance claim.
+All 2D maps use WebGL. The legacy SVG geographic renderer and automatic SVG
+fallback have been removed at the owner's request. Old `renderer=svg` links open
+WebGL and the obsolete renderer parameter is removed when the URL is saved.
+WebGL failure shows an explicit map error with a retry button. Transparent SVG
+text labels and the existing D3 gesture surface remain; they contain no county,
+state or world paths and do not render the geographic map. The 3D renderer remains
+WebGL. The [October comparison](docs/webgl-comparison-2026-10-11.md) is historical.
+City membership is cached by state feature so detailed polygon containment is not
+repeated on every 2D pan/zoom frame.
 
 ## Current interface — Paper runtime, promoted 20 October 2026
 
@@ -38,7 +46,7 @@ On Desktop the map is the workspace. The left panel holds the indicator, the pla
 
 On a phone the map keeps the top of the screen and the place panel becomes a bottom sheet that expands over the map; Compare stacks the two place maps, and a docked bar switches modes. The source and geometry popups, the camera controls and the sheet transitions follow the same rules on both sizes.
 
-The indicator pickers share one set of display switches: 38 collected fields are enabled — the 35 collected map indicators plus the three admitted medical fields. Only the enabled fields whose default series the connected database has admitted appear in a picker, so the number you see depends on that database. A missing observation stays an explicit gap: a state value is never spread over its counties, and no US average is computed from states.
+The indicator pickers share one set of display switches: 39 collected fields are enabled — the 36 collected map indicators plus the three admitted medical fields. Only the enabled fields whose default series the connected database has admitted appear in a picker, so the number you see depends on that database. A missing observation stays an explicit gap: a state value is never spread over its counties, and no US average is computed from states.
 
 The Blog is the Atlas journal. It shows live map previews and two editorial drafts that are still marked review pending. Stats is the audience view; no public audience data is connected, so its figures read as unavailable rather than zero.
 
@@ -117,11 +125,12 @@ python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release
 `ux/build.json` carries the `release` identifier, the `sourceBaseCommit` the build
 came from, and the SHA-256 of every shipped source and contract file. The live file
 is at `https://usa-xray.online/ux/build.json`, so the published site always names
-the commit it was built from. The current live release is `20261020-normalized39-v2`;
-it was packaged before the commit field existed, so its `sourceSha256` and
-`dataContractSha256` lists identify the exact bytes instead. The repository carries
-those bytes: a build from this tree reproduces the live release file for file,
-except the two local review-tooling lines that the public build strips on purpose.
+the commit it was built from. The current live release is `20261025-seo-routes-dd3d97`, based on source commit
+`dd3d97d829e85e341b051538707298bd943dea31`. It adds canonical geography, indicator,
+comparison and page routes with server-rendered search metadata, permanent legacy
+URL redirects, a 57-route sitemap, and explicit noindex handling for Stats and
+unpublished Blog content. The published bytes are bound by the raw manifest in
+[`docs/releases/20261025-seo-routes-dd3d97/public-build.json`](docs/releases/20261025-seo-routes-dd3d97/public-build.json); the full application-side evidence is in that release folder. The recovered runtime remains the baseline for version binding.
 
 The public runtime is read-only. It serves the same admitted observations as a local
 run, reads them from the `usa_atlas` database through the read-only adapter, and
@@ -147,7 +156,7 @@ For a quick integrity check of the gallery run:
 npm run check
 ~~~
 
-The command checks files, geographic assets and synthetic fields. It does not require PostgreSQL. The atlas itself has its own checks in <code>ux/check-*.mjs</code>: the flat topology and picking suite, the volume geometry and detail suites, the motion suite, the data-store suite, the source-metadata suite, the approved-icon suite and the runtime suite. The Python suites in <code>scripts/test_*.py</code> cover the adapter, the catalog contract, the preview cache and the local server. Continuous integration runs all of them; the checks that need a live database are skipped when PostgreSQL is unavailable. Verify the relevant code in <code>ux/</code> and <code>scripts/</code> before sending changes.
+The command checks files, geographic assets and synthetic fields. It does not require PostgreSQL. The atlas itself has its own checks in <code>ux/check-*.mjs</code>: the flat topology and picking suite, the volume geometry and detail suites, the motion suite, the data-store suite, the source-metadata suite, the approved-icon suite and the runtime suite. The Python suites in <code>scripts/test_*.py</code> cover the adapter, the catalog contract, the preview cache and the local server. Continuous integration must run required browser and PostgreSQL gates with those services available; a required gate must fail when its tool or service is missing. Verify the relevant code in <code>ux/</code> and <code>scripts/</code> before sending changes.
 
 When changing data, keep the original values, units, period, source release and exact geography matching. Do not fill gaps with computations and do not change the geography level without changing the contract and the documentation.
 

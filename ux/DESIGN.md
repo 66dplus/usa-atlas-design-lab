@@ -1,4 +1,4 @@
-# USA Atlas — assembled UI
+# USA X-Ray — assembled UI
 
 Updated 20 September 2026 from the owner's Paper comments on screens 83–106. Current live code: `index.html`, `app.js`, `style.css`, `map.js`. Reference captures and acceptance evidence are held in the wider workspace archive.
 
@@ -13,7 +13,7 @@ Desktop: 20 px outside margin, header at 18 px, left profile 308 px, right quick
 - Header order: Trends / Explorer / Compare. Saved is on the left beside the brand. The old `concept=stories` route remains valid and now means Trends.
 - Left profile: search icon + place dropdown, real geographic path, photo, indicator dropdown, raw value with source/period, Highest / Lowest, Compare / Explore more, next questions, source details.
 - California's photo opens San Francisco; in San Francisco the photo expands in the same scrollable profile. The credit stays on the photo. Other places do not reuse an unrelated city photo.
-- Metric chooser retains search, categories and coverage labels. Curated Popular indicators sit below the results; these do not claim measured search traffic.
+- Metric chooser retains search, categories and coverage labels. Indicators are discovered through the searchable catalog and horizontal category filters.
 - Saved, place search, metric search, rankings and Surprise use the left frame. Saved's Back restores the previous profile and scroll, without a modal on the map.
 - Right side: quick statistics for the selected place, source details and a labelled advertisement placeholder. No live advertiser, ad network or outbound commercial integration.
 - Compare: two full-height frameless map halves, place/metric selectors and small values near their lower edge, a source comparison table from below. No card surrounding either map. Mobile stacks the maps.

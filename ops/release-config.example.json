@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "network": "usa-atlas-private",
+  "primaryContainer": "usa-atlas-paper-runtime-20261009",
+  "primaryAddress": "172.19.0.4",
+  "stageAddress": "172.19.0.231",
+  "port": 4429,
+  "runtimeUser": "10001:10001",
+  "readOnlyRoot": true,
+  "stateDirectoryEnv": "USA_ATLAS_RELEASE_STATE_DIR",
+  "deploymentLockEnv": "USA_ATLAS_DEPLOYMENT_LOCK",
+  "readerSecretDestination": "/run/secrets/reader_password",
+  "databaseDestination": "/var/lib/postgresql/data",
+  "memory": "384m",
+  "cpus": "1",
+  "pidsLimit": 64,
+  "mainRemote": "origin",
+  "mainBranch": "main",
+  "approvalRegistry": "/opt/usa-atlas-releases/approved-artifacts.json",
+  "acceptancePolicy": "ops/acceptance-policy.json",
+  "readerContractArtifact": "contracts/reader/v1/contract.json"
+}

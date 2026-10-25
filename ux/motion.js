@@ -15,9 +15,9 @@ export function showSurface(node, open, {axis='y', distance=28, duration=260}={}
   return animation.finished.then(()=>{if(running.get(node)!==animation)return false;node.hidden=!open;animation.cancel();running.delete(node);return true;}).catch(()=>false);
 }
 export function slidePill(group, selected) {
-  const buttons=[...group.querySelectorAll(':scope > button')].filter(button=>button.dataset?.pill!=='skip'),index=buttons.indexOf(selected);
+  const items=[...group.querySelectorAll(':scope > button, :scope > a[data-page]')].filter(button=>button.dataset?.pill!=='skip'),index=items.indexOf(selected);
   if(index<0)return;
-  group.style.setProperty('--slot',index);group.style.setProperty('--slots',buttons.length);
+  group.style.setProperty('--slot',index);group.style.setProperty('--slots',items.length);
 }
 export function animateReplacement(node, change) {
   running.get(node)?.cancel();

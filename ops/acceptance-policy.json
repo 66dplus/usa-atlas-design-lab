@@ -1,0 +1,41 @@
+{
+  "format": "usa_atlas_application_acceptance_policy",
+  "version": 1,
+  "suiteIdentity": "usa-atlas-application-acceptance-v1",
+  "mandatoryCheckIDs": [
+    "application.staged-build-identity",
+    "application.staged-runtime-api",
+    "application.reader-contract",
+    "application.geography-contract",
+    "application.seo-static",
+    "application.source-checks",
+    "application.chrome-regressions"
+  ],
+  "checks": [
+    {
+      "id": "application.reader-contract",
+      "command": ["{python}", "scripts/check_reader_contract.py", "--require-postgres"],
+      "timeoutSeconds": 180
+    },
+    {
+      "id": "application.geography-contract",
+      "command": ["{python}", "scripts/check_geography_contract.py"],
+      "timeoutSeconds": 180
+    },
+    {
+      "id": "application.seo-static",
+      "command": ["npm", "run", "check:seo"],
+      "timeoutSeconds": 300
+    },
+    {
+      "id": "application.source-checks",
+      "command": ["npm", "run", "check:source"],
+      "timeoutSeconds": 900
+    },
+    {
+      "id": "application.chrome-regressions",
+      "command": ["{python}", "scripts/run_release_regressions.py"],
+      "timeoutSeconds": 3600
+    }
+  ]
+}
