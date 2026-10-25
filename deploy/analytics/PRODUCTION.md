@@ -186,11 +186,13 @@ sudo sh -c 'umask 077; python3 scripts/analytics_report.py \
   --test --days 7 --output /tmp/usa-xray-qa-analytics.json'
 ```
 
-The Compose project owns its private network and the persistent named volume
-`usa-xray-analytics_analytics-db`. `restart`, `stop`, and `down` preserve the
-volume. Never use `down -v`; it deletes the collection. Back up and restore the
-volume using the operator's PostgreSQL backup procedure before any storage
-migration or host replacement.
+The Compose project owns a dedicated bridge used only by Umami and its database,
+plus the persistent named volume `usa-xray-analytics_analytics-db`. This is a
+normal bridge so Docker can publish Umami on the host loopback; PostgreSQL has
+no published host port, and the stack joins no Atlas networks. `restart`,
+`stop`, and `down` preserve the volume. Never use `down -v`; it deletes the
+collection. Back up and restore the volume using the operator's PostgreSQL
+backup procedure before any storage migration or host replacement.
 
 There is no previous Umami traffic to backfill. Public `/stats` integration is
 outside this work: the analytics service and private dashboard collect data,

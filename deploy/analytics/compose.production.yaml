@@ -61,8 +61,8 @@ services:
       - analytics-private
 
 networks:
-  analytics-private:
-    internal: true
+  # A normal bridge is needed for Docker 29 to publish Umami's loopback port.
+  analytics-private: {}
 
 volumes:
   analytics-db:
