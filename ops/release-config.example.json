@@ -18,5 +18,11 @@
   "mainBranch": "main",
   "approvalRegistry": "/opt/usa-atlas-releases/approved-artifacts.json",
   "acceptancePolicy": "ops/acceptance-policy.json",
-  "readerContractArtifact": "contracts/reader/v1/contract.json"
+  "readerContractArtifact": "contracts/reader/v1/contract.json",
+  "reportsStorage": {
+    "type": "volume",
+    "sourceEnv": "USA_ATLAS_REPORTS_VOLUME",
+    "destination": "/var/lib/usa-atlas/reports"
+  },
+  "trustedProxyNetworks": []
 }

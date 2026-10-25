@@ -52,3 +52,7 @@ The completed index above lists report hashes. Critical reports include:
 - Actual Sol mobile hardening review: `sol-mobile-hardening-review.md`, SHA-256 `73b3ae0c10a7675300d93d3fbdade70e24bce553d79ae20b6dd0fa6818228471`.
 
 Private owner camera preferences are excluded; curated committed runtime defaults remain versioned. The evidence packet contains no secrets, full server environment, private feedback, mount sources or owner-private notes. This report records completed runtime evaluation; documentation/test-only integration follows the protected PR process and is verifiable in GitHub history.
+
+## Separate React task
+
+The completed E1–E11 record above remains unchanged. The separately owner-authorized React/TypeScript candidate is tracked in [its own before/after evaluation](react-typescript-evaluation-20261026.md); its local checks do not change the current production release or authorize activation.

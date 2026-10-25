@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from scripts.test_runtime_conformance import passing_report
+
 from scripts.release_workflow import (Coordinator, DockerBackend, ReleaseError,
     atomic_json, create_plan, deployment_lock, digest, json_sha, package_inventory,
     require_clean_checkout)
@@ -172,6 +174,7 @@ class WorkflowTests(unittest.TestCase):
         checks = {'stagedBuildIdentity': {'runtimeBuildSha256':build or self.target_sha,
                     'releaseId':runtime_release,'sourceCommit':source},
                   'stagedRuntimeApi': {'exitCode':0}}
+        checks['runtimeConformance'] = passing_report(build or self.target_sha, source, runtime_release, image)
         checks.update({check: {'exitCode':0} for check in self.coordinator.mandatory_checks
                        if check not in ('application.staged-build-identity','application.staged-runtime-api')})
         return {'format':'usa_atlas_release_acceptance','status':'pass','failures':[],
@@ -388,6 +391,43 @@ class WorkflowTests(unittest.TestCase):
         self.coordinator.stage_rollback('r1', output)
         self.assertEqual(captured['current']['containerId'], 'stage-r1')
         self.assertEqual(captured['prior']['containerId'], 'container-old')
+
+    def test_preactivation_baseline_rehearsal_is_locked_and_does_not_activate(self):
+        captured = {}
+        def stage_target(prior, current, release_id, identity, lock, artifact):
+            import fcntl
+            with self.lockfile.open('a+') as stream:
+                with self.assertRaises(BlockingIOError):
+                    fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            captured.update(prior=prior,current=current)
+            return {'releaseId':release_id,'containerId':'baseline-test','testedImageDigest':prior['imageId']}
+        self.backend.stage_rollback_target=stage_target
+        self.backend.remove_baseline_test_stage=lambda stage:self.backend.removed_stages.append(stage['containerId'])
+        before=dict(self.backend.live)
+        with patch('scripts.release_workflow.require_clean_checkout',return_value='a'*40):
+            evidence=self.coordinator.stage_current_baseline('proof-a',self.root/'baseline-proof.json')
+        self.assertEqual(captured['prior'],before);self.assertEqual(captured['current'],before)
+        self.assertEqual(self.backend.live,before)
+        self.assertEqual(evidence['purpose'],'preactivation-baseline-rehearsal')
+        with self.assertRaises(ReleaseError):self.coordinator.activate('proof-a',self.receipt('activate'))
+        with patch('scripts.release_workflow.require_clean_checkout',return_value='a'*40),self.assertRaises(ReleaseError):
+            self.coordinator.stage_current_baseline('proof-a',self.root/'other-output.json')
+        def failed_cleanup(stage):
+            raise ReleaseError('removal failed')
+        self.backend.remove_baseline_test_stage = failed_cleanup
+        with self.assertRaisesRegex(ReleaseError, 'removal failed'):
+            self.coordinator.discard_baseline_stage('proof-a')
+        self.assertEqual(json.loads((self.records/'proof-a-baseline-proof.json').read_text())['status'], 'baseline-test-staged')
+        self.backend.remove_baseline_test_stage=lambda stage:self.backend.removed_stages.append(stage['containerId'])
+        self.coordinator.discard_baseline_stage('proof-a')
+        self.assertEqual(self.backend.removed_stages,['baseline-test']);self.assertEqual(self.backend.live,before)
+
+    def test_baseline_rehearsal_rejects_stale_source_and_unapproved_runtime(self):
+        with patch('scripts.release_workflow.require_clean_checkout',return_value='c'*40),self.assertRaisesRegex(ReleaseError,'current accepted main'):
+            self.coordinator.stage_current_baseline('bad',self.root/'bad.json')
+        self.backend.live['imageId']='sha256:unapproved'
+        with patch('scripts.release_workflow.require_clean_checkout',return_value='a'*40),self.assertRaisesRegex(ReleaseError,'not currently approved'):
+            self.coordinator.stage_current_baseline('bad',self.root/'bad.json')
 
     def test_self_consistent_unplanned_map_change_is_not_hidden_by_seo_paths(self):
         map_file = self.target/'ux/map.js'

@@ -36,11 +36,12 @@ export class AttentionClock {
 }
 
 export function createAtlasAnalytics() {
+  const lifetime = new AbortController();
   let context, signature, comparisonSignature, ready = false, foreground = false, clock;
   let tracker, failed = false, pending = [], initialViewSent = false;
   const now = () => performance.now();
   const engaged = () => ready && foreground;
-  const diagnostic = error => { if (!failed) console.warn('Atlas analytics unavailable:', error.message); failed = true; pending = []; };
+  const diagnostic = error => { if(lifetime.signal.aborted)return; if (!failed) console.warn('Atlas analytics unavailable:', error.message); failed = true; pending = []; };
   function send(name, data = context) {
     if (failed || !data) return;
     const payload = {name: 'atlas_' + name, data: {...data}};
@@ -87,7 +88,7 @@ export function createAtlasAnalytics() {
   function visibility() { setForeground(document.visibilityState === 'visible' && document.hasFocus()); }
   async function start() {
     try {
-      const response = await fetch('/api/analytics/config');
+      const response = await fetch('/api/analytics/config', {signal:lifetime.signal});
       if (!response.ok) throw new Error('Tracker configuration could not be loaded');
       const config = await response.json();
       if (!config.enabled) { failed = true; pending = []; return; }
@@ -107,13 +108,13 @@ export function createAtlasAnalytics() {
     } catch (error) { diagnostic(error); }
   }
   foreground = document.visibilityState === 'visible' && document.hasFocus();
-  for (const event of ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll']) document.addEventListener(event, activity, {passive: true, capture: true});
-  document.addEventListener('visibilitychange', visibility);
+  for (const event of ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll']) document.addEventListener(event, activity, {passive: true, capture: true, signal:lifetime.signal});
+  document.addEventListener('visibilitychange', visibility, {signal:lifetime.signal});
   // Window events are authoritative; hasFocus() can lag while blur/focus is dispatched.
-  window.addEventListener('blur', () => setForeground(false));
-  window.addEventListener('focus', () => setForeground(document.visibilityState === 'visible'));
-  window.addEventListener('pagehide', flush);
-  setInterval(flush, FLUSH_MS);
+  window.addEventListener('blur', () => setForeground(false), {signal:lifetime.signal});
+  window.addEventListener('focus', () => setForeground(document.visibilityState === 'visible'), {signal:lifetime.signal});
+  window.addEventListener('pagehide', flush, {signal:lifetime.signal});
+  const interval = setInterval(flush, FLUSH_MS);
   start();
-  return {observe, action};
+  return {observe, action, dispose() {flush(); clearInterval(interval); lifetime.abort(); pending = [];}};
 }

@@ -17,6 +17,11 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
+try:
+    from .runtime_conformance import validate_conformance
+except ImportError:
+    from runtime_conformance import validate_conformance
+
 ROOT = Path(__file__).resolve().parents[1]
 OUT_ROOT = Path(tempfile.gettempdir()) / "usa-xray-release-acceptance"
 POLICY_PATH = ROOT / "ops/acceptance-policy.json"
@@ -203,6 +208,9 @@ def main():
     env["ATLAS_TEST_BROWSER"] = "chrome"
     env.setdefault("PLAYWRIGHT_MODULE", "playwright")
     env["ATLAS_DISABLE_SECRET_FILE"] = "1"
+    env["ATLAS_CONFORMANCE_IMAGE_DIGEST"] = args.image_digest
+    env["ATLAS_CONFORMANCE_BUILD_SHA256"] = args.build_sha256
+    env["ATLAS_CONFORMANCE_REPORT"] = str(workdir / "runtime-conformance.json")
     failures, checks, successful = [], {}, []
     if runner_start_error:
         failures.append(f"acceptance runner provenance check failed: {runner_start_error}")
@@ -383,7 +391,8 @@ def main():
                 port = free_port()
                 env["ATLAS_TEST_OUTPUT"] = str(workdir / "browser")
                 server = subprocess.Popen([sys.executable, str(package / "scripts/preview_server.py"),
-                                           "--host", "127.0.0.1", "--port", str(port)],
+                                           "--host", "127.0.0.1", "--port", str(port),
+                                           "--reports-dir", str(workdir / "private-reports")],
                                           cwd=package, env=env, stdout=subprocess.DEVNULL,
                                           stderr=subprocess.DEVNULL)
                 base_url = f"http://127.0.0.1:{port}"
@@ -445,6 +454,14 @@ def main():
                 failures.append(f"mandatory acceptance check failed: {check_id}")
             else:
                 successful.append(check_id)
+        try:
+            conformance = json.loads(Path(env['ATLAS_CONFORMANCE_REPORT']).read_text())
+            validate_conformance(conformance, build_sha=args.build_sha256,
+                                 source=args.source_commit, image=args.image_digest,
+                                 release=(stage.get('targetRelease') if args.operation == 'rollback' else args.release_id))
+            checks['runtimeConformance'] = conformance
+        except (OSError, ValueError, TypeError) as error:
+            failures.append(f'bound runtime conformance evidence failed: {error}')
         expected_ids = set(policy.get("mandatoryCheckIDs", []))
         if set(successful) != expected_ids:
             failures.append("executed successful check IDs do not exactly match mandatory acceptance policy")

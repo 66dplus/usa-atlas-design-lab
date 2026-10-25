@@ -14,6 +14,7 @@ from unittest.mock import patch
 from scripts import check_release_acceptance
 from scripts.check_release_acceptance import bind_test_target, build_receipt
 from scripts.release_workflow import ReleaseError, verify_receipt
+from scripts.test_runtime_conformance import passing_report
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,7 +105,7 @@ class AcceptanceProtocolTests(unittest.TestCase):
         argv.extend(["--receipt", str(receipt_path)])
         return argv, stage, build_raw, receipt_path, release_id, image_digest, build_sha, source_commit
 
-    def run_main_with_evidence(self, directory, operation="activate", mutate=None, runner_commits=None):
+    def run_main_with_evidence(self, directory, operation="activate", mutate=None, runner_commits=None, mutate_conformance=None):
         (argv, stage, build_raw, receipt_path, release_id, image_digest,
          build_sha, source_commit) = self.integration_fixture(directory, operation)
         if mutate:
@@ -119,6 +120,11 @@ class AcceptanceProtocolTests(unittest.TestCase):
             return json.dumps({"fieldId": "03.06:unemployment_rate", "observations": []}).encode()
 
         def successful_check(command, **kwargs):
+            if 'scripts/run_release_regressions.py' in command:
+                path = Path(kwargs['env']['ATLAS_CONFORMANCE_REPORT'])
+                report=passing_report(build_sha, source_commit, stage.get('targetRelease', release_id), image_digest)
+                if mutate_conformance: mutate_conformance(report)
+                path.write_text(json.dumps(report))
             return {"command": command, "exitCode": 0, "stdout": "", "stderr": ""}
 
         output = io.StringIO()
@@ -151,6 +157,23 @@ class AcceptanceProtocolTests(unittest.TestCase):
                        suite_identity=POLICY["suiteIdentity"], mandatory_checks=MANDATORY,
                        vendored_artifact="contracts/reader/v1/contract.json",
                        runtime_release_id=runtime_release_id)
+
+    def test_main_rejects_zero_exit_browser_without_complete_conformance(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result, receipt, *_ = self.run_main_with_evidence(directory,
+                mutate_conformance=lambda report:report['core'].pop('negativeFooter'))
+            self.assertEqual(result,1)
+            self.assertTrue(any('conformance' in error for error in receipt['failures']))
+
+    def test_current_candidate_receipt_cannot_mark_new_checks_not_applicable(self):
+        args,receipt=self.runner_receipt('activate')
+        receipt['checks']['runtimeConformance']['supplements']['studio'].update(applicable=False,status='not_applicable')
+        with self.assertRaisesRegex(ReleaseError,'conformance evidence invalid'):
+            verify_receipt(receipt,LOCK,release_id=args.release_id,operation='activate',
+                image_digest=args.image_digest,build_sha=args.build_sha256,source_commit=args.source_commit,
+                started_at=(datetime.now(timezone.utc)-timedelta(seconds=1)).isoformat(),
+                suite_identity=POLICY['suiteIdentity'],mandatory_checks=MANDATORY,
+                vendored_artifact='contracts/reader/v1/contract.json')
 
     def test_main_accepts_coordinator_shaped_activation_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -255,6 +278,7 @@ class AcceptanceProtocolTests(unittest.TestCase):
                                    "releaseId": runtime_release, "sourceCommit": args.source_commit},
             "stagedRuntimeApi": {"exitCode": 0},
         }
+        checks['runtimeConformance'] = passing_report(args.build_sha256, args.source_commit, runtime_release, args.image_digest)
         successful = ["application.staged-build-identity", "application.staged-runtime-api"]
         for check_id in MANDATORY:
             if check_id not in successful:

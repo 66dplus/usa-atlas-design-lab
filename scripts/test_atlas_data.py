@@ -131,7 +131,7 @@ class AtlasDataIntegration(unittest.TestCase):
     def test_local_sources_do_not_reuse_a_future_cached_revision(self):
         code, body, headers = self.request('/ux/app.js', headers={'If-Modified-Since': 'Wed, 01 Jan 2031 00:00:00 GMT'})
         self.assertEqual(code, 200)
-        self.assertIn(b'createDataStore', body)
+        self.assertEqual(body, (Path(__file__).resolve().parents[1] / 'dist/ux/app.js').read_bytes(), 'Serve the exact current compiled frontend rather than a stale source or cached revision')
         self.assertEqual(headers['Cache-Control'], 'no-store')
 
 

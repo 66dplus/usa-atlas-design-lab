@@ -100,10 +100,18 @@ const assets = {
   }
 };
 
+// Shared semantic definitions for both the renderer tooling and React SVGs.
+export const interfaceIconDefinition = name => interfaceIcons[name] || null;
+export function indicatorIconDefinition(metric) {
+  const id=String(metric.id||'').split('--')[0],name=byIndicator[id]||byLabel[metric.name];
+  return name&&thematicIcons[name] || null;
+}
+
 const vector=(definition,className)=>`<svg class="${className}" viewBox="${definition.viewBox}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${definition.body}</svg>`;
 let renderId = 0;
 export function brandIcon(name) {
-  if(interfaceIcons[name])return vector(interfaceIcons[name],'brand-icon');
+  const definition=interfaceIconDefinition(name);
+  if(definition)return vector(definition,'brand-icon');
   const asset = assets[name];
   if (!asset) throw new Error(`Unknown Brand 02 icon: ${name}`);
   const filterId = `brand-ink-${++renderId}`;
@@ -113,8 +121,8 @@ export function brandIcon(name) {
 }
 
 export function indicatorIcon(metric) {
-  const id=String(metric.id||'').split('--')[0],name=byIndicator[id]||byLabel[metric.name];
-  if(name&&thematicIcons[name])return `<span class="indicator-icon">${vector(thematicIcons[name],'thematic-icon')}</span>`;
+  const definition=indicatorIconDefinition(metric);
+  if(definition)return `<span class="indicator-icon">${vector(definition,'thematic-icon')}</span>`;
   // Employment glyph from the final Mobile indicator picker (Paper 1Y69-1).
   // Other catalog topics keep the approved Brand 02 indicator symbol.
   const employment=metric.catalogId?.startsWith('03.06')||metric.id.startsWith('unemployment');

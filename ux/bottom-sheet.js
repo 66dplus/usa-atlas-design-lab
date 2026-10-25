@@ -23,6 +23,8 @@ export function sheetContent(root) {
 /** @param {HTMLElement} root @param {SheetOptions} options */
 export function bottomSheet(root, {initial = 'half', maxSnap = 'expanded', fitContent = false, freeDrag = false, onSnap = () => {}} = {}) {
   if (controllers.has(root)) return controllers.get(root);
+  const lifetime = new AbortController();
+  const listen = (target, type, callback, options = {}) => target?.addEventListener(type, callback, {...options, signal: lifetime.signal});
   const content = sheetContent(root);
   const handle = document.createElement('button');
   handle.type = 'button';
@@ -166,34 +168,34 @@ export function bottomSheet(root, {initial = 'half', maxSnap = 'expanded', fitCo
   }
   const dragTargets=[handle];
   for(const target of dragTargets){
-    target.addEventListener('pointerdown', event => {
+    listen(target, 'pointerdown', event => {
       if (!mobile.matches || event.button !== 0 || event.isPrimary === false) return;
       begin(event.clientY, event.timeStamp); target.setPointerCapture(event.pointerId);
     });
-    target.addEventListener('pointermove', event => {if (drag) move(event.clientY, event.timeStamp);});
-    target.addEventListener('pointerup', event => finish(false, event.timeStamp));
-    target.addEventListener('pointercancel', () => finish(true));
-    target.addEventListener('lostpointercapture', () => {if (drag) finish(true);});
-    if(target!==handle)target.addEventListener('click',event=>{if(suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}});
+    listen(target, 'pointermove', event => {if (drag) move(event.clientY, event.timeStamp);});
+    listen(target, 'pointerup', event => finish(false, event.timeStamp));
+    listen(target, 'pointercancel', () => finish(true));
+    listen(target, 'lostpointercapture', () => {if (drag) finish(true);});
+    if(target!==handle)listen(target, 'click',event=>{if(suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}});
   }
   if(freeDrag){
-    root.addEventListener('pointerdown',event=>{
+    listen(root, 'pointerdown',event=>{
       const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;
       if(!target||!root.contains(target)||!mobile.matches||event.button!==0||event.isPrimary===false)return;
       begin(event.clientY,event.timeStamp);target.setPointerCapture(event.pointerId);drag.target=target;
     });
-    root.addEventListener('pointermove',event=>{if(drag?.target&&event.target===drag.target)move(event.clientY,event.timeStamp);});
-    root.addEventListener('pointerup',event=>{if(drag?.target&&event.target===drag.target)finish(false,event.timeStamp);});
-    root.addEventListener('pointercancel',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
-    root.addEventListener('lostpointercapture',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
-    root.addEventListener('click',event=>{const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;if(target&&suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}});
+    listen(root, 'pointermove',event=>{if(drag?.target&&event.target===drag.target)move(event.clientY,event.timeStamp);});
+    listen(root, 'pointerup',event=>{if(drag?.target&&event.target===drag.target)finish(false,event.timeStamp);});
+    listen(root, 'pointercancel',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
+    listen(root, 'lostpointercapture',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
+    listen(root, 'click',event=>{const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;if(target&&suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}}, {capture:true});
   }
-  handle.addEventListener('click', event => {
+  listen(handle, 'click', event => {
     if (suppressClick && event.detail > 0) {suppressClick = false; return;}
     const next = snap === 'expanded' ? 'half' : snap === 'half' ? 'expanded' : 'half';
     setSnap(names[Math.max(firstSnap, names.indexOf(next))]);
   });
-  handle.addEventListener('keydown', event => {
+  listen(handle, 'keydown', event => {
     if (!['ArrowUp','ArrowDown','Home','End'].includes(event.key)) return;
     event.preventDefault();
     const index = names.indexOf(snap);
@@ -215,11 +217,11 @@ export function bottomSheet(root, {initial = 'half', maxSnap = 'expanded', fitCo
   }
   // Native vertical scrolling is preserved at maximum. A non-passive listener
   // takes ownership only after a downward pull reaches the top of that scroll.
-  content.addEventListener('touchstart', event => {
+  listen(content, 'touchstart', event => {
     if (!mobile.matches || event.touches.length !== 1) return;
     const t = event.touches[0]; touch = {target:event.target,y: t.clientY, x: t.clientX, startY: t.clientY, startX: t.clientX, owned: false};
   }, {passive: true});
-  content.addEventListener('touchmove', event => {
+  listen(content, 'touchmove', event => {
     if (!touch || event.touches.length !== 1) return;
     const t = event.touches[0], delta = t.clientY - touch.y;
     const vertical = Math.abs(t.clientY - touch.startY) > Math.abs(t.clientX - touch.startX);
@@ -233,18 +235,18 @@ export function bottomSheet(root, {initial = 'half', maxSnap = 'expanded', fitCo
     }
     touch.y = t.clientY; touch.x = t.clientX;
   }, {passive: false});
-  content.addEventListener('touchend', event => {if (touch?.owned) finish(false, event.timeStamp); touch = null;});
-  content.addEventListener('touchcancel', () => {if (touch?.owned) finish(true); touch = null;});
+  listen(content, 'touchend', event => {if (touch?.owned) finish(false, event.timeStamp); touch = null;});
+  listen(content, 'touchcancel', () => {if (touch?.owned) finish(true); touch = null;});
   // Keyboard focus must never disappear into the clipped half of a compact sheet.
-  content.addEventListener('focusin', event => {
+  listen(content, 'focusin', event => {
     if (mobile.matches && snap !== maxSnap && event.target.getBoundingClientRect().bottom > viewport() - style('--nav-height') - style('--safe-bottom')) setSnap(maxSnap);
   });
   function resize() {cancelAnimationFrame(frame); frame = requestAnimationFrame(geometry);}
-  window.addEventListener('resize', resize);
-  window.visualViewport?.addEventListener('resize', resize);
-  mobile.addEventListener('change', () => {geometry(); setSnap(snap, false);});
-  reduced.addEventListener('change', () => {interrupt(); setSnap(snap, false);});
-  const api = {setSnap, content, handle, get snap() {return snap;}, refresh: geometry, syncSummary};
+  listen(window, 'resize', resize);
+  listen(window.visualViewport, 'resize', resize);
+  listen(mobile, 'change', () => {geometry(); setSnap(snap, false);});
+  listen(reduced, 'change', () => {interrupt(); setSnap(snap, false);});
+  const api = {setSnap, content, handle, destroy() {lifetime.abort(); cancelAnimationFrame(frame); interrupt(); controllers.delete(root); handle.remove();}, get snap() {return snap;}, refresh: geometry, syncSummary};
   controllers.set(root, api);
   geometry(); setSnap(snap, false);
   return api;

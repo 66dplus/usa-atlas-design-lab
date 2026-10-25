@@ -7,6 +7,7 @@ const rectJSON=r=>({x:r.x,y:r.y,width:r.width,height:r.height});
 
 // Explicit component ownership, ordered from specific controls to their containing surface.
 const OWNERS=[
+ ['.app-dialog-backdrop','app-dialog'],['#source-popup','source-popup'],['#about-main','about'],['#support-main','support'],['#reading-page','reading-pages'],['.indicator-legend','legend'],
  ['#view-settings-panel','view-settings'],['#view-settings-open','view-settings'],['.focus-caption','focus-controls'],['.camera-tools','camera-controls'],['.dimension-control','view-controls'],['.concept-tabs','concept-tabs'],
  ['[data-pane-metric]','metric-select'],['#metric-button','metric-select'],['#share','share'],['[data-pane-place]','place-search'],['#find-place','place-search'],
  ['#metric-library','metric-library'],['#place-library','place-library'],['#breadcrumbs','breadcrumbs'],
