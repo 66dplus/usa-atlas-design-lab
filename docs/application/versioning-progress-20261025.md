@@ -5,7 +5,7 @@ This is a bounded before/after progress record for the documentation consolidati
 ## Before
 
 - The public manifest reported release `20261025-seo-routes-dd3d97`, raw build SHA-256 `337a3e0bbb9dd5e50f603e49c6c4f79cb5d1366d5a10d38af7f27f7256f1c512`, and `sourceBaseCommit` `dd3d97d829e85e341b051538707298bd943dea31`. These live bytes were built from reviewed source inputs; no exact Git source commit is established by that binding.
-- The recovered stable app commit is `1c3881a`; clean SEO transfer `83d2bc0` is on the app integration branch. App final `main`, tag, and deployment are pending.
+- The recovered stable app commit is `1c3881a`; clean SEO transfer `83d2bc2` is on the app integration branch. App final `main`, tag, and deployment are pending.
 - Data reader PR #2 is merged at `b405bfdf473614beea49dd5126a843a916168f7d`, tagged `reader-contract-v1.0.0`; CI run `40188844214` passed. Local data `main` was clean and fast-forwarded to that commit at the dated check. This producer identity is separate from the production pipeline code audit.
 
 ## After this documentation pass

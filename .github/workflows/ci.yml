@@ -39,7 +39,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chrome
+      - run: node node_modules/playwright/cli.js install --with-deps chrome
       - run: sudo apt-get update
       - run: sudo apt-get install -y postgresql-client
       - run: python3 scripts/prepare_ci_database.py

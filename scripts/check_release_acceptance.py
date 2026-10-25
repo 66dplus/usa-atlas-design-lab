@@ -44,6 +44,11 @@ def free_port():
         return sock.getsockname()[1]
 
 
+def bind_test_target(env, base_url):
+    """Make policy subprocesses exercise the runtime whose identity was observed."""
+    env["ATLAS_TEST_URL"] = base_url
+
+
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -391,6 +396,7 @@ def main():
         if not isinstance(required, list) or not required:
             failures.append("acceptance policy does not enumerate mandatory checks")
             required = []
+        bind_test_target(env, base_url)
         for check in required:
             check_id, command = check.get("id"), check.get("command")
             if not isinstance(check_id, str) or not isinstance(command, list) or not command:

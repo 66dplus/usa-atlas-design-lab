@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 
-from scripts.check_release_acceptance import build_receipt
+from scripts.check_release_acceptance import bind_test_target, build_receipt
 from scripts.release_workflow import ReleaseError, verify_receipt
 
 
@@ -16,6 +16,13 @@ LOCK = ROOT / "contracts/reader-contract.lock.json"
 
 
 class AcceptanceProtocolTests(unittest.TestCase):
+    def test_policy_subprocess_target_overwrites_ambient_url(self):
+        for observed_url in ("https://stage.example.test", "http://127.0.0.1:43210"):
+            with self.subTest(observed_url=observed_url):
+                env = {"ATLAS_TEST_URL": "https://attacker.example.test"}
+                bind_test_target(env, observed_url)
+                self.assertEqual(env["ATLAS_TEST_URL"], observed_url)
+
     def runner_receipt(self, operation):
         runtime_release = "releaseA" if operation == "rollback" else "releaseB"
         args = Namespace(release_id="releaseB", operation=operation,

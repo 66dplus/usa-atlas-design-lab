@@ -19,7 +19,7 @@ At the start of every implementation session:
 
 ## Luna Standard review route
 
-Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, with Fast and Ultrafast off. Example: `codex exec --model gpt-6-luna --cd /path/to/usa-atlas-design-lab "Implement the assigned task; preserve existing global configuration."` Do not set a profile or override global configuration. The user primary does not implement application changes; the parent performs primary review, required tests, and integration. An authorized parent integrator may perform requested Git/release/SSH operations through established secure credential loading. Production release remains controlled by the unified workflow.
+Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, with Fast and Ultrafast off. Example: `codex exec -m gpt-6-luna -c service_tier='"default"' --disable fast_mode --disable ultrafast_mode --cd /path/to/usa-atlas-design-lab "Implement the assigned task; preserve existing global configuration."` These per-invocation options select the required model and service tier and disable Fast and Ultrafast without changing the global configuration. The user primary does not implement application changes; the parent performs primary review, required tests, and integration. An authorized parent integrator may perform requested Git/release/SSH operations through established secure credential loading. Production release remains controlled by the unified workflow.
 
 ## E1–E11 evaluation plan
 
@@ -27,7 +27,7 @@ For each item, preserve a before/after result, exact source/build binding, comma
 
 | ID | Evaluation | Before evidence | Required after evidence |
 | --- | --- | --- | --- |
-| E1 | Single source commit and tag | Capture the exact deployed application source commit and immutable release tag | Reproduce the published frontend and backend from one exact application commit and tag; do not require separate frontend/backend commits or user identities |
+| E1 | Single source commit and tag | The deployed build is bound to mixed-worktree source inputs and a `sourceBaseCommit`; no exact deployed `sourceCommit` was established | Reproduce the published frontend and backend from one exact application commit and tag; do not require separate frontend/backend commits or user identities |
 | E2 | Preserve owner work | Owner-owned application, workspace, feedback, and camera state before integration | Exact before/after preservation evidence; no owner state overwritten or packaged |
 | E3 | Git protections | Current branch rules and repository protections | Required review, checks, no force-push, and no deletion protections verified |
 | E4 | Reject wrong-base SEO package | Historical SEO incident and baseline evidence | A valid SEO package based on the wrong source base is blocked by the release gate |
@@ -36,7 +36,7 @@ For each item, preserve a before/after result, exact source/build binding, comma
 | E7 | Rollback and activation races | Current/live identity, failure boundaries, and concurrent operation behavior | Rollback succeeds on stage; revoked, stale, and concurrent activations are blocked |
 | E8 | Independent data contract | Current producer/consumer contracts and admitted data behavior | Independently pinned versioned producer contract and fixture semantics pass; incompatible contract is blocked |
 | E9 | SEO | Current public routes, metadata, redirects, and indexing policy | Canonical route, metadata, redirect, noindex, 404, sitemap, and robots checks pass |
-| E10 | Full Chrome/runtime | Current shipped application across supported viewports and themes | Packaged runtime passes all eight Chrome viewport/theme combinations, short-desktop API and read-only mount checks, rollback, and public-hash checks |
+| E10 | Full Chrome/runtime | Current shipped application across supported viewports and themes | Packaged runtime passes all eight Chrome viewport/theme combinations and the script's short-desktop coverage (four viewports across two themes), API and read-only mount checks, rollback, and public-hash checks |
 | E11 | Deferred React/TypeScript task | Current UI and state ownership | A separate task is documented with explicit state owners and component inventory; migration starts only after all E1–E11 are PASS |
 
 ### Evaluation receipt template

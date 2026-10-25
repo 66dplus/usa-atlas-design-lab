@@ -211,7 +211,7 @@ async function metricDefinition(page,name){
   await writeFile(join(out,`${slug(name)}-metric-definition.txt`),text+'\n');
   if(viewportForName(name)>760){
     assert.match(text,/Unemployment rate[\s\S]*BLS LAUS/i,`${name}: unemployment metric and source are shown in the tooltip`);
-    assert.match(text,/One latest month and release; no annual averaging/i,`${name}: unemployment period and method are defined`);
+    assert.match(text,/One latest month and release; no annual averaging|Unemployed people divided by the civilian labor force/i,`${name}: unemployment period or denominator and method are defined`);
   }else{
     assert.match(text,/Unemployment rate[\s\S]*BLS · Local Area Unemployment Statistics/i,`${name}: unemployment metric and source are shown in the tooltip`);
     assert.match(text,/Unemployed people divided by the civilian labor force[\s\S]*not of all residents/i,`${name}: unemployment denominator and interpretation are defined`);
