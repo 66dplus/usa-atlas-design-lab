@@ -91,8 +91,14 @@ try{
       await page.goto(`${base}/ux/?place=06&view=2d&theme=${theme}`,{waitUntil:'domcontentloaded'});await settle();
       await check(`${key}-state-half`);
       if(mobile){
-        const tops=await page.locator('#mobile-search,#support-open,.dimension-control,#info-open').evaluateAll(nodes=>nodes.map(e=>e.getBoundingClientRect().top));
-        assert.ok(tops.every(top=>Math.abs(top-8)<1),'All four top controls sit 8px from the available viewport edge');
+        const topControls=await page.locator('#mobile-search,#support-open,.dimension-control,#info-open').evaluateAll(nodes=>nodes.map(e=>{
+          const rect=e.getBoundingClientRect(),style=getComputedStyle(e);
+          return {id:e.matches('.dimension-control')?'dimension-control':e.id,top:rect.top,visible:style.display!=='none'&&style.visibility!=='hidden'&&rect.width>0&&rect.height>0};
+        }));
+        const visibleTopControls=topControls.filter(control=>control.visible);
+        assert.deepEqual(visibleTopControls.map(control=>control.id).sort(),['dimension-control','info-open','support-open'].sort(),'Expected visible mobile top controls');
+        // Search is intentionally display:none in the preserved live runtime, so it has no top-control geometry to assert.
+        assert.ok(visibleTopControls.every(control=>Math.abs(control.top-8)<1),'Every visible top control sits 8px from the available viewport edge');
       }
       if(mobile){
         const original=await page.evaluateHandle(()=>({handle:document.querySelector('#explore-panel > .sheet-handle'),content:document.querySelector('#explore-panel > .sheet-content'),map:document.querySelector('#map-a'),canvas:document.querySelector('#map-a canvas')}));
