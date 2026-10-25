@@ -40,7 +40,8 @@ function addPageListeners(page,errors,expectedNetwork){
   page.on('pageerror',error=>errors.push({type:'pageerror',message:error.message}));
   page.on('console',message=>{
     const text=message.text();
-    const expectedInjected=expectedNetwork.consoleMessages?.some(expected=>text===expected||text.startsWith(expected))||false;
+    const expectedMessages=expectedNetwork.consoleMessages||[];
+    const expectedInjected=[...expectedMessages].some(expected=>text===expected||text.startsWith(expected));
     if(message.type()==='error'&&!expectedInjected&&!([...expectedNetwork.urls].some(url=>text.includes(url))))errors.push({type:'console',message:text});
   });
   page.on('requestfailed',request=>{
@@ -231,7 +232,7 @@ async function runMatrixCase(viewport,theme){
     if(viewport.width>760&&viewport.height<=700)await shortDesktopPanel(page,name);
     if(mutation==='legacy-footer'&&viewport.width>760){
       await page.locator('.concept-tabs a[data-page="compare"]').click();await page.waitForFunction(()=>document.body.dataset.page==='compare');await settleMap(page);
-      await page.locator('#desktop-compare-card .desktop-compare-source-row').evaluate(e=>{e.style.setProperty('position','fixed','important');e.style.setProperty('inset','auto 0 0','important');e.style.setProperty('z-index','99999','important');});
+      await page.locator('#desktop-compare-card .desktop-compare-source-row').evaluate(e=>{e.style.setProperty('transform','translateY(100vh)','important');});
       await assertCompareFooter(page,name);
     }
     await navigationChecks(page,name);
