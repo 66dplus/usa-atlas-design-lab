@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Internal After support preview · USA X-Ray</title>
+  <link rel="stylesheet" href="../assets/fonts.css">
+  <link rel="stylesheet" href="../ui-tokens.css">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../master.css">
+  <link rel="stylesheet" href="../ui-overhaul.css">
+  <link rel="stylesheet" href="../mobile-layout.css">
+  <link rel="stylesheet" href="../support-about.css">
+</head>
+<body data-theme="light" data-page="after-support-fixture">
+  <header class="after-support-fixture-header">
+    <a class="brand" href="/united-states/unemployment">USA <b>X-Ray</b></a>
+    <nav aria-label="Explore modes"><span>Map</span><span>Compare</span><span>Stats</span><span>Blog</span></nav>
+    <span class="after-support-fixture-current">Support</span>
+  </header>
+  <main class="after-support-fixture-main">
+    <div id="after-support-preview"></div>
+  </main>
+  <script type="module">
+    import {afterSupportFixture} from './after-support-fixture.js';
+    document.querySelector('#after-support-preview').innerHTML=afterSupportFixture();
+  </script>
+</body>
+</html>

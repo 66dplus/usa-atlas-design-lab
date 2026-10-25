@@ -6,7 +6,13 @@
     "creator": {
       "description": "Built and maintained by Dmitrii Rybkin, an independent developer who enjoys maps and statistics.",
       "publicName": "Dmitrii Rybkin",
-      "profileLinks": [],
+      "profileLinks": [
+        {
+          "id": "linkedin",
+          "label": "LinkedIn",
+          "url": "https://www.linkedin.com/in/dmitrii-rybkin-157594425/"
+        }
+      ],
       "status": "confirmed"
     }
   },
@@ -23,7 +29,26 @@
       "targetUsd": 2500,
       "raisedUsd": null,
       "updatedAt": null,
-      "improvements": []
+      "improvements": [
+        {
+          "id": "new-indicators",
+          "title": "10 new indicators",
+          "status": "planned",
+          "description": "Add ten new indicators with source links, observation periods and coverage notes. The final selection will follow data availability and quality checks."
+        },
+        {
+          "id": "map-assistant",
+          "title": "An AI assistant for the map",
+          "status": "planned",
+          "description": "Ask questions about a place or indicator, get help understanding measures, and explore comparisons on the map."
+        },
+        {
+          "id": "clearer-sources",
+          "title": "Clearer sources & methodology",
+          "status": "planned",
+          "description": "Make definitions, sources, updates and missing values easier to understand, with a clearer way to report data issues."
+        }
+      ]
     },
     "donationMethods": {
       "externalLinks": [],

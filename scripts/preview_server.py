@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Temporary, bounded, read-only UI server. Never imports the local review server."""
+"""Bounded app runtime with a read-only data API and optional write-only private reports."""
 from collections import OrderedDict
 import gzip
 import hashlib
@@ -16,6 +16,9 @@ import time
 from urllib.parse import parse_qs, urlsplit
 
 import atlas_data
+from bug_reports import (MAX_REPORT_BODY, ReportRateLimiter, create_report_store,
+                         report_rate_limit_identity, same_origin, trusted_proxy_networks,
+                         validate_report)
 from seo_render import articles, geography, metric_labels, redirect_target, render_route
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,9 +80,12 @@ class PreviewServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
     request_queue_size = 16
 
-    def __init__(self, address, assets, cache=None):
+    def __init__(self, address, assets, cache=None, reports_dir=None, trusted_proxies=()):
         self.assets, self.cache = assets, cache or ReadCache()
         self.workers = threading.BoundedSemaphore(16)
+        self.bug_report_store = create_report_store(reports_dir, ROOT)
+        self.bug_report_limiter = ReportRateLimiter()
+        self.trusted_proxies = tuple(trusted_proxies)
         super().__init__(address, PreviewHandler)
 
     def get_request(self):
@@ -242,9 +248,51 @@ class PreviewHandler(BaseHTTPRequestHandler):
         return self.do_GET()
 
     def do_POST(self):
+        try:
+            request_path = urlsplit(self.path).path
+        except ValueError:
+            return self.reply(400, {'error': 'Invalid request'})
+        if len(self.path) > 2048 or self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
+            return self.reply(400, {'error': 'Invalid request'})
+        if request_path != '/api/bug-reports':
+            return self.reject_method()
+        if not same_origin(self.headers):
+            return self.reply(403, {'error': 'Same-origin requests only'})
+        if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+            return self.reply(415, {'error': 'JSON required'})
+        if self.server.bug_report_store is None:
+            return self.reply(503, {'error': 'Report storage is not available. Please retry later.'},
+                              extra={'Retry-After': '60'})
+        try:
+            length = int(self.headers.get('Content-Length', '0'))
+            if not 0 < length <= MAX_REPORT_BODY:
+                return self.reply(413, {'error': 'Report exceeds the size limit'})
+            identity = report_rate_limit_identity(self.client_address[0], self.headers,
+                                                  self.server.trusted_proxies)
+            if not self.server.bug_report_limiter.allow(identity):
+                return self.reply(429, {'error': 'Too many reports. Please try again later.'}, extra={'Retry-After': '3600'})
+            body = self.rfile.read(length)
+            if len(body) != length:
+                raise ValueError('Incomplete request')
+            data = json.loads(body, parse_constant=lambda value: (_ for _ in ()).throw(ValueError('Invalid JSON number')))
+            report = validate_report(data)
+            report_id = self.server.bug_report_store.save(report)
+            return self.reply(201, {'id': report_id, 'saved': True})
+        except (ValueError, TypeError, UnicodeDecodeError) as error:
+            return self.reply(400, {'error': str(error)})
+        except OSError:
+            return self.reply(503, {'error': 'Report storage is unavailable. Please retry.'})
+
+    def reject_method(self):
+        try:
+            path = urlsplit(self.path).path
+        except ValueError:
+            return self.reply(400, {'error': 'Invalid request'})
+        if path == '/api/bug-reports':
+            return self.reply(405, {'error': 'Only POST is allowed'}, extra={'Allow': 'POST'})
         return self.reply(405, {'error': 'This preview is read-only'}, extra={'Allow': 'GET, HEAD'})
 
-    do_PUT = do_PATCH = do_DELETE = do_OPTIONS = do_POST
+    do_PUT = do_PATCH = do_DELETE = do_OPTIONS = do_TRACE = reject_method
 
 
 def load_assets(root=ROOT):
@@ -264,12 +312,16 @@ if __name__ == '__main__':
     parser.add_argument('--host', default='0.0.0.0')
     parser.add_argument('--port', type=int, default=4429)
     parser.add_argument('--secret-file', type=Path, default=Path('/run/secrets/reader_password'))
+    parser.add_argument('--reports-dir', type=Path, help='Private, write-only bug report storage outside the served app tree')
+    parser.add_argument('--trusted-proxy', action='append', default=[], metavar='IP_OR_CIDR',
+                        help='Explicit trusted reverse proxy network for client rate limits; repeat as needed')
     args = parser.parse_args()
     if (os.environ.get('ATLAS_DISABLE_SECRET_FILE') != '1' and
             not os.environ.get('PGPASSWORD') and args.secret_file.is_file()):
         os.environ['PGPASSWORD'] = args.secret_file.read_text().strip()
-    server = PreviewServer((args.host, args.port), load_assets())
-    print(f'Temporary read-only Atlas preview listening on {args.host}:{server.server_port}', flush=True)
+    server = PreviewServer((args.host, args.port), load_assets(), reports_dir=args.reports_dir,
+                           trusted_proxies=trusted_proxy_networks(args.trusted_proxy))
+    print(f'Temporary Atlas preview listening on {args.host}:{server.server_port}; bug reports {"enabled" if args.reports_dir else "disabled"}', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
