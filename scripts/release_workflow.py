@@ -894,7 +894,7 @@ class DockerBackend:
                 obj.get('Image') != stage['testedImageDigest'] or
                 self._primary_owner_id() == stage['containerId']):
             raise ReleaseError('baseline test container identity changed; preserving it')
-        self.remove_stage(stage)
+        run(['docker', 'rm', '-f', stage['containerId']])
 
     def stage_rollback_target(self, prior, current, release_id, reader_identity,
                               lock_path, contract_path):
@@ -1300,7 +1300,7 @@ class Coordinator:
             except BaseException:
                 self.backend.remove_stage(result)
                 atomic_json(path, {'releaseId': proof_id, 'status': 'baseline-test-failed',
-                                   'stageEvidence': result, 'testContainerRemoved': True})
+                                   'stageEvidence': result, 'cleanupRequested': True})
                 raise
             return result
 

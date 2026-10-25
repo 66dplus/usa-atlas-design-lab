@@ -105,12 +105,21 @@ class ReportsReleaseTests(unittest.TestCase):
     def test_baseline_cleanup_preserves_foreign_or_promoted_container(self):
         stage={'purpose':'preactivation-baseline-rehearsal','releaseId':'proof','containerId':'owned','testedImageDigest':'sha256:old'}
         obj={'Name':'/usa-atlas-rollback-stage-proof','Image':'sha256:old'}
-        with patch.object(self.backend,'inspect',return_value=obj),patch.object(self.backend,'_primary_owner_id',return_value='primary'),patch.object(self.backend,'remove_stage') as remove:
-            self.backend.remove_baseline_test_stage(stage);remove.assert_called_once_with(stage)
+        with patch.object(self.backend,'inspect',return_value=obj),patch.object(self.backend,'_primary_owner_id',return_value='primary'),patch('scripts.release_workflow.run') as remove:
+            self.backend.remove_baseline_test_stage(stage);remove.assert_called_once_with(['docker','rm','-f','owned'])
         for changed,primary in ((dict(obj,Name='/foreign'),'primary'),(dict(obj,Image='sha256:new'),'primary'),(obj,'owned')):
-            with self.subTest(changed=changed,primary=primary),patch.object(self.backend,'inspect',return_value=changed),patch.object(self.backend,'_primary_owner_id',return_value=primary),patch.object(self.backend,'remove_stage') as remove,self.assertRaises(ReleaseError):
+            with self.subTest(changed=changed,primary=primary),patch.object(self.backend,'inspect',return_value=changed),patch.object(self.backend,'_primary_owner_id',return_value=primary),patch('scripts.release_workflow.run') as remove,self.assertRaises(ReleaseError):
                 self.backend.remove_baseline_test_stage(stage)
             remove.assert_not_called()
+
+    def test_baseline_cleanup_propagates_docker_removal_failure(self):
+        stage={'purpose':'preactivation-baseline-rehearsal','releaseId':'proof','containerId':'owned','testedImageDigest':'sha256:old'}
+        obj={'Name':'/usa-atlas-rollback-stage-proof','Image':'sha256:old'}
+        with patch.object(self.backend,'inspect',return_value=obj), \
+                patch.object(self.backend,'_primary_owner_id',return_value='primary'), \
+                patch('scripts.release_workflow.run',side_effect=ReleaseError('removal failed')), \
+                self.assertRaisesRegex(ReleaseError,'removal failed'):
+            self.backend.remove_baseline_test_stage(stage)
 
     def test_stage_reinspection_retains_mount_binding_for_activation(self):
         self.config.update(runtimeUser='10001:10001', network='fixture', stageAddress='192.0.2.2')

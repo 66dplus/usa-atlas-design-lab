@@ -412,6 +412,13 @@ class WorkflowTests(unittest.TestCase):
         with self.assertRaises(ReleaseError):self.coordinator.activate('proof-a',self.receipt('activate'))
         with patch('scripts.release_workflow.require_clean_checkout',return_value='a'*40),self.assertRaises(ReleaseError):
             self.coordinator.stage_current_baseline('proof-a',self.root/'other-output.json')
+        def failed_cleanup(stage):
+            raise ReleaseError('removal failed')
+        self.backend.remove_baseline_test_stage = failed_cleanup
+        with self.assertRaisesRegex(ReleaseError, 'removal failed'):
+            self.coordinator.discard_baseline_stage('proof-a')
+        self.assertEqual(json.loads((self.records/'proof-a-baseline-proof.json').read_text())['status'], 'baseline-test-staged')
+        self.backend.remove_baseline_test_stage=lambda stage:self.backend.removed_stages.append(stage['containerId'])
         self.coordinator.discard_baseline_stage('proof-a')
         self.assertEqual(self.backend.removed_stages,['baseline-test']);self.assertEqual(self.backend.live,before)
 
