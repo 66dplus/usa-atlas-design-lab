@@ -273,8 +273,11 @@ def main():
         if args.operation == "activate" and not isinstance(stage_verified, dict):
             failures.append("stage evidence has no backend-verified stageVerifiedIdentity record")
         elif args.operation == "activate":
+            stage_container_id = stage_identity.get("containerId")
+            if not isinstance(stage_container_id, str) or not stage_container_id.strip():
+                failures.append("backend stage identity has no container identity")
             verified_expected = {
-                "containerId": stage_identity.get("containerId"),
+                "containerId": stage_container_id,
                 "imageId": args.image_digest, "status": "running",
                 "releaseId": args.release_id, "buildSha256": args.build_sha256,
                 "sourceCommit": args.source_commit,
@@ -301,8 +304,15 @@ def main():
             except (KeyError, TypeError, ValueError, AttributeError):
                 failures.append("read-only current-database schema proof timestamp is missing, stale, or invalid")
             stage_build_sha = stage.get("runtimeBuildSha256", stage.get("buildSha256"))
+            proof_container_id = (stage_identity.get("containerId") if args.operation == "activate"
+                                  else stage.get("containerId"))
+            if not isinstance(proof_container_id, str) or not proof_container_id.strip():
+                failures.append("staged runtime has no backend container identity for schema proof binding")
+            proof_container = schema_proof.get("containerId")
+            if not isinstance(proof_container, str) or not proof_container.strip():
+                failures.append("read-only current-database schema proof has no backend container identity")
             proof_expected = {
-                "containerId": stage.get("containerId"),
+                "containerId": proof_container_id,
                 "imageDigest": args.image_digest,
                 "buildSha256": stage_build_sha,
                 "readerLockSha256": lock_sha,
