@@ -22,6 +22,9 @@ from view_settings import read_settings, save_settings
 import atlas_data
 import advertising
 import analytics_config
+from bug_reports import (MAX_REPORT_BODY, ReportRateLimiter, create_report_store,
+                         report_rate_limit_identity, same_origin, trusted_proxy_networks,
+                         validate_report)
 from seo_render import articles, geography, metric_labels, redirect_target, render_route
 
 MAX_BODY = 16 * 1024 * 1024
@@ -177,13 +180,15 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-store')
         super().end_headers()
 
-    def respond(self, code, body):
+    def respond(self, code, body, extra=None):
         encoded = json.dumps(body, ensure_ascii=False).encode()
         self.send_response(code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(encoded)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
+        for name, value in (extra or {}).items():
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(encoded)
 
@@ -314,23 +319,41 @@ class Handler(SimpleHTTPRequestHandler):
         super().do_HEAD()
 
     def do_POST(self):
-        if not self.allowed_host() or self.headers.get('Origin') != 'http://' + self.headers.get('Host', ''):
+        if not self.allowed_host():
             return self.respond(403, {'error': 'Same-origin requests only'})
         path = urlsplit(self.path).path
-        if path not in ('/api/feedback', '/api/view-settings', '/api/advertising/request'):
+        if path not in ('/api/feedback', '/api/view-settings', '/api/advertising/request', '/api/bug-reports'):
             return self.respond(404, {'error': 'Unknown endpoint'})
+        if path == '/api/bug-reports':
+            if not same_origin(self.headers):
+                return self.respond(403, {'error': 'Same-origin requests only'})
+        elif self.headers.get('Origin') != 'http://' + self.headers.get('Host', ''):
+            return self.respond(403, {'error': 'Same-origin requests only'})
         if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
             return self.respond(415, {'error': 'JSON required'})
         try:
             length = int(self.headers.get('Content-Length', '0'))
-            limit = 4096 if path == '/api/view-settings' else advertising.MAX_REQUEST if path == '/api/advertising/request' else MAX_BODY
+            limit = (4096 if path == '/api/view-settings' else advertising.MAX_REQUEST if path == '/api/advertising/request'
+                     else MAX_REPORT_BODY if path == '/api/bug-reports' else MAX_BODY)
             if not 0 < length <= limit:
-                return self.respond(413, {'error': 'Comment exceeds size limit'})
+                message = 'Report exceeds the size limit' if path == '/api/bug-reports' else 'Comment exceeds size limit'
+                return self.respond(413, {'error': message})
             self.connection.settimeout(15)
             body = self.rfile.read(length)
             if len(body) != length:
                 raise ValueError('Incomplete request')
             data = json.loads(body, parse_constant=invalid_constant)
+            if path == '/api/bug-reports':
+                if self.server.bug_report_store is None:
+                    return self.respond(503, {'error': 'Report storage is not available. Please retry later.'},
+                                        {'Retry-After': '60'})
+                identity = report_rate_limit_identity(self.client_address[0], self.headers,
+                                                      self.server.trusted_proxies)
+                if not self.server.bug_report_limiter.allow(identity):
+                    return self.respond(429, {'error': 'Too many reports. Please try again later.'}, {'Retry-After': '3600'})
+                report = validate_report(data)
+                report_id = self.server.bug_report_store.save(report)
+                return self.respond(201, {'id': report_id, 'saved': True})
             if path == '/api/advertising/request':
                 if not advertising.configured():
                     return self.respond(503, {'error': 'Email delivery is not configured. Download your draft instead.'})
@@ -341,7 +364,10 @@ class Handler(SimpleHTTPRequestHandler):
             record, created = store_comment(self.server.feedback_dir, data, png, sources)
             self.respond(201 if created else 200, {'comment': record})
         except FileExistsError as error:
-            self.respond(409, {'error': str(error)})
+            if path == '/api/bug-reports':
+                self.respond(503, {'error': 'Report storage is unavailable. Please retry.'}, {'Retry-After': '60'})
+            else:
+                self.respond(409, {'error': str(error)})
         except advertising.DeliveryUnavailable as error:
             self.respond(503, {'error': str(error)})
         except atlas_data.DatabaseUnavailable:
@@ -349,7 +375,10 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, KeyError, TypeError, AttributeError, binascii.Error) as error:
             self.respond(400, {'error': str(error)})
         except (OSError, TimeoutError) as error:
-            self.respond(500, {'error': 'Save failed; keep the draft and retry'})
+            if path == '/api/bug-reports':
+                self.respond(503, {'error': 'Report storage is unavailable. Please retry.'}, {'Retry-After': '60'})
+            else:
+                self.respond(500, {'error': 'Save failed; keep the draft and retry'})
 
 
 class AtlasHTTPServer(ThreadingHTTPServer):
@@ -357,10 +386,13 @@ class AtlasHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
 
 
-def create_server(port, feedback_dir):
+def create_server(port, feedback_dir, reports_dir=None, trusted_proxies=()):
     feedback_dir.mkdir(parents=True, exist_ok=True)
     server = AtlasHTTPServer(('127.0.0.1', port), Handler)
     server.feedback_dir = feedback_dir.resolve()
+    server.bug_report_store = create_report_store(reports_dir, ROOT)
+    server.bug_report_limiter = ReportRateLimiter()
+    server.trusted_proxies = tuple(trusted_proxies)
     return server
 
 
@@ -368,9 +400,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=4180)
     parser.add_argument('--feedback-dir', type=Path, default=ROOT.parent / 'feedback')
+    parser.add_argument('--reports-dir', type=Path, help='Private, write-only bug report storage outside the served app tree')
+    parser.add_argument('--trusted-proxy', action='append', default=[], metavar='IP_OR_CIDR',
+                        help='Explicit trusted reverse proxy network for client rate limits; repeat as needed')
     args = parser.parse_args()
-    server = create_server(args.port, args.feedback_dir)
-    print(f'Atlas: http://127.0.0.1:{server.server_port}/ux/ | Feedback: {server.feedback_dir}', flush=True)
+    server = create_server(args.port, args.feedback_dir, args.reports_dir,
+                           trusted_proxies=trusted_proxy_networks(args.trusted_proxy))
+    print(f'Atlas: http://127.0.0.1:{server.server_port}/ux/ | Bug reports: {"enabled" if args.reports_dir else "disabled"}', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
