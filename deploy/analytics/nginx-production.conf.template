@@ -1,0 +1,61 @@
+# Include this file inside the existing public TLS server block. It contains
+# only exact locations; keep Umami's dashboard and other APIs private.
+
+location = /api/analytics/config {
+    limit_except GET HEAD {
+        deny all;
+    }
+    client_max_body_size 1k;
+    client_body_timeout 5s;
+    send_timeout 10s;
+    default_type application/json;
+    add_header Cache-Control "no-store" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    return 200 '{"enabled":true,"websiteId":"__PRODUCTION_WEBSITE_ID__","scriptUrl":"/analytics/script.js"}';
+}
+
+location = /analytics/script.js {
+    limit_except GET HEAD {
+        deny all;
+    }
+    client_max_body_size 1k;
+    proxy_connect_timeout 3s;
+    proxy_send_timeout 10s;
+    proxy_read_timeout 10s;
+    send_timeout 10s;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_hide_header Cache-Control;
+    add_header Cache-Control "public, max-age=300" always;
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    proxy_pass http://127.0.0.1:4300/script.js;
+}
+
+# Umami 3.4.1 resolves its collector from the script directory and appends
+# /api/send. The script above therefore posts here; preserve this exact route.
+location = /analytics/api/send {
+    limit_except POST {
+        deny all;
+    }
+    client_max_body_size 16k;
+    client_body_timeout 5s;
+    proxy_connect_timeout 3s;
+    proxy_send_timeout 10s;
+    proxy_read_timeout 10s;
+    send_timeout 10s;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_buffering off;
+    access_log off;
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    proxy_pass http://127.0.0.1:4300/api/send;
+}
