@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
-from scripts.runtime_conformance import (ARCHIVED_A, CAPABILITIES, CORE_CASES,
-    observe_runtime, profile_for_identity, validate_conformance)
+from scripts.runtime_conformance import (
+    ARCHIVED_A, CAPABILITIES, CORE_CASES, observe_runtime, profile_for_identity,
+    validate_conformance, ARCHIVED_INDEX_PATHS, ARCHIVED_INDEX_METADATA,
+)
 from scripts.run_release_regressions import archived_public_assets
 
 
@@ -20,7 +22,10 @@ def passing_report(build_sha='b'*64, source='a'*40, release='candidate', image='
                   **({'cases':8} if applicable else {})} for name in ('react-ui','studio')}}
     if not applicable:
         report['archivedPublicAssets']={'status':'pass','count':ARCHIVED_A['publicAssetCount'],
-            'manifestSha256':ARCHIVED_A['publicAssetManifestSha256']}
+            'staticAssetCount':ARCHIVED_A['staticAssetCount'],
+            'manifestSha256':ARCHIVED_A['publicAssetManifestSha256'],
+            'dynamicIndexes': [
+                {'path': path, **ARCHIVED_INDEX_METADATA} for path in ARCHIVED_INDEX_PATHS]}
     return report
 
 
@@ -57,6 +62,16 @@ class RuntimeConformanceTests(unittest.TestCase):
             with self.subTest(field=field),self.assertRaises(ValueError):validate_conformance(bad,**self.arguments(report))
         bad=copy.deepcopy(report);bad.pop('archivedPublicAssets')
         with self.assertRaises(ValueError):validate_conformance(bad,**self.arguments(report))
+        incomplete = (
+            ('staticAssetCount', 124),
+            ('dynamicIndexes', []),
+            ('dynamicIndexes', report['archivedPublicAssets']['dynamicIndexes'][:1]),
+        )
+        for field, value in incomplete:
+            bad = copy.deepcopy(report)
+            bad['archivedPublicAssets'][field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                validate_conformance(bad, **self.arguments(report))
 
     def arguments(self,report):
         identity=report['identity'];return {'build_sha':identity['buildSha256'],'source':identity['sourceCommit'],

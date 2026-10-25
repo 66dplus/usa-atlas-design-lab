@@ -7,11 +7,23 @@ SUPPLEMENTS = ('react-ui', 'studio')
 CORE_CASES = ['startup-definition-before-refresh',
               *[f'chrome-{size}-{theme}' for size in ('390x844', '360x640', '1440x900', '1440x640')
                 for theme in ('light', 'dark')], 'api-failure-retry']
+# Two public URLs share one raw template. Both permanently redirect to this
+# route; its server-rendered metadata is the accepted SEO contract.
+ARCHIVED_INDEX_PATHS = ('/ux/index.html', '/ux/')
+ARCHIVED_INDEX_TARGET = '/united-states/unemployment'
+ARCHIVED_INDEX_METADATA = {
+    'redirectStatus': 301, 'documentStatus': 200,
+    'canonical': 'https://usa-xray.online' + ARCHIVED_INDEX_TARGET,
+    'robots': 'index,follow',
+    'title': 'Unemployment rate in the United States | USA X-Ray',
+    'description': 'pass', 'structuredData': 'pass',
+}
 # Immutable evidence from the accepted normalization release. This exception is
 # an exact artifact, never a caller-supplied capability flag or source age rule.
 ARCHIVED_A = {
     'profile': 'archived-versioning-A',
     'publicAssetCount': 124,
+    'staticAssetCount': 123,
     'publicAssetManifestSha256': '726c3d4aa71cca0da8d550def107c2a584ae7c647292c2b1a8f90e490281d3f3',
     'releaseId': '20261025-versioning-ed8eefb-A',
     'sourceCommit': 'ed8eefbe22c3befcf2b40d5e16fde0948e696772',
@@ -63,8 +75,11 @@ def validate_conformance(report, *, build_sha, source, release, image=None):
         raise ValueError('complete current mandatory core execution evidence is required')
     if profile == ARCHIVED_A['profile'] and report.get('archivedPublicAssets') != {
             'status': 'pass', 'count': ARCHIVED_A['publicAssetCount'],
-            'manifestSha256': ARCHIVED_A['publicAssetManifestSha256']}:
-        raise ValueError('archived public bytes were not verified against the exact pinned manifest')
+            'staticAssetCount': ARCHIVED_A['staticAssetCount'],
+            'manifestSha256': ARCHIVED_A['publicAssetManifestSha256'],
+            'dynamicIndexes': [{'path': path, **ARCHIVED_INDEX_METADATA}
+                               for path in ARCHIVED_INDEX_PATHS]}:
+        raise ValueError('archived static bytes and dynamic SSR semantics require complete pinned evidence')
     supplements = report.get('supplements')
     if not isinstance(supplements, dict) or set(supplements) != set(SUPPLEMENTS):
         raise ValueError('supplemental applicability evidence is incomplete')

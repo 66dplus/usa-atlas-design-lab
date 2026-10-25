@@ -4,17 +4,25 @@ from __future__ import annotations
 
 import json
 import os
+from html.parser import HTMLParser
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
-from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 import hashlib
 
 try:
-    from .runtime_conformance import observe_runtime, validate_conformance, CORE_CASES
+    from .runtime_conformance import (
+        observe_runtime, validate_conformance, CORE_CASES,
+        ARCHIVED_INDEX_PATHS, ARCHIVED_INDEX_TARGET, ARCHIVED_INDEX_METADATA,
+    )
 except ImportError:
-    from runtime_conformance import observe_runtime, validate_conformance, CORE_CASES
+    from runtime_conformance import (
+        observe_runtime, validate_conformance, CORE_CASES,
+        ARCHIVED_INDEX_PATHS, ARCHIVED_INDEX_TARGET, ARCHIVED_INDEX_METADATA,
+    )
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "ux/check-release-regressions.mjs"
@@ -53,11 +61,96 @@ def require_footer_failure(result, evidence_path: Path):
     return evidence
 
 
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def read_http(url):
+    """Inspect the actual response; never hide a bad status or redirect target."""
+    try:
+        response = build_opener(NoRedirect).open(
+            Request(url, headers={'Accept-Encoding': 'identity'}), timeout=30)
+    except HTTPError as error:
+        response = error
+    with response:
+        return response.status, response.headers, response.read()
+
+
 def read_runtime(url):
-    with urlopen(url, timeout=30) as response:
-        if response.status != 200:
-            raise ValueError('runtime resource did not return HTTP 200')
-        return response.read()
+    status, _, raw = read_http(url)
+    if status != 200:
+        raise ValueError('runtime resource did not return HTTP 200: ' + url)
+    return raw
+
+
+class SSRMetadata(HTMLParser):
+    """Collect singular metadata from the head, without executing client code."""
+    def __init__(self):
+        super().__init__()
+        self.in_head = False
+        self.capture = None
+        self.text = []
+        self.values = {key: [] for key in ('title', 'canonical', 'robots', 'description', 'schema')}
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'head':
+            self.in_head = True
+        if not self.in_head:
+            return
+        if tag == 'link' and 'canonical' in (attrs.get('rel') or '').lower().split():
+            self.values['canonical'].append(attrs.get('href'))
+        name = (attrs.get('name') or '').lower()
+        if tag == 'meta' and name in ('robots', 'description'):
+            self.values[name].append(attrs.get('content'))
+        if tag == 'title' or (tag == 'script' and (attrs.get('type') or '').lower() == 'application/ld+json'):
+            self.capture = 'title' if tag == 'title' else 'schema'
+            self.text = []
+
+    def handle_data(self, data):
+        if self.capture:
+            self.text.append(data)
+
+    def handle_endtag(self, tag):
+        capture_ended = ((tag == 'title' and self.capture == 'title') or
+                         (tag == 'script' and self.capture == 'schema'))
+        if capture_ended:
+            self.values[self.capture].append(''.join(self.text).strip())
+            self.capture = None
+        if tag == 'head':
+            self.in_head = False
+            self.capture = None
+
+
+def archived_dynamic_index(base, path):
+    status, headers, _ = read_http(base + path)
+    if status != 301 or headers.get('Location') != ARCHIVED_INDEX_TARGET:
+        raise ValueError('archived index must permanently redirect to the canonical route: ' + path)
+    status, headers, body = read_http(base + ARCHIVED_INDEX_TARGET)
+    content_type = headers.get('Content-Type', '').split(';')[0].strip().lower()
+    if status != 200 or content_type != 'text/html':
+        raise ValueError('archived index destination must return an HTML document with HTTP 200: ' + path)
+    parser = SSRMetadata()
+    parser.feed(body.decode('utf-8'))
+    values = parser.values
+    for key in ('title', 'canonical', 'robots'):
+        if values[key] != [ARCHIVED_INDEX_METADATA[key]]:
+            raise ValueError('archived SSR index has incorrect ' + key + ': ' + path)
+    descriptions = values['description']
+    if len(descriptions) != 1 or not isinstance(descriptions[0], str) or not descriptions[0].strip():
+        raise ValueError('archived SSR index requires one nonempty description: ' + path)
+    try:
+        schema = json.loads(values['schema'][0]) if len(values['schema']) == 1 else None
+    except json.JSONDecodeError:
+        schema = None
+    site = {'@type': 'WebSite', 'name': 'USA X-Ray', 'url': 'https://usa-xray.online'}
+    if (not isinstance(schema, dict) or schema.get('@context') != 'https://schema.org' or
+            schema.get('@type') != 'WebPage' or schema.get('url') != ARCHIVED_INDEX_METADATA['canonical'] or
+            schema.get('name') != ARCHIVED_INDEX_METADATA['title'] or
+            schema.get('description') != descriptions[0] or schema.get('isPartOf') != site):
+        raise ValueError('archived SSR index has missing or incorrect structured data: ' + path)
+    return {'path': path, **ARCHIVED_INDEX_METADATA}
 
 
 def archived_public_assets(base, build):
@@ -65,12 +158,19 @@ def archived_public_assets(base, build):
     assets = build.get('assetSha256')
     if not isinstance(assets, dict) or not assets:
         raise ValueError('archived public asset bindings are missing')
+    static_count = 0
     for name, expected in assets.items():
         if name.startswith('/') or '..' in name.split('/'):
             raise ValueError('unsafe archived asset binding')
+        if name == 'ux/index.html':
+            continue  # Its two HTTP routes are verified semantically below.
         if hashlib.sha256(read_runtime(base + '/' + name)).hexdigest() != expected:
             raise ValueError('archived runtime public asset mismatch: ' + name)
-    return {'status': 'pass', 'count': len(assets), 'manifestSha256': hashlib.sha256(
+        static_count += 1
+    dynamic = ([archived_dynamic_index(base, path) for path in ARCHIVED_INDEX_PATHS]
+               if 'ux/index.html' in assets else [])
+    return {'status': 'pass', 'count': len(assets), 'staticAssetCount': static_count,
+            'dynamicIndexes': dynamic, 'manifestSha256': hashlib.sha256(
         json.dumps(assets, sort_keys=True, separators=(',', ':')).encode()).hexdigest()}
 
 
