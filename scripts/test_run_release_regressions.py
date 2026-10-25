@@ -10,7 +10,9 @@ from unittest.mock import patch
 
 from scripts.run_release_regressions import browser_env, require_footer_failure
 from scripts import run_release_regressions as runner
-from scripts.runtime_conformance import ARCHIVED_A, CAPABILITIES, CORE_CASES
+from scripts.runtime_conformance import (
+    ARCHIVED_A, CAPABILITIES, CORE_CASES, ARCHIVED_INDEX_PATHS, ARCHIVED_INDEX_METADATA,
+)
 
 
 class ReleaseRegressionRunnerTests(unittest.TestCase):
@@ -84,7 +86,10 @@ class ReleaseRegressionRunnerTests(unittest.TestCase):
                                        stdout='', stderr='')
 
             assets = {'status': 'pass', 'count': ARCHIVED_A['publicAssetCount'],
-                      'manifestSha256': ARCHIVED_A['publicAssetManifestSha256']}
+                      'staticAssetCount': ARCHIVED_A['staticAssetCount'],
+                      'manifestSha256': ARCHIVED_A['publicAssetManifestSha256'],
+                      'dynamicIndexes': [
+                          {'path': path, **ARCHIVED_INDEX_METADATA} for path in ARCHIVED_INDEX_PATHS]}
             with patch.dict(os.environ, {'ATLAS_TEST_URL': 'http://fixture',
                     'ATLAS_CONFORMANCE_REPORT': str(report_path)}, clear=True), \
                     patch.object(runner, 'read_runtime', return_value=raw), \

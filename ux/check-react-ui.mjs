@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/$/, ''),
@@ -14,6 +14,12 @@ const result = {
   additionalChecks: [],
   failures: [],
   screenshots: [],
+};
+const reportAcknowledgements = {
+  runtimeBase: base,
+  test: 'ux/check-react-ui.mjs',
+  suite: result.suite,
+  acknowledgements: [],
 };
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 async function ready(page) {
@@ -162,7 +168,18 @@ async function reportStates(page, key) {
   await page.locator('#bug-report-form [type=submit]').click();
   const saved = await response;
   assert.equal(saved.status(), 201, 'Actual private endpoint confirms durable test storage');
-  assert.equal((await saved.json()).saved, true);
+  const acknowledgement = await saved.json();
+  assert.equal(acknowledgement.saved, true);
+  assert.match(
+    acknowledgement.id,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    'The saved acknowledgement identifies an exact UUIDv4 report',
+  );
+  reportAcknowledgements.acknowledgements.push({ id: acknowledgement.id, testCase: key });
+  // Preserve exact synthetic IDs for private cleanup even if later UI assertions fail.
+  const sidecar = join(out, 'acknowledged-report-ids.json');
+  await writeFile(sidecar + '.tmp', JSON.stringify(reportAcknowledgements, null, 2) + '\n');
+  await rename(sidecar + '.tmp', sidecar);
   await page.waitForFunction(
     () => document.querySelector('#bug-report-status')?.dataset.state === 'success',
   );
