@@ -178,7 +178,8 @@ class WorkflowTests(unittest.TestCase):
             'checks':checks,'releaseId':release,'operation':operation,
             'runtimeReleaseId':runtime_release,
             'testedImageDigest':image,'buildSha256':build or self.target_sha,
-            'sourceCommit':source, 'suiteIdentity':'usa-atlas-application-acceptance-v1',
+            'sourceCommit':source, 'acceptanceSourceCommit':'a'*40,
+            'suiteIdentity':'usa-atlas-application-acceptance-v1',
             **contract_identity(self.lock), 'mandatorySuccessfulCheckIDs':['application.staged-build-identity','application.staged-runtime-api','application.reader-contract','application.geography-contract','application.seo-static','application.source-checks','application.chrome-regressions'],
             'testedAt':datetime.now(timezone.utc).isoformat()}
 
@@ -445,6 +446,19 @@ class WorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(ReleaseError,'passing execution evidence'):
             self.coordinator.activate('r1',fabricated)
 
+    def test_activation_rejects_missing_or_stale_runner_before_backend_mutation(self):
+        self.stage()
+        for runner_commit in (None, 'b'*40):
+            receipt = self.receipt('activate')
+            if runner_commit is None:
+                receipt.pop('acceptanceSourceCommit')
+            else:
+                receipt['acceptanceSourceCommit'] = runner_commit
+            with self.subTest(runner_commit=runner_commit):
+                with self.assertRaisesRegex(ReleaseError, 'acceptanceSourceCommit|acceptance runner source'):
+                    self.coordinator.activate('r1', receipt)
+                self.assertEqual(self.backend.live['containerId'], 'container-old')
+
     def test_tampered_staged_image_identity_is_rejected(self):
         self.stage()
         self.backend.stage_state['imageId']='sha256:foreign'
@@ -476,6 +490,25 @@ class WorkflowTests(unittest.TestCase):
         receipt['operationBaselineBuildSha256']=current['buildSha256']
         self.coordinator.rollback('r1', current, receipt)
         self.assertEqual(self.backend.live['containerId'],'container-old')
+
+    def test_rollback_rejects_missing_or_stale_runner_before_restore(self):
+        self.stage()
+        self.coordinator.activate('r1', self.receipt('activate'))
+        current = self.backend.live_identity()
+        for runner_commit in (None, 'b'*40):
+            receipt = self.receipt('rollback', image='sha256:base', build=self.baseline_sha,
+                                   release='r1', source='b'*40)
+            receipt['operationBaselineContainerId'] = current['containerId']
+            receipt['operationBaselineBuildSha256'] = current['buildSha256']
+            if runner_commit is None:
+                receipt.pop('acceptanceSourceCommit')
+            else:
+                receipt['acceptanceSourceCommit'] = runner_commit
+            with self.subTest(runner_commit=runner_commit), \
+                 patch.object(self.backend, 'restore', wraps=self.backend.restore) as restore:
+                with self.assertRaisesRegex(ReleaseError, 'acceptanceSourceCommit|acceptance runner source'):
+                    self.coordinator.rollback('r1', current, receipt)
+                restore.assert_not_called()
 
     def test_activation_race_and_global_lock(self):
         self.stage()

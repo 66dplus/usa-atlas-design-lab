@@ -32,10 +32,13 @@ The application `ops/acceptance-policy.json` is pinned by exact SHA256, suite id
 
 - `status: "pass"`, `releaseId`, `operation` (`activate` or `rollback`), `testedAt` in ISO-8601 UTC, the exact current `suiteIdentity`, and every current `mandatoryCheckIDs` value in `mandatorySuccessfulCheckIDs`.
 - `testedImageDigest` (the staged or rollback target Docker image ID), exact raw `buildSha256`, and `sourceCommit`.
+- `acceptanceSourceCommit`, the exact clean Git `HEAD` of the acceptance runner checkout. The runner checks that its checkout is clean before and after the checks and that `HEAD` stayed unchanged. This is separate from `sourceCommit`, which identifies the tested runtime and may name an archived release during rollback.
 - `readerLockSha256` (SHA256 of the exact lock file) and `readerSchemaFingerprint`.
 - For rollback only, `operationBaselineContainerId` and `operationBaselineBuildSha256`, identifying the actual live release snapshot used by the regression run.
 
 The receipt must be generated after staging for activation and be no more than 15 minutes old for either operation; future timestamps are rejected. The coordinator stage record contains nested `stageIdentity` and `stageVerifiedIdentity` objects and a fresh `readerSchemaProof`. Before it records a successful stage, the runtime queries `information_schema.columns` inside an explicit read-only transaction using its mounted reader secret, validates the vendored contract's required object/column types, and emits no row data or credentials. The pinned suite is `usa-atlas-application-acceptance-v1` and requires the staged build, staged runtime API, reader, geography, SEO, source, and Chrome regression checks. Secrets, database rows/counts, and secret-derived values do not belong in receipts. In the reader lock, `artifactPath` remains the producer repository path (`database/reader/v1`); `readerContractArtifact` explicitly names its vendored application copy (`contracts/reader/v1/contract.json`). Release validation binds the lock's raw SHA and schema fingerprint to that vendored contract JSON and its read-only admission rule.
+
+The release coordinator rejects legacy receipts without `acceptanceSourceCommit`. Activation requires that runner commit to equal the staged runtime's accepted current-main source commit; rollback allows the tested runtime source to be older, but requires the runner commit itself to pass the current public-main and clean-checkout guard. CI may create a receipt from a proposed merge commit; production will accept it only after that exact commit is current accepted main.
 
 ```sh
 python3 scripts/release_workflow.py activate --id UNIQUE_ID --receipt /tmp/activate-receipt.json
