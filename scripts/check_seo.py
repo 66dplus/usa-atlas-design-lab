@@ -70,7 +70,8 @@ def check_preview_http_dispatch():
             check(status == 301 and headers.get('Location') == destination,
                   f'HTTP {source} should redirect to {destination}; got {status} {headers.get("Location")}')
 
-        status, _, _ = http_response(server, '/united-states/not-a-real-place/unemployment')
+        with patch('preview_server.atlas_data.catalog', return_value={'metrics': []}):
+            status, _, _ = http_response(server, '/united-states/not-a-real-place/unemployment')
         check(status == 404, 'unknown app routes should remain HTTP 404')
 
         # Static and API requests must stay outside route-index loading and redirects.
