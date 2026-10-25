@@ -675,7 +675,8 @@ class DockerBackend:
         try:
             return self.inspect(self.config['primaryContainer'])['Id']
         except ReleaseError as error:
-            if 'No such object' in str(error) or 'No such container' in str(error):
+            message = str(error).lower()
+            if 'no such object' in message or 'no such container' in message:
                 return None
             raise
 

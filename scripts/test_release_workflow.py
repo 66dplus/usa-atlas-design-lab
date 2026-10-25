@@ -514,6 +514,63 @@ class WorkflowTests(unittest.TestCase):
             backend.restore({'containerId':'old-id'}, {'containerId':'stage-id'})
         self.assertEqual(calls, [])
 
+    def test_primary_owner_treats_docker_missing_container_errors_case_insensitively(self):
+        backend = DockerBackend({'primaryContainer':'primary'})
+        for message in (
+                'release: docker inspect failed (1): error: no such object: primary',
+                'release: docker inspect failed (1): Error: No such object: primary',
+                'release: docker inspect failed (1): Error: No such container: primary'):
+            with self.subTest(message=message), \
+                    patch.object(backend, 'inspect', side_effect=ReleaseError(message)):
+                self.assertIsNone(backend._primary_owner_id())
+        error = ReleaseError('release: docker inspect failed (1): permission denied by daemon')
+        with patch.object(backend, 'inspect', side_effect=error), \
+                self.assertRaisesRegex(ReleaseError, 'permission denied by daemon') as caught:
+            backend._primary_owner_id()
+        self.assertIs(caught.exception, error)
+
+    def test_restore_recovers_when_primary_alias_is_temporarily_missing(self):
+        backend = DockerBackend({'network':'net','primaryContainer':'primary',
+                                 'primaryAddress':'172.19.0.4'})
+        state = {'name':'usa-atlas-archived-old','running':False,'address':None}
+        missing_alias_checks = []
+
+        def inspect(container):
+            if container == 'primary' and state['name'] != 'primary':
+                missing_alias_checks.append(container)
+                raise ReleaseError(
+                    'release: docker inspect failed (1): error: no such object: primary')
+            if container not in ('old-id', 'primary'):
+                raise AssertionError(f'unexpected inspect target: {container}')
+            return {'Id':'old-id','Name':'/' + state['name'],
+                    'State':{'Status':'running' if state['running'] else 'exited',
+                             'Running':state['running']},
+                    'NetworkSettings':{'Networks':{'net':
+                        ({'IPAddress':state['address']} if state['address'] else {})}}}
+
+        commands = []
+        def run(command, **kwargs):
+            commands.append(command)
+            if command[1:3] == ['rename', 'old-id']:
+                state['name'] = command[3]
+            elif command[1:3] == ['network', 'connect']:
+                state['address'] = command[command.index('--ip') + 1]
+            elif command[1:2] == ['start']:
+                state['running'] = True
+            return type('Result', (), {'stdout':'', 'stderr':''})()
+
+        prior = {'containerId':'old-id','buildSha256':'a'*64}
+        live = {'containerId':'old-id','networkAddress':'172.19.0.4'}
+        with patch.object(backend, 'inspect', side_effect=inspect), \
+                patch('scripts.release_workflow.run', side_effect=run), \
+                patch.object(backend, 'live_identity', return_value=live), \
+                patch.object(backend, 'healthcheck'):
+            backend.restore(prior, {'containerId':'stage-id'})
+
+        self.assertGreaterEqual(len(missing_alias_checks), 2)
+        self.assertEqual(state, {'name':'primary','running':True,'address':'172.19.0.4'})
+        self.assertTrue(any(command[1:3] == ['rename', 'old-id'] for command in commands))
+
     def test_wrong_live_alias_ip_never_passes_recovery(self):
         backend = DockerBackend({'network':'net','primaryContainer':'primary',
                                  'primaryAddress':'172.19.0.4'})
