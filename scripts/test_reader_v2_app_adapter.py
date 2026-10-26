@@ -118,13 +118,23 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
         return rows
 
     def test_candidate_sql_filters_every_batch_role_to_the_selected_mode(self):
-        for alias in ('rb', 'cb', 'pb', 'ab', 'eb', 'cf', 'gb'):
+        for alias in ('rb', 'cb', 'pb', 'ab', 'eb', 'cf'):
             with self.subTest(alias=alias), patch('scripts.atlas_data.subprocess.run') as run:
                 run.return_value = SimpleNamespace(returncode=0, stdout='[]', stderr='')
                 atlas_data.query(f"SELECT 1 WHERE {alias}.candidate_status IN ('local_review','admitted')")
                 sql=run.call_args.kwargs['input']
                 self.assertIn(f"{alias}.candidate_status='local_review'",sql)
                 self.assertNotIn("IN ('local_review','admitted')",sql)
+
+    def test_boundary_row_state_is_preserved_while_batch_admission_is_strict(self):
+        with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted'}), \
+             patch('scripts.atlas_data.subprocess.run') as run:
+            run.return_value=SimpleNamespace(returncode=0,stdout='[]',stderr='')
+            atlas_data.query("SELECT 1 WHERE gb.candidate_status IN ('local_review','admitted') "
+                             "AND rb.candidate_status IN ('local_review','admitted')")
+        sql=run.call_args.kwargs['input']
+        self.assertIn("gb.candidate_status IN ('local_review','admitted')",sql)
+        self.assertIn("rb.candidate_status='admitted'",sql)
 
     def test_v1_read_does_not_require_a_v2_lock_during_rollback(self):
         previous=atlas_data._verified_reader_v2_lock

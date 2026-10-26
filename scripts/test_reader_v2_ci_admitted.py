@@ -58,7 +58,7 @@ class AdmittedReaderV2PostgresTests(unittest.TestCase):
         self.assertEqual(missing['qualityState'],'missing')
         self.assertIsNone(missing['value'])
 
-    def test_cd119_admitted_database_returns_verified_full_boundary(self):
+    def test_cd119_keeps_local_review_geometry_for_admitted_batch_only(self):
         boundary=atlas_data.reader_v2_cd119_boundary(include_features=True)
         self.assertTrue(boundary['available'])
         self.assertEqual(boundary['featureCount'],435)
