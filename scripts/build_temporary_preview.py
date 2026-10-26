@@ -180,7 +180,8 @@ def build(destination, release, source_commit=None, previous_release=None,
                                            'contracts/reader-contract.lock.json', 'contracts/reader/v1/contract.json',
                                            'contracts/reader/v1/schema.sql', 'contracts/reader/v1/fixtures/reader-fixture.sql',
                                            'contracts/reader/v1/fixtures/reader-query.sql') +
-                              ([selected_lock_path] + selected_artifacts if selected_lock_path != 'contracts/reader-contract.lock.json' else [])},
+                              tuple([selected_lock_path] + selected_artifacts
+                                    if selected_lock_path != 'contracts/reader-contract.lock.json' else ())},
     }
     reader_lock = json.loads((destination / selected_lock_path).read_text())
     metadata['dataReaderLock'] = {
