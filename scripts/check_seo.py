@@ -91,6 +91,72 @@ def check_preview_http_dispatch():
             check(status == 301 and headers.get('Location') == destination,
                   f'HTTP {source} should redirect to {destination}; got {status} {headers.get("Location")}')
 
+        # Operational selections survive path normalization and a full HTTP
+        # follow. The final document still describes only the clean base route.
+        def check_operational_redirect(source, destination):
+            status, headers, _ = http_response(server, source)
+            check(status == 301 and headers.get('Location') == destination,
+                  f'HTTP {source} should retain operational state at {destination}; got {status} {headers.get("Location")}')
+            final_status, final_headers, body = http_response(server, destination)
+            check(final_status == 200 and 'Location' not in final_headers,
+                  f'HTTP follow of {source} should reach a stable rendered route')
+            base_path = destination.split('?', 1)[0]
+            canonical = f'https://usa-xray.online{base_path}'
+            jsonld = re.search(rb'<script id="atlas-jsonld" type="application/ld\+json">(.*?)</script>', body, re.S)
+            schema = json.loads(jsonld.group(1)) if jsonld else None
+            check(f'<link rel="canonical" href="{canonical}">'.encode() in body and
+                  meta(body, 'property', 'og:url') == canonical and
+                  meta(body, 'name', 'description') and
+                  meta(body, 'name', 'robots') in ('index,follow', 'noindex,follow') and
+                  body.count(b'rel="canonical"') == 1 and
+                  schema is not None and schema.get('@type') == 'WebPage' and schema.get('url') == canonical,
+                  f'HTTP follow of {source} should retain valid query-free canonical metadata')
+
+        for period in ('2025-M01', '2025-M10', '2025'):
+            check_operational_redirect(
+                f'/UNIted-states/Unemployment/?period={period}',
+                f'/united-states/unemployment?period={period}')
+        check_operational_redirect(
+            '/UNIted-states/California/Elections-President/?party=REPUBLICAN',
+            '/united-states/california/elections-president?party=REPUBLICAN')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=0606&party=REPUBLICAN',
+            '/united-states/elections-house?party=REPUBLICAN&district=0606')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=9999',
+            '/united-states/elections-house?district=9999')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=0606&party=REPUBLICAN&compare=places&secondDistrict=0607',
+            '/united-states/elections-house?party=REPUBLICAN&district=0606&compare=places&secondDistrict=0607')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=0606&compare=metrics&metricA=elections-house&metricB=unemployment',
+            '/united-states/elections-house?district=0606&compare=metrics&metricA=elections-house&metricB=unemployment')
+
+        # Only the first bounded value is considered; unrelated or invalid
+        # values are removed, and an over-wide query is discarded as a whole.
+        check_operational_redirect(
+            '/united-states/unemployment?period=2025-M01&period=2025-M10&party=REPUBLICAN&party=DEMOCRAT&theme=dark',
+            '/united-states/unemployment?period=2025-M01&party=REPUBLICAN')
+        check_operational_redirect(
+            '/united-states/unemployment?period=2026-M01&party=OTHER&theme=dark&embed=1',
+            '/united-states/unemployment?embed=1')
+        invalid_house = http_response(
+            server,
+            '/united-states/elections-house?district=0606&party=OTHER&compare=places&secondDistrict=0606&theme=dark')
+        check(invalid_house[0] == 301 and
+              invalid_house[1].get('Location') == '/united-states/elections-house?district=0606',
+              'invalid House state and unrelated query values should normalize away')
+        invalid_metric_comparison = http_response(
+            server,
+            '/united-states/elections-house?district=0606&compare=metrics&metricA=unknown&metricB=unknown')
+        check(invalid_metric_comparison[0] == 301 and
+              invalid_metric_comparison[1].get('Location') == '/united-states/elections-house?district=0606',
+              'unrecognized House metric operands should not survive normalization')
+        too_many = '&'.join(['period=2025-M01'] + [f'x{i}=1' for i in range(32)])
+        bounded = http_response(server, '/united-states/unemployment?' + too_many)
+        check(bounded[0] == 301 and bounded[1].get('Location') == '/united-states/unemployment',
+              'queries beyond the bounded parser limit should not retain partial state')
+
         with patch('preview_server.atlas_data.catalog', return_value={'metrics': []}):
             status, _, _ = http_response(server, '/united-states/not-a-real-place/unemployment')
         check(status == 404, 'unknown app routes should remain HTTP 404')
