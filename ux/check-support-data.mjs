@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {normalizeDonationMethods, normalizeSupportData, normalizeSupportGoal} from './support-data.js';
 
 const unconfigured = normalizeSupportData(null);
@@ -7,6 +8,18 @@ assert.equal(unconfigured.goal.status, 'unconfigured');
 assert.equal(unconfigured.goal.goal, null, 'unconfigured funding must not become a fake $0');
 assert.equal(unconfigured.donationMethods.status, 'unconfigured');
 assert.deepEqual(unconfigured.donationMethods.wallets, []);
+
+const configured = JSON.parse(await readFile(new URL('./project-content.json', import.meta.url), 'utf8'));
+const configuredMethods = normalizeSupportData(configured.support).donationMethods;
+assert.equal(configuredMethods.status, 'available');
+assert.deepEqual(configuredMethods.wallets.map(({id, asset, network, address, qrUrl}) => ({id, asset, network, address, qrUrl})), [
+  {id:'tron',asset:'TRX / USDT',network:'TRON',address:'TLR2roEqr5i7KFJ1cAGam7AgmDJeyEr942',qrUrl:'/ux/assets/support/tron.png'},
+  {id:'ethereum',asset:'ETH',network:'Ethereum',address:'0x788698c9a116f7DF1af7D0f0297d5021Be00C4e2',qrUrl:'/ux/assets/support/evm.png'},
+  {id:'bitcoin',asset:'BTC',network:'Bitcoin',address:'bc1q6hnej0feq64mdxyhx59xld7qc40grrhp8a9w0h',qrUrl:'/ux/assets/support/bitcoin.png'},
+  {id:'solana',asset:'SOL',network:'Solana',address:'8LvnsGQ9MskAZVAgjS6SYEbHJQiib1j5UAkv3TYhs28a',qrUrl:'/ux/assets/support/solana.png'},
+  {id:'bnb-chain',asset:'BNB',network:'BNB Chain',address:'0x788698c9a116f7DF1af7D0f0297d5021Be00C4e2',qrUrl:'/ux/assets/support/evm.png'},
+  {id:'polygon',asset:'POL',network:'Polygon',address:'0x788698c9a116f7DF1af7D0f0297d5021Be00C4e2',qrUrl:'/ux/assets/support/evm.png'}
+]);
 
 // Synthetic totals exercise funding states; the configured target has no reported raised amount.
 const goal = (raisedUsd, overrides = {}) => ({

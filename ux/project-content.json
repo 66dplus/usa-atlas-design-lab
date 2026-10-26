@@ -52,7 +52,14 @@
     },
     "donationMethods": {
       "externalLinks": [],
-      "wallets": []
+      "wallets": [
+        {"id":"tron","confirmed":true,"asset":"TRX / USDT","network":"TRON","address":"TLR2roEqr5i7KFJ1cAGam7AgmDJeyEr942","qrUrl":"/ux/assets/support/tron.png"},
+        {"id":"ethereum","confirmed":true,"asset":"ETH","network":"Ethereum","address":"0x788698c9a116f7DF1af7D0f0297d5021Be00C4e2","qrUrl":"/ux/assets/support/evm.png"},
+        {"id":"bitcoin","confirmed":true,"asset":"BTC","network":"Bitcoin","address":"bc1q6hnej0feq64mdxyhx59xld7qc40grrhp8a9w0h","qrUrl":"/ux/assets/support/bitcoin.png"},
+        {"id":"solana","confirmed":true,"asset":"SOL","network":"Solana","address":"8LvnsGQ9MskAZVAgjS6SYEbHJQiib1j5UAkv3TYhs28a","qrUrl":"/ux/assets/support/solana.png"},
+        {"id":"bnb-chain","confirmed":true,"asset":"BNB","network":"BNB Chain","address":"0x788698c9a116f7DF1af7D0f0297d5021Be00C4e2","qrUrl":"/ux/assets/support/evm.png"},
+        {"id":"polygon","confirmed":true,"asset":"POL","network":"Polygon","address":"0x788698c9a116f7DF1af7D0f0297d5021Be00C4e2","qrUrl":"/ux/assets/support/evm.png"}
+      ]
     }
   }
 }

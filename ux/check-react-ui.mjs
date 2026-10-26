@@ -290,7 +290,9 @@ try {
         await page.locator('#support-open').click();
         await page.locator('#support-main').waitFor();
         await shot(page, 'after-' + key + '-support');
-        assert.equal(await page.locator('.support-method--unavailable').count(), 3);
+        assert.equal(await page.locator('.support-method--unavailable').count(), 0);
+        assert.equal(await page.locator('[data-open-crypto]').count(), 1);
+        assert.equal(await page.getByRole('button', {name: /Cryptocurrency/}).count(), 1);
         await page.locator('#reading-page').evaluate((e) => (e.scrollTop = e.scrollHeight));
         await shot(page, 'after-' + key + '-support-footer');
         await page.locator('[data-open-milestone]').click();

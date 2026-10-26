@@ -158,6 +158,10 @@ function App() {
       dialogs.open('milestone', button);
       return;
     }
+    if (button.hasAttribute('data-open-crypto')) {
+      dialogs.open('crypto', button);
+      return;
+    }
     if (button.hasAttribute('data-support-methods')) {
       const section = document.querySelector<HTMLElement>('#support-methods');
       section?.focus({ preventScroll: true });
