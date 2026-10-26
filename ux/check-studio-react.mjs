@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
+import { assertStudioPost } from './studio-request-contract.mjs';
 const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/$/, ''),
   before = process.env.ATLAS_BEFORE_URL,
   out = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-xray-react-studio-${Date.now()}`;
@@ -42,7 +43,10 @@ try {
           acceptDownloads: true,
         }),
         errors = [],
-        posts = [], advertisingRequests = [];
+        posts = [],
+        advertisingRequests = [],
+        websiteIds = new Set(),
+        configs = [];
       await context.addInitScript((theme) => localStorage.setItem('usa-atlas-theme', theme), theme);
       try {
         if (before) {
@@ -57,10 +61,21 @@ try {
           if (message.type() === 'error') errors.push(message.text());
         });
         page.on('request', (request) => {
-          if (request.method() === 'POST') posts.push(request.url());
+          if (request.method() === 'POST') {
+            posts.push(request.allHeaders().then(headers => ({
+              url: request.url(), method: request.method(), headers, body: request.postData(),
+            })));
+          }
           const url = new URL(request.url());
           if (url.hostname === 'example.test' || /\/api\/(?:ad(?:vertis)?|placements?|publish)/i.test(url.pathname))
             advertisingRequests.push(request.url());
+        });
+        page.on('response', (response) => {
+          const url = new URL(response.url());
+          if (url.origin === new URL(base).origin && url.pathname === '/api/analytics/config' && !url.search)
+            configs.push(response.json().then((config) => {
+              if (config.enabled === true) websiteIds.add(config.websiteId);
+            }).catch(() => {}));
         });
         await loaded(page, base);
         assert.equal(await page.locator('body').getAttribute('data-theme'), theme);
@@ -145,16 +160,14 @@ try {
           false,
         );
         assert.deepEqual(errors, []);
-        assert.deepEqual(
-          posts,
-          [],
-          'Saving and downloading drafts do not send requests or publish advertising',
-        );
-        assert.deepEqual(advertisingRequests, [], 'Draft URLs and advertising endpoints are never requested');
         await page.locator(viewport.width <= 760 ? '#save-mobile' : '#save-draft').click();
+        await Promise.all(configs);
+        for (const post of await Promise.all(posts)) assertStudioPost(post, base, websiteIds);
+        assert.deepEqual(advertisingRequests, [], 'Draft URLs and advertising endpoints are never requested');
         result.checks.push({
           name,
           status: 'pass',
+          approvedTelemetryPosts: posts.length,
           scope:
             'bounded unverified reference, independently settled real map, retained creative/contact/duration/targeting, private browser draft persistence, download-only request, invalid URL and Desktop-only ticker; no advertising requests',
         });

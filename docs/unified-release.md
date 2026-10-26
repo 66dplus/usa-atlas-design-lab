@@ -77,6 +77,8 @@ The first official A rehearsal on accepted main `6cf18e11041e958024708c8c3507f07
 
 ## Local verification and scope
 
+The phase4 pending statements above are historical. R1 later passed actual stage acceptance, failed public report/telemetry verification and was officially rolled back using a new current-main/live-R1-bound complete receipt. Original A is restored; R2 remains pending. See [the actual incident record](application/react-typescript-evaluation-20261026.md#current-incident-disposition-and-public-boundary-correction). No old stage proof or preactivation receipt may be reused.
+
 Run `python3 -m unittest scripts.test_release_workflow` for temporary-directory, in-memory backend, and mocked Docker adapter checks. These tests make no remote Git query, Docker mutation, SSH connection, or production request. They cover dirty/stale source and baseline rejection, legacy hashes, package metadata/UI tampering, extra files/symlinks/unsafe paths, mount source identity, receipt freshness/policy binding, denied rollback, lock contention, activation races, immutable container IDs, and preservation of a foreign primary owner. Real Docker failure injection and production rollback rehearsals remain part of parent integration review.
 
 No E1–E11 acceptance claim is made by this tooling change. Parent integration owns real runtime baseline capture, reader-lock production, the acceptance runner, production registry approval, and all deployment/SSH operations.
@@ -92,3 +94,25 @@ This is the sole permitted writable mount. The root filesystem, reader secret an
 `trustedProxyNetworks` is an explicit list of IP/CIDR networks, empty by default. Configure only the actual validated reverse proxy peers/chains. The backend otherwise limits by socket peer, rejects invalid origin/privacy/body fields, acknowledges only after atomic private storage, and never offers a report read/list route. Report files and browser feedback are outside `/app` and outside the static package manifest. No report directory source, caller address or report body belongs in release evidence.
 
 Tests cover configured/absent/provisioning errors, exact writable destination and source identity, retained required read-only mounts, rollback inheritance and repeated stage inspection. Actual Docker mount permission/durability, UID/read-only-root behavior and proxy topology require the coordinator's isolated real stage. Keep those checks distinct from mocked adapter tests.
+
+## Permanent public relay sync
+
+`deploy/public-relay/proxy.py` versions the existing permanent nginx-to-loopback relay; this is not the retired tunnel. Defaults remain loopback `127.0.0.1:8099` to primary `172.19.0.4:4429` with Host `127.0.0.1:4429`, existing routing, response framing and gzip behavior. It selectively preserves Origin, Sec-Fetch-Site, Content-Type and X-Forwarded-For. Only a loopback socket peer may supply the latter; nginx must overwrite/append the real caller chain, and the backend must trust only verified proxy peers. An invalid IP chain, duplicate security/framing header, transfer-encoded request, oversized headers or body above 8MiB fails closed. This outer framing bound does not change the much smaller report-body limit. Connection-nominated fields, Cookie, Authorization and all other inbound headers are excluded. The strict report origin/JSON/privacy checks remain unchanged.
+
+The parent adds exactly this private sub-object to its existing operator config, after securely discovering the actual existing source and managed service. Neither value belongs in repository config or evidence:
+
+```json
+{"publicRelay":{"sourcePath":"ABSOLUTE_CANONICAL_EXISTING_SOURCE","serviceUnit":"EXISTING_UNIT.service"}}
+```
+
+`sourcePath` must be a regular absolute file with no symlink components; `serviceUnit` must be an explicit bounded systemd service name. There is no arbitrary shell, create-service or deploy-container interface. After protected merge, from a clean checkout equal to current public remote main, the parent invokes:
+
+```sh
+python3 scripts/release_workflow.py --config PRIVATE_OPERATOR_CONFIG --repo CLEAN_ACCEPTED_CHECKOUT --state-dir APPROVED_STATE --registry APPROVED_REGISTRY relay-sync --id UNIQUE_SYNC_ID --source-commit FULL_ACCEPTED_MAIN_SHA --baseline-build-sha 213f3c50fdd595420f19b917bb13c0b47c6463049695de0ae08ed9197a252859 --expected-preimage-sha256 b8768575a323785eb4617e8f34fb33e3659dfa76df064390370df1fd3f643910
+```
+
+The operation holds the same global deployment lock as release actions. It requires the exact approved, unrevoked restored A tuple, primary address, UID, read-only root and required read-only mounts; no unapproved writable mount is allowed. It rechecks source/main, live identity and exact preimage immediately before mutation. The only install source is the exact committed relay file. It saves a mode 0600 fsynced backup and hash-only operation record under the private state directory, atomically replaces/fsyncs the existing source preserving mode/owner, restarts only the configured existing service, then checks both loopback and public raw build bytes against A and rechecks live container identity. Public HTTP proves build identity, not Docker identity.
+
+Handled replacement/restart/health failures restore prior bytes, restart the same service and verify both baseline endpoints. The record distinguishes `not-mutated`, `prior-source-service-restored` and `restoration-failed`. Backup/intent evidence is retained. An abrupt host failure/SIGKILL cannot guarantee automatic recovery; the parent must inspect private backup/record and restore through secure operator recovery before proceeding. Source paths, unit names, command output and private environment are not emitted. This operation does not mutate release/artifact approvals, create a stage, authorize activation or replace complete acceptance. Actual host/service execution is a pending parent operation, not certified by local mocks.
+
+Local checks: `python3 -m unittest scripts.test_public_relay scripts.test_public_relay_sync` exercises real relay HTTP into the real report handler plus temporary-file/lock transitions with systemd/Docker/network mocked. `node ux/check-studio-request-contract.mjs` checks the narrow approved analytics schema and unknown/private POST negatives. Full native and studio browser checks must also execute against a built runtime; no native N/A on compiled candidates.
