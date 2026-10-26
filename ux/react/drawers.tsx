@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react';
 import type { Atlas } from './use-atlas';
+import { displayMetricName } from './types';
 import { stories, mobileLayout } from './use-atlas';
 import { SavedContent } from './saved';
 import type { Saved } from './saved';
@@ -162,7 +163,7 @@ export function Drawers({ atlas, saved }: { atlas: Atlas; saved: Saved }) {
             <button className="panel-back" data-close="ranking-panel">
               <Icon name="back" /> Back to {selected()?.name || 'Explorer'}
             </button>
-            <h2>{atlas.metric().name}</h2>
+            <h2>{displayMetricName(atlas.metric())}</h2>
             <RankList atlas={atlas} />
             <p className="library-note">
               <SourceLink atlas={atlas} metric={atlas.metric()} place={selected()} />. Missing

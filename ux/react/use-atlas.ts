@@ -108,9 +108,10 @@ export function initialState(): AtlasState {
           ? 'compare'
           : q.get('page')
   ) as Page;
-  let theme: 'light' | 'dark' = 'light';
+  let theme: 'light' | 'dark' = 'dark';
   try {
-    theme = localStorage.getItem('usa-atlas-theme') === 'dark' ? 'dark' : 'light';
+    const saved = localStorage.getItem('usa-atlas-theme');
+    if (q.get('embed') !== '1' && (saved === 'light' || saved === 'dark')) theme = saved;
   } catch {}
   if (q.get('theme') === 'light' || q.get('theme') === 'dark')
     theme = q.get('theme') as typeof theme;

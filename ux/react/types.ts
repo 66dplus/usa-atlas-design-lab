@@ -38,6 +38,17 @@ export interface Metric {
   switchLabel?: string;
   switchOptions?: { id: string; label: string }[];
 }
+/** Short presentation label for the four race/ethnicity series. Metric names,
+ * IDs and source definitions remain unchanged in the adapter and contracts. */
+export function displayMetricName(metric: Metric): string {
+  const labels: Record<string, string> = {
+    'race-ethnicity--black': 'Black',
+    'race-ethnicity--asian': 'Asian',
+    'race-ethnicity--white-non-hispanic': 'White',
+    'race-ethnicity': 'Hispanic',
+  };
+  return labels[metric.id] || metric.name;
+}
 export interface Place {
   id: string;
   stateId: string;

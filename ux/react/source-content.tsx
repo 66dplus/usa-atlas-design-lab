@@ -1,5 +1,5 @@
 import type { Atlas } from './use-atlas';
-import type { Side } from './types';
+import { displayMetricName, type Side } from './types';
 import { formatValue, formatPeriod, missingReason } from '../model.js';
 export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
   const { metric, metricB, selected, selectedB, layer, observation, number } = atlas;
@@ -34,6 +34,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
     (row && m.fieldId === '03.06:unemployment_rate' && m.definition?.method) || '';
   const explanation =
     unemploymentMethod ||
+    m.definition?.method ||
     row?.methodologyNote ||
     (row
       ? m.fieldId === '03.06:unemployment_rate'
@@ -53,7 +54,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         <p>
           {f?.name || 'United States'}
           {' · '}
-          {m.name}
+          {displayMetricName(m)}
         </p>
         <strong>{number(m, f?.id)}</strong>
       </div>
@@ -82,6 +83,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         <h3>{'Method & data gaps'}</h3>
         <p>
           {unemploymentMethod ||
+            m.definition?.method ||
             row?.methodologyNote ||
             'No county/state aggregation or missing-value substitution is performed. A dash means no published observation.'}
         </p>
@@ -130,7 +132,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
     <>
       <div className="source-desktop">{desktop}</div>
       <div className="source-mobile">
-        <h3>{m.name}</h3>
+        <h3>{displayMetricName(m)}</h3>
         <dl>
           <dt>{'Source'}</dt>
           <dd>{sourceName}</dd>

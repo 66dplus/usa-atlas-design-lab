@@ -85,7 +85,6 @@ function ReadingContent({
               libraryRows={<LibraryRows atlas={atlas} />}
               appearanceControl={
                 <button
-                  id="theme-toggle"
                   className="theme-toggle"
                   onClick={() => atlas.setTheme(state.theme === 'dark' ? 'light' : 'dark', true)}
                 >

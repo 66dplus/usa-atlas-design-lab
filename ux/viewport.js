@@ -12,6 +12,7 @@ export function initViewport() {
       }
       const color = getComputedStyle(document.body).getPropertyValue('--bg').trim();
       document.documentElement.style.backgroundColor = color;
+      document.documentElement.style.colorScheme = document.body.dataset.theme || 'dark';
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta && color) meta.content = color;
     });
