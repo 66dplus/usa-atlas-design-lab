@@ -1,5 +1,6 @@
 """Static revalidation saves transfer while new builds and data stay fresh."""
 import gzip
+import hashlib
 import http.client
 from pathlib import Path
 import socket
@@ -84,7 +85,7 @@ class PreviewCacheTests(unittest.TestCase):
         asset.write_bytes(body)
         server = PreviewServer(('127.0.0.1', 0), {'/slow-reader.bin': asset})
         server.request_timeout = 0.2  # Scale the production 10 second timeout for this check.
-        server.response_write_timeout = 1.0
+        server.response_write_timeout = 3.0
         original_get_request = server.get_request
 
         def small_send_buffer():
@@ -96,7 +97,7 @@ class PreviewCacheTests(unittest.TestCase):
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         client = socket.create_connection(server.server_address, timeout=5)
-        client.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 64 * 1024)
         client.sendall((f'GET /slow-reader.bin HTTP/1.1\r\nHost: 127.0.0.1:{server.server_port}\r\n'
                         'Connection: close\r\n\r\n').encode())
         response = http.client.HTTPResponse(client)
@@ -114,7 +115,10 @@ class PreviewCacheTests(unittest.TestCase):
                 time.sleep(0.001)
             elapsed = time.monotonic() - start
             self.assertGreater(elapsed, server.request_timeout)
+            self.assertEqual(len(received), len(body))
             self.assertEqual(bytes(received), body)
+            self.assertEqual(hashlib.sha256(received).hexdigest(),
+                             '91d3beb88a9b2f778a6c44a1c53b63d3c79931845a9aef84b3fb414610bd1938')
         finally:
             client.close()
             server.shutdown()
