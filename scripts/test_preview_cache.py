@@ -1,9 +1,12 @@
 """Static revalidation saves transfer while new builds and data stay fresh."""
 import gzip
+import hashlib
 import http.client
 from pathlib import Path
+import socket
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -73,6 +76,111 @@ class PreviewCacheTests(unittest.TestCase):
             _, api, _ = self.request('/api/atlas/catalog')
         self.assertEqual(api['Cache-Control'], 'no-store')
         self.assertNotIn('ETag', api)
+
+    def test_slow_active_reader_gets_complete_response_past_scaled_request_timeout(self):
+        # Deterministic transport bytes exercise the real reply() socket write;
+        # their contents carry no application or data-source meaning.
+        body = bytes(range(256)) * 8192
+        asset = self.root / 'slow-reader.bin'
+        asset.write_bytes(body)
+        server = PreviewServer(('127.0.0.1', 0), {'/slow-reader.bin': asset})
+        server.request_timeout = 0.2  # Scale the production 10 second timeout for this check.
+        server.response_write_timeout = 3.0
+        original_get_request = server.get_request
+
+        def small_send_buffer():
+            connection, address = original_get_request()
+            connection.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+            return connection, address
+
+        server.get_request = small_send_buffer
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        client = socket.create_connection(server.server_address, timeout=5)
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 64 * 1024)
+        client.sendall((f'GET /slow-reader.bin HTTP/1.1\r\nHost: 127.0.0.1:{server.server_port}\r\n'
+                        'Connection: close\r\n\r\n').encode())
+        response = http.client.HTTPResponse(client)
+        try:
+            response.begin()
+            self.assertEqual(response.status, 200)
+            self.assertEqual(int(response.getheader('Content-Length')), len(body))
+            received = bytearray()
+            start = time.monotonic()
+            while True:
+                chunk = response.read(8192)
+                if not chunk:
+                    break
+                received.extend(chunk)
+                time.sleep(0.001)
+            elapsed = time.monotonic() - start
+            self.assertGreater(elapsed, server.request_timeout)
+            self.assertEqual(len(received), len(body))
+            self.assertEqual(bytes(received), body)
+            self.assertEqual(hashlib.sha256(received).hexdigest(),
+                             '91d3beb88a9b2f778a6c44a1c53b63d3c79931845a9aef84b3fb414610bd1938')
+        finally:
+            client.close()
+            server.shutdown()
+            server.server_close()
+            thread.join(2)
+
+    def test_stalled_reader_is_closed_within_bounded_response_timeout(self):
+        body = bytes(range(256)) * 8192
+        asset = self.root / 'stalled-reader.bin'
+        asset.write_bytes(body)
+        server = PreviewServer(('127.0.0.1', 0), {'/stalled-reader.bin': asset})
+        server.request_timeout = 0.2
+        server.response_write_timeout = 0.4
+        original_get_request = server.get_request
+
+        def small_send_buffer():
+            connection, address = original_get_request()
+            connection.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+            return connection, address
+
+        server.get_request = small_send_buffer
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        client = socket.create_connection(server.server_address, timeout=5)
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)
+        client.sendall((f'GET /stalled-reader.bin HTTP/1.1\r\nHost: 127.0.0.1:{server.server_port}\r\n'
+                        'Connection: close\r\n\r\n').encode())
+        response = http.client.HTTPResponse(client)
+        try:
+            response.begin()
+            self.assertEqual(int(response.getheader('Content-Length')), len(body))
+            start = time.monotonic()
+            time.sleep(server.response_write_timeout + 0.1)
+            with self.assertRaises(http.client.IncompleteRead) as truncated:
+                response.read()
+            elapsed = time.monotonic() - start
+            self.assertLess(elapsed, 2)
+            self.assertEqual(truncated.exception.partial, body[:len(truncated.exception.partial)])
+            self.assertLess(len(truncated.exception.partial), len(body))
+        finally:
+            client.close()
+            server.shutdown()
+            server.server_close()
+            thread.join(2)
+
+    def test_incomplete_request_headers_keep_their_separate_read_timeout(self):
+        server = PreviewServer(('127.0.0.1', 0), {})
+        server.request_timeout = 0.2
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        client = socket.create_connection(server.server_address, timeout=2)
+        client.sendall((f'GET / HTTP/1.1\r\nHost: 127.0.0.1:{server.server_port}\r\n'
+                        'X-Incomplete:').encode())
+        try:
+            start = time.monotonic()
+            self.assertEqual(client.recv(1), b'')
+            self.assertLess(time.monotonic() - start, 1)
+        finally:
+            client.close()
+            server.shutdown()
+            server.server_close()
+            thread.join(2)
 
 
 if __name__ == '__main__':

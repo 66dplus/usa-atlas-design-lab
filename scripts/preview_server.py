@@ -88,6 +88,8 @@ class ReadCache:
 class PreviewServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
     request_queue_size = 16
+    request_timeout = 10
+    response_write_timeout = 60
 
     def __init__(self, address, assets, cache=None, reports_dir=None, trusted_proxies=()):
         self.assets, self.cache = assets, cache or ReadCache()
@@ -99,7 +101,7 @@ class PreviewServer(ThreadingMixIn, HTTPServer):
 
     def get_request(self):
         connection, address = super().get_request()
-        connection.settimeout(10)
+        connection.settimeout(self.request_timeout)
         return connection, address
 
     def process_request(self, request, address):
@@ -153,6 +155,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
             self.send_header(name, value)
         self.end_headers()
         if self.command != 'HEAD':
+            self.connection.settimeout(self.server.response_write_timeout)
             try:
                 self.wfile.write(body)
             except (BrokenPipeError, ConnectionResetError, socket.timeout):
