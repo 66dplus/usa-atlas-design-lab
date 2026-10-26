@@ -117,10 +117,10 @@ class WorkflowTests(unittest.TestCase):
         self.lock = self.root/'contracts'/'reader-contract.lock.json'
         artifact=self.root/'contracts'/'reader'/'v1'/'contract.json'
         artifact.parent.mkdir(parents=True)
-        write_json(artifact, {'version':'v1','schema_fingerprint':'schema-v1','read_only':True,
+        write_json(artifact, {'version':'1.0.0','schema_fingerprint':'schema-v1','read_only':True,
                               'admission_filter':"usa_atlas.ingest_run.status = 'pass'"})
         write_json(self.lock, {'producerRepository':'reader','sourceCommit':'a'*40,
-            'contractVersion':'v1','artifactPath':'database/reader/v1',
+            'contractVersion':'1.0.0','artifactPath':'database/reader/v1',
             'localArtifactPath':'contracts/reader/v1/contract.json',
             'contractSha256':digest(artifact.read_bytes()),'schemaFingerprint':'schema-v1',
             'bootstrapSha256':'2'*64,'fixtureSha256':'3'*64,

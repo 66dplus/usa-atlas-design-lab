@@ -1,5 +1,8 @@
 """Read-only PostgreSQL boundary for the local atlas; no ingestion or inferred values."""
+import calendar
+import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -28,12 +31,36 @@ SOURCE_NAMES = {'bls_laus': 'BLS LAUS', 'bea_rpp': 'BEA Regional Price Parities'
                 'cdc_uscs': 'CDC USCS', 'cdc_atlasplus': 'CDC AtlasPlus',
                 'cdc_wonder': 'CDC WONDER'}
 
+# Explicit consumer aliases for the guarded local refresh batch. The source
+# field IDs stay as recorded by the reader; public metric aliases are mapped
+# only at this application boundary and remain candidate/nonreleased.
+REFRESH_TARGETS = {
+    'irs_agi_total_2023': {'metric_id':'adjusted-gross-income-agi','catalog':'07.01','dataset':'irs_agi','field':'07.01:agi_total','public_field':'07.01:derived:total','year':2023,'unit':'USD','display_unit':'USD','geography':'state_and_county'},
+    'irs_agi_per_resident_2023': {'metric_id':'adjusted-gross-income-agi--per-resident','catalog':'07.01','dataset':'irs_agi','field':'07.01:derived:per-resident','public_field':'07.01:derived:per-resident','year':2023,'unit':'USD/person','display_unit':'USD per resident','geography':'state_and_county'},
+    'electricity_price_2025_all': {'metric_id':'electricity-price','catalog':'08.05','dataset':'electricity_price','field':'08.05:sector_ALL','public_field':'08.05:sector_ALL','year':2025,'unit':'cents/kWh','display_unit':'cents/kWh','geography':'state'},
+    'cancer_2023': {'metric_id':'all-cancer-new-cases','catalog':'11.01','dataset':'cancer','field':'11.01','public_field':'11.01:derived','year':2023,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county'},
+    'hiv_2024': {'metric_id':'new-hiv-diagnoses','catalog':'11.02','dataset':'hiv','field':'11.02','public_field':'11.02:derived','year':2024,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county'},
+    'child_deaths_under18_2024': {'metric_id':'deaths-under-18','catalog':'11.03','dataset':'child_deaths_under18','field':'11.03','public_field':'11.03:derived','year':2024,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county'},
+    'fbi_homicide_2025': {'metric_id':'murders','catalog':'04.01','dataset':'fbi_crime_rate','field':'04.01:derived','public_field':'04.01:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'fbi_violent_crime_2025': {'metric_id':'violent-crime','catalog':'04.02','dataset':'fbi_crime_rate','field':'04.02:derived','public_field':'04.02:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'fbi_robbery_2025': {'metric_id':'robbery','catalog':'04.03','dataset':'fbi_crime_rate','field':'04.03:derived','public_field':'04.03:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'fbi_aggravated_assault_2025': {'metric_id':'aggravated-assault','catalog':'04.04','dataset':'fbi_crime_rate','field':'04.04:derived','public_field':'04.04:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'fbi_burglary_2025': {'metric_id':'burglary','catalog':'04.05','dataset':'fbi_crime_rate','field':'04.05:derived','public_field':'04.05:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'fbi_motor_vehicle_theft_2025': {'metric_id':'motor-vehicle-theft','catalog':'04.06','dataset':'fbi_crime_rate','field':'04.06:derived','public_field':'04.06:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'fbi_rape_revised_2025': {'metric_id':'rape','catalog':'04.07','dataset':'fbi_crime_rate','field':'04.07:derived','public_field':'04.07:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+}
+
 
 class DatabaseUnavailable(RuntimeError):
     pass
 
 
 def query(sql, variables=None, *, statement_timeout_ms=8000, database='usa_atlas'):
+    mode = reader_v2_mode()
+    status = 'local_review' if mode == 'local_review' else 'admitted'
+    for alias in ('rb', 'cb', 'pb', 'ab', 'eb'):
+        sql = sql.replace(f"{alias}.candidate_status IN ('local_review','admitted')",
+                          f"{alias}.candidate_status='{status}'")
     env = {**os.environ, 'PGCONNECT_TIMEOUT': '3',
            'PGAPPNAME': 'usa_atlas_ui',
            'PGOPTIONS': f'-c default_transaction_read_only=on -c statement_timeout={statement_timeout_ms}'}
@@ -57,6 +84,8 @@ NORMALIZATION = json.loads((ROOT / 'ux/metric-definitions.json').read_text())
 NORMALIZED_BY_ID = {metric['id']: metric for metric in NORMALIZATION['metrics']}
 NORMALIZED_BY_FIELD = {metric['fieldId']: metric for metric in NORMALIZATION['metrics'] if metric.get('fieldId')}
 NORMALIZED_VARIANTS = NORMALIZATION['variants']
+READER_V2_LOCK = ROOT / 'contracts/reader-v2-contract.lock.json'
+_verified_reader_v2_lock = None
 
 
 def presentation_metadata(field_id, source, unit, period, release):
@@ -104,7 +133,7 @@ def series_label(base, field):
 def public_definition(definition):
     return {key: definition.get(key) for key in
             ('formula', 'period', 'displayPeriod', 'unit', 'geography', 'scale',
-             'minDenominator', 'source', 'method', 'sourceRelease')
+             'minDenominator', 'source', 'method', 'sourceRelease', 'rateMetadata')
             if definition.get(key) is not None}
 
 
@@ -516,3 +545,648 @@ def observations(field_id):
                             'suppressedGeographies': []})
     result_data['selection'] = 'Latest single period and release in the loaded database; no older-place fallback.'
     return result_data
+
+
+def unemployment_period_observations(period_type, year, month=None):
+    """Read one explicit LAUS period; M13 is an annual average, never a month."""
+    if period_type not in ('annual', 'month') or not isinstance(year, int) or not 2000 <= year <= 2100:
+        raise ValueError('Choose a supported unemployment period')
+    if period_type == 'annual' and month is not None:
+        raise ValueError('Annual average does not take a month')
+    if period_type == 'month' and (not isinstance(month, int) or not 1 <= month <= 12):
+        raise ValueError('Choose a month from January through December')
+    if not os.environ.get('ATLAS_READER_V2_DATABASE'):
+        raise DatabaseUnavailable('Released unemployment data has no explicit NSA period contract.')
+    return reader_v2_unemployment_period(period_type, year, month)
+
+
+def unemployment_month_series(year, geography_type, geography_id):
+    """Read only observed Jan–Dec LAUS rows for one exact geography."""
+    if not isinstance(year, int) or not 2000 <= year <= 2100:
+        raise ValueError('Choose a supported unemployment year')
+    if not os.environ.get('ATLAS_READER_V2_DATABASE'):
+        raise DatabaseUnavailable('Monthly unemployment data has no explicit NSA period contract.')
+    return reader_v2_unemployment_month_series(year, geography_type, geography_id)
+
+
+def _verify_reader_v2_lock():
+    """Verify the separate formal 2.0 bundle before public admitted reads."""
+    global _verified_reader_v2_lock
+    if _verified_reader_v2_lock is not None:
+        return _verified_reader_v2_lock
+    try:
+        lock = json.loads(READER_V2_LOCK.read_bytes())
+        root = (ROOT / 'contracts/reader/v2').resolve()
+        if (lock.get('format') != 'usa_atlas_reader_lock' or lock.get('contractVersion') != '2.0.0' or
+                not re.fullmatch(r'[0-9a-f]{40}', str(lock.get('sourceCommit', ''))) or
+                not re.fullmatch(r'[0-9a-f]{64}', str(lock.get('contractSha256', ''))) or
+                not re.fullmatch(r'[0-9a-f]{64}', str(lock.get('schemaFingerprint', ''))) or
+                lock.get('readOnly') is not True or
+                lock.get('admissionFilter') != "usa_atlas.reader_batch.candidate_status = 'admitted' AND usa_atlas.ingest_run.status = 'pass'"):
+            raise ValueError('reader lock fields are incomplete')
+        contract_path = root / 'contract.json'
+        contract_raw = contract_path.read_bytes()
+        contract = json.loads(contract_raw)
+        if (hashlib.sha256(contract_raw).hexdigest() != lock['contractSha256'] or
+                contract.get('version') != '2.0.0' or contract.get('schema_fingerprint') != lock['schemaFingerprint']):
+            raise ValueError('reader contract identity differs from lock')
+        artifacts = lock.get('artifacts')
+        if not isinstance(artifacts, dict) or not artifacts:
+            raise ValueError('reader lock has no pinned artifacts')
+        for relative, expected in artifacts.items():
+            artifact = (root / relative).resolve()
+            if (not artifact.is_relative_to(root) or not re.fullmatch(r'[0-9a-f]{64}', str(expected)) or
+                    hashlib.sha256(artifact.read_bytes()).hexdigest() != expected):
+                raise ValueError('reader artifact differs from lock')
+        _verified_reader_v2_lock = lock
+        return lock
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        raise DatabaseUnavailable('The admitted reader-v2 contract is not installed or does not match its lock.') from None
+
+
+def reader_v2_mode():
+    """Return disabled, local_review, or admitted; never infer admission from a DB name."""
+    mode = os.environ.get('ATLAS_READER_V2_MODE', 'disabled')
+    if mode == 'local_review':
+        database = os.environ.get('ATLAS_READER_V2_DATABASE', '')
+        return mode if re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,62}', database) and database != 'usa_atlas' else 'disabled'
+    if mode == 'admitted':
+        if os.environ.get('ATLAS_READER_V2_DATABASE') not in (None, '', 'usa_atlas'):
+            return 'disabled'
+        _verify_reader_v2_lock()
+        return mode
+    return 'disabled'
+
+
+def _reader_v2_payload_identity():
+    mode = reader_v2_mode()
+    if mode == 'local_review':
+        return {'candidateStatus': 'local_candidate', 'localCandidatePreview': True, 'admissionStatus': 'candidate_nonreleased'}
+    if mode == 'admitted':
+        return {'candidateStatus': 'admitted', 'localCandidatePreview': False, 'admissionStatus': 'admitted'}
+    raise DatabaseUnavailable('Reader-v2 data are unavailable until an explicit reviewed mode is configured.')
+
+
+def _reader_v2_database():
+    mode = reader_v2_mode()
+    if mode == 'local_review':
+        return os.environ['ATLAS_READER_V2_DATABASE']
+    if mode == 'admitted':
+        return 'usa_atlas'
+    raise DatabaseUnavailable('Reader-v2 data are unavailable until an explicit reviewed mode is configured.')
+
+
+def reader_v2_cd119_boundary(include_features=False):
+    """Read an explicitly configured local 2024 CD119 GeoJSON; never bundle it."""
+    filename=os.environ.get('ATLAS_CD119_GEOJSON','')
+    expected=os.environ.get('ATLAS_CD119_GEOJSON_SHA256','').lower()
+    if not filename or not re.fullmatch(r'[a-f0-9]{64}',expected):
+        return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+    try:
+        raw=Path(filename).read_bytes()
+    except OSError:
+        return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+    digest=hashlib.sha256(raw).hexdigest()
+    if digest!=expected or len(raw)>50_000_000:
+        return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+    try: source=json.loads(raw)
+    except (UnicodeDecodeError,json.JSONDecodeError):
+        return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+    if source.get('type')!='FeatureCollection' or not isinstance(source.get('features'),list):
+        return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+    features=[];seen=set()
+    for original in source['features']:
+        props=original.get('properties') or {}
+        state=props.get('STATEFP');district=props.get('CD119FP');geoid=props.get('GEOID')
+        if district=='98': continue
+        if not (isinstance(state,str) and re.fullmatch(r'\d{2}',state) and
+                isinstance(district,str) and re.fullmatch(r'\d{2}',district) and
+                isinstance(geoid,str) and geoid==state+district and geoid not in seen and
+                original.get('type')=='Feature' and original.get('geometry')):
+            return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+        seen.add(geoid)
+        feature={**original,'id':geoid,'properties':{**props,'name':props.get('NAMELSAD') or props.get('NAME') or f'{state}-{district}'}}
+        features.append(feature)
+    if len(features)!=435 or not any(f['properties']['CD119FP']=='00' for f in features):
+        return {'available':False,'boundaryVintage':2024,'congressSession':'119'}
+    result={'available':True,'boundaryVintage':2024,'congressSession':'119',
+      'source':'U.S. Census Bureau TIGER/Line 2024 CD119',
+      'sourceUrl':'https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_cd119_500k.zip',
+      'sha256':digest,'featureCount':len(features)}
+    if include_features: result['featureCollection']={'type':'FeatureCollection','features':features}
+    return result
+
+
+def _reader_v2_unemployment_contract(database):
+    rows=query("""
+      SELECT json_build_object('sourceRelease',COALESCE(contract->>'sourceRelease',contract->>'source_release'),
+        'seasonalAdjustment',COALESCE(contract->>'seasonalAdjustment',contract->>'seasonal_adjustment'),
+        'sourceCode',COALESCE(contract->>'sourceCode',contract->>'source_code'))
+      FROM usa_atlas.catalog_field WHERE catalog_field_id='03.06'
+    """,database=database)
+    if (not rows or rows.get('seasonalAdjustment')!='NSA' or not rows.get('sourceRelease') or
+            rows.get('sourceCode')!='bls_laus'):
+        raise DatabaseUnavailable('Reader-v2 catalog has no explicit BLS LAUS NSA source release contract.')
+    return rows
+
+
+def _reader_v2_unemployment_domain(database, year, source_release):
+    result=query("""
+      SELECT json_build_object('maximum',max(o.value),'observations',count(*))
+      FROM usa_atlas.reader_observation o
+      JOIN usa_atlas.ingest_run i USING (ingest_id)
+      JOIN usa_atlas.catalog_field cf USING (catalog_field_id)
+      JOIN usa_atlas.reader_batch rb USING (ingest_id)
+      WHERE o.dataset_id='unemployment' AND o.field_id='03.06:unemployment_rate'
+        AND o.catalog_field_id='03.06' AND o.period_kind='monthly' AND o.period_year=:'year'::smallint
+        AND o.source_release=:'source_release'
+        AND COALESCE(cf.contract->>'seasonalAdjustment',cf.contract->>'seasonal_adjustment')='NSA'
+        AND o.quality_status='observed'
+        AND o.value IS NOT NULL AND o.unit IN ('percent','%')
+        AND o.geo_type IN ('nation','state','county') AND i.status='pass'
+        AND rb.candidate_status IN ('local_review','admitted')
+    """,{'year':year,'source_release':source_release},database=database)
+    maximum=result.get('maximum') if result else None
+    if maximum is None or int(result.get('observations') or 0)<1 or not 0<=float(maximum)<=100:
+        raise DatabaseUnavailable('No validated 2025 NSA monthly range is available for a shared map scale.')
+    high=max(1,math.ceil(float(maximum)/5)*5)
+    return [0,high]
+
+
+def reader_v2_unemployment_period(period_type, year, month=None):
+    database=_reader_v2_database()
+    contract=_reader_v2_unemployment_contract(database)
+    if period_type=='annual':
+        if month is not None: raise ValueError('Annual average does not take a month')
+    elif period_type=='month':
+        if not isinstance(month,int) or not 1<=month<=12: raise ValueError('Invalid calendar month')
+    else: raise ValueError('Invalid unemployment period type')
+    native_period_kind='monthly' if period_type=='month' else 'annual'
+    rows=query("""
+      SELECT COALESCE(json_agg(t ORDER BY geo_type,geo_id),'[]'::json)
+      FROM (
+        SELECT o.geo_id,o.geo_type,o.value,o.unit,o.quality_status,o.period_kind,
+          o.period_year,o.period_month,o.period_start_year,o.period_end_year,
+          o.source_period_code,o.source,o.source_release,o.source_url,o.methodology_note,
+          o.retrieved_at,COALESCE(cf.contract->>'seasonalAdjustment',cf.contract->>'seasonal_adjustment') AS seasonal_adjustment
+        FROM usa_atlas.reader_observation o
+        JOIN usa_atlas.ingest_run i USING (ingest_id)
+        JOIN usa_atlas.catalog_field cf USING (catalog_field_id)
+        JOIN usa_atlas.reader_batch rb USING (ingest_id)
+        WHERE o.dataset_id='unemployment' AND o.field_id='03.06:unemployment_rate'
+          AND o.catalog_field_id='03.06' AND o.period_kind=:'period_kind'
+          AND o.period_year=:'year'::smallint
+          AND o.period_month IS NOT DISTINCT FROM NULLIF(:'month','')::smallint
+          AND o.source_release=:'source_release' AND i.status='pass'
+          AND rb.candidate_status IN ('local_review','admitted')
+      ) t
+    """, {'period_kind':native_period_kind,'year':year,'month':'' if month is None else month,
+          'source_release':contract['sourceRelease']}, database=database)
+    expected_month=month
+    if any(row['seasonal_adjustment']!='NSA' for row in rows):
+        raise DatabaseUnavailable('Candidate unemployment contract does not explicitly identify NSA observations.')
+    observations=[]; releases=set(); source_periods=set()
+    for row in rows or []:
+        expected_period_code = f'M{month:02d}' if period_type == 'month' else 'M13'
+        if (row['period_kind'] != native_period_kind or int(row['period_year']) != year or
+                row['period_month'] != expected_month or row['period_start_year'] != year or
+                row['period_end_year'] != year or row['source_period_code'] not in
+                (expected_period_code, f'{year}-{expected_period_code}')):
+            raise DatabaseUnavailable('Candidate unemployment response contains a different exact period.')
+        if row['unit'] not in ('percent','%'):
+            raise DatabaseUnavailable('Candidate unemployment observations do not use percent units.')
+        if row['source'] not in ('bls_laus', 'BLS LAUS'):
+            raise DatabaseUnavailable('Candidate unemployment observations do not identify BLS LAUS.')
+        releases.add(row['source_release']); source_periods.add(row['source_period_code'])
+        identifier=canonical_geo(row['source'],row['geo_type'],row['geo_id'])
+        quality=row['quality_status']
+        value=row['value'] if quality=='observed' else None
+        if quality=='observed' and (value is None or not 0<=float(value)<=100):
+            raise DatabaseUnavailable('Candidate unemployment rate is outside the percent range.')
+        observations.append({'id':identifier or row['geo_id'],'geoType':row['geo_type'],
+          'sourceGeoId':row['geo_id'],'value':value,'qualityState':quality,
+          'sourceUrl':row['source_url'],'methodologyNote':row['methodology_note'],
+          'sourceRelease':row['source_release'],'retrievedAt':row['retrieved_at']})
+    if len(releases)>1 or (releases and releases!={contract['sourceRelease']}): raise DatabaseUnavailable('Candidate unemployment response mixed source releases.')
+    fixed_domain=_reader_v2_unemployment_domain(database,year,contract['sourceRelease'])
+    native_period=f'{year}-M13' if period_type=='annual' else f'{year}-M{month:02d}'
+    display=f'Annual average {year}' if period_type=='annual' else f'{calendar.month_name[month]} {year}'
+    release=next(iter(releases),contract['sourceRelease'])
+    return {'datasetId':'unemployment',**_reader_v2_payload_identity(),'fieldId':'03.06:unemployment_rate',
+      'period':native_period,'sourcePeriod':next(iter(source_periods),native_period),
+      'periodType':period_type,'year':year,'month':month,'displayPeriod':display,
+      'sourceSeasonalAdjustment':'NSA','sourceRelease':release,
+      'sourceUnit':rows[0]['unit'] if rows else '%','unit':'%',
+      'source':'BLS LAUS · not seasonally adjusted','sourceCode':'bls_laus',
+      'scale':'linear','fixedDomain':fixed_domain,'periodStatus':'observed' if any(x['qualityState']=='observed' for x in observations) else 'missing',
+      'observations':observations,'excludedGeographies':[],
+      'selection':'Exact candidate period, source release and NSA contract identity.'}
+
+
+def reader_v2_unemployment_month_series(year, geography_type, geography_id):
+    database=_reader_v2_database()
+    contract=_reader_v2_unemployment_contract(database)
+    expected_type=('nation' if geography_id=='US' else 'state' if re.fullmatch(r'[0-9]{2}',geography_id or '')
+                   else 'county' if re.fullmatch(r'[0-9]{5}',geography_id or '') else None)
+    if geography_type!=expected_type: raise ValueError('Geography type does not match identifier.')
+    rows=query("""
+      SELECT COALESCE(json_agg(t ORDER BY period_month),'[]'::json)
+      FROM (
+        SELECT o.geo_id,o.geo_type,o.value,o.unit,o.quality_status,o.period_month,
+          o.period_year,o.period_kind,o.source_period_code,o.source,o.source_release,o.source_url,
+          o.methodology_note,o.retrieved_at,COALESCE(cf.contract->>'seasonalAdjustment',cf.contract->>'seasonal_adjustment') AS seasonal_adjustment
+        FROM usa_atlas.reader_observation o JOIN usa_atlas.ingest_run i USING (ingest_id)
+        JOIN usa_atlas.catalog_field cf USING (catalog_field_id)
+        JOIN usa_atlas.reader_batch rb USING (ingest_id)
+        WHERE o.dataset_id='unemployment' AND o.field_id='03.06:unemployment_rate'
+          AND o.catalog_field_id='03.06' AND o.period_kind='monthly' AND o.period_year=:'year'::smallint
+          AND o.period_month BETWEEN 1 AND 12 AND o.geo_id=:'geo_id' AND o.geo_type=:'geo_type'
+          AND o.source_release=:'source_release' AND i.status='pass'
+          AND rb.candidate_status IN ('local_review','admitted')
+      ) t
+    """,{'year':year,'geo_id':geography_id,'geo_type':geography_type,
+          'source_release':contract['sourceRelease']},database=database)
+    allowed_quality={'observed','missing','suppressed','invalid','nonmapping_geography'}
+    if any(row['seasonal_adjustment']!='NSA' or row['quality_status'] not in allowed_quality or
+           row['unit'] not in ('percent','%') or row['source'] not in ('bls_laus', 'BLS LAUS')
+           for row in rows or []):
+        raise DatabaseUnavailable('Monthly candidate series lacks verified NSA identity or valid observations.')
+    if any(int(row['period_year']) != year or
+           row['period_kind'] != 'monthly' or
+           row['source_period_code'] not in (f'M{int(row["period_month"]):02d}',
+                                             f'{year}-M{int(row["period_month"]):02d}')
+           for row in rows or []):
+        raise DatabaseUnavailable('Monthly candidate series returned a different exact period.')
+    releases={row['source_release'] for row in rows or []}
+    if len(releases)>1 or (releases and releases!={contract['sourceRelease']}): raise DatabaseUnavailable('Monthly candidate series mixed source releases.')
+    fixed_domain=_reader_v2_unemployment_domain(database,year,contract['sourceRelease'])
+    return {**_reader_v2_payload_identity(),'fieldId':'03.06:unemployment_rate','periodType':'month','year':year,
+      'geographyType':geography_type,'geographyId':geography_id,'sourceSeasonalAdjustment':'NSA',
+      'sourceRelease':next(iter(releases),contract['sourceRelease']),'unit':'%','source':'BLS LAUS · not seasonally adjusted',
+      'fixedDomain':fixed_domain,
+      'observations':[{'month':int(row['period_month']),'period':f'{year}-M{int(row["period_month"]):02d}',
+        'value':row['value'] if row['quality_status']=='observed' else None,'qualityState':row['quality_status'],
+        'unit':'%','sourceSeasonalAdjustment':'NSA','sourceRelease':row['source_release'],
+        'sourceUrl':row['source_url'],'methodologyNote':row['methodology_note'],'retrievedAt':row['retrieved_at']}
+        for row in rows or []],
+      'selection':'Observed exact monthly candidate rows only; missing months are omitted.'}
+
+
+def reader_v2_catalog():
+    database = _reader_v2_database()
+    identity = _reader_v2_payload_identity()
+    # Avoid reading/decoding the large CD119 file during ordinary map startup.
+    # The endpoint verifies bytes, hash and features when House geometry is requested.
+    boundary={'available':bool(os.environ.get('ATLAS_CD119_GEOJSON') and
+                               re.fullmatch(r'[a-f0-9]{64}',os.environ.get('ATLAS_CD119_GEOJSON_SHA256','').lower()))}
+    rows = query("""
+      SELECT COALESCE(json_agg(t ORDER BY catalog_field_id),'[]'::json)
+      FROM (
+        SELECT cf.catalog_field_id,cf.catalog_label,cf.source_release,cf.contract,
+          count(DISTINCT o.dataset_id) FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS dataset_count,
+          min(o.dataset_id) FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS dataset_id,
+          count(DISTINCT o.observation_id) FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS passed_rows,
+          count(DISTINCT c.contest_id) FILTER (WHERE ci.status='pass' AND cb.candidate_status IN ('local_review','admitted')) AS passed_contests,
+          count(DISTINCT COALESCE(o.source_release,c.source_release)) FILTER (WHERE
+            (i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) OR
+            (ci.status='pass' AND cb.candidate_status IN ('local_review','admitted'))) AS release_count,
+          min(COALESCE(o.source_release,c.source_release)) FILTER (WHERE
+            (i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) OR
+            (ci.status='pass' AND cb.candidate_status IN ('local_review','admitted'))) AS data_release,
+          bool_or(o.geo_type='county') FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS has_county,
+          bool_or(o.geo_type='state') FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS has_state,
+          bool_or(o.geo_type='congressional_district' AND o.boundary_vintage=2024
+                  AND o.congress_session='119') FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS has_cd119,
+          min(o.source) FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS source,
+          min(o.source_url) FILTER (WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')) AS source_url,
+          min(c.source_url) FILTER (WHERE ci.status='pass' AND cb.candidate_status IN ('local_review','admitted')) AS contest_source_url
+        FROM usa_atlas.catalog_field cf
+        LEFT JOIN usa_atlas.reader_observation o ON o.catalog_field_id=cf.catalog_field_id
+        LEFT JOIN usa_atlas.ingest_run i USING (ingest_id)
+        LEFT JOIN usa_atlas.reader_batch rb ON rb.ingest_id=o.ingest_id
+        LEFT JOIN usa_atlas.election_contest c ON c.catalog_field_id=cf.catalog_field_id AND
+          c.office=CASE cf.catalog_field_id WHEN '12.01' THEN 'president'
+            WHEN '12.02' THEN 'senate' WHEN '12.03' THEN 'house' END
+        LEFT JOIN usa_atlas.ingest_run ci ON ci.ingest_id=c.ingest_id
+        LEFT JOIN usa_atlas.reader_batch cb ON cb.ingest_id=c.ingest_id
+        WHERE cf.catalog_field_id IN ('01.04','12.01','12.02','12.03')
+        GROUP BY cf.catalog_field_id,cf.catalog_label,cf.source_release,cf.contract
+      ) t
+    """, database=database)
+    records = rows or []
+    entries = []
+    for row in records:
+        field_id=row['catalog_field_id']
+        entries.append({
+            'id': {'01.04':'race-ethnicity--aian','12.01':'elections-president',
+                   '12.02':'elections-senate','12.03':'elections-house'}.get(field_id),
+            'catalogFieldId': field_id,
+            'datasetId': ({'01.04':'aian_broad_share','12.01':'election_president_2024',
+                           '12.02':'election_senate_2024','12.03':'election_house_2024'}.get(field_id)),
+            'sourceRelease': row['data_release'] if int(row['release_count'] or 0)==1 else None,
+            'source': row['source'] or ('MIT Election Lab / MEDSL' if field_id.startswith('12.') else None),
+            'sourceUrl': row['source_url'] or row['contest_source_url'], 'candidateStatus': identity['candidateStatus'],
+            'candidateAvailable': (int(row['release_count'] or 0)==1 and
+                                  ((int(row['passed_rows'] or 0) > 0 and int(row['dataset_count'] or 0) == 1)
+                                  or (int(row['passed_contests'] or 0) > 0 and
+                                      (field_id!='12.03' or boundary['available'])))),
+            'geographyType': ('congressional_district' if field_id=='12.03' or row['has_cd119'] else
+                              'state_and_county' if row['has_county'] and row['has_state'] else
+                              'county' if field_id=='12.01' else
+                              'county' if row['has_county'] else 'state'),
+            'boundaryVintage': 2024 if field_id=='12.03' and boundary['available'] else None,
+            'congressSession': '119' if field_id=='12.03' and boundary['available'] else None,
+            'geometryAvailable': boundary['available'] if field_id=='12.03' else None,
+        })
+    refresh_rows = query("""
+      SELECT COALESCE(json_agg(t ORDER BY catalog_field_id,field_id),'[]'::json)
+      FROM (
+        SELECT o.catalog_field_id,o.dataset_id,o.field_id,o.period_year,o.period_kind,o.unit,
+          count(*) AS row_count,count(*) FILTER (WHERE o.quality_status='observed') AS observed_count,
+          array_agg(DISTINCT o.source_release ORDER BY o.source_release) AS source_releases,
+          min(o.source) AS source,min(o.source_url) AS source_url,
+          array_agg(DISTINCT o.source_version ORDER BY o.source_version) AS source_versions,
+          count(DISTINCT o.geo_type) AS geography_count
+        FROM usa_atlas.reader_observation o
+        JOIN usa_atlas.ingest_run i USING (ingest_id)
+        JOIN usa_atlas.reader_batch rb USING (ingest_id)
+        WHERE i.status='pass' AND rb.candidate_status IN ('local_review','admitted')
+          AND o.period_kind='annual' AND o.period_month IS NULL
+          AND ((o.catalog_field_id='07.01' AND o.dataset_id='irs_agi' AND o.field_id IN ('07.01:agi_total','07.01:derived:per-resident') AND o.period_year=2023)
+            OR (o.catalog_field_id='08.05' AND o.dataset_id='electricity_price' AND o.field_id='08.05:sector_ALL' AND o.period_year=2025)
+            OR (o.catalog_field_id='11.01' AND o.dataset_id='cancer' AND o.field_id='11.01' AND o.period_year=2023)
+            OR (o.catalog_field_id='11.02' AND o.dataset_id='hiv' AND o.field_id='11.02' AND o.period_year=2024)
+            OR (o.catalog_field_id='11.03' AND o.dataset_id='child_deaths_under18' AND o.field_id='11.03' AND o.period_year=2024)
+            OR (o.catalog_field_id IN ('04.01','04.02','04.03','04.04','04.05','04.06','04.07')
+              AND o.dataset_id='fbi_crime_rate' AND o.field_id=o.catalog_field_id || ':derived' AND o.period_year=2025))
+        GROUP BY o.catalog_field_id,o.dataset_id,o.field_id,o.period_year,o.period_kind,o.unit
+      ) t
+    """,database=database)
+    refresh_lookup={(target['catalog'],target['field'],target['dataset'],target['year']):target
+                    for target in REFRESH_TARGETS.values()}
+    for row in refresh_rows or []:
+        target=refresh_lookup.get((row['catalog_field_id'],row['field_id'],row['dataset_id'],int(row['period_year'])))
+        if not target: continue
+        releases=row['source_releases'] or []
+        entries.append({'id':target['metric_id'],
+          'catalogFieldId':target['catalog'],'datasetId':next(key for key,value in REFRESH_TARGETS.items() if value is target),
+          'readerDatasetId':target['dataset'],'fieldId':target['public_field'],'readerFieldId':target['field'],
+          'candidateStatus':identity['candidateStatus'],'candidateAvailable':int(row['observed_count'])>0,
+          'sourceRelease':releases[0] if len(releases)==1 else None,'sourceReleases':releases,
+          'source':row['source'],'sourceUrl':row['source_url'],'sourceVersions':row['source_versions'],
+          'periodType':'annual','year':int(row['period_year']),'period':str(row['period_year']),
+          'geographyType':target['geography'],'unit':target['display_unit'],'sourceUnit':row['unit'],
+          'rowCount':int(row['row_count']),'observedCount':int(row['observed_count'])})
+    return {'contractStatus':'admitted' if identity['candidateStatus']=='admitted' else 'candidate_nonreleased',
+      'localCandidatePreview':identity['localCandidatePreview'],'admissionStatus':identity['admissionStatus'],
+      'cd119BoundaryAvailable':boundary['available'],'metrics':entries}
+
+
+def reader_v2_observations(dataset_id, period_type, year, geography_type, party=None):
+    database = _reader_v2_database()
+    if dataset_id not in ('unemployment', 'aian_broad_share', 'election_president_2024',
+                          'election_senate_2024', 'election_house_2024'):
+        if dataset_id not in REFRESH_TARGETS: raise ValueError('Unknown local candidate dataset')
+    if not isinstance(year, int) or not 2000 <= year <= 2100:
+        raise ValueError('Invalid candidate period')
+    if period_type not in ('annual', 'month', 'multi_year', 'cycle'):
+        raise ValueError('Invalid candidate period type')
+    if dataset_id.startswith('election_'):
+        if year != 2024 or period_type != 'cycle' or party not in ('DEMOCRAT','REPUBLICAN'):
+            raise ValueError('Only the selected 2024 election party is available in local review.')
+        office = {'election_president_2024':'president','election_senate_2024':'senate',
+                  'election_house_2024':'house'}[dataset_id]
+        geo = {'president':'county','senate':'state','house':'congressional_district'}[office]
+        if geography_type != geo:
+            raise ValueError('Election geography does not match the selected office.')
+        return _reader_v2_election_observations(database, office, party, year, geo)
+    if dataset_id in REFRESH_TARGETS:
+        target=REFRESH_TARGETS[dataset_id]
+        if period_type!='annual' or year!=target['year'] or geography_type!=target['geography']:
+            raise ValueError('The local refreshed field requires its exact annual period and supported geography.')
+        rows=query("""
+          SELECT COALESCE(json_agg(t ORDER BY geo_type,geo_id),'[]'::json)
+          FROM (
+            SELECT o.geo_id,o.geo_type,o.value,o.unit,o.quality_status,o.source_value_status,
+              o.source,o.source_release,o.source_version,o.source_url,o.methodology_note,
+              o.raw_estimate,o.raw_estimate_moe,o.raw_denominator,o.raw_denominator_moe,
+              o.denominator_value,o.period_kind,o.period_year,o.period_month,
+              o.period_start_year,o.period_end_year,o.source_period_code,o.retrieved_at
+            FROM usa_atlas.reader_observation o
+            JOIN usa_atlas.ingest_run i USING (ingest_id)
+            JOIN usa_atlas.reader_batch rb USING (ingest_id)
+            WHERE o.catalog_field_id=:'catalog' AND o.dataset_id=:'reader_dataset'
+              AND o.field_id=:'reader_field' AND o.period_kind='annual'
+              AND o.period_year=:'year'::smallint AND o.period_month IS NULL
+              AND o.period_start_year=:'year'::smallint AND o.period_end_year=:'year'::smallint
+              AND o.unit=:'unit' AND i.status='pass'
+              AND rb.candidate_status IN ('local_review','admitted')
+              AND o.geo_type IN ('nation','state','county')
+              AND (:'geography_type'='state_and_county' OR o.geo_type=:'geography_type')
+          ) t
+        """,{'catalog':target['catalog'],'reader_dataset':target['dataset'],'reader_field':target['field'],
+              'year':year,'unit':target['unit'],'geography_type':geography_type},database=database)
+        observations=[]; releases=set(); versions=set(); sources=set(); urls=set()
+        for row in rows or []:
+            if row['period_kind']!='annual' or row['period_month'] is not None or int(row['period_year'])!=year or row['period_start_year']!=year or row['period_end_year']!=year:
+                raise DatabaseUnavailable('Refreshed candidate returned a different annual period.')
+            if row['unit']!=target['unit'] or row['quality_status'] not in ('observed','missing','suppressed','invalid','nonmapping_geography'):
+                raise DatabaseUnavailable('Refreshed candidate unit or quality status is invalid.')
+            if row['quality_status']=='observed' and (row['value'] is None or not math.isfinite(float(row['value']))):
+                raise DatabaseUnavailable('Observed refreshed candidate values must be finite.')
+            releases.add(row['source_release']); versions.add(row['source_version']); sources.add(row['source']); urls.add(row['source_url'])
+            identifier=canonical_geo(row['source'],row['geo_type'],row['geo_id'])
+            observations.append({'id':identifier or row['geo_id'],'geoType':row['geo_type'],
+              'sourceGeoId':row['geo_id'],'value':row['value'] if row['quality_status']=='observed' else None,
+              'qualityState':row['quality_status'],'sourceRelease':row['source_release'],
+              'sourceVersion':row['source_version'],'sourceUrl':row['source_url'],
+              'methodologyNote':row['methodology_note'],'sourceUnit':row['unit'],
+              'numerator':row['raw_estimate'],'numeratorMoe':row['raw_estimate_moe'],
+              'denominator':row['raw_denominator'],'denominatorMoe':row['raw_denominator_moe'],
+              'denominatorValue':row['denominator_value'],'sourcePeriod':row['source_period_code'],
+              'retrievedAt':row['retrieved_at']})
+        if len(releases)>1 and dataset_id not in ('cancer_2023',):
+            raise DatabaseUnavailable('Refreshed candidate mixed source releases for one field.')
+        if len(versions)>1 and dataset_id not in ('cancer_2023',):
+            raise DatabaseUnavailable('Refreshed candidate mixed source versions for one field.')
+        return {'datasetId':dataset_id,**_reader_v2_payload_identity(),
+          'fieldId':target['public_field'],'readerFieldId':target['field'],'period':str(year),'displayPeriod':str(year),
+          'periodType':'annual','year':year,'geographyType':geography_type,
+          'sourceRelease':next(iter(releases)) if len(releases)==1 else None,
+          'sourceReleases':sorted(releases),'sourceVersion':next(iter(versions)) if len(versions)==1 else None,
+          'sourceVersions':sorted(versions),'source':next(iter(sources)) if len(sources)==1 else None,
+          'sourceUrls':sorted(urls),'sourceUnit':target['unit'],'unit':target['display_unit'],
+          'unitDefinition':target['unit'],'observations':observations,
+          'selection':'Exact reader field and annual source period; availability follows the selected reader mode.'}
+    if dataset_id == 'unemployment':
+        raise DatabaseUnavailable('Unemployment candidate records require explicit NSA source metadata before map display.')
+    field_id = '01.04:aian_share'
+    if period_type != 'multi_year' or year != 2024 or geography_type not in ('nation','state','county','state_and_county'):
+        raise ValueError('AIAN candidate selection must be ACS 2024 five-year nation/state/county data.')
+    rows = query("""
+      SELECT COALESCE(json_agg(t ORDER BY geo_type,geo_id),'[]'::json)
+      FROM (
+        SELECT o.dataset_id,o.field_id,o.geo_id,o.geo_type,o.value,o.unit,o.quality_status,
+          o.raw_estimate,o.raw_estimate_moe,o.raw_denominator,o.raw_denominator_moe,
+          o.denominator_value,o.source,o.source_release,o.source_url,o.methodology_note,
+          o.period_kind,o.period_year,o.period_month,o.period_start_year,o.period_end_year,
+          o.source_period_code,o.retrieved_at
+        FROM usa_atlas.reader_observation o JOIN usa_atlas.ingest_run i USING (ingest_id)
+        JOIN usa_atlas.catalog_field cf USING (catalog_field_id)
+        JOIN usa_atlas.reader_batch rb USING (ingest_id)
+        WHERE o.dataset_id=:'dataset_id' AND o.field_id=:'field_id' AND o.catalog_field_id='01.04'
+          AND o.period_kind='multi_year' AND o.period_year=2024 AND o.period_month IS NULL
+          AND o.period_start_year=2020 AND o.period_end_year=2024
+          AND i.status='pass' AND rb.candidate_status IN ('local_review','admitted')
+          AND o.geo_type IN ('nation','state','county')
+          AND (:'geography_type'='state_and_county' OR o.geo_type=:'geography_type')
+      ) t
+    """, {'dataset_id':dataset_id,'field_id':field_id,
+          'geography_type':geography_type}, database=database)
+    observations=[]; releases=set()
+    for row in rows or []:
+        releases.add(row['source_release'])
+        identifier=canonical_geo('census_acs',row['geo_type'],row['geo_id'])
+        quality=row['quality_status']
+        observations.append({'id':identifier or row['geo_id'],'value':row['value'] if quality=='observed' else None,
+          'qualityState':quality,'count':row['raw_estimate'],'countMoe':row['raw_estimate_moe'],
+          'population':row['raw_denominator'],'populationMoe':row['raw_denominator_moe'],
+          'sourceUrl':row['source_url'],'methodologyNote':row['methodology_note'],
+          'sourceRelease':row['source_release'],'sourcePeriod':row['source_period_code'],
+          'geoType':row['geo_type'],'sourceGeoId':row['geo_id'],'retrievedAt':row['retrieved_at']})
+    if len(releases)>1: raise DatabaseUnavailable('Candidate ACS rows mix source releases.')
+    return {'datasetId':dataset_id,**_reader_v2_payload_identity(),'fieldId':field_id,
+      'period':'2020–2024','periodType':'multi_year','year':2024,'geographyType':geography_type,
+      'sourceRelease':next(iter(releases),None),
+      'unit':'%','source':'U.S. Census Bureau ACS 2024 5-year','sourceSeasonalAdjustment':None,
+      'observations':observations,'selection':'ACS 2024 five-year broad AIAN estimate; availability follows the selected reader mode.'}
+
+
+def _reader_v2_election_observations(database, office, party, year, geography_type):
+    catalog_field = {'president':'12.01','senate':'12.02','house':'12.03'}[office]
+    map_geo = {'president':'county','senate':'state','house':'congressional_district'}[office]
+    rows = query("""
+      WITH selected AS (
+        SELECT c.*
+        FROM usa_atlas.election_contest c
+        JOIN usa_atlas.ingest_run ci USING (ingest_id)
+        JOIN usa_atlas.reader_batch cb USING (ingest_id)
+        JOIN usa_atlas.catalog_field cf ON cf.catalog_field_id=:'catalog_field'
+        WHERE c.office=:'office' AND c.election_year=2024
+          AND c.catalog_field_id=:'catalog_field'
+          AND c.geography_type=:'geography_type'
+          AND upper(btrim(c.stage)) IN ('GEN','GENERAL')
+          AND c.is_special=false AND c.is_runoff=false AND c.result_mode='TOTAL'
+          AND ci.status='pass' AND cb.candidate_status IN ('local_review','admitted')
+          AND (c.office<>'house' OR (c.boundary_vintage=2024 AND c.congress_session='119'))
+      )
+      SELECT COALESCE(json_agg(t ORDER BY geo_type,geo_id),'[]'::json)
+      FROM (
+        SELECT c.contest_id,c.geo_id,c.geography_type AS geo_type,c.state_fips,
+          c.district_code,c.boundary_vintage,c.congress_session,c.election_year,
+          c.stage,c.source_stage_values,c.is_special,c.is_runoff,c.result_mode,c.reported_total_votes,
+          c.quality_status,c.party_aggregation_status,c.source_release,c.source_url,
+          c.source_version,c.geography_mapping_status,c.methodology_note,
+          p.party_votes,p.reported_total_votes AS party_total_votes,p.quality_status AS party_quality,
+          p.party_aggregation_status AS party_result_aggregation,
+          CASE WHEN c.quality_status='observed' AND c.party_aggregation_status='validated'
+                     AND p.quality_status='observed' AND p.party_aggregation_status='validated'
+                     AND p.reported_total_votes=c.reported_total_votes AND c.reported_total_votes>0
+            THEN 100*p.party_votes::numeric/c.reported_total_votes ELSE NULL END AS share,
+          CASE WHEN c.quality_status='no_election' THEN 'no_election'
+               WHEN c.quality_status='suppressed' THEN 'suppressed'
+               WHEN c.quality_status='invalid' THEN 'invalid'
+               WHEN c.geography_mapping_status<>'mapped' THEN 'nonmapping_geography'
+               WHEN c.quality_status='observed' AND c.party_aggregation_status='validated'
+                     AND p.quality_status='observed' AND p.party_aggregation_status='validated'
+                     AND p.reported_total_votes=c.reported_total_votes AND c.reported_total_votes>0 THEN 'observed'
+               ELSE 'missing' END AS selected_quality,
+          cand.candidates
+        FROM selected c
+        LEFT JOIN usa_atlas.election_party_result p ON p.contest_id=c.contest_id
+          AND p.party_normalized=:'party' AND p.source_release=c.source_release
+        LEFT JOIN usa_atlas.ingest_run pi ON pi.ingest_id=p.ingest_id AND pi.status='pass'
+        LEFT JOIN usa_atlas.reader_batch pb ON pb.ingest_id=p.ingest_id
+          AND pb.candidate_status IN ('local_review','admitted')
+        LEFT JOIN LATERAL (
+          SELECT json_agg(json_build_object('candidateId',e.candidate_id,'candidate',e.candidate_label,
+            'votes',e.candidate_votes,'share',CASE WHEN c.reported_total_votes>0
+              THEN 100*e.candidate_votes::numeric/c.reported_total_votes ELSE NULL END,
+            'sourceVotes',e.candidatevotes_raw,'sourceTotalVotes',e.totalvotes_raw,
+            'partyOriginal',e.party_original,'party',e.party_normalized,'writeIn',e.write_in,
+            'fusionTicket',e.fusion_ticket,'sourceVersion',e.source_version) ORDER BY e.candidate_label) AS candidates
+          FROM usa_atlas.election_candidate e
+          JOIN usa_atlas.ingest_run ei ON ei.ingest_id=e.ingest_id AND ei.status='pass'
+          JOIN usa_atlas.reader_batch eb ON eb.ingest_id=e.ingest_id
+            AND eb.candidate_status IN ('local_review','admitted')
+          WHERE e.contest_id=c.contest_id AND e.result_mode='TOTAL'
+            AND e.candidate_kind='candidate' AND e.quality_status='observed'
+            AND e.party_normalized=:'party'
+        ) cand ON true
+        WHERE (p.contest_id IS NULL OR (pi.ingest_id IS NOT NULL AND pb.ingest_id IS NOT NULL))
+      ) t
+    """, {'catalog_field':catalog_field,'office':office,'geography_type':map_geo,
+          'party':party}, database=database)
+    observations=[]; identities=set(); seen=set()
+    for row in rows or []:
+        identity=(row['source_release'],row['source_version'],row['stage'],
+                  row['is_special'],row['is_runoff'],row['result_mode'])
+        identities.add(identity)
+        if office=='house':
+            identifier=row['state_fips']+row['district_code']
+        else:
+            identifier=row['geo_id']
+        if identifier in seen:
+            raise DatabaseUnavailable('Multiple election contests map to one place; select a contest identity before display.')
+        seen.add(identifier)
+        quality=row['selected_quality']
+        observations.append({'id':identifier,'geoType':row['geo_type'],
+          'value':row['share'] if quality=='observed' else None,'qualityState':quality,
+          'votes':row['party_votes'] if quality=='observed' else None,
+          'totalVotes':row['reported_total_votes'],'party':party,
+          'sourceUrl':row['source_url'],'methodologyNote':row['methodology_note'],
+          'sourceRelease':row['source_release'],'contestId':row['contest_id'],
+          'electionYear':row['election_year'],'stage':'general','sourceStage':row.get('source_stage_values') or row['stage'],
+          'isSpecial':row['is_special'],'isRunoff':row['is_runoff'],
+          'resultMode':row['result_mode'],'boundaryVintage':row['boundary_vintage'],
+          'congressSession':row['congress_session'],'sourceVersion':row['source_version'],
+          'candidates':row['candidates'] or [],
+          'geographyMappingStatus':row['geography_mapping_status']})
+    availability=query("""
+      SELECT COALESCE(json_agg(t ORDER BY geo_id),'[]'::json)
+      FROM (
+        SELECT a.geo_id,a.quality_status,a.reason,a.source_release,a.stage
+        FROM usa_atlas.election_availability a
+        JOIN usa_atlas.ingest_run i USING (ingest_id)
+        JOIN usa_atlas.reader_batch ab USING (ingest_id)
+        WHERE a.office=:'office' AND a.election_year=2024
+          AND a.field_id=:'catalog_field' AND a.geography_type=:'geography_type'
+          AND upper(btrim(a.stage)) IN ('GEN','GENERAL')
+          AND a.is_special=false AND a.is_runoff=false AND i.status='pass'
+          AND ab.candidate_status IN ('local_review','admitted')
+      ) t
+    """,{'catalog_field':catalog_field,'office':office,'geography_type':map_geo},database=database)
+    for row in availability or []:
+        if row['geo_id'] in seen: continue
+        if row['quality_status'] not in ('no_election','missing','suppressed','invalid','nonmapping_geography'):
+            continue
+        identifier=row['geo_id']
+        observations.append({'id':identifier,'geoType':geography_type,'value':None,
+          'qualityState':row['quality_status'],'sourceRelease':row['source_release'],
+          'methodologyNote':row['reason'],'party':party,'electionYear':2024,
+          'stage':'general','sourceStage':row['stage'],'isSpecial':False,'isRunoff':False,'resultMode':'TOTAL'})
+    if len(identities)>1:
+        raise DatabaseUnavailable('Election response mixed contest identity, mode, or source release.')
+    catalog_release=next(iter(identities))[0] if identities else None
+    catalog_version=next(iter(identities))[1] if identities else None
+    identity = _reader_v2_payload_identity()
+    lock = _verify_reader_v2_lock() if identity['candidateStatus']=='admitted' else None
+    return {'datasetId':f'election_{office}_2024',**identity,
+      'contractVersion':lock['contractVersion'] if lock else '2.0.0-candidate',
+      'fieldId':catalog_field,
+      'selectedParty':party,
+      'period':'2024','periodType':'cycle','year':2024,'sourceRelease':catalog_release,
+      'unit':'%','fixedDomain':[0,100],'source':'MIT Election Lab / MEDSL',
+      'sourceVersion':catalog_version,
+      'geographyType':geography_type,'observations':observations,
+      'selection':'Selected party votes divided by one contest reported total.'}

@@ -1,6 +1,6 @@
 {
   "release": "20261020-normalized39",
-  "visibleCount": 39,
+  "visibleCount": 38,
   "metrics": [
     {
       "id": "population",
@@ -63,7 +63,7 @@
         "numerator": [
           {
             "field": "01.03:B01001_002E",
-            "period": "2024",
+            "period": "2023",
             "multiplier": 1
           }
         ],
@@ -916,12 +916,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.01:derived",
-      "formula": "04.01 count / 2024 state population * 100000",
+      "formula": "04.01 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -942,7 +942,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2023",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "violent-crime",
@@ -955,12 +966,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.02:derived",
-      "formula": "04.02 count / 2024 state population * 100000",
+      "formula": "04.02 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -981,7 +992,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "robbery",
@@ -994,12 +1016,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.03:derived",
-      "formula": "04.03 count / 2024 state population * 100000",
+      "formula": "04.03 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1020,7 +1042,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "aggravated-assault",
@@ -1033,12 +1066,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.04:derived",
-      "formula": "04.04 count / 2024 state population * 100000",
+      "formula": "04.04 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1059,7 +1092,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "burglary",
@@ -1072,12 +1116,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.05:derived",
-      "formula": "04.05 count / 2024 state population * 100000",
+      "formula": "04.05 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1098,7 +1142,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "motor-vehicle-theft",
@@ -1111,12 +1166,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.06:derived",
-      "formula": "04.06 count / 2024 state population * 100000",
+      "formula": "04.06 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1137,7 +1192,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "rape",
@@ -1150,12 +1216,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "FBI CDE + Census ACS",
+      "source": "FBI Crime Data Explorer + Census ACS 2024 5-year",
       "sourceUrl": "https://cde.ucr.cjis.gov/",
       "fieldId": "04.07:derived",
-      "formula": "04.07 count / 2024 state population * 100000",
+      "formula": "04.07 2023 count / ACS 2024 total population * 100000",
       "minDenominator": null,
-      "method": "State count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: 2023 FBI Crime Data Explorer count divided by the 2020–2024 ACS 5-year total population estimate, multiplied by 100,000. The US value uses the source national count and ACS estimate; no county or annual FBI rate is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1176,7 +1242,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "FBI CDE 2023; ACS 2024"
+      "sourceRelease": "FBI CDE 2023; Census ACS 2024 5-year",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "FBI Crime Data Explorer count",
+        "numeratorPeriod": "2023",
+        "denominatorSource": "Census ACS 2024 5-year",
+        "denominatorField": "01.01:B01003_001E",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 count ÷ 2020–2024 ACS population estimate × 100,000"
+      }
     },
     {
       "id": "obesity-rate",
@@ -1244,12 +1321,12 @@
       "period": "2023",
       "displayPeriod": "2023 tax year",
       "scale": "log",
-      "source": "IRS SOI + Census ACS",
+      "source": "IRS SOI + Census PEP Vintage 2025",
       "sourceUrl": "https://www.irs.gov/statistics/soi-tax-stats-data-by-geographic-area",
       "fieldId": "07.01:derived:total",
       "formula": "A00100 × 1000",
       "minDenominator": null,
-      "method": "Income before deductions from IRS Statistics of Income, multiplied by 1,000. State values are sums of their counties; the US value is the sum of county values. No tax or adjusted-gross-income label is shown.",
+      "method": "Income before deductions from IRS Statistics of Income, multiplied by 1,000. State values are sums of county income; the US value is the sum of county income. The per-resident variant divides 2023 income by 2023 annual PEP population.",
       "derived": {
         "operation": "sum",
         "numerator": [
@@ -1264,7 +1341,7 @@
         "aggregateState": true,
         "aggregateUS": true
       },
-      "sourceRelease": "IRS SOI 2023; ACS 2024"
+      "sourceRelease": "IRS SOI County 2023; Census PEP Vintage 2025"
     },
     {
       "id": "electricity-price",
@@ -1313,12 +1390,12 @@
       "period": "2023",
       "displayPeriod": "2023",
       "scale": "linear",
-      "source": "CDC USCS + Census ACS",
+      "source": "CDC USCS + Census PEP Vintage 2025",
       "sourceUrl": "https://gis.cdc.gov/Cancer/USCS/",
       "fieldId": "11.01:derived",
-      "formula": "11.01 count / 2024 state population * 100000",
+      "formula": "2023 incident cases / 2023 annual PEP total population * 100000",
       "minDenominator": null,
-      "method": "State cancer case count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude incidence rate: 2023 incident cancer cases divided by matching 2023 annual Census PEP total population, multiplied by 100,000. This is not age-adjusted. Suppressed source cells remain missing; no county value is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1330,16 +1407,27 @@
         ],
         "denominator": [
           {
-            "field": "01.01:B01003_001E",
-            "period": "2024",
+            "field": "01.01:pep_population_total",
+            "period": "2023",
             "multiplier": 1
           }
         ],
         "multiplier": 100000,
         "aggregateState": false,
-        "aggregateUS": true
+        "aggregateUS": false
       },
-      "sourceRelease": "CDC USCS 2023; ACS 2024"
+      "sourceRelease": "CDC USCS diagnosis year 2023; Census PEP Vintage 2025",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "CDC USCS incident cancer cases",
+        "numeratorPeriod": "2023 diagnosis year",
+        "denominatorSource": "Census PEP Vintage 2025",
+        "denominatorField": "01.01:pep_population_total",
+        "denominatorPeriod": "2023",
+        "denominatorPopulationKind": "total",
+        "denominatorUnit": "persons",
+        "formula": "2023 incident cases ÷ 2023 annual PEP total population × 100,000 (crude; not age-adjusted)"
+      }
     },
     {
       "id": "new-hiv-diagnoses",
@@ -1350,14 +1438,14 @@
         "state"
       ],
       "period": "2024",
-      "displayPeriod": "2020–2024",
+      "displayPeriod": "2024 event year",
       "scale": "linear",
-      "source": "CDC AtlasPlus + Census ACS",
+      "source": "CDC AtlasPlus/NHSS + Census PEP Vintage 2025",
       "sourceUrl": "https://gis.cdc.gov/api/AtlasPlus/qtOutputData",
       "fieldId": "11.02:derived",
-      "formula": "11.02 count / 2024 state population * 100000",
+      "formula": "2024 provisional diagnoses age 13+ / 2024 annual PEP age 13+ population * 100000",
       "minDenominator": null,
-      "method": "State HIV diagnosis count divided by 2024 state population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: provisional 2024 diagnoses among people age 13 and older divided by matching 2024 annual Census PEP age-13-plus population, multiplied by 100,000. The US value uses the national numerator and denominator; no county value is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1369,7 +1457,7 @@
         ],
         "denominator": [
           {
-            "field": "01.01:B01003_001E",
+            "field": "01.01:pep_population_age_13_plus",
             "period": "2024",
             "multiplier": 1
           }
@@ -1378,7 +1466,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "CDC AtlasPlus 2024; ACS 2024"
+      "sourceRelease": "CDC AtlasPlus/NHSS 2024 provisional; Census PEP Vintage 2025",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "CDC AtlasPlus/NHSS provisional HIV diagnoses age 13+",
+        "numeratorPeriod": "2024 diagnosis year",
+        "denominatorSource": "Census PEP Vintage 2025",
+        "denominatorField": "01.01:pep_population_age_13_plus",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "age_13_plus",
+        "denominatorUnit": "persons",
+        "formula": "2024 provisional age-13-plus diagnoses ÷ 2024 annual PEP age-13-plus population × 100,000"
+      }
     },
     {
       "id": "deaths-under-18",
@@ -1389,14 +1488,14 @@
         "state"
       ],
       "period": "2024",
-      "displayPeriod": "2020–2024",
+      "displayPeriod": "2024 event year",
       "scale": "linear",
-      "source": "CDC WONDER + Census ACS",
+      "source": "CDC WONDER/NVSS + Census PEP Vintage 2025",
       "sourceUrl": "https://wonder.cdc.gov/controller/saved/D158/D473F417",
       "fieldId": "11.03:derived",
-      "formula": "11.03 count / under-18 population * 100000",
+      "formula": "2024 deaths among ages 0–17 / 2024 annual PEP under-18 population * 100000",
       "minDenominator": null,
-      "method": "State death count for people younger than 18 divided by the ACS under-18 population, multiplied by 100,000. The US value uses the national count and population. No county value is inferred.",
+      "method": "Custom crude rate: observed 2024 deaths among people ages 0–17 divided by matching 2024 annual Census PEP under-18 population, multiplied by 100,000. Suppressed source counts remain missing; no county value is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1408,42 +1507,7 @@
         ],
         "denominator": [
           {
-            "field": "01.02:B01001_003E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_004E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_005E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_006E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_027E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_028E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_029E",
-            "period": "2024",
-            "multiplier": 1
-          },
-          {
-            "field": "01.02:B01001_030E",
+            "field": "01.01:pep_population_under_18",
             "period": "2024",
             "multiplier": 1
           }
@@ -1452,7 +1516,18 @@
         "aggregateState": false,
         "aggregateUS": true
       },
-      "sourceRelease": "CDC WONDER 2024; ACS 2024"
+      "sourceRelease": "CDC WONDER 2024 final; Census PEP Vintage 2025",
+      "rateMetadata": {
+        "type": "custom_calculated",
+        "numeratorSource": "CDC WONDER/NVSS deaths ages 0–17",
+        "numeratorPeriod": "2024 event year",
+        "denominatorSource": "Census PEP Vintage 2025",
+        "denominatorField": "01.01:pep_population_under_18",
+        "denominatorPeriod": "2024",
+        "denominatorPopulationKind": "under_18",
+        "denominatorUnit": "persons",
+        "formula": "2024 deaths ages 0–17 ÷ 2024 annual PEP under-18 population × 100,000"
+      }
     }
   ],
   "library": [
@@ -1629,7 +1704,7 @@
         "id": "adjusted-gross-income-agi--per-resident",
         "label": "Income before deductions per resident",
         "fieldId": "07.01:derived:per-resident",
-        "formula": "A00100 × 1000 / B01003_001E",
+        "formula": "A00100 thousand USD × 1000 / 2023 annual PEP total population",
         "unit": "USD per resident",
         "numerator": [
           {
@@ -1640,12 +1715,25 @@
         ],
         "denominator": [
           {
-            "field": "01.01:B01003_001E",
-            "period": "2024",
+            "field": "01.01:pep_population_total",
+            "period": "2023",
             "multiplier": 1
           }
         ],
-        "multiplier": 1000
+        "multiplier": 1000,
+        "method": "2023 IRS SOI income in thousand USD multiplied by 1,000, divided by the matching 2023 annual Census PEP total population in persons. This is income per resident, not household income.",
+        "sourceRelease": "IRS SOI County 2023; Census PEP Vintage 2025",
+        "rateMetadata": {
+          "type": "custom_calculated",
+          "numeratorSource": "IRS Statistics of Income county income",
+          "numeratorPeriod": "2023 tax year",
+          "denominatorSource": "Census PEP Vintage 2025",
+          "denominatorField": "01.01:pep_population_total",
+          "denominatorPeriod": "2023",
+          "denominatorPopulationKind": "total",
+          "denominatorUnit": "persons",
+          "formula": "A00100 thousand USD × 1,000 ÷ 2023 annual PEP population"
+        }
       }
     ]
   }

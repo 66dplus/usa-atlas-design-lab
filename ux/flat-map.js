@@ -85,7 +85,8 @@ export class FlatMapRenderer {
   }
   update(state,mappedValue,color,background){
     this.state=state;this.renderer.setClearColor(background,1);
-    const parent=state.selectedId?.slice(0,2),isolated=state.cleanBackdrop;
+    const districtMode=state.geographyType==='congressional_district';
+    const parent=districtMode?state.selectedId:state.selectedId?.slice(0,2),isolated=state.cleanBackdrop;
     for(const id of this.geo.states.map(f=>f.id)){
       let group=this.groups.get(id);
       const rows=this.geo.counties.filter(f=>f.stateId===id);
@@ -101,7 +102,7 @@ export class FlatMapRenderer {
         const tint=new THREE.Color();cache.ids.forEach((id,i)=>{tint.set(color(mappedValue(this.geo.byId.get(id))));texture.image.data.set([tint.r,tint.g,tint.b,1],i*4);});texture.needsUpdate=true;
         group.userData.values=state.values;group.userData.countySupported=state.countySupported;this.stats.colorUpdates++;
       }
-      group.visible=!isolated||(parent?id===parent:!['02','15'].includes(id));
+      group.visible=!isolated||(parent?id===parent:districtMode||!['02','15'].includes(id));
       const opacity=parent&&id!==parent? .3:1;
       mesh.material.uniforms.opacity.value=opacity;lines.material.opacity=opacity;outline.material.opacity=1;
       outline.visible=!(state.selectedId?.length===5&&id===parent);
@@ -116,7 +117,7 @@ export class FlatMapRenderer {
     const selectionCache=this.groups.get(parent)?.userData.cache;
     if(this.selection&&this.selectionCache!==selectionCache){this.selection.geometry.dispose();this.selection.geometry=new LineSegmentsGeometry().setPositions(selectionCache.selections.get(state.selectedId));}
     this.selectionCache=selectionCache;
-    if(this.hoverId&&this.hoverCache!==this.groups.get(this.hoverId.slice(0,2))?.userData.cache){const id=this.hoverId;this.hoverId=null;this.hover(id);}
+    if(this.hoverId&&this.hoverCache!==this.groups.get(this.geo.geographyType==='congressional_district'?this.hoverId:this.hoverId.slice(0,2))?.userData.cache){const id=this.hoverId;this.hoverId=null;this.hover(id);}
     this.world.visible=this.worldLines.visible=!isolated;this.world.material.color.set(state.dark?'#25292D':state.cleanBackdrop?'#FFFFFF':'#EEF0F3');
     this.requestRender();
   }
@@ -150,7 +151,8 @@ export class FlatMapRenderer {
   hover(id){
     if(this.hoverId===id)return;this.hoverId=id;
     if(this.hoverLine){this.scene.remove(this.hoverLine);this.hoverLine.geometry.dispose();this.hoverLine.material.dispose();this.hoverLine=null;}
-    this.hoverCache=id?this.groups.get(id.slice(0,2))?.userData.cache:null;
+    const groupId=this.geo.geographyType==='congressional_district'?id:id?.slice(0,2);
+    this.hoverCache=id?this.groups.get(groupId)?.userData.cache:null;
     if(id){const positions=this.hoverCache.selections.get(id);this.hoverLine=line(new LineSegmentsGeometry().setPositions(positions),'#ffffff',id===this.selectionId?2.4:.35);this.hoverLine.renderOrder=4;this.scene.add(this.hoverLine);}
     this.requestRender();
   }

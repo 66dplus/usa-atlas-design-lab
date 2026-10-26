@@ -246,3 +246,9 @@ export function MetricSwitch({ metric }: { metric: Metric }) {
     </div>
   );
 }
+
+export function PartySwitch({ selectedParty, onSelect }: { selectedParty: string; onSelect(party: string): void }) {
+  return <div className="party-switch" role="group" aria-label="Election party">
+    {(['DEMOCRAT', 'REPUBLICAN'] as const).map((party) => <button type="button" key={party} aria-pressed={selectedParty === party} onClick={() => onSelect(party)}>{party === 'DEMOCRAT' ? 'Democratic' : 'Republican'}</button>)}
+  </div>;
+}

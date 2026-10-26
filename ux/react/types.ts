@@ -17,6 +17,23 @@ export interface Definition {
   method?: string;
   formula?: string;
   minDenominator?: number;
+  period?: string;
+  displayPeriod?: string;
+  unit?: string;
+  source?: string;
+  sourceRelease?: string;
+  geography?: string[];
+  rateMetadata?: {
+    type: 'official_source_rate' | 'custom_calculated';
+    numeratorSource: string;
+    numeratorPeriod: string;
+    denominatorSource?: string;
+    denominatorField?: string;
+    denominatorPeriod?: string;
+    denominatorPopulationKind?: string;
+    denominatorUnit?: string;
+    formula: string;
+  };
 }
 export interface Metric {
   id: string;
@@ -37,6 +54,19 @@ export interface Metric {
   switchGroup?: string;
   switchLabel?: string;
   switchOptions?: { id: string; label: string }[];
+  selectionKind?: 'primary' | 'variant' | 'mode';
+  periodControl?: 'unemployment-2025';
+  geographyType?: 'state' | 'county' | 'state_and_county' | 'congressional_district';
+  consumerDataset?: string;
+  consumerFieldId?: string;
+  candidateSourceUnit?: string;
+  candidateSourceReleases?: string[];
+  candidateAvailable?: boolean;
+  candidateRequired?: boolean;
+  availability?: 'loaded' | 'unavailable' | 'not_admitted' | 'local_candidate';
+  periodType?: 'annual' | 'multi_year' | 'cycle';
+  periodYear?: number;
+  candidateSourceRelease?: string;
 }
 /** Short presentation label for the four race/ethnicity series. Metric names,
  * IDs and source definitions remain unchanged in the adapter and contracts. */
@@ -45,7 +75,8 @@ export function displayMetricName(metric: Metric): string {
     'race-ethnicity--black': 'Black',
     'race-ethnicity--asian': 'Asian',
     'race-ethnicity--white-non-hispanic': 'White',
-    'race-ethnicity': 'Hispanic',
+    'race-ethnicity--aian': 'American Indian and Alaska Native',
+    'race-ethnicity': 'Hispanic / Latino',
   };
   return labels[metric.id] || metric.name;
 }
@@ -53,12 +84,39 @@ export interface Place {
   id: string;
   stateId: string;
   name: string;
+  districtCode?: string;
+  boundaryVintage?: number;
+  congressSession?: string;
 }
 export interface Observation {
   id: string;
-  value: number;
+  value: number | null;
+  qualityState?: 'observed' | 'no_election' | 'missing' | 'suppressed' | 'invalid' | 'nonmapping_geography';
   sourceUrl?: string;
   methodologyNote?: string;
+  count?: number;
+  countMoe?: number;
+  population?: number;
+  populationMoe?: number;
+  selectedParty?: string;
+  party?: string;
+  selectedPartyVotes?: number;
+  votes?: number;
+  totalVotes?: number;
+  contestId?: string;
+  electionYear?: number;
+  stage?: string;
+  sourceStage?: string | string[];
+  isSpecial?: boolean;
+  isRunoff?: boolean;
+  resultMode?: string;
+  boundaryVintage?: number | null;
+  congressSession?: string | null;
+  geographyMappingStatus?: string;
+  sourceRelease?: string;
+  sourceVersion?: string;
+  candidates?: { candidate?: string; candidateId?: string; originalParty?: string | null; normalizedParty?: string | null; partyOriginal?: string | null; party?: string | null; votes: number; share?: number | null; sourceVotes?: string; sourceTotalVotes?: string; writeIn?: boolean; fusionTicket?: boolean; sourceVersion?: string }[];
+  contest?: { id: string; office: string; year: number; raceType: string; stage: string; special: boolean; runoff: boolean; boundaryVintage?: string };
 }
 export interface Layer {
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unavailable';
@@ -83,21 +141,35 @@ export interface Layer {
   suppressed?: Set<string>;
   excludedGeographies?: string[];
   selection?: string;
+  periodStatus?: 'observed' | 'missing';
+  sourceReleases?: string[];
+}
+
+export type UnemploymentPeriod =
+  | { type: 'annual'; year: 2025 }
+  | { type: 'month'; year: 2025; month: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 };
+
+export interface LayerSelection {
+  period?: UnemploymentPeriod;
+  party?: string;
+  contestId?: string;
 }
 export interface Geography {
   states: Place[];
   counties: Place[];
+  districts?: Place[];
+  loadDistricts?: () => Promise<Place[]>;
   byId: Map<string, Place>;
   collection: GeoJSON.FeatureCollection;
   prepareFocus(id: string | null): void;
   loadDetail(id: string | null): Promise<unknown>;
 }
 export interface DataStore {
-  get(metric: Metric): Layer;
-  load(metric: Metric): Promise<Layer>;
-  retry(metric: Metric): Promise<Layer>;
-  refresh(metric: Metric): Promise<Layer>;
-  seed(metric: Metric, data: unknown): boolean;
+  get(metric: Metric, selection?: LayerSelection): Layer;
+  load(metric: Metric, selection?: LayerSelection): Promise<Layer>;
+  retry(metric: Metric, selection?: LayerSelection): Promise<Layer>;
+  refresh(metric: Metric, selection?: LayerSelection): Promise<Layer>;
+  seed(metric: Metric, data: unknown, selection?: LayerSelection): boolean;
 }
 export interface ViewSettings {
   tilt: number;
@@ -153,6 +225,8 @@ export interface AtlasState extends Selection {
   metricQuery: string;
   placeQuery: string;
   pinned: string[];
+  unemploymentPeriod: UnemploymentPeriod;
+  selectedParty: string;
   recentStates: string[];
   overlay: { id: DrawerId; side: Side; edge: Side } | null;
   comparisonDraft: {
@@ -187,6 +261,7 @@ export interface MapAdapter {
     mode: '2d' | '3d';
     selectedId: string | null;
     metricKey: string;
+    geographyType: 'state' | 'congressional_district';
     values: Layer['values'];
     heightValues: Layer['values'];
     countySupported: boolean;

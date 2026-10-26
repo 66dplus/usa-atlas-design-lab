@@ -225,7 +225,14 @@ def main():
             policy = json.loads(POLICY_PATH.read_text())
             lock_sha = sha(lock_raw)
             schema_fingerprint = lock["schemaFingerprint"]
-            canonical_lock_sha = sha((ROOT / "contracts/reader-contract.lock.json").read_bytes())
+            expected_lock_path = (ROOT / "contracts/reader-contract.lock.json" if lock.get("contractVersion") == "1.0.0"
+                                  else ROOT / "contracts/reader-v2-contract.lock.json" if lock.get("contractVersion") == "2.0.0"
+                                  else None)
+            if expected_lock_path is None or not expected_lock_path.is_file():
+                failures.append("reader contract version has no separately reviewed application lock")
+                canonical_lock_sha = ""
+            else:
+                canonical_lock_sha = sha(expected_lock_path.read_bytes())
             if lock_sha != canonical_lock_sha:
                 failures.append("candidate reader lock is not byte-identical to the reviewed application lock")
         except (OSError, json.JSONDecodeError, KeyError) as error:
@@ -358,8 +365,8 @@ def main():
                                        capture_output=True, text=True, timeout=15)
         if source_object.returncode:
             failures.append("requested source commit is not present as an immutable Git commit in the application checkout")
-        if lock.get("sourceCommit") != "b405bfdf473614beea49dd5126a843a916168f7d":
-            failures.append("reader lock source is not the merged producer contract commit")
+        if lock.get("contractVersion") == "1.0.0" and lock.get("sourceCommit") != "b405bfdf473614beea49dd5126a843a916168f7d":
+            failures.append("reader v1 lock source is not the merged producer contract commit")
         if args.operation == "rollback":
             if not args.rollback_baseline or not args.rollback_baseline.is_file():
                 failures.append("rollback operation requires an immutable baseline container/build binding")

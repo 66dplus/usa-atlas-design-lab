@@ -15,6 +15,7 @@ const counties=[
   {id:'06003',stateId:'06',name:'Alpha'},
 ];
 const index=buildPlaceIndex(states,counties);
+const districtIndex=buildPlaceIndex(states,counties,[{id:'0606',districtCode:'06',name:'California · Congressional District 6'}]);
 const metrics=new Set(['unemployment','adjusted-gross-income-agi','adjusted-gross-income-agi--per-resident','median-household-income','electricity-price','electricity-price--08-05-sector-res','access-to-a-grocery-store']);
 const resolve=path=>resolveRoute(parsePath(path),index,metrics);
 
@@ -66,6 +67,7 @@ assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'metrics
 assert.equal(canonicalPath({page:'compare',concept:'compare',comparison:'metrics',metric:'unemployment',secondMetric:'adjusted-gross-income-agi',selected:'06'},index),'/compare/indicators/unemployment-vs-adjusted-gross-income-agi/in/california');
 assert.equal(canonicalPath({page:'stats'},null),'/stats');
 assert.equal(canonicalPath({page:'article',article:'mississippi'},null),'/blog/mississippi');
+assert.equal(canonicalPath({page:'map',metric:'elections-house',selected:'0606'},districtIndex),'/united-states/elections-house');
 
 const retained=routeParams(new URLSearchParams('place=06&metric=unemployment&theme=dark&renderer=svg&page=map&embed=1'));
 assert.equal(new URLSearchParams(retained).has('theme'),false);
@@ -73,6 +75,12 @@ assert.equal(new URLSearchParams(retained).has('renderer'),false);
 assert.equal(new URLSearchParams(retained).get('embed'),'1');
 assert.equal(new URLSearchParams(retained).has('place'),false);
 assert.equal(routeParams(new URLSearchParams('review=1&preview=1&embed=1&expanded=1&view=3d&rank=highest')),'embed=1&review=1&preview=1');
+const selections=new URLSearchParams(routeParams(new URLSearchParams('period=2025-M01&party=REPUBLICAN&district=invalid'),{selected:'0606',index:districtIndex}));
+assert.equal(selections.get('period'),'2025-M01');
+assert.equal(selections.get('party'),'REPUBLICAN');
+assert.equal(selections.get('district'),'0606');
+assert.equal(new URLSearchParams(routeParams(new URLSearchParams('period=2026-M01&party=OTHER'))).has('period'),false);
+assert.equal(new URLSearchParams(routeParams(new URLSearchParams('period=2026-M01&party=OTHER'))).has('party'),false);
 
 const metadata=createPageMetadata({title:'Unemployment in California | USA X-Ray',description:'Explore unemployment in California.',path:'/united-states/california/unemployment?theme=dark'});
 assert.equal(metadata.canonical,'https://usa-xray.online/united-states/california/unemployment');

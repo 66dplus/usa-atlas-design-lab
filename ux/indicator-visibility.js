@@ -80,7 +80,7 @@ export const indicatorVisibility=Object.freeze({
   '09.01': false, // Fast-food restaurants per 10k residents
   '09.02': false, // Access to a grocery store
   '09.03': false, // Farmers' markets per capita
-  '09.04': true, // Fitness / recreation centers per capita
+  '09.04': false, // Retained source; hidden from primary selections
   '09.05': false, // Parks / recreation facilities
   '09.06': false, // PM2.5
   '09.07': false, // Ozone

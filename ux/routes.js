@@ -75,17 +75,19 @@ function putUniqueCounty(index, slug, county) {
 // Build the resolution index once geography is loaded. Every county route
 // carries its state; rare duplicate names within a state gain a short FIPS
 // suffix so no valid selection has to fall back to a query-string URL.
-export function buildPlaceIndex(states, counties) {
-  const index = {byStateSlug: new Map(), countiesByState: new Map(), uniqueCounties: new Map(), slugByPlaceId: new Map()};
+export function buildPlaceIndex(states, counties, districts = []) {
+  const index = {byStateSlug: new Map(), countiesByState: new Map(), uniqueCounties: new Map(), slugByPlaceId: new Map(), byId: new Map()};
   for (const state of states) {
     const slug = slugify(state.name);
     if (!validSegment(slug) || index.byStateSlug.has(slug)) continue;
     index.byStateSlug.set(slug, state);
     index.countiesByState.set(state.id, new Map());
     index.slugByPlaceId.set(state.id, slug);
+    index.byId.set(state.id, state);
   }
   for (const county of counties) {
     const scope = index.countiesByState.get(county.stateId);
+    index.byId.set(county.id, county);
     if (!scope) continue;
     const base = countySlug(county.name, county.id);
     if (!validSegment(base)) continue;
@@ -115,6 +117,7 @@ export function buildPlaceIndex(states, counties) {
     for (const [slug, county] of scope) putUniqueCounty(index, slug, county);
   }
   for (const [slug, value] of [...index.uniqueCounties]) if (!value) index.uniqueCounties.delete(slug);
+  for (const district of districts) index.byId.set(district.id, district);
   return index;
 }
 
@@ -268,6 +271,7 @@ export function canonicalPath(state, index) {
   if (!index) return null;
   const metric = indicatorSegment(state.metric || DEFAULT_INDICATOR) || DEFAULT_INDICATOR;
   const placeId = state.place ?? state.selected ?? null;
+  if (placeId && index.byId?.get(placeId)?.districtCode) return `/${ROOT_SEGMENT}/${metric}`;
   if (state.concept === 'compare') {
     if (state.comparison === 'metrics') {
       const a = indicatorSegment(state.metric), b = indicatorSegment(state.secondMetric);
@@ -287,11 +291,17 @@ export function canonicalPath(state, index) {
 
 // Keep only non-content operational flags. Indicator, geography and page are
 // always represented by the path; presentation preferences do not create URLs.
-export function routeParams(params) {
+export function routeParams(params, selection = {}) {
   const keep = new URLSearchParams();
   for (const key of ['embed', 'review', 'preview']) {
     const value = params?.get(key);
     if (value) keep.set(key, value);
   }
+  const period = params?.get('period');
+  if (/^2025(?:-M(?:0[1-9]|1[0-2]))?$/.test(period || '')) keep.set('period', period);
+  const party = params?.get('party');
+  if (['DEMOCRAT', 'REPUBLICAN'].includes(party || '')) keep.set('party', party);
+  if (selection.selected && selection.index?.byId?.get(selection.selected)?.districtCode)
+    keep.set('district', selection.selected);
   return keep.toString();
 }

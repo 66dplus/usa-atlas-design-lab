@@ -144,9 +144,8 @@ export function Sheet({
         false,
       );
       requestAnimationFrame(() => {
-        const target = host.querySelector<HTMLInputElement | HTMLButtonElement>(
-          'input,button:not(.sheet-handle)',
-        );
+        const target = host.querySelector<HTMLInputElement>('input:not([type="hidden"])') ||
+          host.querySelector<HTMLButtonElement>('button:not(.sheet-handle)');
         if (target?.getClientRects().length) target.focus({ preventScroll: true });
       });
     }
@@ -157,7 +156,6 @@ export function Sheet({
     overlay?.side,
     atlas.state.countiesOnly,
     atlas.state.placeBrowseAll,
-    atlas.state.placeQuery,
     atlas.state.concept,
   ]);
   useLayoutEffect(() => {

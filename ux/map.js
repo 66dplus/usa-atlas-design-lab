@@ -37,16 +37,36 @@ export async function loadGeography() {
   // National WebGL geometry uses source features directly; detailed bounds and
   // centroids are prepared only when a state is opened.
   const c=counties.map(f=>({id:f.id,name:f.properties.name,stateId:f.id.slice(0,2),feature:f}));
+  let districts=[],districtAreas=[],districtLoad=null;
   const context=topojson.feature(world,world.objects.countries);
   // Only other countries form the backdrop; a coarse US coast would protrude into detailed bays.
   context.features=context.features.filter(f=>f.id!=='840');
-  const geo={states:s,counties:c,byId:new Map([...s,...c].map(f=>[f.id,f])),projection,path,cities:cities.map(c=>({...c,point:projection([c.lon,c.lat])})),world:context,collection,detailStates:new Set()};
+  const geo={states:s,counties:c,districts,districtAreas,geographyType:'state',byId:new Map([...s,...c].map(f=>[f.id,f])),projection,path,cities:cities.map(c=>({...c,point:projection([c.lon,c.lat])})),world:context,collection,detailStates:new Set(),
+    loadDistricts:async()=>{
+      if(districts.length)return districts;
+      if(districtLoad)return districtLoad;
+      districtLoad=(async()=>{
+        const response=await fetch('/api/atlas/reader/v2/cd119-boundary');
+        if(!response.ok)throw new Error('The 2024 congressional district boundary is unavailable.');
+        const payload=await response.json();
+        if(!payload.available||payload.boundaryVintage!==2024||payload.congressSession!=='119'||!Array.isArray(payload.featureCollection?.features))throw new Error('The 2024 congressional district boundary is invalid.');
+        const features=payload.featureCollection.features;
+        if(features.length!==435)throw new Error('The 2024 congressional district boundary is incomplete.');
+        districts=features.map(feature=>{feature.id=feature.properties.GEOID;const stateName=s.find(state=>state.id===feature.id.slice(0,2))?.name||feature.id.slice(0,2);const item=decorate(feature);item.name=`${stateName} · ${item.name}`;return {...item,stateId:feature.id.slice(0,2),districtCode:feature.properties.CD119FP,boundaryVintage:2024,congressSession:'119'};});
+        districtAreas=districts.map(feature=>({...feature,stateId:feature.id}));
+        geo.districts=districts;geo.districtAreas=districtAreas;
+        for(const feature of districts)geo.byId.set(feature.id,feature);
+        return districts;
+      })().finally(()=>{districtLoad=null;});
+      return districtLoad;
+    }};
   geo.prepareFocus=id=>{
     const feature=geo.byId.get(id);
     if(feature&&feature.id.length===5&&!feature.focusBounds)Object.assign(feature,decorate(feature.feature));
   };
   const pending=new Map();
   geo.loadDetail=async id=>{
+    if(geo.geographyType==='congressional_district'||geo.byId.get(id)?.districtCode)return;
     const parent=id?.slice(0,2);if(!parent||geo.detailStates.has(parent))return;
     if(pending.has(parent))return pending.get(parent);
     const request=(async()=>{
@@ -67,7 +87,7 @@ export async function loadGeography() {
 
 export class ExplorerMap {
   constructor(host,geo,{onSelect=()=>{},onRankSelect=()=>{},onError=()=>{},onHover=()=>{},onRenderError=()=>{}}={}) {
-    Object.assign(this,{host,geo,onSelect,onRankSelect,onError,onHover,onRenderError});
+    Object.assign(this,{host,geo,sourceGeo:geo,onSelect,onRankSelect,onError,onHover,onRenderError});
     this.state={mode:'2d',selectedId:null,values:new Map(),dark:false};
     this.svg=d3.select(host).append('svg').attr('viewBox',`0 0 ${WIDTH} ${HEIGHT}`).attr('class','geo-svg').attr('aria-label','United States interactive map');
     this.labelLayer=this.svg.append('g').attr('pointer-events','none');
@@ -85,11 +105,15 @@ export class ExplorerMap {
     document.addEventListener('keydown',this.onEscape);
   }
   pick(id) {
+    if(this.geo.geographyType==='congressional_district'){if(id)this.onSelect(id);return;}
     const selected=this.state.selectedId;
     const next=selected && selected.slice(0,2)===id.slice(0,2)?id:id.slice(0,2);
     this.onSelect(next);
   }
   hover(id) {
+    if(this.geo.geographyType==='congressional_district'){
+      const f=this.geo.byId.get(id);if(f)this.onHover({id:f.id,name:f.name,value:this.state.values.get(f.id)??null});return;
+    }
     const f=this.geo.byId.get(this.state.selectedId?.slice(0,2)===id.slice(0,2)?id:id.slice(0,2));
     if(f) this.onHover({id:f.id,name:f.name,value:this.state.values.get(f.id)??null});
   }
@@ -121,6 +145,15 @@ export class ExplorerMap {
   }
   update(next) {
     const previous=this.state,oldSettings=this.settings;
+    const requestedGeography=next.geographyType==='congressional_district'?'congressional_district':'state';
+    const changedGeography=this.geo.geographyType!==requestedGeography;
+    const oldTransform=changedGeography?d3.zoomTransform(this.svg.node()):null;
+    if(changedGeography){
+      this.flat?.dispose();this.flat=null;this.flatFailed=false;
+      this.geo=requestedGeography==='congressional_district'
+        ?{...this.sourceGeo,states:this.sourceGeo.districts||[],counties:this.sourceGeo.districtAreas||[],geographyType:'congressional_district',detailStates:new Set()}
+        :this.sourceGeo;
+    }
     const changedLayout=previous.layoutKey!==next.layoutKey,changedMode=previous.mode!==next.mode;
     let cover=changedMode&&this.initialized?this.coverTransition():null;
     const changedPlace=previous.selectedId!==next.selectedId,changedRanks=JSON.stringify(previous.ranks||[])!==JSON.stringify(next.ranks||[]);
@@ -131,13 +164,13 @@ export class ExplorerMap {
     const before=this.renderer&&!changedMode?this.snapshotPose():null;
     this.state={...previous,...next};
     this.tint=value=>color(value,this.state.palette||this.state.scale);
-    const {mode,dark,selectedId}=this.state,parent=selectedId?.slice(0,2);
+    const {mode,dark,selectedId}=this.state,parent=this.geo.geographyType==='congressional_district'?selectedId:selectedId?.slice(0,2);
     this.setFlatMode(mode==='2d');
     this.host.dataset.mode=mode;this.host.dataset.selected=selectedId||'US';this.host.dataset.metric=this.state.metricKey||'';
     this.host.dataset.renderMode=mode;
     this.host.classList.toggle('map-dark',dark);this.svg.style('display',mode==='2d'?null:'none').style('background',this.flatActive?'transparent':this.mapBackdrop());
     if(this.renderer)this.renderer.domElement.hidden=mode==='2d';
-    if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
+    if(this.flatActive)try{this.flat.update(this.state,f=>this.mappedValue(f),this.tint,this.mapBackdrop());this.flat.setTransform(oldTransform||d3.zoomTransform(this.svg.node()));}catch(error){this.failFlat(error);}
     this.renderLabels();
     if(mode==='2d'){
       if(this.terrainBuilding){this.terrainBuildVersion++;this.terrainInterrupted=true;}
@@ -193,11 +226,11 @@ export class ExplorerMap {
     }));
   }
   mappedValue(feature) {
-    const id=this.state.countySupported===false ? feature.stateId : feature.id;
+    const id=this.geo.geographyType==='congressional_district'?feature.id:this.state.countySupported===false ? feature.stateId : feature.id;
     return this.state.values.get(id)??null;
   }
   mappedHeight(feature) {
-    const id=this.state.countySupported===false ? feature.stateId : feature.id;
+    const id=this.geo.geographyType==='congressional_district'?feature.id:this.state.countySupported===false ? feature.stateId : feature.id;
     return this.state.heightValues?.get(id)??null;
   }
   setFlatMode(requested){
@@ -242,7 +275,7 @@ export class ExplorerMap {
       this.cityMembership ||= new WeakMap();members=this.cityMembership.get(focusedState.feature);
       if(!members){members=new Set(this.geo.cities.filter(city=>d3.geoContains(focusedState.feature,[city.lon,city.lat])));this.cityMembership.set(focusedState.feature,members);}
     }
-    const rows=this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name)&&(!focusedState||members.has(city)));
+    const rows=this.geo.geographyType==='congressional_district'?(selected?[{name:selected.name,point:selected.point}]:[]):this.geo.cities.filter((city,index)=>(transform.k>2||index<12)&&(selected?.id.length!==5||city.name!==selected.name)&&(!focusedState||members.has(city)));
     if(selected?.id.length===5)rows.unshift({name:selected.name+' · county',point:selected.point});
     // Screen-space collision estimates avoid layout reads and hundreds of county labels per zoom tick.
     for(const row of rows){
@@ -297,7 +330,7 @@ export class ExplorerMap {
       if(this.dragging||this.transition){canvas.style.cursor='grabbing';return;}
       const id=this.hit(e);
       canvas.style.cursor=id?'pointer':'grab';
-      if(id!==this.hoveredPlace){this.hoveredPlace=id;if(id)this.hover(id);else this.onHover(null);this.highlight(id?.slice(0,2));}
+      if(id!==this.hoveredPlace){this.hoveredPlace=id;if(id)this.hover(id);else this.onHover(null);this.highlight(this.geo.geographyType==='congressional_district'?id:id?.slice(0,2));}
 
     });
     canvas.addEventListener('pointerleave',()=>{this.hoveredPlace=null;this.onHover(null);this.highlight(null);});
@@ -438,7 +471,7 @@ export class ExplorerMap {
   }
   cancelMotion(){cancelAnimationFrame(this.frame);cancelAnimationFrame(this.zoomFrame);this.transition=null;this.zoomDestination=null;}
   settle(){if(this.transition){const finish=this.transition.finish;this.cancelMotion();finish();}else this.cancelMotion();for(const group of this.stateGroups?.values()||[])group.rotation.set(0,0,0);this.svg?.interrupt();this.flat?.renderNow();this.render();}
-  exitFocus(){const id=this.state.selectedId;if(id)this.onSelect(id.length===5?id.slice(0,2):null);}
+  exitFocus(){const id=this.state.selectedId;if(id)this.onSelect(this.geo.geographyType==='congressional_district'?null:id.length===5?id.slice(0,2):null);}
   highlight(id){
     if(this.hoveredState===id)return;this.hoveredState=id;
     for(const [key,group] of this.stateGroups||[]){group.userData.outline.material.color.set(key===id?'#ffffff':'#ffe9bc');}

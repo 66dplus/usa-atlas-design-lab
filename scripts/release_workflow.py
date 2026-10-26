@@ -363,7 +363,8 @@ def package_sha(package):
     return digest(json.dumps(files, sort_keys=True, separators=(',', ':')).encode())
 
 
-def reconstruct_package(repo, commit, release, previous_release, previous_build_sha256):
+def reconstruct_package(repo, commit, release, previous_release, previous_build_sha256,
+                        reader_lock_path='contracts/reader-contract.lock.json'):
     """Build package from an isolated checkout of the exact committed source."""
     repo = Path(repo).resolve()
     temp = Path(tempfile.mkdtemp(prefix='usa-release-source-proof-'))
@@ -378,7 +379,8 @@ def reconstruct_package(repo, commit, release, previous_release, previous_build_
         run(['python3', 'scripts/release_workflow.py', 'prepare',
              '--destination', str(output), '--release', release,
              '--source-commit', commit, '--previous-release', previous_release,
-             '--previous-build-sha256', previous_build_sha256], capture=True,
+             '--previous-build-sha256', previous_build_sha256,
+             '--contracts-lock', str(reader_lock_path)], capture=True,
             check=True, cwd=checkout)
         return package_inventory(output), (output / 'ux/build.json').read_bytes(), (output / 'preview-assets.json').read_bytes()
     finally:
@@ -517,14 +519,26 @@ def create_plan(baseline_dir, target_dir, baseline_release, baseline_build_sha,
 def contract_identity(lock_path, vendored_artifact=None):
     lock = read_json(lock_path)
     required = ('producerRepository', 'sourceCommit', 'contractVersion', 'artifactPath',
-                'contractSha256', 'schemaFingerprint', 'bootstrapSha256', 'fixtureSha256')
+                'contractSha256', 'schemaFingerprint')
     if any(not lock.get(key) for key in required):
         raise ReleaseError('reader lock is missing required contract artifact identity fields')
     if not re.fullmatch(r'[0-9a-f]{40}', str(lock['sourceCommit'])):
         raise ReleaseError('reader lock sourceCommit must be a full Git SHA')
-    for field in ('contractSha256', 'bootstrapSha256', 'fixtureSha256'):
+    for field in ('contractSha256',):
         if not re.fullmatch(r'[0-9a-f]{64}', str(lock[field])):
             raise ReleaseError(f'reader lock {field} must be a SHA256')
+    if lock['contractVersion'] == '1.0.0':
+        for field in ('bootstrapSha256', 'fixtureSha256'):
+            if not re.fullmatch(r'[0-9a-f]{64}', str(lock.get(field, ''))):
+                raise ReleaseError(f'reader lock {field} must be a SHA256')
+    elif lock['contractVersion'] == '2.0.0':
+        if not isinstance(lock.get('artifacts'), dict) or not lock['artifacts']:
+            raise ReleaseError('reader-v2 lock must list its exact artifact hashes')
+        expected_filter = "usa_atlas.reader_batch.candidate_status = 'admitted' AND usa_atlas.ingest_run.status = 'pass'"
+        if lock.get('admissionFilter') != expected_filter:
+            raise ReleaseError('reader-v2 lock must require admitted batches and passed ingests')
+    else:
+        raise ReleaseError('unsupported reader contract version')
     # artifactPath names the producer repository location. The vendored copy is
     # explicitly named by localArtifactPath and is never inferred from it.
     local_name = vendored_artifact or lock.get('localArtifactPath')
@@ -538,11 +552,19 @@ def contract_identity(lock_path, vendored_artifact=None):
     if not artifact_file.is_file() or artifact_file.is_symlink() or json_sha(artifact_file) != lock['contractSha256']:
         raise ReleaseError('reader contract artifact is missing or differs from reader lock SHA256')
     contract = read_json(artifact_file)
+    artifact_root = artifact_file.parent
     if (contract.get('schema_fingerprint') != lock['schemaFingerprint'] or
             contract.get('version') != lock['contractVersion'] or
-            contract.get('read_only', contract.get('readOnly')) is not True or
-            contract.get('admission_filter', contract.get('admissionFilter')) != "usa_atlas.ingest_run.status = 'pass'"):
+            contract.get('read_only', contract.get('readOnly')) is not True):
         raise ReleaseError('reader lock does not bind the current read-only admitted schema contract')
+    if lock['contractVersion'] == '1.0.0' and contract.get('admission_filter', contract.get('admissionFilter')) != "usa_atlas.ingest_run.status = 'pass'":
+        raise ReleaseError('reader-v1 lock does not preserve its passed-ingest filter')
+    if lock['contractVersion'] == '2.0.0':
+        for relative, expected in lock['artifacts'].items():
+            artifact_path = _safe_rel(str(relative))
+            pinned = artifact_root / artifact_path
+            if not pinned.is_file() or json_sha(pinned) != expected:
+                raise ReleaseError(f'reader-v2 artifact is missing or differs from lock: {relative}')
     return {'readerLockSha256': json_sha(lock_path), 'readerSchemaFingerprint': lock['schemaFingerprint']}
 
 
@@ -1217,7 +1239,8 @@ class Coordinator:
                 raise ReleaseError('exact committed-source reconstruction is not configured')
             reconstructed = self.source_reconstructor(
                 self.source_repo, plan['targetCommit'], release_id,
-                build_meta['previousRelease'], build_meta['previousBuildSha256'])
+                build_meta['previousRelease'], build_meta['previousBuildSha256'],
+                build_meta.get('dataReaderLock', {}).get('path', 'contracts/reader-contract.lock.json'))
             source_proof = compare_source_reconstruction(package, reconstructed)
             if source_proof['sourceCommit'] != plan['targetCommit'] or source_proof['packageSha256'] != expected:
                 raise ReleaseError('source proof does not bind the exact target commit and package')
@@ -1648,7 +1671,8 @@ def main(argv=None):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             result = module.build(args.destination, args.release, args.source_commit,
-                                  args.previous_release, args.previous_build_sha256, emit=False)
+                                  args.previous_release, args.previous_build_sha256, emit=False,
+                                  reader_lock_path=str(args.contracts_lock))
         elif args.command == 'plan':
             result = create_plan(args.baseline, args.package, args.baseline_release,
                                  args.baseline_build_sha, args.changes, args.output)

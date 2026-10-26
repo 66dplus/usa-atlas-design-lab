@@ -32,6 +32,10 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
   const unit = data.unit === '%' ? 'Percent (%)' : data.unit || m.unit || '—';
   const unemploymentMethod =
     (row && m.fieldId === '03.06:unemployment_rate' && m.definition?.method) || '';
+  const rateMetadata = m.definition?.rateMetadata;
+  const rateDescription = rateMetadata
+    ? `${rateMetadata.type === 'official_source_rate' ? 'Official source rate' : 'Custom calculated rate'} · numerator: ${rateMetadata.numeratorSource} (${rateMetadata.numeratorPeriod})${rateMetadata.denominatorSource ? ` · denominator: ${rateMetadata.denominatorSource}${rateMetadata.denominatorPeriod ? ` (${rateMetadata.denominatorPeriod})` : ''}${rateMetadata.denominatorPopulationKind ? ` · ${rateMetadata.denominatorPopulationKind} population` : ''}${rateMetadata.denominatorUnit ? ` · ${rateMetadata.denominatorUnit}` : ''}` : ''} · ${rateMetadata.formula}`
+    : '';
   const explanation =
     unemploymentMethod ||
     m.definition?.method ||
@@ -99,6 +103,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         ) : (
           ''
         )}
+        {rateDescription ? <p>{'Rate construction: '}{rateDescription}</p> : ''}
         <p>
           {'Census 2017 boundaries. '}
           {data.excludedGeographies?.length || 0}
@@ -148,6 +153,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
           <dd>{data.sourceRelease || '—'}</dd>
         </dl>
         <p>{explanation}</p>
+        {rateDescription ? <p>{'Rate construction: '}{rateDescription}</p> : ''}
         {url ? (
           <a className="primary-button" href={url} target="_blank" rel="noreferrer">
             {'Open original source'}

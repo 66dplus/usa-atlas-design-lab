@@ -69,7 +69,7 @@ export function Drawers({ atlas, saved }: { atlas: Atlas; saved: Saved }) {
             ))}
         </div>
         <p id="catalog-status" className="library-note">
-          {resources ? `${resources.catalog.length} indicators` : 'Loading the database catalog…'}
+          {resources ? `${resources.selectionCounts.primary + resources.selectionCounts.variants} selections · ${resources.selectionCounts.primary} primary + ${resources.selectionCounts.variants} race variants` : 'Loading the database catalog…'}
         </p>
         <div id="metric-list" className="metric-list">
           {resources && <MetricItems atlas={atlas} />}
@@ -235,6 +235,7 @@ export function Drawers({ atlas, saved }: { atlas: Atlas; saved: Saved }) {
 function PlaceItems({ atlas }: { atlas: Atlas }) {
   const { state, resources, place, selectedB } = atlas,
     geo = resources!.geo,
+    districtMetric = atlas.metric().geographyType === 'congressional_district',
     query = state.placeQuery.trim().toLowerCase(),
     parent = (state.placeTarget === 'b' ? selectedB()?.id : state.selected)?.slice(0, 2),
     recent = mobileLayout() && !state.countiesOnly && !query && !state.placeBrowseAll;
@@ -275,7 +276,9 @@ function PlaceItems({ atlas }: { atlas: Atlas }) {
       </>
     );
   let list =
-    state.countiesOnly && parent
+    districtMetric
+      ? geo.districts || []
+      : state.countiesOnly && parent
       ? geo.counties.filter((f) => f.stateId === parent)
       : query
         ? [...geo.states, ...geo.counties]
@@ -289,7 +292,7 @@ function PlaceItems({ atlas }: { atlas: Atlas }) {
     <>
       <p id="place-list-caption" className="library-note">
         {list.length.toLocaleString()} matches
-        {!query && !state.countiesOnly ? ' · Type a county name to search all counties' : ''}
+        {!query && districtMetric ? ' · 119th Congress districts' : !query && !state.countiesOnly ? ' · Type a county name to search all counties' : ''}
         {list.length > 100 ? ' · First 100 shown' : ''}
       </p>
       <div id="place-list" className="place-list">
@@ -298,7 +301,9 @@ function PlaceItems({ atlas }: { atlas: Atlas }) {
             <span>
               <strong>{f.name}</strong>
               <small>
-                {f.id.length === 2
+                {f.districtCode
+                  ? `${place(f.stateId)!.name} · Congressional District ${Number(f.districtCode)} · 119th Congress`
+                  : f.id.length === 2
                   ? f.id === '11'
                     ? 'Federal district'
                     : 'State'

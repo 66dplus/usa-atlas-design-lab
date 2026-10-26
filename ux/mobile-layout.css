@@ -211,3 +211,6 @@
 
 @media(max-width:760px){.concept-tabs a{min-height:44px;padding:8px 4px;font-size:12px}}
 
+
+@media(max-width:760px){.period-control{margin:12px 0;padding:0}.period-chart-frame{--period-chart-height:96px;gap:4px}.period-chart{gap:2px}.period-chart__axis{font-size:.58rem}.period-chart__label{font-size:.62rem;letter-spacing:-.02em}.period-control__heading{align-items:flex-start}.period-control__heading>span{max-width:64%;line-height:1.35}.period-control__annual{max-width:65%;text-align:right}}
+@media(max-width:760px){.party-switch{gap:8px}.party-switch button{min-height:48px;white-space:normal}.local-candidate-note{overflow-wrap:anywhere}}
