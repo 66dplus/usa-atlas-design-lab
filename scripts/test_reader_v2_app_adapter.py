@@ -1,5 +1,7 @@
 import os
 import json
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -45,6 +47,75 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
         with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'disabled','ATLAS_READER_V2_DATABASE':''}):
             with self.assertRaisesRegex(atlas_data.DatabaseUnavailable,'explicit reviewed mode'):
                 atlas_data.unemployment_period_observations('annual',2025)
+
+    def test_admitted_cd119_database_requires_archive_identity_and_verifies_each_geometry(self):
+        rows=self.cd119_rows()
+        with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted','ATLAS_READER_V2_DATABASE':''}), \
+             patch.object(atlas_data,'_verified_reader_v2_lock',{}), \
+             patch.object(atlas_data,'query',return_value=rows) as read:
+            result=atlas_data.reader_v2_cd119_boundary(include_features=True)
+        self.assertTrue(result['available'])
+        self.assertEqual(result['featureCount'],435)
+        self.assertEqual(result['sourceSha256'],atlas_data.CD119_SOURCE_SHA256)
+        self.assertEqual(result['geometryCollectionSha256'],atlas_data.CD119_GEOJSON_SHA256)
+        self.assertEqual(len(result['featureCollection']['features']),435)
+        self.assertEqual(read.call_args.args[1]['source_sha256'],atlas_data.CD119_SOURCE_SHA256)
+        self.assertIn("gb.geometry_source_sha256=:'source_sha256'",read.call_args.args[0])
+
+        for bad_hash in ('0'*64,atlas_data.CD119_GEOJSON_SHA256):
+            bad_rows=[dict(row) for row in rows]
+            bad_rows[0]['geometry_source_sha256']=bad_hash
+            with self.subTest(source_hash=bad_hash), \
+                 patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted','ATLAS_READER_V2_DATABASE':''}), \
+                 patch.object(atlas_data,'_verified_reader_v2_lock',{}), \
+                 patch.object(atlas_data,'query',return_value=bad_rows):
+                self.assertFalse(atlas_data.reader_v2_cd119_boundary(include_features=True)['available'])
+
+        bad_geometry_rows=[dict(row) for row in rows]
+        bad_geometry_rows[0]['geometry']={'type':'Point','coordinates':[0,0]}
+        with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted','ATLAS_READER_V2_DATABASE':''}), \
+             patch.object(atlas_data,'_verified_reader_v2_lock',{}), \
+             patch.object(atlas_data,'query',return_value=bad_geometry_rows):
+            self.assertFalse(atlas_data.reader_v2_cd119_boundary(include_features=True)['available'])
+
+    def test_local_cd119_file_mode_keeps_the_trusted_geojson_hash(self):
+        features=[]
+        for row in self.cd119_rows():
+            features.append({'type':'Feature','properties':{
+                'GEOID':row['geo_id'],'STATEFP':row['state_fips'],
+                'CD119FP':row['district_code'],'NAMELSAD':row['label']},
+                'geometry':row['geometry']})
+        raw=json.dumps({'type':'FeatureCollection','features':features},
+                       sort_keys=True,separators=(',',':')).encode()
+        geojson_sha256=atlas_data.hashlib.sha256(raw).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'cd119.geojson'
+            path.write_bytes(raw)
+            with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'local_review',
+                    'ATLAS_READER_V2_DATABASE':'app_adapter_test','ATLAS_CD119_GEOJSON':str(path),
+                    'ATLAS_CD119_GEOJSON_SHA256':geojson_sha256}), \
+                 patch.object(atlas_data,'CD119_GEOJSON_SHA256',geojson_sha256):
+                result=atlas_data.reader_v2_cd119_boundary(include_features=True)
+        self.assertTrue(result['available'])
+        self.assertEqual(result['featureCount'],435)
+        self.assertEqual(result['sourceSha256'],atlas_data.CD119_SOURCE_SHA256)
+        self.assertEqual(result['geometryCollectionSha256'],geojson_sha256)
+
+    @staticmethod
+    def cd119_rows():
+        rows=[]
+        geometry={'type':'Polygon','coordinates':[[[0,0],[1,0],[1,1],[0,0]]]}
+        geometry_hash=atlas_data.hashlib.sha256(json.dumps(
+            geometry,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        for index in range(435):
+            state=f'{index // 99 + 1:02d}'
+            district=f'{index % 99 + (index % 99 >= 98):02d}'
+            rows.append({'geo_id':state+district,'state_fips':state,'district_code':district,
+                'is_at_large':district=='00','seat_type':'voting_district','label':state+district,
+                'geometry_record_sha256':geometry_hash,
+                'geometry_source_sha256':atlas_data.CD119_SOURCE_SHA256,
+                'geometry_source_url':atlas_data.CD119_SOURCE_URL,'geometry':geometry})
+        return rows
 
     def test_candidate_sql_filters_every_batch_role_to_the_selected_mode(self):
         for alias in ('rb', 'cb', 'pb', 'ab', 'eb', 'cf', 'gb'):

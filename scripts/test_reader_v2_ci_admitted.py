@@ -58,6 +58,16 @@ class AdmittedReaderV2PostgresTests(unittest.TestCase):
         self.assertEqual(missing['qualityState'],'missing')
         self.assertIsNone(missing['value'])
 
+    def test_cd119_admitted_database_returns_verified_full_boundary(self):
+        boundary=atlas_data.reader_v2_cd119_boundary(include_features=True)
+        self.assertTrue(boundary['available'])
+        self.assertEqual(boundary['featureCount'],435)
+        self.assertEqual(len(boundary['featureCollection']['features']),435)
+        self.assertEqual(boundary['sourceSha256'],atlas_data.CD119_SOURCE_SHA256)
+        self.assertEqual(boundary['geometryCollectionSha256'],atlas_data.CD119_GEOJSON_SHA256)
+        self.assertEqual({feature['properties']['CD119FP']
+                          for feature in boundary['featureCollection']['features']}&{'98'},set())
+
 
 if __name__ == '__main__':
     unittest.main()

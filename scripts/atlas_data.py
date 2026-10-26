@@ -672,6 +672,7 @@ def reader_v2_cd119_boundary(include_features=False):
     unavailable={'available':False,'boundaryVintage':2024,'congressSession':'119'}
     filename=os.environ.get('ATLAS_CD119_GEOJSON','')
     expected=os.environ.get('ATLAS_CD119_GEOJSON_SHA256','').lower()
+    expected_source_sha256=CD119_GEOJSON_SHA256 if mode=='local_review' and filename else CD119_SOURCE_SHA256
     if mode=='local_review' and filename:
         if expected!=CD119_GEOJSON_SHA256:
             return unavailable
@@ -712,12 +713,12 @@ def reader_v2_cd119_boundary(include_features=False):
               AND gb.geo_type='congressional_district'
               AND gb.source_release='census-cb-2024-cd119-500k'
               AND gb.geometry_source_url=:'source_url'
-              AND gb.geometry_source_sha256=:'geometry_sha256'
+              AND gb.geometry_source_sha256=:'source_sha256'
               AND gb.candidate_status IN ('local_review','admitted')
               AND i.status='pass' AND rb.candidate_status IN ('local_review','admitted')
               AND gb.seat_type='voting_district'
           ) t
-        """,{'source_url':CD119_SOURCE_URL,'geometry_sha256':CD119_GEOJSON_SHA256,
+        """,{'source_url':CD119_SOURCE_URL,'source_sha256':expected_source_sha256,
              'include_geometry':'true' if include_features else 'false'},
           statement_timeout_ms=12000,database=database)
         source_rows=rows or []
@@ -728,7 +729,7 @@ def reader_v2_cd119_boundary(include_features=False):
         if (not isinstance(state,str) or not re.fullmatch(r'\d{2}',state) or
             not isinstance(district,str) or not re.fullmatch(r'\d{2}',district) or
             geoid!=state+district or district=='98' or geoid in ids or
-            row.get('geometry_source_sha256')!=CD119_GEOJSON_SHA256 or
+            row.get('geometry_source_sha256')!=expected_source_sha256 or
             row.get('geometry_source_url')!=CD119_SOURCE_URL or
             not re.fullmatch(r'[a-f0-9]{64}',str(row.get('geometry_record_sha256') or '')) or
             (mode=='admitted' and row.get('seat_type') not in (None,'voting_district'))):
@@ -751,8 +752,7 @@ def reader_v2_cd119_boundary(include_features=False):
           'name':row.get('label'),'isAtLarge':district=='00'}})
     if len(ids)!=435 or not any(geoid.endswith('00') for geoid in ids):
         return unavailable
-    # Keep the original archive and its normalized GeoJSON derivative distinct:
-    # database geometry_source_sha256 is the latter, never the ZIP checksum.
+    # Keep the original archive and its normalized GeoJSON derivative distinct.
     result={'available':True,'boundaryVintage':2024,'congressSession':'119',
       'source':'U.S. Census Bureau TIGER/Line 2024 CD119','sourceUrl':CD119_SOURCE_URL,
       'sourceSha256':CD119_SOURCE_SHA256,'geometryCollectionSha256':CD119_GEOJSON_SHA256,
