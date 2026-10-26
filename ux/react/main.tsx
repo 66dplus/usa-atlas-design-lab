@@ -820,16 +820,27 @@ function Startup({ atlas }: { atlas: Atlas }) {
   useEffect(() => {
     if (state.startup !== 'loading') return;
     let alive = true,
-      rotating = false;
+      rotating = false,
+      rotation: ReturnType<typeof setInterval>,
+      timeout: ReturnType<typeof setTimeout>;
     const message = document.querySelector<HTMLElement>('#startup-message'),
       reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const isLoading = () => alive && document.body.dataset.atlasStatus === 'loading';
+    const stop = () => {
+      if (!alive) return;
+      alive = false;
+      clearInterval(rotation);
+      clearTimeout(timeout);
+      phraseAnimation.current?.cancel();
+      phraseAnimation.current = null;
+    };
     if (message && !reduced.matches)
       phraseAnimation.current = message.animate(
         [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
         { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' },
       );
     const rotate = async () => {
-      if (!alive || rotating || document.hidden) return;
+      if (!isLoading() || rotating || document.hidden) return;
       rotating = true;
       if (message && !reduced.matches) {
         phraseAnimation.current?.cancel();
@@ -839,11 +850,11 @@ function Startup({ atlas }: { atlas: Atlas }) {
         );
         await phraseAnimation.current.finished.catch(() => {});
       }
-      if (alive) {
+      if (isLoading()) {
         setPhrase((p) => (p + 1) % phrases.length);
         if (message && !reduced.matches)
           requestAnimationFrame(() => {
-            if (alive && state.startup === 'loading') {
+            if (isLoading()) {
               phraseAnimation.current?.cancel();
               phraseAnimation.current = message.animate(
                 [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
@@ -854,14 +865,12 @@ function Startup({ atlas }: { atlas: Atlas }) {
       }
       rotating = false;
     };
-    const rotation = setInterval(() => void rotate(), 2800),
-      timeout = setTimeout(() => atlas.patch({ startup: 'error' }), 45000);
+    rotation = setInterval(() => void rotate(), 2800);
+    timeout = setTimeout(() => atlas.patch({ startup: 'error' }), 45000);
+    window.addEventListener('atlas:startup-ready', stop);
     return () => {
-      alive = false;
-      clearInterval(rotation);
-      clearTimeout(timeout);
-      phraseAnimation.current?.cancel();
-      phraseAnimation.current = null;
+      window.removeEventListener('atlas:startup-ready', stop);
+      stop();
     };
   }, [state.startup]);
   useEffect(() => {
