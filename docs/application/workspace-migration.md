@@ -1,7 +1,11 @@
 # Workspace ownership and migration record
 
-Updated 25 October 2026. The root workspace is a local Git repository with no
-remote. It holds workspace documentation, planning, iteration worktrees, and
+Historical ownership/migration record dated 25 October 2026.
+
+**26 October closeout:** E1–E11 normalization and the separate React migration are complete. Current recorded production release/tag is `20261026-react-ts-6f24b2b-r3`, exact source `6f24b2ba7faa3b14f48be81771983838a5417f35`. See the [completed React evaluation](react-typescript-evaluation-20261026.md), [historical E1–E11 results](versioning-evaluation-20261026.md) and [release authority](release-and-evaluation.md). The dated pending statements below preserve the earlier state; they are not current blockers or release instructions.
+
+At that checkpoint the root workspace was a local Git repository with no
+remote. It held workspace documentation, planning, iteration worktrees, and
 legacy evidence. The application and data collection repositories have
 independent Git histories and remotes; they integrate through versioned contracts
 and the read-only PostgreSQL boundary, not shared Git history or collector
@@ -17,12 +21,12 @@ credentials.
 
 The canonical operating instructions are `usa-atlas-design-lab/AGENTS.md` and
 `research/data-collection/AGENTS.md`. In a temporary worktree, consult its local
-`AGENTS.md`, but do not use a `.worktrees/...` path as a permanent link. Application
+`AGENTS.md`, but use repository-relative or canonical GitHub links rather than temporary checkout paths. Application
 product constraints are in `docs/application/product-rules.md`; release and
 acceptance are defined by the application repository's release workflow and
 `docs/application/release-and-evaluation.md`.
 
-## Current release facts and incomplete work
+## Historical 25 October release facts and incomplete work
 
 The public manifest at <https://usa-xray.online/ux/build.json> is the live source
 of truth. Verified 25 October 2026: release `20261025-seo-routes-dd3d97`, raw
@@ -43,7 +47,7 @@ historical evidence only. Do not copy complete release packages, bulk images,
 private feedback, camera preferences, secrets, or raw tokens into the application
 repository. Do not rewrite or delete root history as part of this migration.
 Keep accepted decisions in root `PRODUCT.md` as dated history and link to the
-canonical product rules and future UI task in the application repository.
+canonical product rules and maintained UI architecture in the application repository.
 
 The root's local plan location remains a pointer for workspace planning. Root
 `AGENTS.md` is only a workspace pointer: it directs application work to the
@@ -51,6 +55,8 @@ application repository instructions and data work to the data repository
 instructions. Its current deployment binding must be a fresh lookup of the public
 manifest, not an old release paragraph.
 
-## Remaining release normalization
+## Historical remaining normalization work — superseded by completed evaluations
 
 The new versioning/release pipeline must establish the exact single application source commit that introduced each published build, preserve all 133 verified inputs, and produce immutable release evidence. Final application `main`/tag creation and deployment remain pending. E1–E11 must be completed and reported with actual evidence. No status in this record implies those steps have passed.
+
+The pending normalization requirements in this dated section were subsequently completed; their exact results remain in the linked E1–E11 record. The successful R3 source/tag is distinct from any later documentation-only mainline commit, which does not request rebuilding or redeployment. Final documentation integration is parent-controlled and is not claimed complete by this record.

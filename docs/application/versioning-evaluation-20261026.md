@@ -1,8 +1,10 @@
 # Application versioning and release evaluation — 26 October 2026
 
-**Runtime evaluation: PASS (E1–E11).** All runtime evidence and required evaluation conditions are complete. This report records the completed runtime evaluation; documentation/test-only integration follows the protected PR process and is verifiable in GitHub history. This is the canonical application evaluation and release pointer. The immutable completed evidence index is `/tmp/usa-xray-versioning-20261025/final-evidence-index-completed.json` (SHA-256 `b6a3df493be36fe5e094bbf326483ad43558c1a20f904c1fbed78095e308a08a`). The earlier `final-evidence-index-current.json` was mutable coordination state and is stale; it is not the authority for this closeout.
+> Historical completed E1–E11 normalization record. The subsequent production React release is **`20261026-react-ts-6f24b2b-r3`**, source `6f24b2ba7faa3b14f48be81771983838a5417f35`; see the [completed React evaluation](react-typescript-evaluation-20261026.md). The A/B identities, results and rollback below describe the earlier normalization closeout, not today’s primary. A is retained as a prior rollback target.
 
-## Release identity and final runtime
+**Runtime evaluation: PASS (E1–E11).** All runtime evidence and required evaluation conditions are complete. This report records the completed runtime evaluation; documentation/test-only integration follows the protected PR process and is verifiable in GitHub history. This is the canonical historical normalization evaluation. The immutable completed evidence index is `/tmp/usa-xray-versioning-20261025/final-evidence-index-completed.json` (SHA-256 `b6a3df493be36fe5e094bbf326483ad43558c1a20f904c1fbed78095e308a08a`). The earlier `final-evidence-index-current.json` was mutable coordination state and is stale; it is not the authority for this closeout.
+
+## Historical normalization release identity and final runtime
 
 | Binding | Verified value |
 | --- | --- |
@@ -12,7 +14,7 @@
 | Actual rollback | Completed `2026-10-25T17:56:45.536535+00:00`; restored the original A container and image, removed rollback clone `1877fdb88662ad7033c8468e77f2e9623fa3b0c6e75cc5a98c077408920f6887`; runtime UID:GID `10001:10001`, read-only root and both required mounts, network address `172.19.0.4` |
 | Producer reader contract | Commit `b405bfdf473614beea49dd5126a843a916168f7d`, tag `reader-contract-v1.0.0`, contract SHA-256 `7b9910816ac5608cbb8c1c90d2bbef45cc464e80d3c13aed92b7a2d62dd7600b`, schema fingerprint `91c807fa18d4ee39f4b89526bf7566cb1e47de31908521d887b68f8c48f4b811` |
 
-The final restored production source and tag remain bound to `ed8eefbe22c3befcf2b40d5e16fde0948e696772`. This documentation/test-only mainline advance does not change or retag the deployed source and does not request a deployment. The exact source is not the later documentation commit. The producer contract identifies the reader boundary; deployed collector provenance is separately recorded, and is not claimed equal to producer main.
+At that normalization closeout, the final restored production source and tag were bound to `ed8eefbe22c3befcf2b40d5e16fde0948e696772`. Subsequent documentation/test-only commits did not change or retag that source; the separately completed React release above later changed production. The exact source is not the later documentation commit. The producer contract identifies the reader boundary; deployed collector provenance is separately recorded, and is not claimed equal to producer main.
 
 ## E1–E11 results
 
@@ -53,6 +55,6 @@ The completed index above lists report hashes. Critical reports include:
 
 Private owner camera preferences are excluded; curated committed runtime defaults remain versioned. The evidence packet contains no secrets, full server environment, private feedback, mount sources or owner-private notes. This report records completed runtime evaluation; documentation/test-only integration follows the protected PR process and is verifiable in GitHub history.
 
-## Separate React task
+## Subsequent completed React task
 
-The completed E1–E11 record above remains unchanged. The separately owner-authorized React/TypeScript candidate is tracked in [its own before/after evaluation](react-typescript-evaluation-20261026.md); its local checks do not change the current production release or authorize activation.
+The completed E1–E11 record above remains unchanged. The separately owner-authorized migration subsequently passed actual protected integration, full current-main stage acceptance, same-container activation and full public verification; its immutable R3 tag binds runtime 6f24. See [the completed React before/after evaluation](react-typescript-evaluation-20261026.md) for current identities, both failed releases/real rollbacks and limits. No historical normalization receipt authorizes a new activation or rollback.

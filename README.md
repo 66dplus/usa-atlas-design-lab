@@ -4,7 +4,7 @@
 
 USA Atlas is an interactive atlas of US statistics. It links indicators to state and county geography, shows data sources and periods, and lets you explore the map in 2D and 3D.
 
-> This is a prototype for local runs. The live atlas reads data from a separate PostgreSQL database; the database and its credentials are not part of the repository. Project source code and documentation are available under the MIT license.
+The maintained production atlas and advertising studio use React + TypeScript in `ux/react/`, with stable WebGL/data/gesture adapters. The live atlas reads a separate PostgreSQL database; data and credentials are not part of this repository. See [architecture](docs/application/react-typescript.md) and the [completed R3 evaluation](docs/application/react-typescript-evaluation-20261026.md). Source and documentation use the MIT license.
 
 ## Screenshots
 
@@ -38,7 +38,7 @@ WebGL. The [October comparison](docs/webgl-comparison-2026-10-11.md) is historic
 City membership is cached by state feature so detailed polygon containment is not
 repeated on every 2D pan/zoom frame.
 
-## Current interface — Paper runtime, promoted 20 October 2026
+## Current interface — preserved Paper design
 
 The runtime shell is the approved Paper design. The header carries the **Map / Compare / Stats / Blog** modes, a Saved panel, Support and About, and a 2D/3D switch; a light and a dark theme apply to the whole interface and are chosen in About → Appearance. Info and Support are their own screens, and leaving them returns to the page you came from.
 
@@ -58,7 +58,7 @@ After starting the server:
 - **Concept gallery:** [http://127.0.0.1:4180/](http://127.0.0.1:4180/) — an early design study with synthetic demo values. These values are not statistics.
 - **Advertising studio:** [http://127.0.0.1:4180/ux/advertise.html](http://127.0.0.1:4180/ux/advertise.html) — an experimental editor with the accepted Creative and Request layout. It keeps drafts in the browser and downloads a review request; delivery is not configured. Its local preview is built separately from the connected database's data, so the generated snapshot and bundle are intentionally not stored in Git. Instructions live in [ux/advertising/DESIGN.md](ux/advertising/DESIGN.md).
 
-The local review panel that records map feedback is a development tool: it is off by default, and `?review=1` on the atlas URL opens it while reviewing designs.
+The local feedback panel requires `npm run start:review` and then `?review=1` on the atlas URL. Default and production builds remove its dynamic import; the query alone does not enable it. Keep captures in an isolated `/tmp` feedback directory.
 
 In the atlas, a missing observation remains an explicit gap. A state value is not distributed over counties, ZIP-code or monitoring-station values are not converted to counties, and a US average is not computed from states.
 
@@ -127,25 +127,13 @@ python3 scripts/build_temporary_preview.py /tmp/atlas-release --release <release
 the prior release/raw-build hash, the reader-lock record, and the SHA-256 of every
 shipped source and contract file. The live file is at
 `https://usa-xray.online/ux/build.json`; `sourceCommit` identifies the exact
-published source. The canonical current release manifest and evaluation status are maintained in
-[the application versioning evaluation](docs/application/versioning-evaluation-20261026.md).
-Runtime evaluation E1–E11 passed. The deployed source remains the immutable A
-release/tag at `ed8eefbe22c3befcf2b40d5e16fde0948e696772`; later documentation/test-only
-mainline commits do not change the deployed source and are not a deployment request.
-The prior published baseline was `20261025-seo-routes-dd3d97`;
-its exact Git source commit was not established by its manifest binding. SEO routes,
-redirects, sitemap and noindex behavior remain part of the accepted application
-contract. Do not use this README or historical release records as a live-state
-receipt.
+published source. The current recorded runtime is release/tag `20261026-react-ts-6f24b2b-r3`, exact source `6f24b2ba7faa3b14f48be81771983838a5417f35`. Its [completed evaluation](docs/application/react-typescript-evaluation-20261026.md) records actual stage 7/7, same-image/container activation, complete public verification and immutable tag. [Historical E1–E11 normalization](docs/application/versioning-evaluation-20261026.md) remains preserved. Later documentation-only mainline commits do not rebuild, redeploy or retag that runtime. Read the live manifest before relying on these dated identities; this README is not an activation receipt.
 
-The public runtime is read-only. It serves the same admitted observations as a local
-run, reads them from the `usa_atlas` database through the read-only adapter, and
-never ships collector code or credentials. The local review panel
-(<code>?review=1</code>) is removed from the public build by the packaging script.
+The data adapter is read-only and never ships collector code or credentials. Private bug reports are the sole approved durable write boundary, stored outside the static package; the root filesystem and both required mounts remain read-only. Reports have no public read/list endpoint. Local feedback tooling is absent from public/default builds. Production operations use only the [unified release workflow](docs/unified-release.md); the packaging example above alone does not authorize deployment.
 
 ## Repository layout
 
-- <code>ux/</code> — the current atlas interface: map, catalogs, geographic assets and the journal.
+- <code>ux/react/</code> — maintained typed atlas/studio components and UI state; <code>ux/</code> also holds map/data/gesture bridges, styles, catalogs, assets and content.
 - <code>scripts/serve.py</code> — the local web server and API; <code>scripts/atlas_data.py</code> — the read-only PostgreSQL adapter.
 - <code>assets/</code>, <code>app.js</code>, <code>maps.js</code>, <code>scene.js</code> and <code>field.js</code> — the separate concept gallery.
 - <code>deploy/</code> — examples of local analytics and mobile environments, and the read-only preview packaging. They are not needed for a basic run.
@@ -181,4 +169,4 @@ Project source code and documentation are available under the [MIT license](LICE
 
 The production atlas and advertiser editor are native React + TypeScript in `ux/react/`. `npm start` compiles their pinned esbuild bundles before starting the local server. Run `npm run typecheck`, `npm run build`, and `npm run check:source`; the canonical Chrome runner additionally exercises React lifecycle, Support/About, report states, editor drafts and actual HTTP SEO against the built runtime. The gallery remains a historical local study, outside the maintained production package. The editor settles an unsupported placement handshake to a truthful unverified reference state while preserving the actual map and draft. Exact archived-runtime applicability and preactivation rollback rehearsal are documented in the unified workflow.
 
-See [component and state ownership](docs/application/react-typescript.md), [candidate evaluation](docs/application/react-typescript-evaluation-20261026.md), and [unified release](docs/unified-release.md). Use `npm run start:review -- --port PORT --feedback-dir /tmp/atlas-feedback` for local review captures; the normal production build excludes that tool. Bug reports require a separate private durable directory; see [Support/About](docs/application/support-about-implementation.md).
+See [component and state ownership](docs/application/react-typescript.md), [completed evaluation](docs/application/react-typescript-evaluation-20261026.md), and [unified release](docs/unified-release.md). Use `npm run start:review -- --port PORT --feedback-dir /tmp/atlas-feedback` and open `?review=1` for local captures; default and production builds exclude that tool. Bug reports require a separate private durable directory; see [Support/About](docs/application/support-about-implementation.md).

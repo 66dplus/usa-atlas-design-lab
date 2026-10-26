@@ -1,4 +1,6 @@
-# Application release and evaluation plan
+# Application release and evaluation
+
+The completed production React release is **`20261026-react-ts-6f24b2b-r3`**, runtime source `6f24b2ba7faa3b14f48be81771983838a5417f35`. Its [completed before/after evaluation](react-typescript-evaluation-20261026.md) is the current result; [architecture](react-typescript.md) defines maintained UI/state boundaries. The historical E1–E11 normalization plan below and [completed evidence](versioning-evaluation-20261026.md) remain preserved. The live manifest is authoritative for subsequent releases.
 
 ## Ownership and release authority
 
@@ -23,7 +25,7 @@ Implementation workers use Luna Standard (`gpt-6-luna`), default service tier, w
 
 For the separately owner-authorized 26 October React/TypeScript migration, a single `gpt-6.1-sol` worker at `xhigh`, configured default service tier and Fast/Ultrafast off supersedes the older Luna preference for this task only. No nested workers, Codex processes, SSH, secrets or global configuration changes are authorized. DIRECT self-review and coordinator-controlled protected integration/release remain required.
 
-## E1–E11 evaluation plan
+## Historical E1–E11 normalization plan
 
 For each item, preserve a before/after result, exact source/build binding, commands, exit status, browser or database versions, observed behavior, screenshots under `/tmp`, and reviewer disposition. Physical iPhone owner checks are separate and do not complete E10. Record `PASS`, `FAIL`, or `NOT RUN`; missing evidence is never a pass.
 
@@ -69,32 +71,14 @@ The `--stage-evidence` input is the immutable JSON record returned by the releas
 
 ## Current evaluation pointer
 
-The current release/evaluation status is maintained in [versioning-evaluation-20261026.md](versioning-evaluation-20261026.md). Runtime evaluation E1–E11 is **PASS**. This approved file remains the plan and acceptance policy; its historic `NOT RUN` statement below is superseded by the canonical evaluation evidence. Documentation/test-only integration follows the protected PR process and is verifiable in GitHub history.
+[React/TypeScript evaluation](react-typescript-evaluation-20261026.md) records successful R3 protected integration, exact source reconstruction, actual stage 7/7, same-image/container activation, complete public conformance and immutable tag. It also preserves R1/R2 public failures and both fresh receipt-bound real rollbacks, plus R3’s first failed stage attempt and full successful retry. [Versioning evaluation](versioning-evaluation-20261026.md) remains the completed historical E1–E11 normalization record; its A release is now a retained prior rollback target, not current primary.
 
-## Known limitations and pending work
+Documentation-only commits after runtime 6f24 do not retag or redeploy it. Final documentation protected CI/merge and operator-source fast-forward are not predeclared PASS. The parent controls protected integration and unified production operations.
 
-- The application reader bundle is copied byte-for-byte from producer tag `reader-contract-v1.0.0`, commit `b405bfdf473614beea49dd5126a843a916168f7d`. Its hashes and schema fingerprint are recorded in `contracts/reader-contract.lock.json`.
-- Do not infer overall E1–E11 PASS from individual receipts. The canonical evaluation records completed checks, rollback and final public closeout.
-- Public SEO follow-up includes search-console submission/indexing, Core Web Vitals, owner-approved About methodology/biography, approved Blog content, and an Open Graph image.
-- React/TypeScript remains a separate future task after all mandatory evaluations PASS.
+## Maintained UI and contract boundaries
 
-## UI refactoring: React + TypeScript
+The separate migration began after completed E1–E11 and is now implemented. Native atlas and studio JSX/state live in `ux/react/`; obsolete string-rendered production entries are removed. Shared components and semantic styles, navigation/selection/request owners, typed map/data bridges and the sole mobile gesture controller are inventoried in [React architecture](react-typescript.md). Preserve approved Paper design, data/SEO semantics, accessibility, map lifetime and free drag in future changes. Reuse existing components before adding variants. Cohesive cutovers must remain buildable at each protected merge; no duplicate production path or migration framework is required.
 
-Do not migrate during versioning or release integration. After all mandatory evaluations pass, create a separate task with short, reviewable PRs. Inventory these surfaces before proposing component boundaries: panels, headers, scroll regions, footers, buttons, selectors, search, metric rows, legends, loading/error states, and remaining valid native-input, scroll/drawer, and resize coverage. Assign ownership of navigation and selected-data state explicitly. Keep the map adapter and mobile gesture controller intact. Preserve design, application functions, SEO routes/metadata, and release manifests in each PR. Require a working before/after comparison and the full acceptance suite before integration.
+The application reader bundle remains copied byte-for-byte from producer tag `reader-contract-v1.0.0`, commit `b405bfdf473614beea49dd5126a843a916168f7d`. Its hashes/schema fingerprint are in `contracts/reader-contract.lock.json`. Collector provenance is separate. Current source/native/core/reader/geography/SEO and private storage gates remain mandatory; a focused local pass never authorizes activation or rollback. See [unified release](../unified-release.md) for exact source/receipt/freshness and current-live-baseline requirements.
 
-### Current state ownership for that future task
-
-| State or component | Current owner to preserve | React migration boundary |
-| --- | --- | --- |
-| Canonical route, query parsing, and browser history | `ux/routes.js`; route rendering in `scripts/seo_render.py` | Route adapter and navigation shell |
-| Selected place, metric, comparison draft, and page mode | `ux/app.js` and normalized state helpers in `ux/model.js` | Shared selection store with explicit navigation actions |
-| Catalog and observations | `scripts/atlas_data.py` and `/api/atlas/*` read-only endpoints | Typed read-only data client; producer contract remains separately versioned |
-| Theme and visible viewport metadata | `ux/viewport.js` | Theme/viewport context that does not own map rendering |
-| Map surfaces, camera, and feature picking | `ux/map.js` and `ux/flat-map.js` | Map adapter remains mounted independently of panels and drawers |
-| Mobile drawer snaps, drag, and scroll restoration | `ux/bottom-sheet.js` and `ux/viewport.js` | Controller remains the only gesture and transform owner |
-| Panels, search, selectors, metric rows, legends, and status surfaces | `ux/app.js`, `ux/pages.js`, `ux/journal-view.js`, `ux/index.html` | Reusable components retain existing semantic patterns and DOM behavior |
-| Loading, error, retry, and empty states | `ux/startup-guard.js`, `ux/app.js`, and the route/data boundary | Explicit state mapping; failed data remains visible and retryable |
-
-## Separately authorized React candidate
-
-The E1–E11 normalization above is historical acceptance and is not rerun by the migration. The owner explicitly assigns a single Sol 6.1 (`gpt-6.1-sol`, `xhigh`, configured default tier, Fast/Ultrafast off) implementation and verification worker for this task, superseding the older Luna preference. No independent agent review is used. [React architecture](react-typescript.md) and [before/after candidate evaluation](react-typescript-evaluation-20261026.md) distinguish local proof from coordinator-only protected merge, current-main image/stage receipts and production activation.
+Public SEO follow-up (search-console submission/indexing, Core Web Vitals, further owner-approved methodology/biography, approved Blog content and Open Graph art) is separate work, not a missing React release gate. Physical iPhone/native pinch and retired optional WebKit are not certified. Dormant advertising activation remains outside scope; truthful bounded loading behavior is verified separately.
