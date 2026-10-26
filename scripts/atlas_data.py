@@ -67,7 +67,9 @@ def query(sql, variables=None, *, statement_timeout_ms=8000, database='usa_atlas
     local_database = os.environ.get('ATLAS_READER_V2_DATABASE', '')
     status = 'local_review' if (mode == 'local_review' and
         re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,62}', local_database) and local_database != 'usa_atlas') else 'admitted'
-    for alias in ('rb', 'cb', 'pb', 'ab', 'eb', 'cf', 'gb'):
+    # Geometry admission belongs to reader_batch. The immutable geometry row
+    # may remain local_review after its batch is admitted.
+    for alias in ('rb', 'cb', 'pb', 'ab', 'eb', 'cf'):
         sql = sql.replace(f"{alias}.candidate_status IN ('local_review','admitted')",
                           f"{alias}.candidate_status='{status}'")
     env = {**os.environ, 'PGCONNECT_TIMEOUT': '3',

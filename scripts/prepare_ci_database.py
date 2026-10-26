@@ -42,7 +42,7 @@ def synthetic_cd119_boundary_sql():
         values=(geoid,'congressional_district',state,district,'119',2024,district=='00',
             'voting_district',f'Synthetic CI district {geoid}',geometry_json,
             atlas_data.CD119_SOURCE_URL,atlas_data.CD119_SOURCE_SHA256,geometry_sha256,
-            'census-cb-2024-cd119-500k','candidate_not_admitted','admitted',ingest_id)
+            'census-cb-2024-cd119-500k','candidate_not_admitted','local_review',ingest_id)
         sql_values=','.join('true' if value is True else 'false' if value is False else
             sql_text(value) for value in values)
         rows.append('('+sql_values+')')
@@ -54,6 +54,45 @@ def synthetic_cd119_boundary_sql():
         "geometry_json,geometry_source_url,geometry_source_sha256,geometry_record_sha256,source_release,source_status,"
         "candidate_status,ingest_id) VALUES "+',\n'.join(rows)+';'
     ]
+
+
+def boundary_admission_negative_sql():
+    """Add matching geometry rows whose batch or ingest status must exclude them."""
+    ingest_rows = [
+        ('00000000-0000-4000-8000-000000000104', 'pass'),
+        ('00000000-0000-4000-8000-000000000105', 'failed'),
+    ]
+    statements = [
+        "INSERT INTO usa_atlas.ingest_run "
+        "(ingest_id,source,artifact_path,artifact_sha256,contract_sha256,row_count,started_at,completed_at,status,error_code) VALUES " +
+        ','.join("({},'application-ci-boundary-negative','fixture',{}, {},1,'2026-01-02T00:00:00Z',"
+                 "'2026-01-02T00:00:01Z',{},{} )".format(
+                     sql_text(ingest_id), sql_text('0' * 64), sql_text('0' * 64),
+                     sql_text(status), 'NULL' if status == 'pass' else sql_text('fixture_failure'))
+                 for ingest_id, status in ingest_rows) + ';',
+        "INSERT INTO usa_atlas.reader_batch "
+        "(ingest_id,contract_version,collector_version,observation_release,candidate_status,input_manifest_sha256) VALUES "
+        "('00000000-0000-4000-8000-000000000104','2.0.0','ci-fixture','ci-unadmitted-boundary',"
+        "'local_review',repeat('b',64)),"
+        "('00000000-0000-4000-8000-000000000105','2.0.0','ci-fixture','ci-failed-boundary',"
+        "'admitted',repeat('c',64));",
+    ]
+    geometry = '{"type":"Polygon","coordinates":[[[0,0],[1,0],[1,1],[0,0]]]}'
+    geometry_hash = hashlib.sha256(json.dumps(
+        json.loads(geometry), sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    for geoid, ingest_id in (('9901', ingest_rows[0][0]), ('9902', ingest_rows[1][0])):
+        values = (geoid, 'congressional_district', geoid[:2], geoid[2:], '119', 2024,
+                  False, 'voting_district', f'Excluded CI district {geoid}', geometry,
+                  atlas_data.CD119_SOURCE_URL, atlas_data.CD119_SOURCE_SHA256, geometry_hash,
+                  'census-cb-2024-cd119-500k', 'candidate_not_admitted', 'local_review', ingest_id)
+        sql_values = ','.join('true' if value is True else 'false' if value is False else
+                              sql_text(value) for value in values)
+        statements.append(
+            "INSERT INTO usa_atlas.geography_boundary "
+            "(geo_id,geo_type,state_fips,district_code,congress_session,boundary_vintage,is_at_large,seat_type,label,"
+            "geometry_json,geometry_source_url,geometry_source_sha256,geometry_record_sha256,source_release,source_status,"
+            "candidate_status,ingest_id) VALUES (" + sql_values + ');')
+    return statements
 
 
 def main():
@@ -150,9 +189,10 @@ def main():
         'GRANT USAGE ON SCHEMA usa_atlas TO atlas_reader;',
         'GRANT SELECT ON ALL TABLES IN SCHEMA usa_atlas TO atlas_reader;',
     ])
-    # Synthetic admitted rows make the CI database execute the CD119 SQL and
-    # post-PostgreSQL geometry hash guards without claiming Census geometry.
+    # Batch-admitted synthetic rows make the CI database exercise the CD119
+    # SQL and geometry hash guards without claiming Census geometry.
     statements.extend(synthetic_cd119_boundary_sql())
+    statements.extend(boundary_admission_negative_sql())
     # Production retains v1 observation as a SELECT view. Keep app CI on that
     # representation while preserving the frozen v1 table as its backing store.
     statements.extend([
@@ -169,7 +209,7 @@ def main():
     if result.returncode:
         print("Could not initialize isolated application CI database.", file=sys.stderr)
         raise SystemExit(1)
-    print("Initialized deterministic v1 fixture plus explicitly admitted synthetic v2 adapter fixture in isolated CI PostgreSQL.")
+    print("Initialized deterministic v1 fixture plus batch-admitted synthetic v2 adapter fixture in isolated CI PostgreSQL.")
 
 
 if __name__ == "__main__":
