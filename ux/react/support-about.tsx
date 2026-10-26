@@ -95,10 +95,9 @@ export function AboutPage() {
         <div
           className="creator-portrait"
           role="img"
-          aria-label="Portrait placeholder for Dmitrii Rybkin"
+          aria-label="Portrait of Dmitrii Rybkin"
         >
-          <strong>{'DR'}</strong>
-          <span>{'Portrait to be added'}</span>
+          <img src="assets/creator-portrait.jpg" alt="" />
         </div>
         {'\n      '}
         <div className="creator-profile">
@@ -360,10 +359,9 @@ export function SupportPage() {
             <div
               className="support-portrait"
               role="img"
-              aria-label="Initials placeholder for Dmitrii Rybkin"
+              aria-label="Portrait of Dmitrii Rybkin"
             >
-              <strong>{'DR'}</strong>
-              <span>{'Portrait to be added'}</span>
+              <img src="assets/creator-portrait.jpg" alt="" />
             </div>
             {'\n          '}
             <div className="support-founder-bio">

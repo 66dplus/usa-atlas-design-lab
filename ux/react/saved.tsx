@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Atlas } from './use-atlas';
+import { displayMetricName } from './types';
 import type { Rank } from './types';
 import { formatPeriod } from '../model.js';
 import { Icon } from './components';
@@ -48,7 +49,7 @@ export function useSaved(atlas: Atlas) {
         title:
           (atlas.selected()?.name || 'United States') +
           (state.concept === 'compare' ? ' + ' + (atlas.selectedB()?.name || 'United States') : ''),
-        metric: atlas.metric().name,
+        metric: displayMetricName(atlas.metric()),
         period: formatPeriod(atlas.layer(atlas.metric()).period),
         savedAt: new Date().toISOString(),
       };

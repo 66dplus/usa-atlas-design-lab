@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { useAtlas, mobileLayout, stories } from './use-atlas';
 import type { Atlas } from './use-atlas';
+import { displayMetricName } from './types';
 import type { Page, Side, Rank } from './types';
 import { features } from './journal';
 import { Icon } from './components';
@@ -24,7 +25,8 @@ function App() {
     saved = useSaved(atlas),
     { state, resources, patch } = atlas,
     mobile = useMobile(),
-    root = useRef<HTMLDivElement>(null);
+    root = useRef<HTMLDivElement>(null),
+    handledClickEvents = useRef(new WeakSet<Event>());
   useEffect(() => {
     const destroyViewport = initViewport();
     document.body.classList.toggle(
@@ -96,6 +98,8 @@ function App() {
     };
   }, []);
   function onClick(event: MouseEvent<HTMLDivElement>) {
+    if (handledClickEvents.current.has(event.nativeEvent)) return;
+    handledClickEvents.current.add(event.nativeEvent);
     const target = event.target as HTMLElement,
       link = target.closest<HTMLAnchorElement>('a[data-page],a#info-open,a#support-open');
     if (
@@ -645,7 +649,7 @@ function Header({ atlas }: { atlas: Atlas }) {
             <span className="mobile-compare-label">
               {sharedPlace
                 ? atlas.selected()?.name || 'United States'
-                : atlas.metric().name.replace(/ rate$/, '')}
+                : displayMetricName(atlas.metric()).replace(/ rate$/, '')}
             </span>
             <Icon name="down" />
           </>
@@ -656,13 +660,14 @@ function Header({ atlas }: { atlas: Atlas }) {
         className="support-trigger"
         href="/support"
         aria-label="Support USA X-Ray"
+        aria-current={state.page === 'support' ? 'page' : undefined}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
         </svg>
         <span>Support</span>
       </a>
-      <a id="info-open" className="chrome-circle" href="/about" aria-label="About USA X-Ray">
+      <a id="info-open" className="chrome-circle" href="/about" aria-label="About USA X-Ray" aria-current={state.page === 'info' ? 'page' : undefined}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 11v6M12 7h.01" />
@@ -714,45 +719,60 @@ function Header({ atlas }: { atlas: Atlas }) {
           </button>
         </div>
       </div>
+      <button
+        id="theme-toggle"
+        className="chrome-circle theme-control"
+        aria-label={'Switch to ' + (state.theme === 'dark' ? 'light' : 'dark') + ' theme'}
+        aria-pressed={state.theme === 'dark'}
+        onClick={() => atlas.setTheme(state.theme === 'dark' ? 'light' : 'dark', true)}
+      >
+        {state.theme === 'dark' ? (
+          <Icon name="moon" />
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l-1.42 1.42m11.3-11.3 1.42-1.42" />
+          </svg>
+        )}
+      </button>
     </header>
   );
 }
 function Attribution({ atlas }: { atlas: Atlas }) {
   const ref = useRef<HTMLAnchorElement>(null),
-    origin = useRef<HTMLElement | null>(null);
+    mobile = useMobile();
   useLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
-    origin.current ??= node.parentElement;
-    let target: HTMLElement = document.body;
-    const s = atlas.state,
-      reading = !['map', 'compare'].includes(s.page),
-      embedded = new URLSearchParams(location.search).get('embed') === '1';
-    if (!mobileLayout() && !embedded && !reading) {
-      if (s.concept === 'compare')
-        target = document.querySelector<HTMLElement>('#compare-desktop-osm-slot') || document.body;
-      else if (
-        s.overlay &&
-        ['ranking-panel', 'metric-library', 'place-library', 'search-sheet'].includes(s.overlay.id)
-      )
-        target =
-          document.querySelector<HTMLElement>(
-            '#' +
-              s.overlay.id +
-              ' .sheet-map-footer .indicator-legend, #' +
-              s.overlay.id +
-              ' .sheet-map-footer',
-          ) || document.body;
-      else
-        target =
-          document.querySelector<HTMLElement>('#explore-panel .indicator-legend') || document.body;
-    }
-    node.dataset.placement = target === document.body ? 'floating' : 'source';
-    if (node.parentElement !== target) target.append(node);
+    const frame = requestAnimationFrame(() => {
+      let target: HTMLElement = document.body;
+      const s = atlas.state,
+        reading = !['map', 'compare'].includes(s.page),
+        embedded = new URLSearchParams(location.search).get('embed') === '1';
+      if (!mobile && !embedded && !reading) {
+        if (s.concept === 'compare')
+          target = document.querySelector<HTMLElement>('#compare-desktop-osm-slot') || document.body;
+        else {
+          const source = s.overlay
+            ? document.querySelector<HTMLButtonElement>(
+                `#${CSS.escape(s.overlay.id)} .indicator-legend-source[data-source="a"]`,
+              )
+            : document.querySelector<HTMLButtonElement>(
+                '#explore-panel .indicator-legend-source[data-source="a"]',
+              );
+          if (source?.getClientRects().length) {
+            source.after(node);
+            target = source.parentElement || document.body;
+          }
+        }
+      }
+      node.dataset.placement = target === document.body ? 'floating' : 'source';
+      if (node.parentElement !== target) target.append(node);
+    });
     return () => {
-      if (origin.current && node.isConnected) origin.current.append(node);
+      cancelAnimationFrame(frame);
     };
-  });
+  }, [mobile, atlas.state.page, atlas.state.concept, atlas.state.overlay?.id, atlas.state.metric, atlas.state.secondMetric, atlas.resources]);
   return (
     <a
       ref={ref}
@@ -786,6 +806,7 @@ function Toast({ message }: { message: string }) {
 function Startup({ atlas }: { atlas: Atlas }) {
   const { state } = atlas,
     [phrase, setPhrase] = useState(0),
+    phraseAnimation = useRef<Animation | null>(null),
     phrases = [
       'Gathering statistics across the states',
       'Taking a closer look at California',
@@ -796,13 +817,49 @@ function Startup({ atlas }: { atlas: Atlas }) {
     ];
   useEffect(() => {
     if (state.startup !== 'loading') return;
-    const rotation = setInterval(() => {
-        if (!document.hidden) setPhrase((p) => (p + 1) % phrases.length);
-      }, 2800),
+    let alive = true,
+      rotating = false;
+    const message = document.querySelector<HTMLElement>('#startup-message'),
+      reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    if (message && !reduced.matches)
+      phraseAnimation.current = message.animate(
+        [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' },
+      );
+    const rotate = async () => {
+      if (!alive || rotating || document.hidden) return;
+      rotating = true;
+      if (message && !reduced.matches) {
+        phraseAnimation.current?.cancel();
+        phraseAnimation.current = message.animate(
+          [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-6px)' }],
+          { duration: 160, fill: 'forwards' },
+        );
+        await phraseAnimation.current.finished.catch(() => {});
+      }
+      if (alive) {
+        setPhrase((p) => (p + 1) % phrases.length);
+        if (message && !reduced.matches)
+          requestAnimationFrame(() => {
+            if (alive && state.startup === 'loading') {
+              phraseAnimation.current?.cancel();
+              phraseAnimation.current = message.animate(
+                [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' },
+              );
+            }
+          });
+      }
+      rotating = false;
+    };
+    const rotation = setInterval(() => void rotate(), 2800),
       timeout = setTimeout(() => atlas.patch({ startup: 'error' }), 45000);
     return () => {
+      alive = false;
       clearInterval(rotation);
       clearTimeout(timeout);
+      phraseAnimation.current?.cancel();
+      phraseAnimation.current = null;
     };
   }, [state.startup]);
   useEffect(() => {

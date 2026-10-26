@@ -2,7 +2,7 @@ import { SourceLink, MetricRow } from './metrics';
 import { Fragment } from 'react';
 import type { Atlas } from './use-atlas';
 import { mobileLayout } from './use-atlas';
-import type { Metric, Place } from './types';
+import { displayMetricName, type Metric, type Place } from './types';
 import { formatValue, formatPeriod, missingReason, comparable } from '../model.js';
 import { MetricSwitch, icon, indicatorIcon } from './components';
 function viewValues(atlas: Atlas) {
@@ -34,7 +34,7 @@ export function MetricItems({ atlas }: { atlas: Atlas }) {
     .filter(
       (m) =>
         (state.category === 'All' || m.shortCategory === state.category) &&
-        `${m.name} ${m.shortCategory} ${m.source}`.toLowerCase().includes(query),
+        `${displayMetricName(m)} ${m.name} ${m.shortCategory} ${m.source}`.toLowerCase().includes(query),
     )
     .sort(
       (a, b) =>
@@ -56,7 +56,7 @@ export function MetricItems({ atlas }: { atlas: Atlas }) {
       >
         {indicatorIcon(m)}
         <span className="metric-copy">
-          <strong>{m.name.replace(' · people', '')}</strong>
+          <strong>{displayMetricName(m).replace(' · people', '')}</strong>
           <small>
             {layer(m).unit === '%' ? 'Percent' : layer(m).unit || m.shortCategory}
             {' · '}
@@ -212,7 +212,7 @@ export function InspectorContent({ atlas }: { atlas: Atlas }) {
         {f ? ' · ' + f.id : ''}
       </p>
       {'\n    '}
-      <p className="metric-caption">{m.name}</p>
+      <p className="metric-caption">{displayMetricName(m)}</p>
       {metricSwitchMarkup(m)}
       {stat}
       {'\n    '}
@@ -292,7 +292,7 @@ export function QuickStatsContent({ atlas }: { atlas: Atlas }) {
       <div className="quick-main">
         <span>
           {indicatorIcon(m)}
-          {m.name}
+          {displayMetricName(m)}
         </span>
         <b>{m.plannedState === 'proposed' ? 'Planned' : number(m, f?.id)}</b>
         <small>
@@ -339,7 +339,7 @@ export function ComparisonDraftContent({ atlas }: { atlas: Atlas }) {
         {county ? 'places' : 'states'}
       </h2>
       <p className="comparison-caption">
-        {m.name}
+        {displayMetricName(m)}
         {' · '}
         {formatPeriod(data.period) || 'No observation'}
       </p>
@@ -497,7 +497,7 @@ export function CompareContent({ atlas }: { atlas: Atlas }) {
                 <Fragment key={m.id}>
                   <tr key={m.id}>
                     <th>
-                      {m.name}
+                      {displayMetricName(m)}
                       <small className="data-period">
                         {formatPeriod(data.period) || 'No observation'}
                       </small>

@@ -52,12 +52,18 @@ def main():
                 time.sleep(0.5)
         else:
             raise SystemExit("Packaged application runtime did not become ready.")
-        result = subprocess.run([sys.executable, "scripts/run_release_regressions.py"], cwd=Path(__file__).resolve().parents[1],
-                                env=env)
-        print(json.dumps({"suite": "release-regressions", "exitCode": result.returncode,
-                          "package": str(package), "runtimeUrl": env["ATLAS_TEST_URL"],
-                          "feedbackDirectory": str(feedback), "artifacts": str(output)}, indent=2))
-        return result.returncode
+        source = Path(__file__).resolve().parents[1]
+        required = subprocess.run([sys.executable, "scripts/run_release_regressions.py"], cwd=source, env=env)
+        focused_env = env.copy()
+        focused_env.update({"ATLAS_PACKAGE_ROOT": str(package), "ATLAS_TEST_OUTPUT": str(temporary / "post-react-ui"),
+                            "ATLAS_TEST_RACE_AVAILABILITY_FIXTURE": "1"})
+        focused = subprocess.run(["node", "ux/check-post-react-ui-fixes.mjs"], cwd=source, env=focused_env)
+        print(json.dumps({"suite": "packaged-browser-regressions", "requiredExitCode": required.returncode,
+                          "postReactUiExitCode": focused.returncode, "postReactUiFixtureOverride": True,
+                          "package": str(package),
+                          "runtimeUrl": env["ATLAS_TEST_URL"], "feedbackDirectory": str(feedback),
+                          "requiredArtifacts": str(output), "postReactUiArtifacts": focused_env["ATLAS_TEST_OUTPUT"]}, indent=2))
+        return required.returncode or focused.returncode
     finally:
         if server.poll() is None:
             server.terminate()

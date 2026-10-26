@@ -5,6 +5,7 @@
 @media(max-width:760px) {
   html,body {height:var(--app-height,100dvh);min-height:0;overflow:hidden;background:var(--bg);}
   #workspace {height:var(--app-height,100dvh)!important;}
+  #theme-toggle {position:fixed;left:calc(max(16px,var(--safe-left)) + 48px);right:auto;top:var(--mobile-chrome-top);z-index:31;}
   body:not([data-concept=compare]):not(.embedded-map) .maps {inset:0!important;height:100%!important;max-height:none!important;}
   body .concept-tabs {
     position:fixed;inset:auto 0 0!important;transform:none;width:auto;height:calc(var(--nav-height) + var(--safe-bottom));
@@ -68,7 +69,7 @@
     padding:0 16px 8px;align-items:center;gap:11px;background:var(--panel);border:0;border-radius:0;
     opacity:var(--summary-opacity);pointer-events:none;z-index:1;
   }
-  .explore-panel[data-snap=min] > .mobile-indicator-summary {pointer-events:auto;}
+  .explore-panel[data-snap=min] > .mobile-indicator-summary {pointer-events:auto;touch-action:none;}
   .explore-panel[data-dragging=true] > .mobile-indicator-summary {pointer-events:none;}
   .explore-panel[data-dragging=true] > .mobile-indicator-summary,
   .explore-panel[data-settling=true]:not([data-snap=min]) > .mobile-indicator-summary {visibility:hidden;}
@@ -81,7 +82,7 @@
   body .app-header {top:var(--mobile-chrome-top);left:max(16px,var(--safe-left));right:max(16px,var(--safe-right));}
   body #mobile-search,body.reading #sheet-back,body.place-expanded #sheet-back,body .support-trigger,body .app-header #info-open,body .workspace-bar {top:var(--mobile-chrome-top);}
   .reading .app-header:before {height:calc(var(--mobile-chrome-top) + 64px);}
-  body[data-concept=compare]:not(.reading) .mobile-compare-metric {max-width:calc(100vw - 252px);top:var(--mobile-chrome-top);}
+  body.reading #theme-toggle {left:calc(max(16px,var(--safe-left)) + 108px);right:auto;}
   body[data-concept=compare] .maps {top:0;bottom:calc(var(--nav-height) + var(--safe-bottom));}
   body.left-replaced:not(.embedded-map) .maps {inset:0 0 calc(var(--nav-height) + var(--safe-bottom))!important;height:auto!important;max-height:none!important;}
   .mobile-sheet .comparison-confirm {position:static;flex:0 0 auto;margin:24px 0 0;width:100%;min-height:56px;}
@@ -134,6 +135,14 @@
 @media(max-width:760px){
   body[data-concept=compare] .desktop-compare-card {display:none!important;}
 }
+
+/* White mobile Compare labels stay legible over light map features. */
+@media(max-width:760px){body[data-theme="light"][data-concept="compare"] :is(.pane-heading .field-value,.map-summary strong,.map-summary small){
+  text-shadow:0 1px 3px #171A1D99;
+}}
+@media(max-width:760px){body[data-theme="light"][data-concept="compare"] .pane-heading .field-value svg{
+  filter:drop-shadow(0 1px 2px #171A1D99);
+}}
 @media(min-width:761px){
   body[data-concept=compare] .compare-map-card {display:none!important;}
   .desktop-compare-card[hidden] {display:none!important;}
@@ -189,8 +198,8 @@
   #metric-library .category-list {scrollbar-width:none;}
   #metric-library .category-list::-webkit-scrollbar {display:none;}
   body[data-concept=compare]:not(.reading) #mobile-compare-metric {
-    box-sizing:border-box;left:max(16px,var(--safe-left));top:var(--mobile-chrome-top);
-    display:flex;align-items:center;justify-content:flex-start;gap:5px;width:max-content;max-width:calc(100vw - 220px);height:44px;
+    box-sizing:border-box;left:calc(max(16px,var(--safe-left)) + 96px);top:var(--mobile-chrome-top);
+    display:flex;align-items:center;justify-content:flex-start;gap:5px;width:calc(100vw - 288px);max-width:calc(100vw - 288px);height:44px;
     padding:0;border:0;border-radius:0;background:transparent;color:#FFFFFF;box-shadow:none;
   }
   body[data-concept=compare] .mobile-compare-label {

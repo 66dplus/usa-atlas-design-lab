@@ -1,7 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { MetricRow } from './metrics';
 import type { Atlas } from './use-atlas';
-import type { Layer, Side } from './types';
+import { displayMetricName, type Layer, type Side } from './types';
 import { formatValue, formatPeriod, missingReason } from '../model.js';
 import { rampColor, EMBER, DIVERGING } from '../map.js';
 import { Icon, IndicatorIcon, MetricSwitch } from './components';
@@ -47,7 +47,7 @@ export function Legend({
     independent = state.concept === 'compare' && state.comparison === 'metrics';
   const title = pane
     ? independent
-      ? `${side === 'a' ? 'Primary' : 'Comparison'} · ${side === 'b' ? metricB().name : metric().name}`
+      ? `${side === 'a' ? 'Primary' : 'Comparison'} · ${displayMetricName(side === 'b' ? metricB() : metric())}`
       : `${state.mode === '3d' ? 'Colour + height' : 'Colour'} · ${data.unit || 'No data'}${state.concept === 'compare' ? ' · shared' : ''}`
     : independent
       ? 'Independent scales · primary / comparison'
@@ -137,27 +137,40 @@ function explorerValues(atlas: Atlas) {
   };
 }
 export function MobileSummary({ atlas }: { atlas: Atlas }) {
-  const { m, nationalRange, averageLabel, mobileValue } = explorerValues(atlas);
+  const { m, nationalRange, averageLabel, mobileValue } = explorerValues(atlas),
+    searchOpen = atlas.state.overlay?.id === 'search-sheet',
+    indicatorsOpen = atlas.state.overlay?.id === 'metric-library';
   return (
-    <button
-      className="mobile-indicator-summary"
-      data-mobile-search
-      aria-label={`Search places and indicators · ${m.name} · ${averageLabel} · ${mobileValue}`}
-      aria-expanded="false"
-    >
+    <div className="mobile-indicator-summary">
       <span className="mobile-summary-grip" aria-hidden="true" />
-      <span className="mobile-summary-search">
+      <button
+        type="button"
+        className="mobile-summary-search"
+        data-mobile-search
+        aria-label="Search places and indicators"
+        aria-controls="search-sheet"
+        aria-expanded={searchOpen}
+      >
         <Icon name="search" />
-      </span>
+      </button>
       <span className="mobile-summary-divider" aria-hidden="true" />
       <span className="mobile-summary-copy">
-        <b>{m.name}</b>
+        <button
+          type="button"
+          className="mobile-summary-name"
+          data-pane-metric="a"
+          aria-label={'Choose indicator: ' + displayMetricName(m)}
+          aria-controls="metric-library"
+          aria-expanded={indicatorsOpen}
+        >
+          {displayMetricName(m)}
+        </button>
         <small>{averageLabel}</small>
       </span>
       <strong className={'mobile-summary-value' + (nationalRange ? ' is-range' : '')}>
         {mobileValue}
       </strong>
-    </button>
+    </div>
   );
 }
 export function ExplorerPanel({ atlas }: { atlas: Atlas }) {
@@ -202,16 +215,16 @@ function ExplorerContent({ atlas }: { atlas: Atlas }) {
           id="desktop-search"
           className="selected-indicator indicator-heading"
           data-pane-metric="a"
-          aria-label={'Choose indicator: ' + m.name}
+          aria-label={'Choose indicator: ' + displayMetricName(m)}
           aria-expanded="false"
         >
           <IndicatorIcon metric={m} />
-          <b>{m.name}</b>
+          <b>{displayMetricName(m)}</b>
           <Icon name="down" />
         </button>
       </div>
       <div className="mobile-metric-overview profile-content">
-        <button className="indicator-chooser" data-pane-metric="a" aria-expanded="false">
+        <button className="indicator-chooser" data-pane-metric="a" aria-expanded={state.overlay?.id === 'metric-library'} aria-controls="metric-library">
           <span className="indicator-search-icon" aria-hidden="true">
             <Icon name="search" />
           </span>
@@ -219,7 +232,7 @@ function ExplorerContent({ atlas }: { atlas: Atlas }) {
           <span className="indicator-chooser-copy">
             <small className="indicator-label">Indicator</small>
             <small className="mobile-indicator-hint">Search indicators</small>
-            <b>{m.name}</b>
+            <b>{displayMetricName(m)}</b>
           </span>
           <Icon name="down" />
         </button>

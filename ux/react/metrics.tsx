@@ -1,5 +1,5 @@
 import type { Atlas } from './use-atlas';
-import type { Metric, Place } from './types';
+import { displayMetricName, type Metric, type Place } from './types';
 import { formatPeriod } from '../model.js';
 import { IndicatorIcon } from './components';
 export function SourceLink({
@@ -44,7 +44,7 @@ export function MetricRow({
         <span>
           <span className="quick-label">
             <IndicatorIcon metric={metric} />
-            {metric.name.replace(' · people', '')}
+            {displayMetricName(metric).replace(' · people', '')}
           </span>
           <small>
             {variant === 'expanded'
@@ -59,12 +59,12 @@ export function MetricRow({
     variant === 'statistics-compact' ? (
       <span className="stat-label">
         <IndicatorIcon metric={metric} />
-        <span className="stat-name" title={metric.name}>
-          {metric.name}
+        <span className="stat-name" title={displayMetricName(metric)}>
+          {displayMetricName(metric)}
         </span>
       </span>
     ) : (
-      metric.name
+      displayMetricName(metric)
     );
   return (
     <div className="stat-row">

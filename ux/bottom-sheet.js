@@ -182,12 +182,35 @@ export function bottomSheet(root, {initial = 'half', maxSnap = 'expanded', fitCo
     listen(root, 'pointerdown',event=>{
       const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;
       if(!target||!root.contains(target)||!mobile.matches||event.button!==0||event.isPrimary===false)return;
-      begin(event.clientY,event.timeStamp);target.setPointerCapture(event.pointerId);drag.target=target;
+      interrupt();
+      suppressClick=false;
+      drag={startY:event.clientY,startOffset:offset,lastY:event.clientY,lastTime:event.timeStamp,velocity:0,moved:false,target,pointerId:event.pointerId,pending:true};
     });
-    listen(root, 'pointermove',event=>{if(drag?.target&&event.target===drag.target)move(event.clientY,event.timeStamp);});
-    listen(root, 'pointerup',event=>{if(drag?.target&&event.target===drag.target)finish(false,event.timeStamp);});
-    listen(root, 'pointercancel',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
-    listen(root, 'lostpointercapture',event=>{if(drag?.target&&event.target===drag.target)finish(true);});
+    listen(root, 'pointermove',event=>{
+      if(!drag?.target||drag.pointerId!==event.pointerId)return;
+      if(drag.pending){
+        if(Math.abs(event.clientY-drag.startY)<=5)return;
+        const startY=drag.startY,startTime=drag.lastTime,target=drag.target,pointerId=drag.pointerId;
+        begin(startY,startTime);drag.target=target;drag.pointerId=pointerId;target.setPointerCapture(pointerId);
+      }
+      move(event.clientY,event.timeStamp);
+    });
+    listen(root, 'pointerup',event=>{
+      if(!drag?.target||drag.pointerId!==event.pointerId)return;
+      if(drag.pending){drag=null;return;}
+      finish(false,event.timeStamp);
+    });
+    listen(root, 'pointercancel',event=>{
+      if(!drag?.target||drag.pointerId!==event.pointerId)return;
+      if(drag.pending){drag=null;return;}
+      finish(true);
+    });
+    listen(root, 'lostpointercapture',event=>{
+      if(!drag?.target||drag.pointerId!==event.pointerId)return;
+      if(event.target!==drag.target)return;
+      if(drag.pending){drag=null;return;}
+      finish(true);
+    });
     listen(root, 'click',event=>{const target=event.target instanceof Element?event.target.closest('.mobile-indicator-summary'):null;if(target&&suppressClick&&event.detail>0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}}, {capture:true});
   }
   listen(handle, 'click', event => {

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { animateMapLayout } from '../motion.js';
 import { ExplorerMap } from '../map.js';
 import type { Atlas } from './use-atlas';
+import { displayMetricName } from './types';
 import type { MapAdapter, Geography, Side } from './types';
 import { formatPeriod } from '../model.js';
 import { Legend, SourceButton, paletteFor, ramp } from './explorer';
@@ -338,7 +339,7 @@ function PaneHeading({ atlas, side }: { atlas: Atlas; side: Side }) {
           {compare && atlas.state.comparison === 'places' ? ' · shared' : ''}
         </span>
         <span className="field-value">
-          {m.name}
+          {displayMetricName(m)}
           <Icon name="down" />
         </span>
       </button>
@@ -407,7 +408,7 @@ function DesktopCompareCard({ atlas }: { atlas: Atlas }) {
                           'Choose indicator for ' + (side === 'a' ? 'first' : 'second') + ' place'
                         }
                       >
-                        <span id={'desktop-compare-metric-' + side}>{m.name}</span>
+                        <span id={'desktop-compare-metric-' + side}>{displayMetricName(m)}</span>
                       </button>
                       <strong id={'desktop-compare-value-' + side}>{atlas.number(m, f?.id)}</strong>
                     </div>
@@ -425,8 +426,8 @@ function DesktopCompareCard({ atlas }: { atlas: Atlas }) {
                 <div key={side} className="desktop-compare-scale-item">
                   <div className="desktop-compare-scale-title">
                     {state.comparison === 'metrics'
-                      ? m.name
-                      : `${m.name} · ${d.unit || 'No data'} · Shared range`}
+                      ? displayMetricName(m)
+                      : `${displayMetricName(m)} · ${d.unit || 'No data'} · Shared range`}
                   </div>
                   <div
                     className="desktop-compare-ramp"

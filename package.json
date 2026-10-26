@@ -19,7 +19,8 @@
     "build:review": "node scripts/build-frontend.mjs dist/ux --review",
     "start:review": "npm run build:review && python3 scripts/serve.py",
     "check:react": "node ux/check-react-ui.mjs",
-    "check:studio": "node ux/check-studio-react.mjs"
+    "check:studio": "node ux/check-studio-react.mjs",
+    "check:post-react-ui": "node ux/check-post-react-ui-fixes.mjs"
   },
   "dependencies": {
     "d3": "7.9.0",

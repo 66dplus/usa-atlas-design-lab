@@ -3,7 +3,7 @@
 <head>
   <base href="/ux/">
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#e9ebee">
+  <meta name="theme-color" content="#171A1D">
   <meta name="description" content="Explore U.S. places through source-based maps, geographic comparisons and public data.">
   <meta name="robots" content="index,follow">
   <meta property="og:type" content="website"><meta property="og:title" content="USA X-Ray — Explore the map">
@@ -21,7 +21,8 @@
   <script src="../node_modules/d3/dist/d3.min.js"></script>
   <script src="../node_modules/topojson-client/dist/topojson-client.min.js"></script>
 </head>
-<body data-atlas-status="loading" data-runtime="preview" data-concept="explorer" data-theme="light" data-page="map">
+<body data-atlas-status="loading" data-runtime="preview" data-concept="explorer" data-theme="dark" data-page="map">
+<script>try{const q=new URLSearchParams(location.search),saved=localStorage.getItem('usa-atlas-theme'),theme=q.get('theme')==='light'||q.get('theme')==='dark'?q.get('theme'):q.get('embed')==='1'?'dark':saved==='light'||saved==='dark'?saved:'dark';document.body.dataset.theme=theme;document.documentElement.style.colorScheme=theme;document.documentElement.style.backgroundColor=theme==='dark'?'#171A1D':'#EEF0F3';document.querySelector('meta[name="theme-color"]').content=theme==='dark'?'#171A1D':'#EEF0F3';}catch{}</script>
 <div id="atlas-root"></div>
 <section id="loading" role="status" aria-live="polite" aria-busy="true"><div class="startup-card"><div class="startup-copy"><h1 id="startup-title">Loading<span class="startup-dots" aria-hidden="true"><i></i><i></i><i></i></span></h1><p id="startup-message" aria-hidden="true">Gathering statistics across the states</p><span class="startup-accessible">Loading the U.S. map and published statistics.</span></div><button id="startup-retry" hidden>Try again</button></div></section>
 <noscript><nav aria-label="Explore modes"><a href="/united-states/unemployment" data-page="map">Map</a> <a href="/compare/places/unemployment/california/vs/texas" data-page="compare">Compare</a> <a href="/stats">Stats</a> <a href="/blog">Blog</a></nav><p>Enable JavaScript to explore the interactive atlas. <a href="/about">About USA X-Ray</a> · <a href="/support">Support the project</a></p></noscript>
