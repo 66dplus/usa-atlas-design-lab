@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { assertStudioPost } from './studio-request-contract.mjs';
+import { enableCompleteRequestHeaders, observedMetadata, requiredMetadata } from './studio-network-observer.mjs';
 const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/$/, ''),
   before = process.env.ATLAS_BEFORE_URL,
   out = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-xray-react-studio-${Date.now()}`;
@@ -49,6 +50,7 @@ try {
         configs = [];
       await context.addInitScript((theme) => localStorage.setItem('usa-atlas-theme', theme), theme);
       try {
+        await enableCompleteRequestHeaders(context);
         if (before) {
           const reference = await context.newPage();
           await loaded(reference, before);
@@ -62,9 +64,9 @@ try {
         });
         page.on('request', (request) => {
           if (request.method() === 'POST') {
-            posts.push(request.allHeaders().then(headers => ({
+            posts.push(observedMetadata(request.allHeaders().then(headers => ({
               url: request.url(), method: request.method(), headers, body: request.postData(),
-            })));
+            })), 'POST full request headers'));
           }
           const url = new URL(request.url());
           if (url.hostname === 'example.test' || /\/api\/(?:ad(?:vertis)?|placements?|publish)/i.test(url.pathname))
@@ -73,9 +75,9 @@ try {
         page.on('response', (response) => {
           const url = new URL(response.url());
           if (url.origin === new URL(base).origin && url.pathname === '/api/analytics/config' && !url.search)
-            configs.push(response.json().then((config) => {
+            configs.push(observedMetadata(response.json().then((config) => {
               if (config.enabled === true) websiteIds.add(config.websiteId);
-            }).catch(() => {}));
+            }), 'public analytics configuration JSON'));
         });
         await loaded(page, base);
         assert.equal(await page.locator('body').getAttribute('data-theme'), theme);
@@ -161,8 +163,8 @@ try {
         );
         assert.deepEqual(errors, []);
         await page.locator(viewport.width <= 760 ? '#save-mobile' : '#save-draft').click();
-        await Promise.all(configs);
-        for (const post of await Promise.all(posts)) assertStudioPost(post, base, websiteIds);
+        await requiredMetadata(configs);
+        for (const post of await requiredMetadata(posts)) assertStudioPost(post, base, websiteIds);
         assert.deepEqual(advertisingRequests, [], 'Draft URLs and advertising endpoints are never requested');
         result.checks.push({
           name,
