@@ -1464,7 +1464,7 @@
         ],
         "multiplier": 100000,
         "aggregateState": false,
-        "aggregateUS": true
+        "aggregateUS": false
       },
       "sourceRelease": "CDC AtlasPlus/NHSS 2024 provisional; Census PEP Vintage 2025",
       "rateMetadata": {
@@ -1495,7 +1495,7 @@
       "fieldId": "11.03:derived",
       "formula": "2024 deaths among ages 0–17 / 2024 annual PEP under-18 population * 100000",
       "minDenominator": null,
-      "method": "Custom crude rate: observed 2024 deaths among people ages 0–17 divided by matching 2024 annual Census PEP under-18 population, multiplied by 100,000. Suppressed source counts remain missing; no county value is inferred.",
+      "method": "Custom crude rate: observed 2024 deaths among people ages 0–17 divided by matching 2024 annual Census PEP under-18 population, multiplied by 100,000. The published numerator is state-only; suppressed source counts remain missing, and no US or county value is inferred.",
       "derived": {
         "operation": "ratio",
         "numerator": [
@@ -1514,7 +1514,7 @@
         ],
         "multiplier": 100000,
         "aggregateState": false,
-        "aggregateUS": true
+        "aggregateUS": false
       },
       "sourceRelease": "CDC WONDER 2024 final; Census PEP Vintage 2025",
       "rateMetadata": {

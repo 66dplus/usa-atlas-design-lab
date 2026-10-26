@@ -59,6 +59,37 @@ class SourceMetadataTests(unittest.TestCase):
         self.assertEqual(by_id['murders']['rateMetadata']['denominatorPeriod'], '2024')
         self.assertIn('state-only', by_id['new-hiv-diagnoses']['method'])
         self.assertIn('no US or county value is inferred', by_id['new-hiv-diagnoses']['method'])
+        self.assertIn('state-only', by_id['deaths-under-18']['method'])
+        self.assertIn('no US or county value is inferred', by_id['deaths-under-18']['method'])
+
+    def test_state_only_hiv_and_child_death_rates_do_not_emit_us(self):
+        cases = (
+            ('11.02:derived', '11.02', 'cdc_atlasplus', 10, 100000, 10),
+            ('11.03:derived', '11.03', 'cdc_wonder', 5, 100000, 5),
+        )
+        for public_field, numerator_field, numerator_source, numerator, population, expected in cases:
+            with self.subTest(field=public_field):
+                def query_components(sql, variables, **kwargs):
+                    self.assertIn("o.period=ANY(string_to_array(:'periods',',')::text[])", sql)
+                    self.assertEqual(variables['fields'],
+                                     numerator_field + ',01.01:pep_population_' +
+                                     ('age_13_plus' if numerator_field == '11.02' else 'under_18'))
+                    self.assertEqual(variables['periods'], '2024')
+                    return [{
+                        'geo_id': '06', 'geo_type': 'state', 'unit': 'persons',
+                        'source_url': 'https://example.test/source',
+                        'methodology_note': 'State-only fixture',
+                        'source_release': 'state-only-fixture',
+                        'c0': numerator, 's0': numerator_source, 'r0': 'numerator-fixture-2024',
+                        'c1': population, 's1': 'census_acs', 'r1': 'pep-fixture-2024',
+                    }]
+
+                with patch.object(atlas_data, 'query', side_effect=query_components):
+                    data = atlas_data.observations(public_field)
+
+                self.assertEqual(data['observations'], [{
+                    'id': '06', 'value': expected, 'geoType': 'state', 'sourceGeoId': '06'}])
+                self.assertNotIn('US', [item['id'] for item in data['observations']])
 
     def test_published_nation_value_and_native_period_are_retained(self):
         rows = [row('06', value=39287377), row('US', 'nation', 334922499)]
