@@ -631,11 +631,12 @@ V2_SCHEMA_ONLY_COLUMNS = {('usa_atlas', 'election_contest'): {'source_mode_raw':
 def reader_schema_probe_sql(version):
     if version == '2.0.0':
         return ("BEGIN READ ONLY; SELECT n.nspname AS table_schema, c.relname AS table_name, "
-                "a.attname AS column_name, format_type(a.atttypid,a.atttypmod) AS data_type "
+                "c.relkind AS relation_kind, a.attname AS column_name, "
+                "format_type(a.atttypid,a.atttypmod) AS data_type "
                 "FROM pg_catalog.pg_attribute a "
                 "JOIN pg_catalog.pg_class c ON c.oid=a.attrelid "
                 "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
-                "WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p') "
+                "WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p','v') "
                 "AND a.attnum>0 AND NOT a.attisdropped ORDER BY c.relname,a.attnum; COMMIT;")
     if version == '1.0.0':
         return ("BEGIN READ ONLY; SELECT table_name, column_name, data_type, "
@@ -1028,8 +1029,13 @@ class DockerBackend:
         """Read-only introspection through the staged runtime's mounted DB credentials."""
         lock, contract = read_json(lock_path), read_json(contract_path)
         expected = {}
+        expected_kinds = {}
         version = lock.get('contractVersion')
-        for relation, declaration in contract.get('objects', {}).items():
+        objects = contract.get('objects', {})
+        metadata = contract.get('object_metadata', {}) if version == '2.0.0' else {}
+        if version == '2.0.0' and (not isinstance(metadata, dict) or set(metadata) != set(objects)):
+            raise ReleaseError('reader-v2 object metadata does not cover its declared schema objects')
+        for relation, declaration in objects.items():
             if version == '1.0.0':
                 if not isinstance(declaration, dict):
                     raise ReleaseError('reader-v1 schema declaration is malformed')
@@ -1045,6 +1051,16 @@ class DockerBackend:
                     table_schema, table, columns = 'usa_atlas', relation, declaration
                 if table_schema != 'usa_atlas' or not isinstance(columns, dict) or not columns:
                     raise ReleaseError('reader-v2 schema declaration has an unsupported object or empty column map')
+                info = metadata.get(relation, {})
+                if (not isinstance(info, dict) or info.get('access') != 'SELECT' or
+                        info.get('version') not in {'v1-retained', 'v2-additive'}):
+                    raise ReleaseError('reader-v2 relation metadata is malformed')
+                # The retained v1 observation object can be backed by its
+                # original table or exposed as the production SELECT view.
+                # Other retained and additive contract objects remain tables.
+                expected_kinds[(table_schema, table)] = (
+                    {'r', 'p', 'v'} if table == 'observation' and info['version'] == 'v1-retained'
+                    else {'r', 'p'})
             else:
                 raise ReleaseError('unsupported reader schema proof version')
             if not isinstance(columns, dict) or not columns:
@@ -1066,14 +1082,18 @@ class DockerBackend:
         result = run(['docker', 'exec', '-i', container_id, 'python3', '-c', probe],
                      input_text=sql)
         actual = {}
+        actual_kinds = {}
         for line in result.stdout.splitlines():
             parts = line.split('\t')
-            if len(parts) != 4:
-                raise ReleaseError('database schema probe returned malformed metadata')
             if version == '2.0.0':
-                schema, table, column, pg_type = parts
+                if len(parts) != 5:
+                    raise ReleaseError('database schema probe returned malformed metadata')
+                schema, table, relation_kind, column, pg_type = parts
+                actual_kinds.setdefault((schema, table), set()).add(relation_kind)
                 actual.setdefault((schema, table), {})[column] = pg_type
             else:
+                if len(parts) != 4:
+                    raise ReleaseError('database schema probe returned malformed metadata')
                 table, column, data_type, length = parts
                 actual.setdefault(('usa_atlas', table), {})[column] = (data_type, length)
         aliases = {'character(64)': ('character', '64'), 'text': ('text', ''),
@@ -1092,6 +1112,9 @@ class DockerBackend:
                     if table_key in expected:
                         expected[table_key].update(columns)
             for table_key, columns in expected.items():
+                kinds = actual_kinds.get(table_key, set())
+                if len(kinds) != 1 or not kinds <= expected_kinds.get(table_key, {'r', 'p'}):
+                    mismatches.append(f'{table_key[0]}.{table_key[1]} relation kind')
                 got = actual.get(table_key, {})
                 if set(got) != set(columns):
                     mismatches.append(f'{table_key[0]}.{table_key[1]} columns')

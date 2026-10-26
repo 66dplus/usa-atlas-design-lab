@@ -121,25 +121,38 @@ def check_postgres(contract: dict) -> None:
     if os.environ.get('PGDATABASE') != 'usa_atlas':
         raise ValueError('PostgreSQL schema check must target the isolated usa_atlas CI database')
     result = subprocess.run([psql, '-X', '-w', '-qAt', '--dbname', 'usa_atlas', '--set', 'ON_ERROR_STOP=1', '-c', """
-      SELECT n.nspname||'|'||c.relname||'|'||a.attname||'|'||format_type(a.atttypid,a.atttypmod)
+      SELECT n.nspname||'|'||c.relname||'|'||c.relkind::text||'|'||a.attname||'|'||format_type(a.atttypid,a.atttypmod)
       FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
       JOIN pg_catalog.pg_attribute a ON a.attrelid=c.oid
-      WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p') AND a.attnum>0 AND NOT a.attisdropped
+      WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p','v') AND a.attnum>0 AND NOT a.attisdropped
       ORDER BY c.relname,a.attname
     """], capture_output=True, text=True, timeout=30)
     if result.returncode:
-        raise ValueError('required PostgreSQL service could not verify the v2 reader schema')
+        detail = result.stderr.strip()
+        raise ValueError('required PostgreSQL service could not verify the v2 reader schema' +
+                         (f': {detail}' if detail else ''))
     actual: dict[str, dict[str, str]] = {}
+    actual_kinds: dict[str, set[str]] = {}
     for line in result.stdout.splitlines():
-        schema, table, column, sql_type = line.split('|', 3)
+        schema, table, relation_kind, column, sql_type = line.split('|', 4)
         if schema == 'usa_atlas':
             actual.setdefault(table, {})[column] = sql_type
+            actual_kinds.setdefault(table, set()).add(relation_kind)
     expected = {name: dict(columns) for name, columns in contract['objects'].items()}
     for name, columns in PINNED_SCHEMA_ONLY_COLUMNS.items():
         if name not in expected or set(columns) & set(expected[name]):
             raise ValueError('reader-v2 schema-only compatibility declaration overlaps its consumer contract')
         expected[name].update(columns)
-    mismatches = [name for name, columns in expected.items() if actual.get(name) != columns]
+    mismatches = []
+    for name, columns in expected.items():
+        metadata = contract['object_metadata'][name]
+        # Only retained v1 observation also supports the production SELECT
+        # view form; the rest of the frozen contract remains table backed.
+        wanted_kinds = ({'r', 'p', 'v'} if name == 'observation' and metadata['version'] == 'v1-retained'
+                        else {'r', 'p'})
+        kinds = actual_kinds.get(name, set())
+        if actual.get(name) != columns or len(kinds) != 1 or not kinds <= wanted_kinds:
+            mismatches.append(name)
     if mismatches:
         raise ValueError('CI database is missing the exact v2 schema objects: ' + ', '.join(mismatches))
 

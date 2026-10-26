@@ -153,6 +153,15 @@ def main():
     # Synthetic admitted rows make the CI database execute the CD119 SQL and
     # post-PostgreSQL geometry hash guards without claiming Census geometry.
     statements.extend(synthetic_cd119_boundary_sql())
+    # Production retains v1 observation as a SELECT view. Keep app CI on that
+    # representation while preserving the frozen v1 table as its backing store.
+    statements.extend([
+        'ALTER TABLE usa_atlas.observation RENAME TO observation_storage;',
+        'CREATE VIEW usa_atlas.observation AS SELECT '
+        'geo_id,geo_type,period,field_id,catalog_field_id,value,unit,source,source_release,source_url,'
+        'methodology_note,retrieved_at,ingest_id FROM usa_atlas.observation_storage;',
+        'GRANT SELECT ON usa_atlas.observation TO atlas_reader;',
+    ])
 
     result = subprocess.run([psql, "-X", "-w", "-q", "--dbname", "usa_atlas",
                              "--set", "ON_ERROR_STOP=1"], env=env, input="\n".join(statements),
