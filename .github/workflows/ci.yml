@@ -41,16 +41,26 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: node node_modules/playwright/cli.js install --with-deps chrome
       - run: sudo apt-get update
-      - run: sudo apt-get install -y postgresql-client
+      - name: Install PostgreSQL 16 binaries for schema probe tests
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
       - run: python3 scripts/prepare_ci_database.py
       - run: python3 scripts/check_reader_contract.py --require-postgres
+      - name: Verify frozen reader-v2 contract and exact PostgreSQL schema
+        run: python3 scripts/check_reader_v2_contract.py --require-postgres
+      - name: Exercise admitted reader-v2 adapter against PostgreSQL
+        run: python3 -m unittest scripts.test_reader_v2_ci_admitted
+      - name: Verify reader-v2 lock and schema checker behavior
+        run: python3 -m unittest discover -s scripts -p 'test_reader_v2_contract.py'
       - run: python3 scripts/check_geography_contract.py
       - run: npm run check:seo
       - run: npm run check:source
-      - run: python3 scripts/build_temporary_preview.py /tmp/usa-atlas-ci-package --release ci-${{ github.sha }} --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000
+      - name: Run the complete Python unit suite
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - run: python3 scripts/build_temporary_preview.py /tmp/usa-atlas-ci-package --release ci-${{ github.sha }} --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000 --contracts-lock contracts/reader-v2-contract.lock.json
       - name: Run required Chrome regressions against the packaged runtime
         env:
           PGUSER: atlas_reader
           PGPASSWORD: atlas-ci-only-reader
         run: python3 scripts/run_ci_browser.py /tmp/usa-atlas-ci-package
-      - run: python3 -m unittest discover -s scripts -p 'test_*.py'

@@ -6,6 +6,7 @@ clock.settle(75000,true);assert.equal(clock.take(),45000);
 clock.settle(90000,false);assert.equal(clock.take(),0);
 clock.touch(95000,false);clock.settle(100000,true);assert.equal(clock.take(),5000);
 assert.throws(()=>placeContext('Austin'));
+assert.deepEqual(placeContext('0606'),{place_type:'state',place_id:'06',state_id:'06'},'district analytics are deliberately coarsened to their parent state');
 const a={concept:'compare',comparison:'places',selected:'06075',second:'36',metric:'unemployment'};
 assert.equal(atlasContext(a).pair_key,atlasContext({...a,selected:'36',second:'06075'}).pair_key);
 assert.equal(atlasContext(a).place_type,'county');assert.equal(atlasContext(a).state_id,'06');

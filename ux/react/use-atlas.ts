@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { buildPlaceIndex, canonicalPath, parsePath, resolveRoute, routeParams } from '../routes.js';
+import { buildPlaceIndex, canonicalPath, parsePath, resolveRoute, resolveHouseQuery, resolvePopNavigation, routeParams } from '../routes.js';
 import { applyPageMetadata, mapPageMetadata, screenPageMetadata } from '../seo.js';
 import {
   createDataStore,
@@ -8,6 +8,8 @@ import {
   collectedMapIndicators,
   displayLayer,
   formatValue,
+  parseUnemploymentPeriod,
+  unemploymentPeriodKey,
 } from '../model.js';
 import { captureMapLayout } from '../motion.js';
 import { sheetScroll } from '../bottom-sheet.js';
@@ -31,7 +33,10 @@ import type {
   SettingsData,
   Side,
   Snap,
+  LayerSelection,
+  UnemploymentPeriod,
 } from './types';
+import { buildSelectionCatalog } from './consumer-candidates';
 
 export const mobileLayout = () => matchMedia('(max-width:760px)').matches;
 export const prompts = [
@@ -135,6 +140,8 @@ export function initialState(): AtlasState {
     second: q.get('other') === 'US' ? null : q.get('other') || '48',
     metric: q.get('metric') || 'unemployment',
     secondMetric: q.get('metric2') || 'population',
+    unemploymentPeriod: parseUnemploymentPeriod(q.get('period')) as UnemploymentPeriod,
+    selectedParty: ['DEMOCRAT', 'REPUBLICAN'].includes(q.get('party') || '') ? q.get('party')! : 'DEMOCRAT',
     comparison: q.get('comparison') === 'metrics' ? 'metrics' : 'places',
     rank: ['highest', 'lowest'].includes(q.get('rank') || '') ? (q.get('rank') as Rank) : null,
     category: 'All',
@@ -174,6 +181,15 @@ export interface Resources {
   store: DataStore;
   settings: SettingsData;
   index: ReturnType<typeof buildPlaceIndex>;
+  selectionCounts: { primary: number; variants: number };
+}
+export interface UnemploymentSeriesState {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  placeId: string;
+  observations: { month: number; value: number | null; sourceRelease: string; sourceUrl?: string; qualityState?: string }[];
+  sourceReleases?: string[];
+  domain?: [number, number];
+  error?: string;
 }
 const emptyLayer: Layer = {
   status: 'idle',
@@ -212,7 +228,13 @@ export function useAtlas() {
       }
     >(),
   );
-  const request = useRef({ a: 0, b: 0, boot: 0, navigation: 0 });
+  const request = useRef({ a: 0, b: 0, boot: 0, navigation: 0, periodSeries: 0 });
+  const [periodSeries, setPeriodSeries] = useState<UnemploymentSeriesState>({
+    status: 'idle',
+    placeId: 'US',
+    observations: [],
+  });
+  const [periodSeriesRetry, retryPeriodSeries] = useReducer((n: number) => n + 1, 0);
   const historyReturns = useRef<Page[]>([]);
   const restoration = useRef<{
     selection: AtlasState;
@@ -247,8 +269,14 @@ export function useAtlas() {
         ? current.current.secondMetric
         : current.current.metric,
     )!;
+  const selectionForMetric = (m: Metric, s = current.current): LayerSelection => ({
+    ...(m.periodControl ? { period: s.unemploymentPeriod } : {}),
+    ...(m.switchGroup === 'elections' ? { party: s.selectedParty } : {}),
+  });
   const layer = (m: Metric): Layer =>
-    m && resource.current ? (displayLayer(resource.current.store.get(m)) as Layer) : emptyLayer;
+    m && resource.current
+      ? (displayLayer(resource.current.store.get(m, selectionForMetric(m))) as Layer)
+      : emptyLayer;
   const observation = (m: Metric, id?: string | null) => layer(m).observations.get(id || 'US');
   const value = (m: Metric, id?: string | null) => observation(m, id)?.value ?? null;
   const number = (m: Metric, id?: string | null) => formatValue(value(m, id), layer(m).unit);
@@ -530,7 +558,8 @@ export function useAtlas() {
       rankedPlace = s.rankFocus?.origin ?? s.selected,
       m = metric(),
       data = layer(m),
-      selectedCounty = rankedPlace?.length === 5;
+      selectedCounty = rankedPlace?.length === 5,
+      districtRanking = m.geographyType === 'congressional_district';
     const countyOnly = m.countySupported && !m.stateSupported,
       county = selectedCounty || countyOnly;
     const parent = selectedCounty
@@ -538,9 +567,11 @@ export function useAtlas() {
       : countyOnly && rankedPlace?.length === 2
         ? rankedPlace
         : null;
-    const group = county
-      ? r.geo.counties.filter((f) => (parent ? f.stateId === parent : f.stateId !== '11'))
-      : r.geo.states.filter((f) => f.id !== '11');
+    const group = districtRanking
+      ? (r.geo.districts || [])
+      : county
+        ? r.geo.counties.filter((f) => (parent ? f.stateId === parent : f.stateId !== '11'))
+        : r.geo.states.filter((f) => f.id !== '11');
     const available = group
       .map((f) => ({ id: f.id, name: f.name, value: value(m, f.id) }))
       .filter((f): f is { id: string; name: string; value: number } => f.value != null);
@@ -553,14 +584,16 @@ export function useAtlas() {
       ...row,
       rank: direction.findIndex((x) => x.value === row.value) + 1,
       tied: available.filter((x) => x.value === row.value).length > 1,
-      label: county && !parent ? `${row.name} · ${place(row.id.slice(0, 2))!.name}` : row.name,
+      label: districtRanking ? row.name : county && !parent ? `${row.name} · ${place(row.id.slice(0, 2))!.name}` : row.name,
     }));
     if (county) rows.forEach((row) => r.geo.prepareFocus(row.id));
     return {
       rows,
       total: group.length,
       count: available.length,
-      group: county
+      group: districtRanking
+        ? '435 voting congressional districts · 119th Congress'
+        : county
         ? parent
           ? place(parent)!.name + ' counties'
           : 'U.S. counties · DC excluded'
@@ -606,11 +639,31 @@ export function useAtlas() {
     }
     void choosePlace(id);
   }
+  function updateQueryParameter(key: string, value: string) {
+    const url = new URL(location.href);
+    url.searchParams.set(key, value);
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  }
+  function selectUnemploymentPeriod(period: UnemploymentPeriod) {
+    if (unemploymentPeriodKey(period) === unemploymentPeriodKey(current.current.unemploymentPeriod))
+      return;
+    beginHistory();
+    patch({ unemploymentPeriod: period });
+    updateQueryParameter('period', period.type === 'annual' ? String(period.year) : unemploymentPeriodKey(period));
+  }
+  function selectParty(party: string) {
+    const selected = party.trim().slice(0, 80);
+    if (!selected || selected === current.current.selectedParty) return;
+    beginHistory();
+    patch({ selectedParty: selected });
+    updateQueryParameter('party', selected);
+  }
   function selectMetric(id: string, from: 'picker' | 'inspect' | 'switch' = 'picker') {
     const s = current.current,
       r = resource.current!;
     if (s.cardMode && from === 'picker') {
-      void r.store.load(r.metricById.get(id)!);
+      const selected = r.metricById.get(id)!;
+      void r.store.load(selected, selectionForMetric(selected, s));
       if (s.pinned.includes(id)) {
         if (s.pinned.length > 1) patch({ pinned: s.pinned.filter((p) => p !== id) });
         else toast('Keep at least one field in the card.');
@@ -627,6 +680,12 @@ export function useAtlas() {
       previous = side === 'b' ? s.secondMetric : s.metric;
     if (previous !== id) beginHistory();
     patch({ [side === 'b' ? 'secondMetric' : 'metric']: id, rank: null });
+    const chosenMetric = r.metricById.get(id);
+    if (chosenMetric?.geographyType === 'congressional_district')
+      void r.geo.loadDistricts?.().then(() => {
+        r.index = buildPlaceIndex(r.geo.states, r.geo.counties, r.geo.districts || []);
+        bump();
+      }).catch((error: unknown) => toast(error instanceof Error ? error.message : 'District boundaries are unavailable.'));
     if (from === 'picker') closeDrawers();
     if (previous !== id) action('indicator_select', { selected_indicator_id: id });
   }
@@ -694,24 +753,26 @@ export function useAtlas() {
     let alive = true;
     void (async () => {
       try {
-        const snapshotRequest = fetch('./startup/unemployment-BLS-LAUS-2024-2024-M12.json')
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null);
-        const [geo, payload, settings, startup] = await Promise.all([
+        const [geo, payload, settings, readerCandidate] = await Promise.all([
           loadGeography(),
           readAtlasJSON('/api/atlas/catalog'),
           loadViewSettings(),
-          snapshotRequest,
+          readAtlasJSON('/api/atlas/reader/v2/catalog').catch(() => null),
         ]);
         if (!alive || serial !== request.current.boot) return;
-        const catalog = collectedMapIndicators(payload.metrics) as Metric[];
+        const mapped = loadedMapMetrics(payload.metrics) as Metric[],
+          selectable = collectedMapIndicators(payload.metrics) as Metric[],
+          registry = buildSelectionCatalog(mapped, readerCandidate, selectable),
+          { catalog, metricById, counts } = registry;
         if (!catalog.length)
           throw new Error('No map indicators have been loaded yet. Please retry later.');
-        const metricById = new Map(
-          (loadedMapMetrics(payload.metrics) as Metric[]).map((m) => [m.id, m]),
-        );
-        const store = createDataStore(geo, () => bump()) as DataStore,
-          index = buildPlaceIndex(geo.states, geo.counties);
+        const store = createDataStore(geo, () => bump()) as DataStore;
+        let index = buildPlaceIndex(geo.states, geo.counties, geo.districts || []);
+        const requestedDistrict = new URLSearchParams(location.search).get('district');
+        if (requestedDistrict) {
+          await geo.loadDistricts?.();
+          index = buildPlaceIndex(geo.states, geo.counties, geo.districts || []);
+        }
         const r: Resources = {
           geo: geo as unknown as Geography,
           catalog,
@@ -720,10 +781,12 @@ export function useAtlas() {
           store,
           settings: settings as SettingsData,
           index,
+          selectionCounts: counts,
         };
         resource.current = r;
         const route = parsePath(location.pathname),
           resolved = route && resolveRoute(route, index, new Set(metricById.keys()));
+        const houseQuery = resolveHouseQuery(new URLSearchParams(location.search), index, new Set(metricById.keys()), location.pathname);
         routeValid.current = !route || Boolean(resolved);
         const s = current.current,
           selection: Partial<AtlasState> = {
@@ -735,10 +798,10 @@ export function useAtlas() {
             ),
             pinned: s.pinned.filter((id) => metricById.has(id)),
             selected: resolved?.concept
-              ? resolved.place || null
-              : r.geo.byId.has(s.selected || '')
-                ? s.selected
-                : null,
+              ? resolved.place || (requestedDistrict && r.geo.byId.has(requestedDistrict) ? requestedDistrict : null)
+              : requestedDistrict && r.geo.byId.has(requestedDistrict)
+                ? requestedDistrict
+                : r.geo.byId.has(s.selected || '') ? s.selected : null,
             second: resolved?.concept
               ? resolved.second || null
               : s.second && r.geo.byId.has(s.second)
@@ -752,17 +815,10 @@ export function useAtlas() {
           selection.comparison = resolved.comparison === 'metrics' ? 'metrics' : 'places';
           secondExplicit.current = resolved.page === 'compare' && resolved.comparison === 'places';
         }
+        if (houseQuery) Object.assign(selection, houseQuery);
+        if (houseQuery && 'concept' in houseQuery && houseQuery.concept === 'compare' && 'comparison' in houseQuery && houseQuery.comparison === 'places')
+          secondExplicit.current = true;
         patch(selection);
-        const startupMetric = metricById.get('unemployment');
-        const seeded =
-          startup?.snapshotVersion === 'BLS-LAUS-2024/2024-M12' &&
-          startup.metricId === 'unemployment' &&
-          startup.fieldId === '03.06:unemployment_rate' &&
-          startup.data?.sourceRelease === 'BLS-LAUS-2024' &&
-          startup.data?.period === '2024-M12' &&
-          current.current.metric === 'unemployment' &&
-          startupMetric &&
-          store.seed(startupMetric, startup.data);
         if (current.current.concept === 'compare') {
           prepareComparison();
           if (!current.current.selected && !resolved && current.current.comparison === 'places')
@@ -776,7 +832,6 @@ export function useAtlas() {
         const stateId = current.current.selected?.slice(0, 2);
         if (stateId) patch({ recentStates: [stateId] });
         setResources(r);
-        if (seeded && startupMetric) void store.refresh(startupMetric);
       } catch (error) {
         if (alive) {
           patch({ startup: 'error' });
@@ -810,7 +865,7 @@ export function useAtlas() {
     ];
     needed.forEach((id) => {
       const m = resources.metricById.get(id);
-      if (m) void resources.store.load(m);
+      if (m) void resources.store.load(m, selectionForMetric(m, s));
     });
     analytics.current?.observe(
       atlasContext(s),
@@ -826,8 +881,85 @@ export function useAtlas() {
     state.concept,
     state.comparison,
     state.pinned,
+    state.unemploymentPeriod,
+    state.selectedParty,
     revision,
   ]);
+  useEffect(() => {
+    const serial = ++request.current.periodSeries;
+    if (!resources || state.metric !== 'unemployment' || !['map', 'compare'].includes(state.page)) {
+      setPeriodSeries({ status: 'idle', placeId: state.selected || 'US', observations: [] });
+      return;
+    }
+    const placeId = state.selected || 'US',
+      geographyType = placeId === 'US' ? 'nation' : placeId.length === 5 ? 'county' : 'state',
+      params = new URLSearchParams({
+        year: '2025',
+        geography_type: geographyType,
+        geography_id: placeId,
+      });
+    setPeriodSeries({ status: 'loading', placeId, observations: [] });
+    void readAtlasJSON('/api/atlas/unemployment-months?' + params.toString())
+      .then((payload) => {
+        if (
+          payload.fieldId !== '03.06:unemployment_rate' ||
+          payload.year !== 2025 ||
+          payload.periodType !== 'month' ||
+          payload.sourceSeasonalAdjustment !== 'NSA' ||
+          typeof payload.sourceRelease !== 'string' || !payload.sourceRelease ||
+          !Array.isArray(payload.fixedDomain) || payload.fixedDomain[0] !== 0 ||
+          !Number.isFinite(payload.fixedDomain[1]) || payload.fixedDomain[1] <= 0 ||
+          payload.geographyType !== geographyType ||
+          payload.geographyId !== placeId ||
+          !Array.isArray(payload.observations)
+        )
+          throw new Error('The monthly series does not match the selected place and year.');
+        const seen = new Set<number>(),
+          observations = payload.observations.map((row: any) => {
+            if (
+              !Number.isInteger(row.month) ||
+              row.month < 1 ||
+              row.month > 12 ||
+              (row.value !== null && (!Number.isFinite(row.value) || row.value < 0 || row.value > 100)) ||
+              (row.value !== null && row.value > payload.fixedDomain[1]) ||
+              (row.qualityState === 'observed' && !Number.isFinite(row.value)) ||
+              !['observed','missing','suppressed','invalid','nonmapping_geography'].includes(row.qualityState || 'observed') ||
+              row.sourceSeasonalAdjustment !== 'NSA' || row.sourceRelease !== payload.sourceRelease ||
+              typeof row.sourceRelease !== 'string' ||
+              seen.has(row.month)
+            )
+              throw new Error('The monthly series contains an invalid or duplicate observation.');
+            seen.add(row.month);
+            return {
+              month: row.month as number,
+              value: row.value as number | null,
+              sourceRelease: row.sourceRelease as string,
+              qualityState: row.qualityState as string | undefined,
+              sourceUrl: typeof row.sourceUrl === 'string' ? row.sourceUrl : undefined,
+            };
+          });
+        if (serial === request.current.periodSeries)
+          setPeriodSeries({
+            status: 'ready',
+            placeId,
+            observations,
+            domain: payload.fixedDomain,
+            sourceReleases: Array.isArray(payload.sourceReleases) ? payload.sourceReleases : [],
+          });
+      })
+      .catch((error) => {
+        if (serial === request.current.periodSeries)
+          setPeriodSeries({
+            status: 'error',
+            placeId,
+            observations: [],
+            error: error instanceof Error ? error.message : String(error),
+          });
+      });
+    return () => {
+      if (request.current.periodSeries === serial) request.current.periodSeries++;
+    };
+  }, [resources, state.metric, state.selected, state.page, periodSeriesRetry]);
   useEffect(() => {
     document.body.dataset.page = state.page;
     document.body.dataset.theme = state.theme;
@@ -852,7 +984,7 @@ export function useAtlas() {
   useEffect(() => {
     if (!resources) return;
     const path = canonicalPath({ ...state }, resources.index) || '/united-states/unemployment',
-      q = routeParams(new URLSearchParams(location.search));
+      q = routeParams(new URLSearchParams(location.search), { state, index: resources.index, metricIds: new Set(resources.metricById.keys()) });
     const next = path + (q ? '?' + q : '');
     if (next !== location.pathname + location.search) history.replaceState(history.state, '', next);
     const query = new URLSearchParams(location.search),
@@ -910,9 +1042,11 @@ export function useAtlas() {
       if (event.state?.usaAtlasDialog) return;
       const r = resource.current;
       if (!r) return;
-      const route = parsePath(location.pathname),
-        resolved = route && resolveRoute(route, r.index, new Set(r.metricById.keys()));
+      const navigation = resolvePopNavigation(location.pathname, location.search, r.index, new Set(r.metricById.keys())),
+        resolved = navigation.resolved,
+        houseQuery = navigation.houseQuery;
       routeValid.current = Boolean(resolved);
+      const query = new URLSearchParams(location.search);
       if (resolved?.concept) {
         patch({
           concept: resolved.concept === 'compare' ? 'compare' : 'explorer',
@@ -922,11 +1056,23 @@ export function useAtlas() {
           secondMetric: availableId(resolved.secondMetric || 'population'),
           comparison: resolved.comparison === 'metrics' ? 'metrics' : 'places',
           rank: null,
+          unemploymentPeriod: parseUnemploymentPeriod(query.get('period')) as UnemploymentPeriod,
+          selectedParty: ['DEMOCRAT', 'REPUBLICAN'].includes(query.get('party') || '') ? query.get('party')! : 'DEMOCRAT',
         });
         secondExplicit.current = resolved.page === 'compare' && resolved.comparison === 'places';
         comparisonDefault.current = null;
       }
-      void navigate((resolved?.page || 'map') as Page, resolved?.article, {
+      if (!resolved?.concept)
+        patch({
+          unemploymentPeriod: parseUnemploymentPeriod(query.get('period')) as UnemploymentPeriod,
+          selectedParty: ['DEMOCRAT', 'REPUBLICAN'].includes(query.get('party') || '') ? query.get('party')! : 'DEMOCRAT',
+        });
+      if (houseQuery) {
+        patch(houseQuery);
+        if ('concept' in houseQuery && houseQuery.concept === 'compare' && 'comparison' in houseQuery && houseQuery.comparison === 'places') secondExplicit.current = true;
+        comparisonDefault.current = null;
+      }
+      void navigate(navigation.page as Page, navigation.article, {
         fromPopState: true,
         force: true,
       });
@@ -974,6 +1120,11 @@ export function useAtlas() {
     selectRankPlace,
     handleMapSelection,
     selectMetric,
+    selectionForMetric,
+    selectUnemploymentPeriod,
+    selectParty,
+    periodSeries,
+    retryPeriodSeries: () => retryPeriodSeries(),
     openPrompt,
     rememberExploration,
     showSource,

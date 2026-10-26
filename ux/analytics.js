@@ -6,6 +6,9 @@ export function placeContext(id) {
   if (!id) return {place_type: 'us', place_id: 'US', state_id: ''};
   if (/^\d{2}$/.test(id)) return {place_type: 'state', place_id: id, state_id: id};
   if (/^\d{5}$/.test(id)) return {place_type: 'county', place_id: id, state_id: id.slice(0, 2)};
+  // Analytics only accepts US/state/county contexts. A 2024 district selection
+  // is represented at its parent state here; map/data identity stays the CD119 ID.
+  if (/^\d{4}$/.test(id)) return {place_type: 'state', place_id: id.slice(0, 2), state_id: id.slice(0, 2)};
   throw new Error('Analytics requires an exact state or county FIPS');
 }
 

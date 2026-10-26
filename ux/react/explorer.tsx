@@ -4,9 +4,10 @@ import type { Atlas } from './use-atlas';
 import { displayMetricName, type Layer, type Side } from './types';
 import { formatValue, formatPeriod, missingReason } from '../model.js';
 import { rampColor, EMBER, DIVERGING } from '../map.js';
-import { Icon, IndicatorIcon, MetricSwitch } from './components';
-import { PlacePhoto, QuickStatsContent } from './data-views';
+import { Icon, IndicatorIcon, MetricSwitch, PartySwitch } from './components';
+import { ElectionDetails, PlacePhoto, QuickStatsContent } from './data-views';
 import { Sheet } from './sheet';
+import { UnemploymentPeriods } from './unemployment-periods';
 export const paletteFor = (layer: Layer) => (layer.scale === 'diverging' ? DIVERGING : EMBER);
 export function ramp(layer: Layer) {
   const sample = rampColor(paletteFor(layer));
@@ -102,6 +103,7 @@ function explorerValues(atlas: Atlas) {
     m = atlas.metric(),
     data = atlas.layer(m),
     v = atlas.value(m, f?.id),
+    row = atlas.observation(m, f?.id),
     nationalGap = !f && data.status === 'ready' && !atlas.observation(m, 'US'),
     nationalUnit = data.unit && data.unit !== '%' ? ' ' + data.unit : '',
     nationalRange =
@@ -110,7 +112,7 @@ function explorerValues(atlas: Atlas) {
         : '';
   const rangeLevel = m.countySupported ? 'County' : 'State',
     averageLabel = f?.name
-      ? `${f.name} · ${f.id.length === 5 ? 'County' : 'State'}`
+      ? `${f.name} · ${m.geographyType === 'congressional_district' ? 'Congressional district' : f.id.length === 5 ? 'County' : 'State'}`
       : nationalGap
         ? nationalRange
           ? `${rangeLevel} range · ${formatPeriod(data.period) || 'Latest available'}`
@@ -130,6 +132,7 @@ function explorerValues(atlas: Atlas) {
     m,
     data,
     v,
+    row,
     nationalGap,
     nationalRange,
     averageLabel,
@@ -205,7 +208,7 @@ export function ExplorerPanel({ atlas }: { atlas: Atlas }) {
 }
 function ExplorerContent({ atlas }: { atlas: Atlas }) {
   const { state, resources, place } = atlas,
-    { f, m, data, v, nationalGap, nationalRange } = explorerValues(atlas);
+    { f, m, data, v, row, nationalGap, nationalRange } = explorerValues(atlas);
   const explanation =
     m.definition?.method || data.definition?.method || data.methodologyNote || m.method || '';
   return (
@@ -289,6 +292,12 @@ function ExplorerContent({ atlas }: { atlas: Atlas }) {
                   <span aria-current="location">{f.name}</span>
                 </>
               )}
+              {f.districtCode && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <span aria-current="location">District {f.districtCode}</span>
+                </>
+              )}
             </>
           )}
         </div>
@@ -296,11 +305,16 @@ function ExplorerContent({ atlas }: { atlas: Atlas }) {
       <PlacePhoto atlas={atlas} />
       <div className="profile-content">
         <MetricSwitch metric={m} />
+        {m.switchGroup === 'elections' && <PartySwitch selectedParty={state.selectedParty} onSelect={atlas.selectParty} />}
+        {m.availability === 'local_candidate' && <p className="local-candidate-note">Local candidate preview · not released. Results are isolated to this local review.</p>}
+        {m.availability === 'not_admitted' && <p className="local-candidate-note">{m.coverageNote || 'Candidate data is not admitted for public display.'}</p>}
+        <UnemploymentPeriods atlas={atlas} metric={m} />
         <p className="value-source">
           <SourceLink atlas={atlas} metric={m} place={f} /> ·{' '}
           {formatPeriod(data.period) ||
             (m.plannedState === 'proposed' ? 'No published period' : 'Not loaded')}
         </p>
+        {m.switchGroup === 'elections' && row?.qualityState === 'observed' && <ElectionDetails row={row} />}
         <div className="expanded-stats">
           {state.pinned.map((id) => (
             <MetricRow
@@ -319,7 +333,11 @@ function ExplorerContent({ atlas }: { atlas: Atlas }) {
                 ? nationalRange
                   ? 'No national total is published for this series. The map shows individual places; select one to see its own observation. No national average is substituted.'
                   : 'This release has no state observations for this series. No national value is substituted.'
-                : missingReason(m, f, data)}
+                : row?.qualityState === 'no_election'
+                  ? 'No election was held for this office in this place during the 2024 cycle.'
+                  : row?.qualityState === 'nonmapping_geography'
+                    ? 'This source geography has no matching map boundary. Its value is not reassigned.'
+                    : missingReason(m, f, data)}
             </p>
             {data.status === 'error' && (
               <button data-retry={m.id} className="outline-button">

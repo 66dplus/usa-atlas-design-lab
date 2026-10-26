@@ -75,17 +75,19 @@ function putUniqueCounty(index, slug, county) {
 // Build the resolution index once geography is loaded. Every county route
 // carries its state; rare duplicate names within a state gain a short FIPS
 // suffix so no valid selection has to fall back to a query-string URL.
-export function buildPlaceIndex(states, counties) {
-  const index = {byStateSlug: new Map(), countiesByState: new Map(), uniqueCounties: new Map(), slugByPlaceId: new Map()};
+export function buildPlaceIndex(states, counties, districts = []) {
+  const index = {byStateSlug: new Map(), countiesByState: new Map(), uniqueCounties: new Map(), slugByPlaceId: new Map(), byId: new Map()};
   for (const state of states) {
     const slug = slugify(state.name);
     if (!validSegment(slug) || index.byStateSlug.has(slug)) continue;
     index.byStateSlug.set(slug, state);
     index.countiesByState.set(state.id, new Map());
     index.slugByPlaceId.set(state.id, slug);
+    index.byId.set(state.id, state);
   }
   for (const county of counties) {
     const scope = index.countiesByState.get(county.stateId);
+    index.byId.set(county.id, county);
     if (!scope) continue;
     const base = countySlug(county.name, county.id);
     if (!validSegment(base)) continue;
@@ -115,6 +117,7 @@ export function buildPlaceIndex(states, counties) {
     for (const [slug, county] of scope) putUniqueCounty(index, slug, county);
   }
   for (const [slug, value] of [...index.uniqueCounties]) if (!value) index.uniqueCounties.delete(slug);
+  for (const district of districts) index.byId.set(district.id, district);
   return index;
 }
 
@@ -268,6 +271,7 @@ export function canonicalPath(state, index) {
   if (!index) return null;
   const metric = indicatorSegment(state.metric || DEFAULT_INDICATOR) || DEFAULT_INDICATOR;
   const placeId = state.place ?? state.selected ?? null;
+  if (placeId && index.byId?.get(placeId)?.districtCode) return `/${ROOT_SEGMENT}/elections-house`;
   if (state.concept === 'compare') {
     if (state.comparison === 'metrics') {
       const a = indicatorSegment(state.metric), b = indicatorSegment(state.secondMetric);
@@ -287,11 +291,73 @@ export function canonicalPath(state, index) {
 
 // Keep only non-content operational flags. Indicator, geography and page are
 // always represented by the path; presentation preferences do not create URLs.
-export function routeParams(params) {
+export function routeParams(params, selection = {}) {
   const keep = new URLSearchParams();
   for (const key of ['embed', 'review', 'preview']) {
     const value = params?.get(key);
     if (value) keep.set(key, value);
   }
+  const period = params?.get('period');
+  if (/^2025(?:-M(?:0[1-9]|1[0-2]))?$/.test(period || '')) keep.set('period', period);
+  const party = params?.get('party');
+  if (['DEMOCRAT', 'REPUBLICAN'].includes(party || '')) keep.set('party', party);
+  const state = selection.state || {};
+  const district = value => typeof value === 'string' && /^\d{4}$/.test(value) &&
+    selection.index?.byId?.get(value)?.districtCode ? value : null;
+  const selectedDistrict = district(state.selected);
+  if (selectedDistrict) {
+    keep.set('district', selectedDistrict);
+    if (state.concept === 'compare' && state.comparison === 'places') {
+      const secondDistrict = district(state.second);
+      if (secondDistrict && secondDistrict !== selectedDistrict) {
+        keep.set('compare', 'places');
+        keep.set('secondDistrict', secondDistrict);
+      }
+    } else if (state.concept === 'compare' && state.comparison === 'metrics') {
+      const metricIds = selection.metricIds || new Set();
+      if (metricIds.has(state.metric) && metricIds.has(state.secondMetric) && state.metric !== state.secondMetric) {
+        keep.set('compare', 'metrics');
+        keep.set('metricA', state.metric);
+        keep.set('metricB', state.secondMetric);
+      }
+    }
+  }
   return keep.toString();
+}
+
+// House selections are operational state on the valid House map path. Never
+// interpret four digits as a county or accept an ID absent from CD119 data.
+export function resolveHouseQuery(params, index, metricIds = new Set(), pathname = '') {
+  if (pathname.replace(/\/+$/, '') !== `/${ROOT_SEGMENT}/elections-house`) return null;
+  const validDistrict = value => typeof value === 'string' && /^\d{4}$/.test(value) &&
+    Boolean(index?.byId?.get(value)?.districtCode) ? value : null;
+  const selected = validDistrict(params?.get('district'));
+  if (!selected) return null;
+  const result = { selected };
+  if (params.get('compare') === 'places') {
+    const second = validDistrict(params.get('secondDistrict'));
+    if (second && second !== selected) Object.assign(result, {
+      page: 'compare', concept: 'compare', comparison: 'places', second,
+    });
+  } else if (params.get('compare') === 'metrics') {
+    const metric = params.get('metricA'), secondMetric = params.get('metricB');
+    if (metricIds.has(metric) && metricIds.has(secondMetric) && metric !== secondMetric)
+      Object.assign(result, { page: 'compare', concept: 'compare', comparison: 'metrics', metric, secondMetric });
+  }
+  return result;
+}
+
+// Resolve a browser history entry as one navigation decision. The validated
+// House query can carry comparison state on its map path, so its page intent
+// takes precedence over the path's ordinary map route.
+export function resolvePopNavigation(pathname, search, index, metricIds = new Set()) {
+  const route = parsePath(pathname),
+    resolved = route && resolveRoute(route, index, metricIds),
+    houseQuery = resolveHouseQuery(new URLSearchParams(search || ''), index, metricIds, pathname);
+  return {
+    page: houseQuery?.page || resolved?.page || 'map',
+    article: resolved?.article,
+    resolved,
+    houseQuery,
+  };
 }

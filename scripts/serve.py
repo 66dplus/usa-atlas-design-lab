@@ -270,6 +270,86 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.respond(404, {'error': str(error)})
             except atlas_data.DatabaseUnavailable as error:
                 return self.respond(503, {'error': str(error)})
+        if path == '/api/atlas/period-observations':
+            try:
+                params = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=4)
+                period_type = params.get('period_type', [''])[0]
+                expected = {'field', 'period_type', 'year'} | ({'month'} if period_type == 'month' else set())
+                if set(params) != expected or any(len(values) != 1 for values in params.values()):
+                    raise ValueError('Choose one explicit unemployment period')
+                if params['field'][0] != '03.06:unemployment_rate':
+                    raise LookupError('Explicit periods are not available for this field')
+                year_text = params['year'][0]
+                if not re.fullmatch(r'(?:20|21)[0-9]{2}', year_text):
+                    raise ValueError('Choose a four-digit period year')
+                year = int(year_text)
+                month = None
+                if period_type == 'month':
+                    month_text = params['month'][0]
+                    if not re.fullmatch(r'(?:0?[1-9]|1[0-2])', month_text):
+                        raise ValueError('Choose a month from January through December')
+                    month = int(month_text)
+                elif period_type != 'annual':
+                    raise ValueError('Choose annual average or a month')
+                return self.respond(200, atlas_data.unemployment_period_observations(period_type, year, month))
+            except ValueError as error:
+                return self.respond(400, {'error': str(error)})
+            except LookupError as error:
+                return self.respond(404, {'error': str(error)})
+            except atlas_data.DatabaseUnavailable as error:
+                return self.respond(503, {'error': str(error)})
+        if path == '/api/atlas/unemployment-months':
+            try:
+                params = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=3)
+                if set(params) != {'year', 'geography_type', 'geography_id'} or any(
+                        len(values) != 1 for values in params.values()):
+                    raise ValueError('Choose one place and one unemployment year')
+                year_text = params['year'][0]
+                if not re.fullmatch(r'(?:20|21)[0-9]{2}', year_text):
+                    raise ValueError('Choose a four-digit period year')
+                result = atlas_data.unemployment_month_series(
+                    int(year_text), params['geography_type'][0], params['geography_id'][0])
+                return self.respond(200, result)
+            except ValueError as error:
+                return self.respond(400, {'error': str(error)})
+            except atlas_data.DatabaseUnavailable as error:
+                return self.respond(503, {'error': str(error)})
+        if path.startswith('/api/atlas/reader/v2/'):
+            try:
+                params = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=6)
+                if path == '/api/atlas/reader/v2/catalog':
+                    if params:
+                        raise ValueError('Candidate catalog does not accept query parameters')
+                    return self.respond(200, atlas_data.reader_v2_catalog())
+                if path == '/api/atlas/reader/v2/cd119-boundary':
+                    if params:
+                        raise ValueError('Candidate boundary does not accept query parameters')
+                    boundary = atlas_data.reader_v2_cd119_boundary(include_features=True)
+                    if not boundary['available']:
+                        return self.respond(503, {'error': 'Local 2024 CD119 geometry is unavailable.'})
+                    return self.respond(200, boundary)
+                if path != '/api/atlas/reader/v2/observations':
+                    return self.respond(404, {'error': 'Unknown candidate endpoint'})
+                required = {'dataset_id', 'period_type', 'year', 'geography_type'}
+                if not required <= set(params) or not set(params) <= required | {'party'} or any(
+                        len(values) != 1 for values in params.values()):
+                    raise ValueError('Choose one candidate dataset, period and geography.')
+                dataset_id = params['dataset_id'][0]
+                if dataset_id not in ({'unemployment', 'aian_broad_share', 'election_president_2024',
+                                      'election_senate_2024', 'election_house_2024'} | set(atlas_data.REFRESH_TARGETS)):
+                    raise LookupError('Candidate dataset is not in the local preview contract.')
+                year_text = params['year'][0]
+                if not re.fullmatch(r'(?:20|21)[0-9]{2}', year_text):
+                    raise ValueError('Choose a four-digit year.')
+                return self.respond(200, atlas_data.reader_v2_observations(
+                    dataset_id, params['period_type'][0], int(year_text),
+                    params['geography_type'][0], params.get('party', [''])[0] or None))
+            except ValueError as error:
+                return self.respond(400, {'error': str(error)})
+            except LookupError as error:
+                return self.respond(404, {'error': str(error)})
+            except atlas_data.DatabaseUnavailable as error:
+                return self.respond(503, {'error': str(error)})
         if path == '/api/view-settings':
             try:
                 return self.respond(200, read_settings(self.server.feedback_dir))

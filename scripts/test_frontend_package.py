@@ -2,6 +2,10 @@
 from pathlib import Path
 import tempfile
 import unittest
+import json
+import subprocess
+import sys
+ROOT = Path(__file__).resolve().parents[1]
 from scripts.build_temporary_preview import validate_entry_assets, PUBLIC
 
 
@@ -38,3 +42,11 @@ class FrontendPackageTests(unittest.TestCase):
             root = Path(folder)
             (root / 'app.css').write_text('a{background:url(data:image/png;base64,fixture)}')
             validate_entry_assets(root, {'/app.css': 'app.css'})
+
+    def test_release_selection_counts_come_from_the_runtime_registry(self):
+        result = subprocess.run(["node", str(ROOT / "scripts/selection_registry.mjs")],
+                                cwd=ROOT, text=True, capture_output=True, check=True)
+        registry = json.loads(result.stdout)
+        self.assertEqual(registry["sourceFields"], 38)
+        self.assertEqual(registry["selectionCounts"], {"primary": 41, "variants": 4, "total": 45})
+        self.assertIn("elections-house", registry["selectableIds"])

@@ -3,6 +3,7 @@
 from collections import OrderedDict
 import gzip
 import hashlib
+import ipaddress
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import mimetypes
@@ -22,6 +23,14 @@ from bug_reports import (MAX_REPORT_BODY, ReportRateLimiter, create_report_store
 from seo_render import articles, geography, metric_labels, redirect_target, render_route
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def local_review_client_allowed(address, headers):
+    try:
+        local = ipaddress.ip_address(address).is_loopback
+    except ValueError:
+        local = False
+    return local and not bool(headers.get('Forwarded') or headers.get('X-Forwarded-For'))
 
 
 class Busy(RuntimeError):
@@ -153,6 +162,16 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if len(self.path) > 2048 or self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
             return self.reply(400, {'error': 'Invalid request'})
         path = urlsplit(self.path).path
+        if (path.startswith('/api/atlas/reader/v2/') or
+                path in ('/api/atlas/period-observations', '/api/atlas/unemployment-months')):
+            try:
+                mode = atlas_data.reader_v2_mode()
+            except atlas_data.DatabaseUnavailable as error:
+                return self.reply(503, {'error': str(error)})
+            if mode == 'disabled':
+                return self.reply(404, {'error': 'Reader-v2 data are unavailable.'})
+            if mode == 'local_review' and not local_review_client_allowed(self.client_address[0], self.headers):
+                return self.reply(404, {'error': 'Local candidate preview is available only over loopback.'})
         route_path = path.lower().rstrip('/') or '/'
         app_route = route_path in ('/', '/ux', '/ux/index.html') or re.fullmatch(
             r'/(?:stats|support|about|blog(?:/[a-z0-9-]{1,64})?|compare(?:/[a-z0-9-]{1,64}){1,7}|united-states(?:/[a-z0-9-]{1,64}){0,4})', route_path)
@@ -199,6 +218,74 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 if field not in {metric['fieldId'] for metric in catalog['metrics'] if metric.get('fieldId')}:
                     return self.reply(404, {'error': 'Field is not in the published map catalog'})
                 return self.reply(200, self.server.cache.get(field, lambda: atlas_data.observations(field)))
+            if path == '/api/atlas/period-observations':
+                parameters = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=4)
+                period_type = parameters.get('period_type', [''])[0]
+                expected = {'field', 'period_type', 'year'} | ({'month'} if period_type == 'month' else set())
+                if set(parameters) != expected or any(len(values) != 1 for values in parameters.values()):
+                    return self.reply(400, {'error': 'Choose one explicit unemployment period'})
+                field = parameters['field'][0]
+                if field != '03.06:unemployment_rate':
+                    return self.reply(404, {'error': 'Explicit periods are not available for this field'})
+                year_text = parameters['year'][0]
+                if not re.fullmatch(r'(?:20|21)[0-9]{2}', year_text):
+                    return self.reply(400, {'error': 'Choose a four-digit period year'})
+                year = int(year_text)
+                month = None
+                if period_type == 'month':
+                    month_text = parameters['month'][0]
+                    if not re.fullmatch(r'(?:0?[1-9]|1[0-2])', month_text):
+                        return self.reply(400, {'error': 'Choose a month from January through December'})
+                    month = int(month_text)
+                elif period_type != 'annual':
+                    return self.reply(400, {'error': 'Choose annual average or a month'})
+                key = f'unemployment-period:{period_type}:{year}:{month or "annual"}'
+                response = self.server.cache.get(
+                    key, lambda: atlas_data.unemployment_period_observations(period_type, year, month))
+                return self.reply(200, response)
+            if path == '/api/atlas/unemployment-months':
+                parameters = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=3)
+                if set(parameters) != {'year', 'geography_type', 'geography_id'} or any(
+                        len(values) != 1 for values in parameters.values()):
+                    return self.reply(400, {'error': 'Choose one place and one unemployment year'})
+                year_text = parameters['year'][0]
+                if not re.fullmatch(r'(?:20|21)[0-9]{2}', year_text):
+                    return self.reply(400, {'error': 'Choose a four-digit period year'})
+                year = int(year_text)
+                geography_type = parameters['geography_type'][0]
+                geography_id = parameters['geography_id'][0]
+                key = f'unemployment-months:{year}:{geography_type}:{geography_id}'
+                response = self.server.cache.get(key, lambda: atlas_data.unemployment_month_series(
+                    year, geography_type, geography_id))
+                return self.reply(200, response)
+            if path == '/api/atlas/reader/v2/catalog':
+                return self.reply(200, self.server.cache.get('reader-v2-catalog', atlas_data.reader_v2_catalog))
+            if path == '/api/atlas/reader/v2/cd119-boundary':
+                boundary=self.server.cache.get('reader-v2-cd119-boundary',
+                    lambda: atlas_data.reader_v2_cd119_boundary(include_features=True))
+                if not boundary['available']:
+                    return self.reply(503, {'error':'The reviewed 2024 CD119 boundary is unavailable.'}, extra={'Retry-After':'2'})
+                return self.reply(200,boundary)
+            if path == '/api/atlas/reader/v2/observations':
+                parameters = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=6)
+                required = {'dataset_id','period_type','year','geography_type'}
+                if not required <= set(parameters) or not set(parameters) <= required | {'party'} or any(
+                        len(values) != 1 for values in parameters.values()):
+                    return self.reply(400, {'error':'Choose one candidate dataset, period and geography.'})
+                dataset_id=parameters['dataset_id'][0]
+                if dataset_id not in ({'unemployment','aian_broad_share','election_president_2024',
+                                      'election_senate_2024','election_house_2024'} | set(atlas_data.REFRESH_TARGETS)):
+                    return self.reply(404, {'error':'Candidate dataset is not in the local preview contract.'})
+                year_text=parameters['year'][0]
+                if not re.fullmatch(r'(?:20|21)[0-9]{2}',year_text):
+                    return self.reply(400, {'error':'Choose a four-digit year.'})
+                period_type=parameters['period_type'][0]
+                geography_type=parameters['geography_type'][0]
+                party=parameters.get('party',[''])[0] or None
+                key='reader-v2:'+':'.join([dataset_id,period_type,year_text,geography_type,party or ''])
+                response=self.server.cache.get(key,lambda:atlas_data.reader_v2_observations(
+                    dataset_id,period_type,int(year_text),geography_type,party))
+                return self.reply(200,response)
             if path == '/api/analytics/config':
                 return self.reply(200, {'enabled': False})
             if path == '/api/view-settings':

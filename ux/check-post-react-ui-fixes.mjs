@@ -189,6 +189,12 @@ try {
     const page = await context.newPage(); let release; const gate = new Promise((resolve) => { release = resolve; });
     await page.addInitScript(() => {
       window.__startupMotion = [];
+      window.__startupIntervals = [];
+      const setInterval = window.setInterval.bind(window);
+      window.setInterval = (callback, delay, ...args) => {
+        if (delay === 2800 && typeof callback === 'function') window.__startupIntervals.push(callback);
+        return setInterval(callback, delay, ...args);
+      };
       const animate = Element.prototype.animate;
       Element.prototype.animate = function (frames, timing) {
         const animation = animate.call(this, frames, timing);
@@ -228,6 +234,13 @@ try {
     assert.equal(cycled.animations.some((a) => a.fill === 'forwards'), false, 'The exit fill is canceled before entry');
     assert.notEqual(cycled.text, first);
     pass(reduced ? 'startup reduced motion' : 'startup entrance and phrase cycle', { first, reduced, cycled });
+    if (!reduced) {
+      await page.waitForFunction(() => window.__startupIntervals?.length === 2, null, { timeout: 5000 });
+      await page.evaluate(() => window.__startupIntervals.at(-1)?.());
+      await page.waitForFunction(() => [...(document.querySelector('#startup-message')?.getAnimations() || [])]
+        .some((animation) => animation.effect?.getTiming().duration === 160 && animation.effect.getTiming().fill === 'forwards' && animation.playState === 'running'));
+      pass('startup ready boundary begins with an in-flight React phrase exit', { phrase: cycled.text });
+    }
     release();
     await page.waitForFunction(() => document.body.dataset.atlasStatus === 'ready', null, { timeout: 60000 });
     await page.waitForTimeout(2900);
@@ -461,7 +474,7 @@ try {
       ['race-ethnicity--black', 'Black', 'People who are Black or African American alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.'],
       ['race-ethnicity--asian', 'Asian', 'People who are Asian alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.'],
       ['race-ethnicity--white-non-hispanic', 'White', 'People who are White alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.'],
-      ['race-ethnicity', 'Hispanic', 'Hispanic or Latino residents divided by all residents, multiplied by 100. This is the share of the total population that is Hispanic or Latino; Hispanic origin can be of any race.'],
+      ['race-ethnicity', 'Hispanic / Latino', 'Hispanic or Latino residents divided by all residents, multiplied by 100. This is the share of the total population that is Hispanic or Latino; Hispanic origin can be of any race.'],
     ];
     for (const [id, label, definition] of expected) {
       const item = page.locator(`#metric-library [data-metric="${id}"]`);

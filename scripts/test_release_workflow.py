@@ -117,10 +117,10 @@ class WorkflowTests(unittest.TestCase):
         self.lock = self.root/'contracts'/'reader-contract.lock.json'
         artifact=self.root/'contracts'/'reader'/'v1'/'contract.json'
         artifact.parent.mkdir(parents=True)
-        write_json(artifact, {'version':'v1','schema_fingerprint':'schema-v1','read_only':True,
+        write_json(artifact, {'version':'1.0.0','schema_fingerprint':'schema-v1','read_only':True,
                               'admission_filter':"usa_atlas.ingest_run.status = 'pass'"})
         write_json(self.lock, {'producerRepository':'reader','sourceCommit':'a'*40,
-            'contractVersion':'v1','artifactPath':'database/reader/v1',
+            'contractVersion':'1.0.0','artifactPath':'database/reader/v1',
             'localArtifactPath':'contracts/reader/v1/contract.json',
             'contractSha256':digest(artifact.read_bytes()),'schemaFingerprint':'schema-v1',
             'bootstrapSha256':'2'*64,'fixtureSha256':'3'*64,
@@ -715,7 +715,7 @@ class WorkflowTests(unittest.TestCase):
         lock = self.root / 'probe-lock.json'
         artifact = self.root / 'probe-contract.json'
         write_json(artifact, {'objects':{'catalog_field':{'catalog_field_id':'text'}}})
-        write_json(lock, {'schemaFingerprint':'probe-fingerprint'})
+        write_json(lock, {'contractVersion':'1.0.0','schemaFingerprint':'probe-fingerprint'})
         valid = 'catalog_field\tcatalog_field_id\ttext\t\n'
         identity = {'Id':'stage-container','Image':'sha256:test','State':{'Status':'running'}}
         def fake_run(command, **kwargs):
@@ -738,6 +738,117 @@ class WorkflowTests(unittest.TestCase):
         with patch('scripts.release_workflow.run', return_value=type('R', (), {'stdout':wrong})()), \
              self.assertRaisesRegex(ReleaseError, 'missing or mistypes'):
             backend.reader_schema_proof('stage-container', lock, artifact)
+
+    def test_reader_v2_schema_probe_checks_all_declared_postgres_columns(self):
+        backend = DockerBackend({})
+        lock = self.root / 'probe-v2-lock.json'
+        artifact = self.root / 'probe-v2-contract.json'
+        objects = {
+            'reader_observation': {
+                'candidate_status': 'text', 'period_month': 'smallint',
+                'source_releases': 'text[]', 'value': 'double precision',
+            },
+            'reader_v2_catalog_field': {
+                'catalog_field_id': 'text', 'contract_sha256': 'character(64)',
+            },
+        }
+        write_json(artifact, {'version':'2.0.0','objects':objects})
+        write_json(lock, {'contractVersion':'2.0.0','schemaFingerprint':'probe-v2'})
+        valid = ('usa_atlas\treader_observation\tcandidate_status\ttext\n'
+                 'usa_atlas\treader_observation\tperiod_month\tsmallint\n'
+                 'usa_atlas\treader_observation\tsource_releases\ttext[]\n'
+                 'usa_atlas\treader_observation\tvalue\tdouble precision\n'
+                 'usa_atlas\treader_v2_catalog_field\tcatalog_field_id\ttext\n'
+                 'usa_atlas\treader_v2_catalog_field\tcontract_sha256\tcharacter(64)\n')
+        identity = {'Id':'stage-container','Image':'sha256:test','State':{'Status':'running'}}
+        def fake_run(command, **kwargs):
+            if command[:3] == ['docker','exec','stage-container'] and command[-1:] == ['/app/ux/build.json']:
+                return type('R', (), {'stdout':'{"release":"probe"}\n'})()
+            return type('R', (), {'stdout':valid})()
+        with patch('scripts.release_workflow.run', side_effect=fake_run) as mocked, patch.object(backend,'inspect',return_value=identity):
+            proof = backend.reader_schema_proof('stage-container', lock, artifact)
+        self.assertTrue(proof['queryReadOnly'])
+        probe_query = next(call.kwargs['input_text'] for call in mocked.call_args_list if 'input_text' in call.kwargs)
+        self.assertIn('format_type(a.atttypid,a.atttypmod)', probe_query)
+        wrong = valid.replace('source_releases\ttext[]', 'source_releases\tinteger[]')
+        with patch('scripts.release_workflow.run', return_value=type('R', (), {'stdout':wrong})()), \
+             self.assertRaisesRegex(ReleaseError, 'missing or mistypes'):
+            backend.reader_schema_proof('stage-container', lock, artifact)
+
+    def test_reader_v2_contract_identity_binds_full_column_map_and_admission_filters(self):
+        from scripts.release_workflow import contract_identity
+        import hashlib
+        root = self.root / 'v2-contract-test'
+        artifact_root = root / 'contracts/reader/v2'
+        artifact_root.mkdir(parents=True)
+        objects = {name:{'id':'text'} for name in (
+            'catalog_field','ingest_run','observation','reader_batch','reader_observation',
+            'reader_v2_catalog_field','reader_v2_admission_event','geography_boundary',
+            'election_contest','election_candidate','election_party_result','election_availability')}
+        basis = json.dumps(objects, sort_keys=True, separators=(',', ':')).encode()
+        contract = {'format':'usa_atlas_reader_contract','contract_id':'usa_atlas.application_reader',
+            'contract_version':'2.0.0','read_only':True,
+            'schema_fingerprint':hashlib.sha256(basis).hexdigest(),
+            'admission_filter':"usa_atlas.ingest_run.status = 'pass'",
+            'additional_reader_filter':"usa_atlas.reader_batch.candidate_status = 'admitted'",
+            'objects':objects,
+            'object_metadata':{name:{'access':'SELECT','reader_filter':"usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'",'version':'v2-additive'} for name in objects},
+            'artifact_sha256':{}}
+        artifact_hashes = {}
+        for rel, body in {'schema.sql':'CREATE SCHEMA usa_atlas;\n','consumer-protocol.md':'read-only\n',
+                          'fixtures/reader-fixture.sql':'SELECT 1;\n','fixtures/reader-query.sql':'SELECT 1;\n'}.items():
+            file=artifact_root/rel; file.parent.mkdir(parents=True,exist_ok=True); file.write_text(body)
+            producer_path='database/reader/v2/'+rel
+            contract['artifact_sha256'][producer_path]=json_sha(file)
+            artifact_hashes[rel]=json_sha(file)
+        contract_path = artifact_root / 'contract.json'
+        write_json(contract_path, contract)
+        artifact_hashes['contract.json']=json_sha(contract_path)
+        lock_path = root / 'contracts/reader-v2-contract.lock.json'
+        export={
+            'database/reader/v2/contract.json':'contract.json','database/reader/v2/schema.sql':'schema.sql',
+            'database/reader/v2/consumer-protocol.md':'consumer-protocol.md',
+            'database/reader/v2/fixtures/reader-fixture.sql':'fixtures/reader-fixture.sql',
+            'database/reader/v2/fixtures/reader-query.sql':'fixtures/reader-query.sql'}
+        write_json(lock_path, {'producerRepository':'usa-atlas-data-collection','sourceCommit':'a'*40,
+            'producerTag':'reader-v2-test-tag',
+            'contractVersion':'2.0.0','artifactPath':'database/reader/v2',
+            'localArtifactPath':'contracts/reader/v2','contractSha256':json_sha(contract_path),
+            'schemaFingerprint':contract['schema_fingerprint'],
+            'admissionFilter':"usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'",
+            'consumerExport':export,'artifacts':artifact_hashes})
+        identity = contract_identity(lock_path)
+        self.assertEqual(identity['readerSchemaFingerprint'],contract['schema_fingerprint'])
+        pending_lock = json.loads(lock_path.read_text())
+        pending_lock['sourcePinStatus'] = 'awaiting-accepted-producer-tag'
+        write_json(lock_path, pending_lock)
+        with self.assertRaisesRegex(ReleaseError, 'not been finalized'):
+            contract_identity(lock_path)
+        pending_lock.pop('sourcePinStatus')
+        write_json(lock_path, pending_lock)
+        contract['objects']['reader_observation']['value'] = 'numeric'
+        write_json(contract_path, contract)
+        lock = json.loads(lock_path.read_text()); lock['contractSha256'] = json_sha(contract_path)
+        lock['artifacts']['contract.json'] = lock['contractSha256']; write_json(lock_path,lock)
+        with self.assertRaisesRegex(ReleaseError,'schema fingerprint'):
+            contract_identity(lock_path)
+
+    def test_accepted_canonical_v2_pin_is_release_eligible_and_v1_remains_eligible(self):
+        from scripts.release_workflow import contract_identity
+        root = Path(__file__).resolve().parents[1]
+        v2_path = root / 'contracts/reader-v2-contract.lock.json'
+        v2_lock = json.loads(v2_path.read_text())
+        self.assertEqual(v2_lock['sourceCommit'], '5f21e6e0921cf9af50a675d7da4b690e28d43026')
+        self.assertEqual(v2_lock['producerTag'], 'reader-contract-v2.0.0')
+        self.assertNotIn('sourcePinStatus', v2_lock)
+        v2 = contract_identity(v2_path)
+        self.assertEqual(v2['readerSchemaFingerprint'], v2_lock['schemaFingerprint'])
+        v1_path = root / 'contracts/reader-contract.lock.json'
+        v1_lock = json.loads(v1_path.read_text())
+        v1 = contract_identity(v1_path)
+        self.assertEqual(v1['readerSchemaFingerprint'], v1_lock['schemaFingerprint'])
+        self.assertEqual(v1_lock['sourceCommit'], 'b405bfdf473614beea49dd5126a843a916168f7d')
+        self.assertEqual(v1_lock['contractSha256'], '7b9910816ac5608cbb8c1c90d2bbef45cc464e80d3c13aed92b7a2d62dd7600b')
 
 
 if __name__=='__main__':

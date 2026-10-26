@@ -3,6 +3,7 @@
 
 import json
 import argparse
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -11,10 +12,48 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts import atlas_data
 
 
 def sql_text(value):
     return "'" + str(value).replace("'", "''") + "'"
+
+
+def synthetic_cd119_boundary_sql():
+    """Create test-only rows to exercise the admitted geometry database path."""
+    rows=[]
+    ingest_id='00000000-0000-4000-8000-000000000101'
+    identities=[('56','00')]
+    state_fipses=sorted(code for code in atlas_data.STATE_CODES.values() if code!='11')
+    for state_index,state in enumerate(code for code in state_fipses if code!='56'):
+        seats=9 if state_index<42 else 8
+        identities.extend((state,f'{district:02d}') for district in range(1,seats+1))
+    if (len(identities)!=435 or len(set(identities))!=435 or
+            sum(district=='00' for _,district in identities)!=1 or
+            any(district=='98' for _,district in identities)):
+        raise RuntimeError('Synthetic CI boundary identities must be 435 unique voting-district IDs.')
+    for index,(state,district) in enumerate(identities):
+        geoid=state+district
+        x=index*2
+        geometry={'type':'Polygon','coordinates':[[[x,0],[x+1,0],[x+1,1],[x,1],[x,0]]]}
+        geometry_json=json.dumps(geometry,sort_keys=True,separators=(',',':'))
+        geometry_sha256=hashlib.sha256(geometry_json.encode()).hexdigest()
+        values=(geoid,'congressional_district',state,district,'119',2024,district=='00',
+            'voting_district',f'Synthetic CI district {geoid}',geometry_json,
+            atlas_data.CD119_SOURCE_URL,atlas_data.CD119_SOURCE_SHA256,geometry_sha256,
+            'census-cb-2024-cd119-500k','candidate_not_admitted','admitted',ingest_id)
+        sql_values=','.join('true' if value is True else 'false' if value is False else
+            sql_text(value) for value in values)
+        rows.append('('+sql_values+')')
+    return [
+        '-- Synthetic CI-only geometries; source identity matches the reviewed contract for adapter-path testing.',
+        '-- These shapes are not Census boundaries; source_status remains candidate_not_admitted.',
+        "INSERT INTO usa_atlas.geography_boundary "
+        "(geo_id,geo_type,state_fips,district_code,congress_session,boundary_vintage,is_at_large,seat_type,label,"
+        "geometry_json,geometry_source_url,geometry_source_sha256,geometry_record_sha256,source_release,source_status,"
+        "candidate_status,ingest_id) VALUES "+',\n'.join(rows)+';'
+    ]
 
 
 def main():
@@ -101,13 +140,27 @@ def main():
                           "(geo_id,geo_type,period,field_id,catalog_field_id,value,unit,source,source_release,"
                           "source_url,methodology_note,retrieved_at,ingest_id) VALUES (" + values + ");")
 
+    # Add the exact frozen consumer schema and producer fixture, then promote
+    # only the test batch in a separate app-owned statement. That drives CI
+    # through admitted mode without pretending local_review rows are public.
+    statements.extend([
+        (ROOT / 'contracts/reader/v2/schema.sql').read_text(),
+        (ROOT / 'contracts/reader/v2/fixtures/reader-fixture.sql').read_text(),
+        (ROOT / 'contracts/reader/v2/fixtures/ci-admitted.sql').read_text(),
+        'GRANT USAGE ON SCHEMA usa_atlas TO atlas_reader;',
+        'GRANT SELECT ON ALL TABLES IN SCHEMA usa_atlas TO atlas_reader;',
+    ])
+    # Synthetic admitted rows make the CI database execute the CD119 SQL and
+    # post-PostgreSQL geometry hash guards without claiming Census geometry.
+    statements.extend(synthetic_cd119_boundary_sql())
+
     result = subprocess.run([psql, "-X", "-w", "-q", "--dbname", "usa_atlas",
                              "--set", "ON_ERROR_STOP=1"], env=env, input="\n".join(statements),
                             text=True, capture_output=True, timeout=30)
     if result.returncode:
         print("Could not initialize isolated application CI database.", file=sys.stderr)
         raise SystemExit(1)
-    print("Initialized deterministic 81-field adapter fixture in isolated CI PostgreSQL.")
+    print("Initialized deterministic v1 fixture plus explicitly admitted synthetic v2 adapter fixture in isolated CI PostgreSQL.")
 
 
 if __name__ == "__main__":

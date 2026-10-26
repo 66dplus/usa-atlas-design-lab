@@ -4,7 +4,8 @@ import type { Atlas } from './use-atlas';
 import { mobileLayout } from './use-atlas';
 import { displayMetricName, type Metric, type Place } from './types';
 import { formatValue, formatPeriod, missingReason, comparable } from '../model.js';
-import { MetricSwitch, icon, indicatorIcon } from './components';
+import { MetricSwitch, PartySwitch, icon, indicatorIcon } from './components';
+import { UnemploymentPeriods } from './unemployment-periods';
 function viewValues(atlas: Atlas) {
   const { resources } = atlas;
   const sourceLink = (metric: Metric, place: Place | undefined) => (
@@ -64,7 +65,13 @@ export function MetricItems({ atlas }: { atlas: Atlas }) {
           </small>
         </span>
         <span className="metric-availability">
-          {m.plannedState === 'proposed'
+          {m.availability === 'local_candidate'
+            ? 'Local preview · not released'
+            : m.availability === 'not_admitted'
+              ? 'Not admitted'
+              : m.availability === 'unavailable'
+                ? 'Unavailable'
+                : m.plannedState === 'proposed'
             ? 'Planned'
             : state.cardMode
               ? 'Add to card'
@@ -133,6 +140,10 @@ export function InspectorContent({ atlas }: { atlas: Atlas }) {
           <button id="edit-card">{'Choose fields'}</button>
         </div>
         {metricSwitchMarkup(m)}
+        {m.switchGroup === 'elections' && <PartySwitch selectedParty={state.selectedParty} onSelect={atlas.selectParty} />}
+        <UnemploymentPeriods atlas={atlas} metric={m} />
+        {m.availability === 'local_candidate' && <p className="local-candidate-note">Local candidate preview · not released. Results are isolated to this local review.</p>}
+        {m.availability === 'not_admitted' && <p className="local-candidate-note">{m.coverageNote || 'Candidate data is not admitted for public display.'}</p>}
         {rows.map((item) => (
           <MetricRow
             key={item.id}
@@ -166,7 +177,7 @@ export function InspectorContent({ atlas }: { atlas: Atlas }) {
                 ? 'Planned indicator'
                 : 'No data here'}
         </h3>
-        <p className="no-data-detail">{missingReason(m, f, data)}</p>
+        <p className="no-data-detail">{row?.qualityState === 'no_election' ? 'No election was held for this office in this place during the 2024 cycle.' : row?.qualityState === 'nonmapping_geography' ? 'This source geography has no matching map boundary. Its value is not reassigned.' : missingReason(m, f, data)}</p>
         {data.status === 'error' ? (
           <button className="outline-button" data-retry={m.id}>
             {'Retry data'}
@@ -205,7 +216,9 @@ export function InspectorContent({ atlas }: { atlas: Atlas }) {
       </div>
       <p className="place-type">
         {f
-          ? isCounty
+          ? m.geographyType === 'congressional_district'
+            ? place(f.stateId)!.name + ' · Congressional district'
+            : isCounty
             ? place(f.stateId)!.name + ' · County equivalent'
             : 'State profile'
           : '50 states + Washington, DC'}
@@ -214,7 +227,12 @@ export function InspectorContent({ atlas }: { atlas: Atlas }) {
       {'\n    '}
       <p className="metric-caption">{displayMetricName(m)}</p>
       {metricSwitchMarkup(m)}
+      {m.switchGroup === 'elections' && <PartySwitch selectedParty={state.selectedParty} onSelect={atlas.selectParty} />}
+      {m.availability === 'local_candidate' && <p className="local-candidate-note">Local candidate preview · not released. Results are isolated to this local review.</p>}
+      {m.availability === 'not_admitted' && <p className="local-candidate-note">{m.coverageNote || 'Candidate data is not admitted for public display.'}</p>}
+      <UnemploymentPeriods atlas={atlas} metric={m} />
       {stat}
+      {m.switchGroup === 'elections' && row?.qualityState === 'observed' && <ElectionDetails row={row} />}
       {'\n    '}
       <div className="local-position">
         <span>{'Observation period'}</span>
@@ -266,6 +284,24 @@ export function InspectorContent({ atlas }: { atlas: Atlas }) {
       )}
     </>
   );
+}
+export function ElectionDetails({ row }: { row: import('./types').Observation }) {
+  const rawStages = Array.isArray(row.sourceStage) ? row.sourceStage.join(', ') : row.sourceStage;
+  const race = `${row.stage || 'general'}${rawStages ? ` (source stage ${rawStages})` : ''}${row.isSpecial ? ' · special' : ''}${row.isRunoff ? ' · runoff' : ''}`;
+  return <section className="election-details" aria-label="Election result provenance">
+    <strong>{row.electionYear || 2024} · {race} · {row.party}</strong>
+    <p>{row.qualityState === 'no_election'
+      ? 'No election was held for this office in this place during the 2024 cycle.'
+      : row.votes == null
+        ? 'Selected-party vote totals are unavailable.'
+        : `${row.votes} selected-party votes / ${row.totalVotes ?? '—'} total contest votes`}</p>
+    {row.candidates?.map((candidate, index) => <p key={candidate.candidateId || candidate.candidate || index}>
+      {candidate.candidate || 'Candidate'} · {candidate.partyOriginal || candidate.party || row.party} · {candidate.votes} votes
+      {candidate.share != null ? ` (${candidate.share.toFixed(2)}% of all contest votes)` : ''}
+    </p>)}
+    <small>{row.sourceRelease || 'Source release unavailable'}{row.sourceVersion ? ` · ${row.sourceVersion}` : ''} · {row.resultMode || 'TOTAL'} results</small>
+    {row.sourceUrl && <a href={row.sourceUrl} target="_blank" rel="noreferrer">Source</a>}
+  </section>;
 }
 export function QuickStatsContent({ atlas }: { atlas: Atlas }) {
   const { metricById, pinned, selected, metric, layer, number, sourceLink, metricSwitchMarkup } =

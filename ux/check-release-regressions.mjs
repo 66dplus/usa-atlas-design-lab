@@ -197,7 +197,7 @@ async function sheetBehavior(page,name){
   assert.deepEqual(after.map,before.map,`${name}: sheet snaps do not resize the map viewport`);
   assert.equal(visible,true);void custom;
 }
-async function metricDefinition(page,name){
+async function metricDefinition(page,name,contractVersion){
   if(name.startsWith('chrome-')&&viewportForName(name)<=760){
     const sheet=page.locator('#explore-panel');
     const handle=sheet.locator(':scope > .sheet-handle');
@@ -214,7 +214,9 @@ async function metricDefinition(page,name){
     assert.match(text,/Unemployment rate[\s\S]*BLS LAUS/i,`${name}: unemployment metric and source are shown in the tooltip`);
     assert.match(text,/One latest month and release; no annual averaging|Unemployed people divided by the civilian labor force/i,`${name}: unemployment period or denominator and method are defined`);
   }else{
-    assert.match(text,/Unemployment rate[\s\S]*BLS · Local Area Unemployment Statistics/i,`${name}: unemployment metric and source are shown in the tooltip`);
+    assert.match(text,/Unemployment rate/i,`${name}: unemployment metric is shown in the tooltip`);
+    const expectedSource=contractVersion==='2.0.0'?'BLS LAUS · not seasonally adjusted':'BLS · Local Area Unemployment Statistics';
+    assert.ok(text.includes(expectedSource),`${name}: unemployment source matches reader contract ${contractVersion}`);
     assert.match(text,/Unemployed people divided by the civilian labor force[\s\S]*not of all residents/i,`${name}: unemployment denominator and interpretation are defined`);
   }
   await page.keyboard.press('Escape');
@@ -222,7 +224,7 @@ async function metricDefinition(page,name){
 async function startupDefinitionBeforeRefresh(){
   const name='startup-definition-before-refresh';
   const context=await browser.newContext({viewport:{width:360,height:640},isMobile:true,hasTouch:true});
-  const errors=[],expectedNetwork={urls:new Set(),consoleMessages:new Set()};let page,releaseResponse,apiResponse,apiFailure;
+  const errors=[],expectedNetwork={urls:new Set(),consoleMessages:new Set()};let page,releaseResponse,apiResponse,apiFailure,requestIdentity;
   const responseHeld=new Promise(resolve=>{apiResponse=resolve;});
   const responseGate=new Promise(resolve=>{releaseResponse=resolve;});
   const item={name,pass:false};results.checks.push(item);
@@ -230,14 +232,34 @@ async function startupDefinitionBeforeRefresh(){
     const definitions=JSON.parse(await readFile(new URL('./metric-definitions.json',import.meta.url),'utf8'));
     const canonical=definitions.metrics.find(metric=>metric.id==='unemployment')?.method;
     assert.ok(canonical,'canonical unemployment definition is present');
+    const manifestResponse=await fetch(`${base}/ux/build.json`,{redirect:'error'});
+    assert.equal(manifestResponse.status,200,`${name}: immutable runtime build manifest is available`);
+    const manifest=await manifestResponse.json();
+    const contractVersion=manifest.dataReaderLock?.contractVersion;
+    assert.ok(['1.0.0','2.0.0'].includes(contractVersion),`${name}: runtime reader contract version is explicitly supported`);
+    assert.equal(manifest.readerContractVersion,contractVersion,`${name}: manifest and immutable reader lock versions agree`);
+    assert.equal(manifest.readerLockSha256,manifest.dataReaderLock.sha256,`${name}: request protocol is selected from the build-bound reader lock`);
+    const expectedPath=contractVersion==='2.0.0'?'/api/atlas/period-observations':'/api/atlas/observations';
+    item.readerContractVersion=contractVersion;
+    const responseName=contractVersion==='2.0.0'?'annual-period':'published observations';
     await context.addInitScript(()=>{try{localStorage.setItem('usa-atlas-theme','light');}catch{}});
     page=await context.newPage();currentPage=page;addPageListeners(page,errors,expectedNetwork);
-    await page.route('**/api/atlas/observations?field=*',async route=>{
+    await page.route('**/api/atlas/**',async route=>{
       const requestURL=new URL(route.request().url());
       if(requestURL.searchParams.get('field')!=='03.06:unemployment_rate')return route.continue();
+      const query=[...requestURL.searchParams.entries()].sort(([a],[b])=>a.localeCompare(b));
+      requestIdentity={path:requestURL.pathname,field:requestURL.searchParams.get('field'),query};
+      const expectedQuery=contractVersion==='2.0.0'
+        ?[['field','03.06:unemployment_rate'],['period_type','annual'],['year','2025']]
+        :[['field','03.06:unemployment_rate']];
+      if(requestIdentity.path!==expectedPath||JSON.stringify(query)!==JSON.stringify(expectedQuery)){
+        apiFailure=new Error(`${name}: request does not match immutable reader contract ${contractVersion}: ${JSON.stringify(requestIdentity)}`);
+        apiResponse({error:String(apiFailure)});
+        return route.abort();
+      }
       try{
         const response=await route.fetch();
-        apiResponse({status:response.status(),ok:response.ok()});
+        apiResponse({status:response.status(),ok:response.ok(),identity:requestIdentity});
         await responseGate;
         await route.fulfill({response});
       }catch(error){apiFailure=error;apiResponse({error:String(error)});await route.abort();}
@@ -246,9 +268,14 @@ async function startupDefinitionBeforeRefresh(){
     await ready(page);
     let startupTimeout;
     const live=await Promise.race([responseHeld,new Promise((resolve,reject)=>{
-      startupTimeout=setTimeout(()=>reject(new Error(`${name}: real observations request never reached its held response`)),60000);
+      startupTimeout=setTimeout(()=>reject(new Error(`${name}: real ${responseName} request never reached its held response`)),60000);
     })]).finally(()=>clearTimeout(startupTimeout));
-    assert.equal(live.ok,true,`real observations API returned HTTP ${live.status}`);
+    assert.equal(live.ok,true,`real ${responseName} API returned HTTP ${live.status}`);
+    const expectedIdentity=contractVersion==='2.0.0'
+      ?{path:'/api/atlas/period-observations',field:'03.06:unemployment_rate',query:[['field','03.06:unemployment_rate'],['period_type','annual'],['year','2025']]}
+      :{path:'/api/atlas/observations',field:'03.06:unemployment_rate',query:[['field','03.06:unemployment_rate']]};
+    assert.deepEqual(live.identity,expectedIdentity,`${name}: startup follows the selected immutable reader contract`);
+    item.requestIdentity=live.identity;
     const sheet=page.locator('#explore-panel'),handle=sheet.locator(':scope > .sheet-handle');
     if(await sheet.getAttribute('data-snap')==='min')await handle.click();
     if(await sheet.getAttribute('data-snap')==='half')await handle.click();
@@ -260,19 +287,21 @@ async function startupDefinitionBeforeRefresh(){
     assert.equal(apiFailure,undefined,'holding the real API response did not produce a network error');
     const deliveredResponse=page.waitForResponse(response=>{
       const responseURL=new URL(response.url());
-      return responseURL.pathname==='/api/atlas/observations'&&responseURL.searchParams.get('field')==='03.06:unemployment_rate';
+      const query=[...responseURL.searchParams.entries()].sort(([a],[b])=>a.localeCompare(b));
+      return responseURL.pathname===expectedPath&&responseURL.searchParams.get('field')==='03.06:unemployment_rate'&&
+        JSON.stringify(query)===JSON.stringify(expectedIdentity.query);
     },{timeout:60000});
     releaseResponse();
     const response=await deliveredResponse;
-    assert.equal(response.ok(),true,'the held real observations API response is delivered successfully');
+    assert.equal(response.ok(),true,`the held real ${contractVersion} observations response is delivered successfully`);
     const responseBody=await response.body();
-    assert.ok(responseBody.length>0,'the held real observations API response body is complete');
+    assert.ok(responseBody.length>0,'the held real annual-period API response body is complete');
     JSON.parse(responseBody.toString('utf8'));
-    await checkConsole(errors,name);item.pass=true;
+    await checkConsole(errors,name);item.pass=true;return contractVersion;
   }catch(error){item.error=error.stack||String(error);recordFailure(name,error);await capture(page,name,'failure');throw error;
   }finally{releaseResponse?.();await capture(page,name,item.pass?'pass':'failure');await context.close();currentPage=null;}
 }
-async function runMatrixCase(viewport,theme){
+async function runMatrixCase(viewport,theme,contractVersion){
   const name=`chrome-${viewport.width}x${viewport.height}-${theme}`;const context=await browser.newContext({viewport,isMobile:viewport.width<=760,hasTouch:viewport.width<=760});
   const errors=[],expectedNetwork={urls:new Set()};let page;
   const item={name,viewport,theme,pass:false,errors};results.checks.push(item);
@@ -291,7 +320,7 @@ async function runMatrixCase(viewport,theme){
     await navigationChecks(page,name);
     await countyCheck(page,name);
     if(viewport.width<=760)await sheetBehavior(page,name);
-    await metricDefinition(page,name);
+    await metricDefinition(page,name,contractVersion);
     await checkConsole(errors,name);
     item.pass=true;
   }catch(error){item.error=error.stack||String(error);recordFailure(name,error);await capture(page,name,'failure');throw error;
@@ -328,8 +357,8 @@ async function apiFailureAndRetry(){
 try{
   assert.ok(!mutation||mutation==='legacy-footer',`Unsupported test mutation: ${mutation}`);
   browser=await chromium.launch({channel:'chrome'});
-  await startupDefinitionBeforeRefresh();
-  for(const viewport of viewports)for(const theme of themes)await runMatrixCase(viewport,theme);
+  const contractVersion=await startupDefinitionBeforeRefresh();
+  for(const viewport of viewports)for(const theme of themes)await runMatrixCase(viewport,theme,contractVersion);
   await apiFailureAndRetry();
 }catch(error){if(!results.failures.length)recordFailure('suite',error);}
 finally{

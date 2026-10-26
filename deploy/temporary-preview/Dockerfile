@@ -3,5 +3,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -
 WORKDIR /app
 COPY . /app/
 USER 10001:10001
-ENV PGHOST=usa-atlas-postgres PGPORT=5432 PGUSER=usa_atlas_reader PYTHONDONTWRITEBYTECODE=1
+ENV PGHOST=usa-atlas-postgres PGPORT=5432 PGUSER=usa_atlas_reader ATLAS_READER_V2_MODE=admitted PYTHONDONTWRITEBYTECODE=1
 ENTRYPOINT ["python3", "/app/scripts/preview_server.py"]
