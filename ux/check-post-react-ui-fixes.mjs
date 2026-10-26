@@ -7,7 +7,15 @@ import { chromium } from 'playwright';
 const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/$/, ''),
   output = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-atlas-post-react-ui-${Date.now()}`,
   packageRoot = process.env.ATLAS_PACKAGE_ROOT,
-  results = { suite: 'post-react-ui-fixes', base, packageRoot: packageRoot || null, checks: [], failures: [], screenshots: [], geometry: [] };
+  fixtureFlag = process.env.ATLAS_TEST_RACE_AVAILABILITY_FIXTURE,
+  fixtureOverride = fixtureFlag === '1',
+  results = { suite: 'post-react-ui-fixes', base, packageRoot: packageRoot || null, fixtureOverride, checks: [], failures: [], screenshots: [], geometry: [] };
+if (fixtureFlag && fixtureFlag !== '1') throw new Error('ATLAS_TEST_RACE_AVAILABILITY_FIXTURE must be 1 when set');
+if (fixtureOverride) {
+  const runtime = new URL(base);
+  if (runtime.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(runtime.hostname))
+    throw new Error('Race availability fixture requires a loopback HTTP runtime');
+}
 const originalPortraitSha256 = '8b4089f06d44e88ce212d3974ca95fa48ba674ffd99add9d38a8f91396e3f92f';
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -443,10 +451,10 @@ try {
 
   // Race/ethnicity presentation names are short while metric identity and methods remain complete.
   {
-    // The isolated PG fixture has no observations for these four catalog series.
-    // Change only their availability flag in this browser response so the real
-    // picker/selection/source UI can be asserted without changing fixture data.
-    const { context, page } = await open('/united-states/california/unemployment', { width: 390, height: 844 }, 'dark', 'no-preference', true);
+    // Only the explicitly marked local/CI fixture changes availability: its PG
+    // database has no observations for these four otherwise unchanged series.
+    // Stage/public run the same four UI assertions against the real catalog.
+    const { context, page } = await open('/united-states/california/unemployment', { width: 390, height: 844 }, 'dark', 'no-preference', fixtureOverride);
     await page.locator('.mobile-summary-name').click();
     await page.waitForFunction(() => !document.querySelector('#metric-library')?.hidden);
     const expected = [
@@ -469,6 +477,7 @@ try {
       await page.locator('#explore-panel .indicator-legend-source').click();
       await page.waitForFunction(() => !document.querySelector('#source-popup')?.hidden);
       assert.equal((await page.locator('#source-popup .source-mobile > p').innerText()).trim(), method, `${label} full method remains available`);
+      pass(`race/ethnicity ${id} label, ID and full method${fixtureOverride ? ' (catalog availability fixture)' : ' (real catalog)'}`, { metricId: id, visibleLabel: label, fullMethod: method, fixtureOverride });
       await page.locator('#source-close').click();
       await page.waitForTimeout(150);
       await drag(page, 600, `collapse-after-${id}-method`);
@@ -483,7 +492,7 @@ try {
     assert.equal((await page.locator('#metric-library [data-metric="race-ethnicity--black"] strong').innerText()).trim(), 'Black', 'Search results use the concise label and stable ID');
     await page.keyboard.press('Escape');
     await context.close();
-    pass('race/ethnicity labels and stable IDs in picker, selected title and search (catalog availability fixture)', { expected, fixtureOverride: 'hasObservations=true for exactly four original catalog entries; IDs/names/definitions unchanged' });
+    pass(`race/ethnicity labels and stable IDs in picker, selected title and search${fixtureOverride ? ' (catalog availability fixture)' : ' (real catalog)'}`, { expected, fixtureOverride, catalogAvailability: fixtureOverride ? 'hasObservations=true for exactly four original catalog entries; IDs/names/definitions unchanged' : 'unmodified runtime response' });
   }
 
   // White mobile Compare labels over geography need shadows; desktop black card text stays crisp.
