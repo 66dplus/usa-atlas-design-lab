@@ -119,11 +119,15 @@ export function candidateCoverageNote(candidate: Pick<Metric, 'name' | 'geograph
   return `${candidate.name}: admitted ${year}observations for ${geography}.`;
 }
 
-export function sourceAreaLabel(geographyType: Metric['geographyType'], placeId?: string | null) {
+export function sourceAreaLabel(geographyType: Metric['geographyType'] | 'nation', placeId?: string | null) {
   if (geographyType === 'congressional_district') return 'Congressional district';
-  if (!placeId) return 'US';
-  if (geographyType === 'county' || (geographyType === 'state_and_county' && placeId.length === 5)) return 'County';
-  return 'State';
+  if (geographyType === 'nation' || !placeId) return 'US';
+  if (geographyType === 'county') return 'County';
+  if (geographyType === 'state') return 'State';
+  if (geographyType === 'state_and_county')
+    return /^\d{5}$/.test(placeId) ? 'County' : /^\d{2}$/.test(placeId) ? 'State' : 'Geographic area';
+  if (!geographyType && /^\d{5}$/.test(placeId)) return 'County';
+  return 'Geographic area';
 }
 
 export function sourceCoverageLabel(metric: Pick<Metric, 'availability' | 'geographyType' | 'fieldId' | 'countySupported' | 'stateSupported' | 'coverageNote'>) {

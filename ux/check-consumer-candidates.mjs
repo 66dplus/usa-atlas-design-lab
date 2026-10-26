@@ -91,6 +91,13 @@ assert.match(admittedSources.metricById.get('race-ethnicity--aian').coverageNote
 assert.equal(sourceAreaLabel('congressional_district','0606'),'Congressional district');
 assert.equal(sourceAreaLabel('state_and_county','06'),'State');
 assert.equal(sourceAreaLabel('state_and_county','06037'),'County');
+assert.equal(sourceAreaLabel(undefined,'06037'),'County','legacy released county metrics retain county geography');
+assert.equal(sourceAreaLabel('state','48'),'State','Senate observations remain state-level');
+assert.equal(sourceAreaLabel('nation','US'),'US');
+assert.equal(sourceAreaLabel(undefined,'CA'),'Geographic area','unknown untyped geography is not mislabeled as a state');
+const releasedUnemployment=registry.metricById.get('unemployment');
+assert.equal(releasedUnemployment.geographyType,undefined,'legacy unemployment metric remains untyped');
+assert.equal(sourceAreaLabel(releasedUnemployment.geographyType,'06037'),'County');
 assert.match(sourceCoverageLabel(localSources.metricById.get('elections-house')),/local candidate preview only.*not released or admitted/);
 assert.match(sourceCoverageLabel(localSources.metricById.get('race-ethnicity--aian')),/local candidate preview only.*not released or admitted/);
 assert.match(sourceCoverageLabel(admittedSources.metricById.get('elections-house')),/admitted 2024 results for voting congressional districts/);
