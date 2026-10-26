@@ -1,5 +1,28 @@
 # React and TypeScript migration evaluation — 26 October 2026
 
+## Current incident disposition and public-boundary correction
+
+This section supersedes the historical pending-release statements below. PR #11 was normally merged at accepted main `a9fbcd86bc907f9c23bc5c689c8cbf6eb086dfa5`; required PR CI `40245217081` and main CI `40246095100` passed. R1 was actually staged, accepted and activated, then failed public verification and was officially rolled back. **R1 is not complete and was never tagged. R2 integration, relay sync, image/stage acceptance, activation and public verification remain PENDING.** Local checks do not establish production readiness.
+
+| Observed boundary | Actual result | Evidence under `/tmp/usa-xray-react-ts-20261026` |
+| --- | --- | --- |
+| A preactivation eligibility | PASS 7/7, full core; native honestly N/A | `phase6/a-complete-receipt.json`, SHA256 `6eb91172b8a0970e12f6b21f4121389f174f8980211978d6a4dadb5d1a1e3c18` |
+| R1 reconstruction and actual image stage | PASS all 117 files; actual storage/root/UID/mount proof | `phase7/` reconstructed package and official stage/storage records |
+| R1 candidate complete acceptance | PASS 7/7, Chrome10/WebGL/HTTP23/negative, React8/embed and studio8 | `phase7/candidate-complete-receipt.json`, SHA256 `ae223f9df1faa9d03c09728d36cefe402cebe393ca2df0e98216a7283e495fc2` |
+| R1 public verification after promotion | **FAIL:** React6/8 + embed; two report POST403 instead of201, zero public acknowledged IDs. Studio0/8 because legitimate telemetry hit the broad POST detector. Core10/WebGL/HTTP23/negative/static99/dynamic2 PASS | `phase8/public-conformance.json`, SHA256 `f602d200077e9e794660f046a42a1b7c6b5de2d68ccb491d732e35718b74b508`; `phase8/public-failed-handoff.json` |
+| Fresh rollback acceptance bound to live R1 | PASS 7/7; full archived core/static123/dynamic2, native N/A | `rollback-r1/complete-receipt.json`, SHA256 `6b930513eecdf78f77c38d6aa1311a666618a3ed1280be6421faa5bb8e9919d3` |
+| Official rollback and public identity | Original A actually restored at 00:52:50Z; public raw213 verified | `rollback-r1/public-restored.json`; parent removed only its two exact synthetic R1 records |
+
+R1 source was `a9fbcd86bc907f9c23bc5c689c8cbf6eb086dfa5`, raw build `cac8076b6358c6d13237b82d0b9976b3c9432488187424eadb28f0a48515b5d4`, image `sha256:0919ab4ff773b06b6cee28cffe8dfb6817a21861cd8e7ed1ad429b5a8f14b1c1`. The staged container was promoted unchanged; public HTTP observed the raw build while the parent separately attested Docker identity. Restored A's exact identities are recorded below. The old preactivation receipt did not authorize rollback: the fresh receipt bound the live R1 container/build and current reader schema.
+
+The parent confirmed that the permanent loopback relay stripped Origin and JSON/client metadata. Strict backend same-origin validation correctly failed closed. The vetted generic relay preimage is SHA256 `b8768575a323785eb4617e8f34fb33e3659dfa76df064390370df1fd3f643910`. The correction versions that relay in `deploy/public-relay/proxy.py`, forwards only Origin, Sec-Fetch-Site, Content-Type and validated trusted-loopback X-Forwarded-For, and leaves `bug_reports.py`, origin allowlists and cross-site rejection unchanged. Cookie, Authorization and arbitrary/hop headers remain excluded. Official `relay-sync` has exact preimage/current-main/A/approval/lock guards, durable backup/replacement and handled-failure restoration; the worker never operates it remotely. See [the operator contract](../unified-release.md#permanent-public-relay-sync).
+
+The studio check validates every POST against the observed public website ID, exact same-origin analytics endpoint and narrow Atlas event schema. Creative/contact/description/query leakage, unknown destinations, credentials and malformed telemetry still fail. It does not modify or disable analytics, advertising or UI. Local browser checks use actual enabled telemetry; payloads are not saved as evidence.
+
+Phase9 preserves failures and reruns separately. Focused relay/workflow integration: **PASS 22 tests**, `phase9/focused-relay-final.json`. Full Python with actual isolated PG53010: **PASS 171 tests**, `phase9/python.json`. Strict TS/build/source checks including classifier **PASS**, `phase9/source.json`; classifier has three positive and 21 negative cases. Committed-package/browser results are recorded in the phase9 handoff after execution. R2 remote operations and public certification remain pending even if local checks pass.
+
+## Historical phase2 assessment
+
 The React/build cutover was normally merged as PR #10 after required CI `40241035500` succeeded; accepted main is `6cf18e11041e958024708c8c3507f0783d0cddcf`, with the same Git tree as reviewed `b08acbe`. The phase2 results below remain local candidate proof, not deployment authorization. A narrow archived-SSR verifier correction is a separate reviewable verification-only change; no frontend, product or data change is included. The coordinator owns the real unified Docker image/stage, private report storage, registry, protected integration and activation/rollback. Fresh current-main complete acceptance against that actual stage remains required.
 
 ## Source, scope and immutable identities

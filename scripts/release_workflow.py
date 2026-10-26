@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 import posixpath
 import re
 import shlex
+import stat
 import subprocess
 import tempfile
 import tarfile
@@ -23,9 +24,9 @@ import urllib.request
 
 
 try:
-    from .runtime_conformance import validate_conformance
+    from .runtime_conformance import validate_conformance, ARCHIVED_A
 except ImportError:
-    from runtime_conformance import validate_conformance
+    from runtime_conformance import validate_conformance, ARCHIVED_A
 
 
 class ReleaseError(RuntimeError):
@@ -107,6 +108,149 @@ def remote_main_sha(repo, remote='origin', branch='main'):
 
 def accepted_main(repo, commit, remote='origin', branch='main'):
     return bool(re.fullmatch(r'[0-9a-f]{40}', commit or '')) and remote_main_sha(repo, remote, branch) == commit
+
+
+def _replace_relay_bytes(path, raw, mode, uid=None, gid=None):
+    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix='.relay-')
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            os.fchmod(stream.fileno(), mode)
+            if uid is not None and (os.fstat(stream.fileno()).st_uid, os.fstat(stream.fileno()).st_gid) != (uid, gid):
+                os.fchown(stream.fileno(), uid, gid)
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def _restart_public_relay(unit):
+    # Only this fixed managed-service operation is exposed, never arbitrary shell.
+    for command in (['systemctl', 'restart', '--', unit],
+                    ['systemctl', 'is-active', '--quiet', '--', unit]):
+        result = subprocess.run(command, capture_output=True, timeout=30)
+        if result.returncode:
+            raise ReleaseError('managed relay service did not become active')
+
+
+def _relay_health(expected):
+    for url in ('http://127.0.0.1:8099/ux/build.json', 'https://usa-xray.online/ux/build.json'):
+        deadline = time.monotonic() + 10
+        while True:
+            try:
+                with urllib.request.urlopen(url, timeout=5) as response:
+                    if response.status != 200 or digest(response.read()) != expected:
+                        raise ReleaseError('relay/public baseline identity mismatch')
+                break
+            except (OSError, urllib.error.URLError):
+                # A simple managed service can be active just before its socket binds.
+                if time.monotonic() >= deadline:
+                    raise ReleaseError('relay/public baseline unavailable') from None
+                time.sleep(0.2)
+
+
+def sync_public_relay(args):
+    """Sync only the committed permanent relay, while approved A owns primary."""
+    config = read_json(args.config)
+    lock = Path(os.environ.get(config.get('deploymentLockEnv', 'USA_ATLAS_DEPLOYMENT_LOCK'), '/opt/usa-atlas-releases/deployment.lock'))
+    state = args.state_dir or Path(os.environ.get(config.get('stateDirectoryEnv', 'USA_ATLAS_RELEASE_STATE_DIR'), '/opt/usa-atlas-releases'))
+    if not re.fullmatch(r'[A-Za-z0-9._-]{1,80}', args.id) or args.id in ('.', '..'):
+        raise ReleaseError('invalid relay sync identity')
+    if not re.fullmatch(r'[0-9a-f]{64}', args.expected_preimage_sha256):
+        raise ReleaseError('relay sync requires an exact preimage SHA256')
+    operation = state / 'relay-sync' / args.id
+    replaced = False
+    created = False
+    record = {'operation': 'public-relay-sync', 'id': args.id, 'status': 'checking'}
+    phase = 'configuration'
+    with deployment_lock(lock):
+        try:
+            private = config.get('publicRelay')
+            if not isinstance(private, dict) or set(private) != {'sourcePath', 'serviceUnit'}:
+                raise ReleaseError('explicit private relay location/service configuration required')
+            target, unit = Path(private['sourcePath']), private['serviceUnit']
+            if (not target.is_absolute() or not target.is_file() or
+                    any(path.is_symlink() for path in (target, *target.parents)) or
+                    not isinstance(unit, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.@-]{0,99}\.service', unit)):
+                raise ReleaseError('invalid private relay configuration')
+            phase = 'current-main'
+            head = require_clean_checkout(args.repo)
+            if head != args.source_commit or not accepted_main(args.repo, head, config.get('mainRemote', 'origin'), config.get('mainBranch', 'main')):
+                raise ReleaseError('relay sync requires exact clean current accepted main')
+            source = Path(args.repo) / 'deploy/public-relay/proxy.py'
+            new = source.read_bytes()
+            if source.is_symlink() or run(['git', '-C', str(args.repo), 'show', f'{head}:deploy/public-relay/proxy.py']).stdout.encode() != new:
+                raise ReleaseError('relay differs from exact committed source')
+            phase = 'approved-A-baseline'
+            backend = DockerBackend(config)
+            baseline = backend.live_identity()
+            if (args.baseline_build_sha != ARCHIVED_A['buildSha256'] or
+                    any(baseline.get(key) != ARCHIVED_A[value] for key, value in
+                        [('buildSha256', 'buildSha256'), ('imageId', 'imageDigest'), ('sourceCommit', 'sourceCommit'), ('release', 'releaseId')]) or
+                    baseline.get('readOnlyRoot') is not True or baseline.get('user') != config['runtimeUser'] or
+                    baseline.get('networkAddress') != config['primaryAddress']):
+                raise ReleaseError('relay sync requires restored immutable A at primary')
+            mounts = {item['destination']: item for item in baseline['mounts']}
+            if any(destination not in mounts or not mounts[destination]['readOnly']
+                   for destination in (config['readerSecretDestination'], config['databaseDestination'])):
+                raise ReleaseError('required baseline mounts must remain read-only')
+            backend._reject_unapproved_writes(baseline['mounts'])
+            registry = args.registry or Path(config.get('approvalRegistry', str(state / 'approved-artifacts.json')))
+            if not policy_not_revoked(read_json(args.policy), baseline['buildSha256'], baseline['imageId']) or not policy_allows(read_json(registry), baseline['buildSha256'], baseline['imageId']):
+                raise ReleaseError('A is not currently approved or is revoked')
+            phase = 'preimage'
+            old, metadata = target.read_bytes(), target.stat()
+            if digest(old) != args.expected_preimage_sha256 or old == new or operation.exists():
+                raise ReleaseError('relay preimage or unused operation identity mismatch')
+            phase = 'initial-health'
+            _relay_health(baseline['buildSha256'])
+            if backend.live_identity() != baseline or require_clean_checkout(args.repo) != head or not accepted_main(args.repo, head, config.get('mainRemote', 'origin'), config.get('mainBranch', 'main')):
+                raise ReleaseError('source or live baseline changed before sync')
+            if target.read_bytes() != old:
+                raise ReleaseError('relay preimage changed before sync')
+            operation.mkdir(parents=True, mode=0o700)
+            created = True
+            _replace_relay_bytes(operation / 'before.py', old, 0o600)
+            record.update(status='syncing', sourceCommit=head, preimageSha256=digest(old),
+                          relaySha256=digest(new), baselineBuildSha256=baseline['buildSha256'],
+                          baselineContainerId=baseline['containerId'])
+            atomic_json(operation / 'result.json', record)
+            phase = 'replacement'
+            replaced = True  # Also restore if directory fsync fails after rename.
+            _replace_relay_bytes(target, new, stat.S_IMODE(metadata.st_mode), metadata.st_uid, metadata.st_gid)
+            phase = 'restart'
+            _restart_public_relay(unit)
+            phase = 'post-sync-health'
+            _relay_health(baseline['buildSha256'])
+            if backend.live_identity() != baseline or target.read_bytes() != new:
+                raise ReleaseError('live baseline or installed relay changed')
+            record.update(status='pass', verifiedAt=datetime.now(timezone.utc).isoformat())
+            atomic_json(operation / 'result.json', record)
+            return record
+        except BaseException:
+            recovery = 'not-mutated'
+            if replaced:
+                try:
+                    _replace_relay_bytes(target, old, stat.S_IMODE(metadata.st_mode), metadata.st_uid, metadata.st_gid)
+                    _restart_public_relay(unit)
+                    _relay_health(baseline['buildSha256'])
+                    if target.read_bytes() != old or backend.live_identity() != baseline:
+                        raise ReleaseError('restoration identity mismatch')
+                    recovery = 'prior-source-service-restored'
+                except BaseException:
+                    recovery = 'restoration-failed'
+            if created:
+                record.update(status='fail', failedPhase=phase, recovery=recovery)
+                atomic_json(operation / 'result.json', record)
+            # Private paths, service names and command output never enter diagnostics.
+            raise ReleaseError(f'public relay sync failed during {phase}; {recovery}') from None
 
 
 def _safe_rel(name):
@@ -1485,9 +1629,12 @@ def main(argv=None):
     rollback_stage = sub.add_parser('rollback-stage'); rollback_stage.add_argument('--id', required=True); rollback_stage.add_argument('--output', type=Path, required=True)
     baseline_stage = sub.add_parser('baseline-stage'); baseline_stage.add_argument('--id', required=True); baseline_stage.add_argument('--output', type=Path, required=True)
     discard_baseline = sub.add_parser('baseline-stage-discard'); discard_baseline.add_argument('--id', required=True)
+    relay = sub.add_parser('relay-sync'); relay.add_argument('--id', required=True); relay.add_argument('--source-commit', required=True); relay.add_argument('--baseline-build-sha', required=True); relay.add_argument('--expected-preimage-sha256', required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'snapshot':
+        if args.command == 'relay-sync':
+            result = sync_public_relay(args)
+        elif args.command == 'snapshot':
             config = read_json(args.config)
             lock_path = Path(os.environ.get(config.get('deploymentLockEnv', 'USA_ATLAS_DEPLOYMENT_LOCK'), '/opt/usa-atlas-releases/deployment.lock'))
             with deployment_lock(lock_path):
