@@ -34,6 +34,14 @@ CITY_COUNTY_SLUGS = {
     '51680': 'roanoke-city-county', '51760': 'richmond-city-county',
 }
 OPERATIONAL_QUERY_KEYS = ('embed', 'review', 'preview')
+# React consumer selections that have stable public routes but no legacy
+# metric-definition entry. Keep these labels aligned with the client selector.
+CONSUMER_ROUTE_LABELS = {
+    'race-ethnicity--aian': 'American Indian and Alaska Native',
+    'elections-president': 'President',
+    'elections-senate': 'Senate',
+    'elections-house': 'House',
+}
 
 
 def slugify(text):
@@ -108,6 +116,7 @@ def metric_labels(definitions_path):
         'crime-trends--04-09-rape-yoy': 'Crime trends · rape · year over year',
         'crime-trends--04-09-robbery-yoy': 'Crime trends · robbery · year over year',
     })
+    labels.update(CONSUMER_ROUTE_LABELS)
     return {'labels': labels, 'idsBySlug': slugs, 'slugsById': INDICATOR_ALIASES}
 
 
@@ -318,6 +327,13 @@ def redirect_target(request_target, geo, metrics, article_data, catalog=None):
         value = params.get(key, [None])[0]
         if value:
             retained[key] = value
+    # A selected CD119 district lives on the national House route. Keep the
+    # browser's operational selection in the URL without treating its ID as a
+    # county or changing the route's national canonical.
+    if route.get('kind') == 'map' and route['metric']['id'] == 'elections-house':
+        district = params.get('district', [None])[0]
+        if district:
+            retained['district'] = district
     query = urlencode(retained)
     target = route['canonical'] + (f'?{query}' if query else '')
     if target != request_target:
