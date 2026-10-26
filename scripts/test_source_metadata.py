@@ -16,6 +16,50 @@ def row(identifier, geography='state', value=1, **changes):
 
 
 class SourceMetadataTests(unittest.TestCase):
+    def test_sex_ratio_uses_matching_2024_acs_components(self):
+        captured = {}
+
+        def query_components(sql, variables, **kwargs):
+            captured.update(sql=sql, variables=variables)
+            self.assertIn("o.period=ANY(string_to_array(:'periods',',')::text[])", sql)
+            # The 2023 male estimate is deliberately different. The adapter must
+            # select the male and female components from the same ACS release.
+            available = {
+                ('01.03:B01001_002E', '2023'): 40,
+                ('01.03:B01001_002E', '2024'): 50,
+                ('01.03:B01001_026E', '2024'): 100,
+            }
+            periods = set(variables['periods'].split(','))
+            male = next((value for (field, period), value in available.items()
+                         if field == variables['f0'] and period in periods), None)
+            female = next((value for (field, period), value in available.items()
+                           if field == variables['f1'] and period in periods), None)
+            return [{'geo_id': '06', 'geo_type': 'state', 'unit': 'persons',
+                     'source_url': 'https://www.census.gov/',
+                     'methodology_note': 'ACS estimate', 'source_release': '2024-acs-acs5',
+                     'c0': male, 's0': 'census_acs', 'r0': '2024-acs-acs5',
+                     'c1': female, 's1': 'census_acs', 'r1': '2024-acs-acs5'}]
+
+        with patch.object(atlas_data, 'query', side_effect=query_components):
+            data = atlas_data.observations('01.03:derived')
+
+        self.assertEqual(captured['variables']['fields'],
+                         '01.03:B01001_002E,01.03:B01001_026E')
+        self.assertEqual(captured['variables']['periods'], '2024')
+        self.assertEqual(data['period'], '2024')
+        self.assertEqual(data['displayPeriod'], '2020–2024')
+        self.assertEqual(data['sourceRelease'], 'Census ACS 2024')
+        california = next(item for item in data['observations'] if item['id'] == '06')
+        self.assertEqual(california, {
+            'id': '06', 'value': 50, 'geoType': 'state', 'sourceGeoId': '06'})
+
+    def test_rate_metadata_matches_retained_source_periods(self):
+        contract = json.loads((Path(atlas_data.ROOT) / 'ux/metric-definitions.json').read_text())
+        by_id = {metric['id']: metric for metric in contract['metrics']}
+        self.assertEqual(by_id['murders']['rateMetadata']['denominatorPeriod'], '2024')
+        self.assertIn('state-only', by_id['new-hiv-diagnoses']['method'])
+        self.assertIn('no US or county value is inferred', by_id['new-hiv-diagnoses']['method'])
+
     def test_published_nation_value_and_native_period_are_retained(self):
         rows = [row('06', value=39287377), row('US', 'nation', 334922499)]
         with patch.object(atlas_data, 'query', return_value=rows):
