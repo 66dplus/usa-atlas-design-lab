@@ -83,7 +83,12 @@ try {
       })());
       assert.equal(posts.length, 1);
       if (kind === 'reload-keepalive') await page.reload();
-      else if (kind === 'abort') await page.evaluate(() => window.fixtureAbort());
+      else if (kind === 'abort') {
+        const cancelled = page.waitForEvent('requestfailed', request => request.method() === 'POST');
+        await page.evaluate(() => window.fixtureAbort());
+        await bounded(cancelled);
+        assert.equal(await page.evaluate(() => window.fixtureDone), null);
+      }
       else await bounded(page.evaluate(() => window.fixtureDone));
       const [post] = await requiredMetadata(posts), actual = received[count];
       assert.equal(post.body, actual.body);
