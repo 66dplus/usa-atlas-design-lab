@@ -752,14 +752,22 @@ class WorkflowTests(unittest.TestCase):
                 'catalog_field_id': 'text', 'contract_sha256': 'character(64)',
             },
         }
-        write_json(artifact, {'version':'2.0.0','objects':objects})
+        metadata = {
+            name: {
+                'access': 'SELECT',
+                'reader_filter': "usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'",
+                'version': 'v2-additive',
+            }
+            for name in objects
+        }
+        write_json(artifact, {'version':'2.0.0','objects':objects,'object_metadata':metadata})
         write_json(lock, {'contractVersion':'2.0.0','schemaFingerprint':'probe-v2'})
-        valid = ('usa_atlas\treader_observation\tcandidate_status\ttext\n'
-                 'usa_atlas\treader_observation\tperiod_month\tsmallint\n'
-                 'usa_atlas\treader_observation\tsource_releases\ttext[]\n'
-                 'usa_atlas\treader_observation\tvalue\tdouble precision\n'
-                 'usa_atlas\treader_v2_catalog_field\tcatalog_field_id\ttext\n'
-                 'usa_atlas\treader_v2_catalog_field\tcontract_sha256\tcharacter(64)\n')
+        valid = ('usa_atlas\treader_observation\tr\tcandidate_status\ttext\n'
+                 'usa_atlas\treader_observation\tr\tperiod_month\tsmallint\n'
+                 'usa_atlas\treader_observation\tr\tsource_releases\ttext[]\n'
+                 'usa_atlas\treader_observation\tr\tvalue\tdouble precision\n'
+                 'usa_atlas\treader_v2_catalog_field\tr\tcatalog_field_id\ttext\n'
+                 'usa_atlas\treader_v2_catalog_field\tr\tcontract_sha256\tcharacter(64)\n')
         identity = {'Id':'stage-container','Image':'sha256:test','State':{'Status':'running'}}
         def fake_run(command, **kwargs):
             if command[:3] == ['docker','exec','stage-container'] and command[-1:] == ['/app/ux/build.json']:
