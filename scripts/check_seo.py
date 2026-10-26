@@ -49,6 +49,27 @@ def http_response(server, path):
     return result
 
 
+def check_route_metadata(path, expected_title, expected_description, canonical_path=None,
+                         robots='index,follow'):
+    status, body = html_for(path)
+    canonical = f'https://usa-xray.online{canonical_path or path.split("?", 1)[0]}'
+    check(status == 200, f'{path} should return a successful route response')
+    check(f'<title>{expected_title}</title>'.encode() in body,
+          f'{path} should have its route-specific title in initial HTML')
+    check(f'<link rel="canonical" href="{canonical}">'.encode() in body,
+          f'{path} should have canonical {canonical}')
+    check(meta(body, 'property', 'og:url') == canonical, f'{path} Open Graph URL should match its canonical')
+    check(meta(body, 'name', 'description') == expected_description,
+          f'{path} should have its route-specific description before JavaScript')
+    check(meta(body, 'name', 'robots') == robots, f'{path} should have robots policy {robots}')
+    check(body.count(b'rel="canonical"') == 1 and body.count(b'id="atlas-jsonld"') == 1,
+          f'{path} should contain one canonical and one JSON-LD block')
+    jsonld = re.search(rb'<script id="atlas-jsonld" type="application/ld\+json">(.*?)</script>', body, re.S)
+    schema = json.loads(jsonld.group(1)) if jsonld else None
+    check(schema is not None and schema.get('@type') == 'WebPage' and schema.get('url') == canonical,
+          f'{path} should contain valid WebPage JSON-LD for its canonical')
+
+
 def check_preview_http_dispatch():
     assets = {
         '/node_modules/us-atlas/counties-10m.json': TOPOLOGY,
@@ -70,9 +91,95 @@ def check_preview_http_dispatch():
             check(status == 301 and headers.get('Location') == destination,
                   f'HTTP {source} should redirect to {destination}; got {status} {headers.get("Location")}')
 
+        # Operational selections survive path normalization and a full HTTP
+        # follow. The final document still describes only the clean base route.
+        def check_operational_redirect(source, destination):
+            status, headers, _ = http_response(server, source)
+            check(status == 301 and headers.get('Location') == destination,
+                  f'HTTP {source} should retain operational state at {destination}; got {status} {headers.get("Location")}')
+            final_status, final_headers, body = http_response(server, destination)
+            check(final_status == 200 and 'Location' not in final_headers,
+                  f'HTTP follow of {source} should reach a stable rendered route')
+            base_path = destination.split('?', 1)[0]
+            canonical = f'https://usa-xray.online{base_path}'
+            jsonld = re.search(rb'<script id="atlas-jsonld" type="application/ld\+json">(.*?)</script>', body, re.S)
+            schema = json.loads(jsonld.group(1)) if jsonld else None
+            check(f'<link rel="canonical" href="{canonical}">'.encode() in body and
+                  meta(body, 'property', 'og:url') == canonical and
+                  meta(body, 'name', 'description') and
+                  meta(body, 'name', 'robots') in ('index,follow', 'noindex,follow') and
+                  body.count(b'rel="canonical"') == 1 and
+                  schema is not None and schema.get('@type') == 'WebPage' and schema.get('url') == canonical,
+                  f'HTTP follow of {source} should retain valid query-free canonical metadata')
+
+        for period in ('2025-M01', '2025-M10', '2025'):
+            check_operational_redirect(
+                f'/UNIted-states/Unemployment/?period={period}',
+                f'/united-states/unemployment?period={period}')
+        check_operational_redirect(
+            '/UNIted-states/California/Elections-President/?party=REPUBLICAN',
+            '/united-states/california/elections-president?party=REPUBLICAN')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=0606&party=REPUBLICAN',
+            '/united-states/elections-house?party=REPUBLICAN&district=0606')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=9999',
+            '/united-states/elections-house?district=9999')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=0606&party=REPUBLICAN&compare=places&secondDistrict=0607',
+            '/united-states/elections-house?party=REPUBLICAN&district=0606&compare=places&secondDistrict=0607')
+        check_operational_redirect(
+            '/UNIted-states/Elections-House/?district=0606&compare=metrics&metricA=elections-house&metricB=unemployment',
+            '/united-states/elections-house?district=0606&compare=metrics&metricA=elections-house&metricB=unemployment')
+
+        # Only the first bounded value is considered; unrelated or invalid
+        # values are removed, and an over-wide query is discarded as a whole.
+        check_operational_redirect(
+            '/united-states/unemployment?period=2025-M01&period=2025-M10&party=REPUBLICAN&party=DEMOCRAT&theme=dark',
+            '/united-states/unemployment?period=2025-M01&party=REPUBLICAN')
+        check_operational_redirect(
+            '/united-states/unemployment?period=2026-M01&party=OTHER&theme=dark&embed=1',
+            '/united-states/unemployment?embed=1')
+        invalid_house = http_response(
+            server,
+            '/united-states/elections-house?district=0606&party=OTHER&compare=places&secondDistrict=0606&theme=dark')
+        check(invalid_house[0] == 301 and
+              invalid_house[1].get('Location') == '/united-states/elections-house?district=0606',
+              'invalid House state and unrelated query values should normalize away')
+        invalid_metric_comparison = http_response(
+            server,
+            '/united-states/elections-house?district=0606&compare=metrics&metricA=unknown&metricB=unknown')
+        check(invalid_metric_comparison[0] == 301 and
+              invalid_metric_comparison[1].get('Location') == '/united-states/elections-house?district=0606',
+              'unrecognized House metric operands should not survive normalization')
+        too_many = '&'.join(['period=2025-M01'] + [f'x{i}=1' for i in range(32)])
+        bounded = http_response(server, '/united-states/unemployment?' + too_many)
+        check(bounded[0] == 301 and bounded[1].get('Location') == '/united-states/unemployment',
+              'queries beyond the bounded parser limit should not retain partial state')
+
         with patch('preview_server.atlas_data.catalog', return_value={'metrics': []}):
             status, _, _ = http_response(server, '/united-states/not-a-real-place/unemployment')
         check(status == 404, 'unknown app routes should remain HTTP 404')
+
+        for path, title in [
+            ('/united-states/race-ethnicity--aian', 'American Indian and Alaska Native in the United States | USA X-Ray'),
+            ('/united-states/california/san-francisco-county/elections-president', 'President in San Francisco | USA X-Ray'),
+            ('/united-states/california/elections-senate', 'Senate in California | USA X-Ray'),
+            ('/united-states/elections-house?district=0606', 'House in the United States | USA X-Ray'),
+        ]:
+            status, _, body = http_response(server, path)
+            canonical_path = path.split('?', 1)[0]
+            canonical = f'https://usa-xray.online{canonical_path}'
+            check(status == 200, f'HTTP {path} should resolve as a direct route, got {status}')
+            check(f'<title>{title}</title>'.encode() in body,
+                  f'HTTP {path} should render its route title')
+            check(meta(body, 'name', 'robots') == 'index,follow' and
+                  f'<link rel="canonical" href="{canonical}">'.encode() in body,
+                  f'HTTP {path} should render indexable metadata for {canonical}')
+            check(b'"@type":"WebPage"' in body and canonical.encode() in body,
+                  f'HTTP {path} should render WebPage JSON-LD for its canonical')
+        check(http_response(server, '/united-states/not-a-real-place/elections-house')[0] == 404,
+              'unknown consumer metric paths should remain HTTP 404')
 
         # Static and API requests must stay outside route-index loading and redirects.
         with patch('preview_server.geography', side_effect=AssertionError('loaded route geography')):
@@ -88,6 +195,36 @@ def check_preview_http_dispatch():
 
 
 check_preview_http_dispatch()
+
+
+# Consumer-only route labels must resolve through the complete renderer, at
+# their supported geographic scopes. The House query remains operational
+# state on the national House path and never becomes a county route.
+consumer_routes = [
+    ('/united-states/race-ethnicity--aian', 'American Indian and Alaska Native in the United States | USA X-Ray',
+     'Explore American Indian and Alaska Native in the United States with source-based observations, reference periods and geographic coverage on the USA X-Ray map.'),
+    ('/united-states/california/race-ethnicity--aian', 'American Indian and Alaska Native in California | USA X-Ray',
+     'Explore American Indian and Alaska Native in California with source-based observations, reference periods and geographic coverage on the USA X-Ray map.'),
+    ('/united-states/california/san-francisco-county/race-ethnicity--aian', 'American Indian and Alaska Native in San Francisco | USA X-Ray',
+     'Explore American Indian and Alaska Native in San Francisco with source-based observations, reference periods and geographic coverage on the USA X-Ray map.'),
+    ('/united-states/california/san-francisco-county/elections-president', 'President in San Francisco | USA X-Ray',
+     'Explore President in San Francisco with source-based observations, reference periods and geographic coverage on the USA X-Ray map.'),
+    ('/united-states/california/elections-senate', 'Senate in California | USA X-Ray',
+     'Explore Senate in California with source-based observations, reference periods and geographic coverage on the USA X-Ray map.'),
+    ('/united-states/elections-house', 'House in the United States | USA X-Ray',
+     'Explore House in the United States with source-based observations, reference periods and geographic coverage on the USA X-Ray map.'),
+]
+for route_path, title, description in consumer_routes:
+    check_route_metadata(route_path, title, description)
+check_route_metadata('/united-states/elections-house?district=0606',
+                     'House in the United States | USA X-Ray',
+                     'Explore House in the United States with source-based observations, reference periods and geographic coverage on the USA X-Ray map.',
+                     '/united-states/elections-house')
+check_route_metadata('/united-states/elections-house?district=0606&review=1',
+                     'House in the United States | USA X-Ray',
+                     'Explore House in the United States with source-based observations, reference periods and geographic coverage on the USA X-Ray map.',
+                     '/united-states/elections-house',
+                     robots='noindex,follow')
 
 
 check(len(GEO['statesById']) == 51 and len(GEO['countiesById']) == 3142,
@@ -125,6 +262,11 @@ for path in ['/stats', '/blog', '/blog/mississippi', '/blog/electricity']:
 
 check(html_for('/united-states/not-a-real-place/unemployment')[0] == 404,
       'unknown places should return 404 instead of a soft-404 app shell')
+for path in ['/united-states/not-a-real-place/race-ethnicity--aian',
+             '/united-states/california/not-a-real-place/elections-president',
+             '/united-states/not-a-real-place/elections-senate',
+             '/united-states/not-a-real-place/elections-house']:
+    check(html_for(path)[0] == 404, f'unknown route {path} should remain a hard 404')
 
 redirect_cases = {
     '/ux/?place=06075&metric=unemployment&view=3d&theme=dark': '/united-states/california/san-francisco-county/unemployment',

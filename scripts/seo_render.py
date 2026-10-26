@@ -33,7 +33,15 @@ CITY_COUNTY_SLUGS = {
     '51600': 'fairfax-city-county', '51620': 'franklin-city-county',
     '51680': 'roanoke-city-county', '51760': 'richmond-city-county',
 }
-OPERATIONAL_QUERY_KEYS = ('embed', 'review', 'preview')
+OPERATIONAL_QUERY_KEYS = ('embed', 'review', 'preview', 'period', 'party')
+# React consumer selections that have stable public routes but no legacy
+# metric-definition entry. Keep these labels aligned with the client selector.
+CONSUMER_ROUTE_LABELS = {
+    'race-ethnicity--aian': 'American Indian and Alaska Native',
+    'elections-president': 'President',
+    'elections-senate': 'Senate',
+    'elections-house': 'House',
+}
 
 
 def slugify(text):
@@ -108,6 +116,7 @@ def metric_labels(definitions_path):
         'crime-trends--04-09-rape-yoy': 'Crime trends · rape · year over year',
         'crime-trends--04-09-robbery-yoy': 'Crime trends · robbery · year over year',
     })
+    labels.update(CONSUMER_ROUTE_LABELS)
     return {'labels': labels, 'idsBySlug': slugs, 'slugsById': INDICATOR_ALIASES}
 
 
@@ -297,8 +306,16 @@ def redirect_target(request_target, geo, metrics, article_data, catalog=None):
                 old_params = parse_qs(split.query, keep_blank_values=True, max_num_fields=32)
             except ValueError:
                 old_params = {}
-            retained = {key: old_params[key][0] for key in OPERATIONAL_QUERY_KEYS
-                        if old_params.get(key) and old_params[key][0]}
+            retained = {}
+            for key in OPERATIONAL_QUERY_KEYS:
+                value = old_params.get(key, [None])[0]
+                if not value:
+                    continue
+                if key == 'period' and not re.fullmatch(r'2025(?:-M(?:0[1-9]|1[0-2]))?', value):
+                    continue
+                if key == 'party' and value not in ('DEMOCRAT', 'REPUBLICAN'):
+                    continue
+                retained[key] = value
             query = urlencode(retained)
             if query:
                 target_path += '?' + query
@@ -316,8 +333,35 @@ def redirect_target(request_target, geo, metrics, article_data, catalog=None):
         params = {}
     for key in OPERATIONAL_QUERY_KEYS:
         value = params.get(key, [None])[0]
-        if value:
-            retained[key] = value
+        if not value:
+            continue
+        if key == 'period' and not re.fullmatch(r'2025(?:-M(?:0[1-9]|1[0-2]))?', value):
+            continue
+        if key == 'party' and value not in ('DEMOCRAT', 'REPUBLICAN'):
+            continue
+        retained[key] = value
+    # A selected CD119 district lives on the national House route. Keep the
+    # browser's operational selection in the URL without treating its ID as a
+    # county or changing the route's national canonical.
+    if route.get('kind') == 'map' and route['metric']['id'] == 'elections-house':
+        district = params.get('district', [None])[0]
+        if district and re.fullmatch(r'\d{4}', district):
+            retained['district'] = district
+            comparison = params.get('compare', [None])[0]
+            if comparison == 'places':
+                second_district = params.get('secondDistrict', [None])[0]
+                if (second_district and re.fullmatch(r'\d{4}', second_district)
+                        and second_district != district):
+                    retained['compare'] = 'places'
+                    retained['secondDistrict'] = second_district
+            elif comparison == 'metrics':
+                metric_a = params.get('metricA', [None])[0]
+                metric_b = params.get('metricB', [None])[0]
+                labels = metrics.get('labels', {})
+                if (metric_a in labels and metric_b in labels and metric_a != metric_b):
+                    retained['compare'] = 'metrics'
+                    retained['metricA'] = metric_a
+                    retained['metricB'] = metric_b
     query = urlencode(retained)
     target = route['canonical'] + (f'?{query}' if query else '')
     if target != request_target:
