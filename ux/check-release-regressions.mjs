@@ -197,7 +197,7 @@ async function sheetBehavior(page,name){
   assert.deepEqual(after.map,before.map,`${name}: sheet snaps do not resize the map viewport`);
   assert.equal(visible,true);void custom;
 }
-async function metricDefinition(page,name){
+async function metricDefinition(page,name,contractVersion){
   if(name.startsWith('chrome-')&&viewportForName(name)<=760){
     const sheet=page.locator('#explore-panel');
     const handle=sheet.locator(':scope > .sheet-handle');
@@ -214,7 +214,9 @@ async function metricDefinition(page,name){
     assert.match(text,/Unemployment rate[\s\S]*BLS LAUS/i,`${name}: unemployment metric and source are shown in the tooltip`);
     assert.match(text,/One latest month and release; no annual averaging|Unemployed people divided by the civilian labor force/i,`${name}: unemployment period or denominator and method are defined`);
   }else{
-    assert.match(text,/Unemployment rate[\s\S]*BLS · Local Area Unemployment Statistics/i,`${name}: unemployment metric and source are shown in the tooltip`);
+    assert.match(text,/Unemployment rate/i,`${name}: unemployment metric is shown in the tooltip`);
+    const expectedSource=contractVersion==='2.0.0'?'BLS LAUS · not seasonally adjusted':'BLS · Local Area Unemployment Statistics';
+    assert.ok(text.includes(expectedSource),`${name}: unemployment source matches reader contract ${contractVersion}`);
     assert.match(text,/Unemployed people divided by the civilian labor force[\s\S]*not of all residents/i,`${name}: unemployment denominator and interpretation are defined`);
   }
   await page.keyboard.press('Escape');
@@ -295,11 +297,11 @@ async function startupDefinitionBeforeRefresh(){
     const responseBody=await response.body();
     assert.ok(responseBody.length>0,'the held real annual-period API response body is complete');
     JSON.parse(responseBody.toString('utf8'));
-    await checkConsole(errors,name);item.pass=true;
+    await checkConsole(errors,name);item.pass=true;return contractVersion;
   }catch(error){item.error=error.stack||String(error);recordFailure(name,error);await capture(page,name,'failure');throw error;
   }finally{releaseResponse?.();await capture(page,name,item.pass?'pass':'failure');await context.close();currentPage=null;}
 }
-async function runMatrixCase(viewport,theme){
+async function runMatrixCase(viewport,theme,contractVersion){
   const name=`chrome-${viewport.width}x${viewport.height}-${theme}`;const context=await browser.newContext({viewport,isMobile:viewport.width<=760,hasTouch:viewport.width<=760});
   const errors=[],expectedNetwork={urls:new Set()};let page;
   const item={name,viewport,theme,pass:false,errors};results.checks.push(item);
@@ -318,7 +320,7 @@ async function runMatrixCase(viewport,theme){
     await navigationChecks(page,name);
     await countyCheck(page,name);
     if(viewport.width<=760)await sheetBehavior(page,name);
-    await metricDefinition(page,name);
+    await metricDefinition(page,name,contractVersion);
     await checkConsole(errors,name);
     item.pass=true;
   }catch(error){item.error=error.stack||String(error);recordFailure(name,error);await capture(page,name,'failure');throw error;
@@ -355,8 +357,8 @@ async function apiFailureAndRetry(){
 try{
   assert.ok(!mutation||mutation==='legacy-footer',`Unsupported test mutation: ${mutation}`);
   browser=await chromium.launch({channel:'chrome'});
-  await startupDefinitionBeforeRefresh();
-  for(const viewport of viewports)for(const theme of themes)await runMatrixCase(viewport,theme);
+  const contractVersion=await startupDefinitionBeforeRefresh();
+  for(const viewport of viewports)for(const theme of themes)await runMatrixCase(viewport,theme,contractVersion);
   await apiFailureAndRetry();
 }catch(error){if(!results.failures.length)recordFailure('suite',error);}
 finally{
