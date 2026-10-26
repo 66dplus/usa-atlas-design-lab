@@ -474,7 +474,7 @@ try {
       ['race-ethnicity--black', 'Black', 'People who are Black or African American alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.'],
       ['race-ethnicity--asian', 'Asian', 'People who are Asian alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.'],
       ['race-ethnicity--white-non-hispanic', 'White', 'People who are White alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.'],
-      ['race-ethnicity', 'Hispanic', 'Hispanic or Latino residents divided by all residents, multiplied by 100. This is the share of the total population that is Hispanic or Latino; Hispanic origin can be of any race.'],
+      ['race-ethnicity', 'Hispanic / Latino', 'Hispanic or Latino residents divided by all residents, multiplied by 100. This is the share of the total population that is Hispanic or Latino; Hispanic origin can be of any race.'],
     ];
     for (const [id, label, definition] of expected) {
       const item = page.locator(`#metric-library [data-metric="${id}"]`);
