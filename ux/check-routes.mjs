@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {buildPlaceIndex,canonicalPath,countySlug,parsePath,resolveHouseQuery,resolveRoute,routeParams,slugify} from './routes.js';
+import {buildPlaceIndex,canonicalPath,countySlug,parsePath,resolveHouseQuery,resolvePopNavigation,resolveRoute,routeParams,slugify} from './routes.js';
 import {createPageMetadata,mapPageMetadata,screenPageMetadata} from './seo.js';
 
 const states=[
@@ -99,6 +99,40 @@ assert.equal(resolveHouseQuery(new URLSearchParams('district=0606&compare=places
   'unknown second districts are never interpreted as counties or accepted');
 assert.equal(resolveHouseQuery(new URLSearchParams('district=0606'),districtIndex,metrics,'/united-states/california/unemployment'),null,
   'House query state never overrides an existing state or county route');
+
+// Exercise the exact resolver used by the popstate controller while replaying
+// browser Back/Forward entries for both supported House comparison modes.
+const historyEntries = [
+  '/united-states/elections-house?district=0606&compare=places&secondDistrict=0607',
+  '/united-states/elections-house?district=0606&compare=metrics&metricA=elections-house&metricB=adjusted-gross-income-agi',
+  '/stats',
+];
+let historyIndex = 2;
+const popNavigation = () => {
+  const url = new URL(historyEntries[historyIndex], 'https://example.test');
+  return resolvePopNavigation(url.pathname, url.search, districtIndex, metrics);
+};
+historyIndex--;
+let navigation = popNavigation();
+assert.equal(navigation.page, 'compare', 'Back restores House metric comparison mode');
+assert.deepEqual(navigation.houseQuery, {
+  selected: '0606', page: 'compare', concept: 'compare', comparison: 'metrics',
+  metric: 'elections-house', secondMetric: 'adjusted-gross-income-agi',
+});
+historyIndex--;
+navigation = popNavigation();
+assert.equal(navigation.page, 'compare', 'Back restores House place comparison mode');
+assert.deepEqual(navigation.houseQuery, {
+  selected: '0606', page: 'compare', concept: 'compare', comparison: 'places', second: '0607',
+});
+historyIndex++;
+navigation = popNavigation();
+assert.equal(navigation.page, 'compare', 'Forward restores House metric comparison mode');
+assert.equal(navigation.houseQuery.metric, 'elections-house');
+assert.equal(navigation.houseQuery.secondMetric, 'adjusted-gross-income-agi');
+historyIndex++;
+navigation = popNavigation();
+assert.equal(navigation.page, 'stats', 'Forward restores the subsequent reading route');
 
 const metadata=createPageMetadata({title:'Unemployment in California | USA X-Ray',description:'Explore unemployment in California.',path:'/united-states/california/unemployment?theme=dark'});
 assert.equal(metadata.canonical,'https://usa-xray.online/united-states/california/unemployment');

@@ -107,6 +107,35 @@ const refreshedTargets: Record<string, Pick<Metric, 'consumerDataset' | 'consume
   'motor-vehicle-theft': {consumerDataset:'fbi_motor_vehicle_theft_2025',consumerFieldId:'04.06:derived',periodType:'annual',periodYear:2025,geographyType:'state',definition:fbiRateDefinition('motor vehicle theft')},
   'rape': {consumerDataset:'fbi_rape_revised_2025',consumerFieldId:'04.07:derived',periodType:'annual',periodYear:2025,geographyType:'state',definition:fbiRateDefinition('revised rape')},
 };
+
+export function candidateCoverageNote(candidate: Pick<Metric, 'name' | 'geographyType' | 'periodYear'>, productionAdmitted: boolean) {
+  if (!productionAdmitted)
+    return `${candidate.name}: local candidate preview only; this result is not released or admitted as public data.`;
+  if (candidate.geographyType === 'congressional_district')
+    return `${candidate.name}: admitted 2024 results for voting congressional districts in the 119th Congress.`;
+  const geography = candidate.geographyType === 'state_and_county' ? 'states and counties' :
+    candidate.geographyType === 'county' ? 'counties' : 'states';
+  const year = candidate.periodYear ? `${candidate.periodYear} ` : '';
+  return `${candidate.name}: admitted ${year}observations for ${geography}.`;
+}
+
+export function sourceAreaLabel(geographyType: Metric['geographyType'], placeId?: string | null) {
+  if (geographyType === 'congressional_district') return 'Congressional district';
+  if (!placeId) return 'US';
+  if (geographyType === 'county' || (geographyType === 'state_and_county' && placeId.length === 5)) return 'County';
+  return 'State';
+}
+
+export function sourceCoverageLabel(metric: Pick<Metric, 'availability' | 'geographyType' | 'fieldId' | 'countySupported' | 'stateSupported' | 'coverageNote'>) {
+  if (metric.availability === 'local_candidate')
+    return metric.coverageNote || 'Local candidate preview only; this result is not released or admitted as public data.';
+  if (metric.geographyType === 'congressional_district')
+    return metric.coverageNote || 'Congressional districts';
+  if (!metric.fieldId) return metric.coverageNote || '—';
+  return metric.countySupported
+    ? metric.stateSupported ? 'State and county' : 'County'
+    : 'State';
+}
 const refreshedPlaceholders: Metric[] = [
   {id:'all-cancer-new-cases',name:'New cancer cases per 100,000 residents',fieldId:null,catalogId:'11.01',shortCategory:'Health',source:'No admitted cancer rate refresh',unit:'per 100,000',stateSupported:true,countySupported:false,hasObservations:false,availability:'not_admitted',selectionKind:'primary',consumerDataset:'cancer_2023',consumerFieldId:'11.01:derived',periodType:'annual',periodYear:2023,geographyType:'state_and_county',coverageNote:'The 2023 cancer rate refresh is unavailable in this local candidate reader.'},
   {id:'new-hiv-diagnoses',name:'New HIV diagnoses per 100,000 residents',fieldId:null,catalogId:'11.02',shortCategory:'Health',source:'No admitted HIV rate refresh',unit:'per 100,000',stateSupported:true,countySupported:false,hasObservations:false,availability:'not_admitted',selectionKind:'primary',consumerDataset:'hiv_2024',consumerFieldId:'11.02:derived',periodType:'annual',periodYear:2024,geographyType:'state_and_county',coverageNote:'The provisional 2024 HIV rate refresh is unavailable in this local candidate reader.'},
@@ -284,7 +313,7 @@ function admittedCandidate(candidate: Metric, entry: Record<string, unknown> | u
         ...(candidate.definition?{definition:{...candidate.definition,period:String(entry?.year||candidate.definition.period||''),displayPeriod:String(entry?.year||candidate.definition.displayPeriod||''),unit:String(entry?.unit||candidate.definition.unit||''),source:String(entry?.source||candidate.definition.source||'')}}:{}),
         source: String(entry?.source || candidate.source),
         sourceUrl: typeof entry?.sourceUrl === 'string' ? entry.sourceUrl : candidate.sourceUrl,
-        coverageNote: `${candidate.name}: local candidate preview only; this result is not released or admitted as public data.`,
+        coverageNote: candidateCoverageNote(candidate, productionAdmitted),
       }
     : failClosed;
 }

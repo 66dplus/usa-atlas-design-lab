@@ -346,3 +346,18 @@ export function resolveHouseQuery(params, index, metricIds = new Set(), pathname
   }
   return result;
 }
+
+// Resolve a browser history entry as one navigation decision. The validated
+// House query can carry comparison state on its map path, so its page intent
+// takes precedence over the path's ordinary map route.
+export function resolvePopNavigation(pathname, search, index, metricIds = new Set()) {
+  const route = parsePath(pathname),
+    resolved = route && resolveRoute(route, index, metricIds),
+    houseQuery = resolveHouseQuery(new URLSearchParams(search || ''), index, metricIds, pathname);
+  return {
+    page: houseQuery?.page || resolved?.page || 'map',
+    article: resolved?.article,
+    resolved,
+    houseQuery,
+  };
+}

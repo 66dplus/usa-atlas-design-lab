@@ -1,6 +1,7 @@
 import type { Atlas } from './use-atlas';
 import { displayMetricName, type Side } from './types';
 import { formatValue, formatPeriod, missingReason } from '../model.js';
+import { sourceAreaLabel, sourceCoverageLabel } from './consumer-candidates';
 export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
   const { metric, metricB, selected, selectedB, layer, observation, number } = atlas;
   const m = side === 'b' ? metricB() : metric(),
@@ -45,13 +46,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         ? 'Share of the labor force that is unemployed. Original units and reporting period are retained.'
         : 'Original units and reference period are retained.'
       : missingReason(m, f, data));
-  const coverage = m.fieldId
-    ? m.countySupported
-      ? m.stateSupported
-        ? 'State and county'
-        : 'County'
-      : 'State'
-    : m.coverageNote;
+  const coverage = sourceCoverageLabel(m);
   const desktop = (
     <>
       <div className="source-observation">
@@ -147,12 +142,13 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
           <dd>
             {unit}
             {' · '}
-            {f?.id.length === 5 ? 'County equivalent' : f ? 'State level' : 'US'}
+            {sourceAreaLabel(m.geographyType, f?.id)}
           </dd>
           <dt>{'Release'}</dt>
           <dd>{data.sourceRelease || '—'}</dd>
         </dl>
         <p>{explanation}</p>
+        {m.availability === 'local_candidate' ? <p>{m.coverageNote}</p> : ''}
         {rateDescription ? <p>{'Rate construction: '}{rateDescription}</p> : ''}
         {url ? (
           <a className="primary-button" href={url} target="_blank" rel="noreferrer">

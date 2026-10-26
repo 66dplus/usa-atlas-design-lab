@@ -623,6 +623,28 @@ def contract_identity(lock_path, vendored_artifact=None):
     return {'readerLockSha256': json_sha(lock_path), 'readerSchemaFingerprint': lock['schemaFingerprint']}
 
 
+V2_SCHEMA_ONLY_CONTRACT_SHA256 = '8916c8d0fda359c56ae66ce7a94b66c0a8cea5f6307c02a0cb95f2cc4dfefe5c'
+V2_SCHEMA_ONLY_FINGERPRINT = '2a319fe39b1045bddb48bcdf688a20032875f4f0ea823784c07a0611f9428fa1'
+V2_SCHEMA_ONLY_COLUMNS = {('usa_atlas', 'election_contest'): {'source_mode_raw': 'text'}}
+
+
+def reader_schema_probe_sql(version):
+    if version == '2.0.0':
+        return ("BEGIN READ ONLY; SELECT n.nspname AS table_schema, c.relname AS table_name, "
+                "a.attname AS column_name, format_type(a.atttypid,a.atttypmod) AS data_type "
+                "FROM pg_catalog.pg_attribute a "
+                "JOIN pg_catalog.pg_class c ON c.oid=a.attrelid "
+                "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+                "WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p') "
+                "AND a.attnum>0 AND NOT a.attisdropped ORDER BY c.relname,a.attnum; COMMIT;")
+    if version == '1.0.0':
+        return ("BEGIN READ ONLY; SELECT table_name, column_name, data_type, "
+                "coalesce(character_maximum_length::text, '') "
+                "FROM information_schema.columns WHERE table_schema='usa_atlas' "
+                "ORDER BY table_name, ordinal_position; COMMIT;")
+    raise ReleaseError('unsupported reader schema proof version')
+
+
 def verify_receipt(receipt, lock_path, *, release_id, operation, image_digest, build_sha,
                    source_commit, started_at, suite_identity, mandatory_checks,
                    vendored_artifact=None, runtime_release_id=None):
@@ -1033,18 +1055,7 @@ class DockerBackend:
                 expected.setdefault((table_schema, table), {})[name] = declared_type
         if not expected:
             raise ReleaseError('reader contract has no pinned object/column types')
-        if version == '2.0.0':
-            sql = ("BEGIN READ ONLY; SELECT table_schema, table_name, column_name, "
-                   "format_type(a.atttypid,a.atttypmod) FROM pg_catalog.pg_attribute a "
-                   "JOIN pg_catalog.pg_class c ON c.oid=a.attrelid "
-                   "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
-                   "WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p') "
-                   "AND a.attnum>0 AND NOT a.attisdropped ORDER BY table_name, ordinal_position; COMMIT;")
-        else:
-            sql = ("BEGIN READ ONLY; SELECT table_name, column_name, data_type, "
-                   "coalesce(character_maximum_length::text, '') "
-                   "FROM information_schema.columns WHERE table_schema='usa_atlas' "
-                   "ORDER BY table_name, ordinal_position; COMMIT;")
+        sql = reader_schema_probe_sql(version)
         probe = (
             "import os,pathlib,subprocess,sys; "
             "os.environ['PGPASSWORD']=pathlib.Path('/run/secrets/reader_password').read_text().strip(); "
@@ -1075,6 +1086,11 @@ class DockerBackend:
                    'numeric': ('numeric', ''), 'text[]': ('ARRAY', '_text')}
         mismatches = []
         if version == '2.0.0':
+            if (lock.get('contractSha256') == V2_SCHEMA_ONLY_CONTRACT_SHA256 and
+                    lock.get('schemaFingerprint') == V2_SCHEMA_ONLY_FINGERPRINT):
+                for table_key, columns in V2_SCHEMA_ONLY_COLUMNS.items():
+                    if table_key in expected:
+                        expected[table_key].update(columns)
             for table_key, columns in expected.items():
                 got = actual.get(table_key, {})
                 if set(got) != set(columns):

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { buildPlaceIndex, canonicalPath, parsePath, resolveRoute, resolveHouseQuery, routeParams } from '../routes.js';
+import { buildPlaceIndex, canonicalPath, parsePath, resolveRoute, resolveHouseQuery, resolvePopNavigation, routeParams } from '../routes.js';
 import { applyPageMetadata, mapPageMetadata, screenPageMetadata } from '../seo.js';
 import {
   createDataStore,
@@ -1042,9 +1042,9 @@ export function useAtlas() {
       if (event.state?.usaAtlasDialog) return;
       const r = resource.current;
       if (!r) return;
-      const route = parsePath(location.pathname),
-        resolved = route && resolveRoute(route, r.index, new Set(r.metricById.keys()));
-      const houseQuery = resolveHouseQuery(new URLSearchParams(location.search), r.index, new Set(r.metricById.keys()), location.pathname);
+      const navigation = resolvePopNavigation(location.pathname, location.search, r.index, new Set(r.metricById.keys())),
+        resolved = navigation.resolved,
+        houseQuery = navigation.houseQuery;
       routeValid.current = Boolean(resolved);
       const query = new URLSearchParams(location.search);
       if (resolved?.concept) {
@@ -1072,7 +1072,7 @@ export function useAtlas() {
         if ('concept' in houseQuery && houseQuery.concept === 'compare' && 'comparison' in houseQuery && houseQuery.comparison === 'places') secondExplicit.current = true;
         comparisonDefault.current = null;
       }
-      void navigate((resolved?.page || 'map') as Page, resolved?.article, {
+      void navigate(navigation.page as Page, navigation.article, {
         fromPopState: true,
         force: true,
       });

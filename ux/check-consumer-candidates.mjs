@@ -8,6 +8,7 @@ const packagedRegistry = JSON.parse(await readFile(new URL('./selection-registry
 const source = await readFile(new URL('./react/consumer-candidates.ts', import.meta.url), 'utf8');
 const compiled = await transform(source, { loader: 'ts', format: 'esm' });
 const consumer = await import(`data:text/javascript;base64,${Buffer.from(compiled.code).toString('base64')}`);
+const {candidateCoverageNote,sourceAreaLabel,sourceCoverageLabel}=consumer;
 const apiMetrics = definitions.metrics
   .filter((metric) => indicatorVisibility[metric.catalogId] === true)
   .map((metric) => ({
@@ -74,6 +75,26 @@ for (const id of officeOptions) {
   assert.equal(item.availability, 'not_admitted', 'unavailable local candidates remain honestly labeled');
   assert.equal(item.candidateRequired,true,'candidate layers do not fall back to unrelated released data');
 }
+const sourceRows = [
+  {id:'race-ethnicity--aian',catalogFieldId:'01.04',datasetId:'aian_broad_share',candidateStatus:'local_candidate',candidateAvailable:true,
+    sourceRelease:'ACS2024',sourceReleases:['ACS2024'],fieldId:'01.04:aian_broad_share',geographyType:'state_and_county',periodType:'multi_year',year:2024,unit:'%',source:'Census ACS'},
+  {id:'elections-house',catalogFieldId:'12.03',datasetId:'election_house_2024',candidateStatus:'local_candidate',candidateAvailable:true,
+    sourceRelease:'House2024',sourceReleases:['House2024'],geographyType:'congressional_district',periodType:'cycle',year:2024,unit:'% of all contest votes',source:'MIT Election Lab',
+    boundaryVintage:2024,congressSession:'119',geometryAvailable:true},
+];
+const localSources=consumer.buildSelectionCatalog(apiMetrics,{contractStatus:'candidate_nonreleased',localCandidatePreview:true,admissionStatus:'candidate_nonreleased',metrics:sourceRows});
+assert.match(localSources.metricById.get('elections-house').coverageNote,/local candidate preview only.*not released or admitted/);
+assert.match(localSources.metricById.get('race-ethnicity--aian').coverageNote,/local candidate preview only.*not released or admitted/);
+const admittedSources=consumer.buildSelectionCatalog(apiMetrics,{contractStatus:'admitted',localCandidatePreview:false,admissionStatus:'admitted',metrics:sourceRows.map((row)=>({...row,candidateStatus:'admitted'}))});
+assert.match(admittedSources.metricById.get('elections-house').coverageNote,/admitted 2024 results for voting congressional districts in the 119th Congress/);
+assert.match(admittedSources.metricById.get('race-ethnicity--aian').coverageNote,/admitted 2024 observations for states and counties/);
+assert.equal(sourceAreaLabel('congressional_district','0606'),'Congressional district');
+assert.equal(sourceAreaLabel('state_and_county','06'),'State');
+assert.equal(sourceAreaLabel('state_and_county','06037'),'County');
+assert.match(sourceCoverageLabel(localSources.metricById.get('elections-house')),/local candidate preview only.*not released or admitted/);
+assert.match(sourceCoverageLabel(localSources.metricById.get('race-ethnicity--aian')),/local candidate preview only.*not released or admitted/);
+assert.match(sourceCoverageLabel(admittedSources.metricById.get('elections-house')),/admitted 2024 results for voting congressional districts/);
+assert.equal(sourceCoverageLabel(admittedSources.metricById.get('race-ethnicity--aian')),'State and county');
 assert.equal(indicatorVisibility['09.04'], false, 'fitness stays out of primary selections');
 
 const byId = new Map(definitions.metrics.map((metric) => [metric.id, metric]));
