@@ -68,6 +68,31 @@ body[data-theme=dark]{--bg:#171A1D;--panel:#25292D;--ink:#F4F1E8;--muted:#B6BBB8
 .article-map a,.article-sources a{color:var(--link-accent);font-size:16px;line-height:24px}
 .article-sources{list-style:none;padding:0;display:grid;gap:12px}
 .article-body>.article-preview-note{font:13px/21px Geist,system-ui,sans-serif;color:var(--muted);margin:28px 0}
+.article-example .article-hero{margin-bottom:32px}
+.article-example .article-live-map{margin-top:34px;margin-bottom:0}
+.article-map-hosts{display:grid;grid-template-columns:minmax(0,1fr);height:470px;gap:12px}
+.article-map-hosts.is-comparison{grid-template-columns:repeat(2,minmax(0,1fr))}
+.article-map-host{position:relative;min-width:0;min-height:0;overflow:hidden;border-radius:12px;background:var(--bg)}
+.article-map-host .geo-svg{display:block;width:100%;height:100%;background:var(--bg)}
+.article-live-map .article-map-legend{position:absolute;margin:0;left:12px;bottom:12px;z-index:5;box-sizing:border-box;width:min(230px,calc(100% - 24px));padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);box-shadow:0 2px 7px #0002;font:11px/14px Geist,system-ui,sans-serif;pointer-events:none}
+.article-map-legend-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;font-size:12px;line-height:15px}
+.article-map-legend-heading>span{min-width:0;font-weight:600;overflow-wrap:anywhere}
+.article-map-legend-heading>strong{flex:none;font-size:14px;line-height:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.article-map-legend-ramp{height:4px;margin-top:5px;border-radius:2px}
+.article-map-legend-range{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;color:var(--muted);font-size:10px;line-height:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.article-map-state{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;color:var(--muted);font:13px/20px Geist,system-ui,sans-serif}
+.article-map-state p{margin:0}
+.article-map-state button{padding:5px 10px;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--ink)}
+.article-table-scroll{max-width:100%;overflow-x:auto;margin:0 0 28px;border:1px solid var(--line);border-radius:10px}
+.article-table-scroll table{border-collapse:collapse;width:100%;font:16px/1.5 Geist,system-ui,sans-serif}
+.article-table-scroll th,.article-table-scroll td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.article-table-scroll th{background:var(--panel);font-weight:600}
+.article-table-scroll tr:last-child td{border-bottom:0}
+.article-example-links,.article-examples-nav{display:flex;flex-direction:column;gap:12px}
+.article-example-links{margin-top:38px;padding-top:20px;border-top:1px solid var(--line)}
+.article-examples-nav{margin:34px 0;padding:22px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.article-examples-nav .page-eyebrow{margin:0}
+.article-examples-nav a,.article-example-links a{color:var(--link-accent);font-weight:600}
 @media(max-width:760px){
   .journal-feature{grid-template-columns:1fr;margin-top:26px!important;min-height:0}.journal-map{height:250px}
   [data-page=blog] .reading-page{inset:120px 0 96px;padding-top:28px}
@@ -80,6 +105,9 @@ body[data-theme=dark]{--bg:#171A1D;--panel:#25292D;--ink:#F4F1E8;--muted:#B6BBB8
   .article-deck{font-size:21px;line-height:31px;margin:24px 0}.article-body>p{font-size:18px;line-height:29px}
   .article-body>h2{font-size:28px;line-height:35px;margin-top:40px}.article-map{width:100%;margin:28px 0}
   .article-map h2{font-size:22px;line-height:30px}.article-map figcaption{font-size:14px;line-height:22px}
+  .article-example .article-hero{margin-bottom:34px}.article-example .article-live-map{margin-top:28px}
+  .article-map-hosts{height:420px}.article-map-hosts.is-comparison{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr));height:690px}
+  .article-table-scroll table{min-width:590px}
 }
 
 /* Crawlable navigation links keep the same animated tab treatment as buttons. */

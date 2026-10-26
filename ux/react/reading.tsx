@@ -123,7 +123,7 @@ function ReadingContent({
         ))}
       {page === 'article' &&
         (document.body.dataset.runtime === 'preview' && articleExists(article) ? (
-          <ArticlePage slug={article} />
+          <ArticlePage slug={article} atlas={atlas} />
         ) : (
           <>
             <button className="article-back" data-page="blog">

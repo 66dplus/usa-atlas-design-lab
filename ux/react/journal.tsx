@@ -1,6 +1,9 @@
 import { useLayoutEffect, useRef } from 'react';
 import { animateReplacement } from '../motion.js';
 import { articles } from '../journal.js';
+import { ArticleMap } from './article-map';
+import { articleExamples, ArticleExampleBody } from './article-examples';
+import type { Atlas } from './use-atlas';
 const headings = new Set([
   'What USDA means by low access',
   'Thirty counties reached at least 25%',
@@ -31,7 +34,72 @@ export function articleMetadata(slug: string) {
       }
     : null;
 }
-export function ArticlePage({ slug }: { slug: string }) {
+export function ArticlePage({ slug, atlas }: { slug: string; atlas: Atlas }) {
+  if (slug === 'pitkin-income-comparison' || slug === 'los-alamos-doctorates-and-income') {
+    const pitkin = slug === 'pitkin-income-comparison';
+    const example = pitkin ? articleExamples.pitkin : articleExamples.losAlamos;
+    const map = (kind: 'primary' | 'household' = 'primary') => {
+      const household = kind === 'household';
+      return (
+        <ArticleMap
+          key={kind}
+          atlas={atlas}
+          title={pitkin ? 'Per-capita income · Pitkin and San Francisco' : household ? 'Median household income · Los Alamos County' : 'Adults with a doctorate · Los Alamos County'}
+          place={pitkin ? '08097' : '35028'}
+          second={pitkin ? '06075' : null}
+          metric={pitkin ? 'per-capita-income' : household ? 'median-household-income' : 'doctorate'}
+          comparison={pitkin}
+          caption={pitkin
+            ? 'Pitkin County, Colorado and San Francisco County, California · per-capita income (dollars per person) · Census ACS, latest admitted period'
+            : household
+              ? 'Los Alamos County, New Mexico · median household income · Census ACS, latest admitted period'
+              : 'Los Alamos County, New Mexico · adults with a doctorate · Census ACS, latest admitted period'}
+        />
+      );
+    };
+    return (
+      <>
+        <button className="article-back" data-page="blog">{'← Article examples'}</button>
+        <article className="journal-article article-example" data-article={slug}>
+          <header className="article-hero">
+            <p className="article-eyebrow">{'LOCAL ARTICLE EXAMPLE · LIVE MAP'}</p>
+            <h1>{example.title}</h1>
+            <p className="article-deck">{example.deck}</p>
+            {map()}
+          </header>
+          <div className="article-body">
+            <ArticleExampleBody article={example} householdMap={pitkin ? undefined : map('household')} />
+            <h2>{'Primary sources'}</h2>
+            <ul className="article-sources">
+              {(pitkin
+                ? [
+                    ['ACS per-capita income · B19301', 'https://data.census.gov/table/ACSDT5Y2024.B19301'],
+                    ['ACS median household income · B19013', 'https://data.census.gov/table/ACSDT5Y2024.B19013'],
+                    ['ACS household income sources · B19064', 'https://data.census.gov/table/ACSDT5Y2024.B19064'],
+                    ['ACS full-time earnings · B20018', 'https://data.census.gov/table/ACSDT5Y2024.B20018'],
+                    ['Census income definition', 'https://www2.census.gov/programs-surveys/acs/tech_docs/subject_definitions/2024_ACSSubjectDefinitions.pdf'],
+                    ['Aspen Journalism', 'https://www.aspentimes.com/news/aspen-journalism-pitkin-countys-per-capita-income-third-highest-in-the-u-s-highlights-growing-disparity-with-wages/'],
+                  ]
+                : [
+                    ['ACS educational attainment · B15003', 'https://data.census.gov/table/ACSDT5Y2024.B15003'],
+                    ['ACS median household income · B19013', 'https://data.census.gov/table/ACSDT5Y2024.B19013'],
+                    ['ACS full-time earnings · B20018', 'https://data.census.gov/table/ACSDT5Y2024.B20018'],
+                    ['U.S. Department of Energy · Manhattan Project', 'https://www.energy.gov/em/manhattan-project-department-energy-formation-1939-1977'],
+                    ['Los Alamos National Laboratory · FY2024 economic-impact report', 'https://cdn.lanl.gov/files/economic-impact-25-st-v4_73055.pdf'],
+                    ['LANL scientific job listings', 'https://lanl.jobs/'],
+                  ]
+              ).map(([label, url]) => <li key={url}><a href={url} target="_blank" rel="noreferrer">{label} ↗</a></li>)}
+            </ul>
+            <nav className="article-example-links" aria-label="Other local article examples">
+              <a href={'/blog/' + (pitkin ? 'los-alamos-doctorates-and-income' : 'pitkin-income-comparison')}>
+                {pitkin ? 'Read the Los Alamos example →' : 'Read the Pitkin and San Francisco example →'}
+              </a>
+            </nav>
+          </div>
+        </article>
+      </>
+    );
+  }
   const article = (articles as Record<string, (typeof articles)[keyof typeof articles]>)[slug];
   if (!article) return null;
   const href = explorePaths[slug];
@@ -254,6 +322,13 @@ export function JournalPage({ theme, index = 0 }: { theme: string; index?: numbe
           </a>
         </article>
       </div>
+      {document.body.dataset.runtime === 'preview' && (
+        <nav className="article-examples-nav" aria-label="Local article examples">
+          <p className="page-eyebrow">{'LOCAL ARTICLE EXAMPLES'}</p>
+          <a href="/blog/pitkin-income-comparison">{'Pitkin County vs San Francisco · per-capita income →'}</a>
+          <a href="/blog/los-alamos-doctorates-and-income">{'Los Alamos · doctorates and household income →'}</a>
+        </nav>
+      )}
       <p className="journal-review-note">
         {
           'Temporary review preview · article drafts remain owner review pending; no final journal publication is implied.'
