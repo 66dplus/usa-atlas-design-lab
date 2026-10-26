@@ -44,6 +44,8 @@ jobs:
       - run: sudo apt-get install -y postgresql-client
       - run: python3 scripts/prepare_ci_database.py
       - run: python3 scripts/check_reader_contract.py --require-postgres
+      - name: Verify reader-v2 lock and schema checker behavior
+        run: python3 -m unittest discover -s scripts -p 'test_reader_v2_contract.py'
       - run: python3 scripts/check_geography_contract.py
       - run: npm run check:seo
       - run: npm run check:source
