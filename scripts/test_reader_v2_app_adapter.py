@@ -1,4 +1,5 @@
 import os
+import json
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -76,6 +77,58 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
                 self.assertEqual(target['year'],2025)
                 self.assertEqual(target['unit'],'per 100,000')
                 self.assertEqual(target['geography'],'state')
+                self.assertTrue(target['include_native_us'])
+
+    def test_irs_targets_match_the_frozen_reader_contract_and_reject_legacy_labels(self):
+        contract=json.loads((atlas_data.ROOT/'contracts/reader/v2/contract.json').read_text())
+        pinned=contract['source_releases']['irs_agi']
+        self.assertEqual(pinned,'irs-soi-2023-pep-vintage-2025')
+        for alias in ('irs_agi_total_2023','irs_agi_per_resident_2023'):
+            target=atlas_data.REFRESH_TARGETS[alias]
+            self.assertEqual(target['source_releases'],(pinned,))
+            self.assertTrue(target['source_release_label'])
+            base=self.refreshed_row(target, '06', 'state', pinned)
+            with patch.object(atlas_data,'query',return_value=[base]):
+                result=atlas_data.reader_v2_observations(alias,'annual',2023,'state_and_county')
+            self.assertEqual(result['sourceReleases'],[pinned])
+            self.assertEqual(result['sourceReleaseLabel'],target['source_release_label'])
+            for old_label in ('IRS SOI County 2023','IRS SOI County 2023; Census PEP Vintage 2025'):
+                with self.subTest(alias=alias,old_label=old_label), patch.object(
+                    atlas_data,'query',return_value=[self.refreshed_row(target,'06','state',old_label)]):
+                    with self.assertRaisesRegex(atlas_data.DatabaseUnavailable,'outside the reviewed field allowlist'):
+                        atlas_data.reader_v2_observations(alias,'annual',2023,'state_and_county')
+
+    @staticmethod
+    def refreshed_row(target, geo_id, geo_type, release):
+        return {'geo_id':geo_id,'geo_type':geo_type,'value':52341.82 if target['unit']=='USD/person' else 1_000_000,
+            'unit':target['unit'],'quality_status':'observed','period_kind':'annual','period_year':target['year'],
+            'period_month':None,'period_start_year':target['year'],'period_end_year':target['year'],
+            'source_version':'2025','source':'irs_soi','source_release':release,
+            'source_url':'https://www.irs.gov/statistics/soi-tax-stats-county-data','methodology_note':'Fixture source metadata',
+            'raw_estimate':1,'raw_estimate_moe':None,'raw_denominator':1,'raw_denominator_moe':None,
+            'denominator_value':100,'source_period_code':'2023','retrieved_at':'2026-10-26T00:00:00Z',
+            'catalog_candidate_status':'local_review'}
+
+    def test_fbi_target_returns_only_native_us_nation_summary_without_synthesizing_it(self):
+        target=atlas_data.REFRESH_TARGETS['fbi_homicide_2025']
+        release=target['source_releases'][0]
+        state=self.refreshed_row(target,'06','state',release)
+        nation=self.refreshed_row(target,'US','nation',release)
+        state['value']=3.4811059417676025
+        nation['value']=5.47
+        with patch.object(atlas_data,'query',return_value=[state,nation]) as read:
+            result=atlas_data.reader_v2_observations('fbi_homicide_2025','annual',2025,'state')
+        self.assertEqual(len(result['observations']),2)
+        self.assertEqual(next(row for row in result['observations'] if row['id']=='US')['value'],5.47)
+        self.assertEqual(next(row for row in result['observations'] if row['id']=='US')['geoType'],'nation')
+        self.assertIn("o.geo_type='nation' AND o.geo_id='US'",read.call_args.args[0])
+        self.assertEqual(read.call_args.args[1]['include_native_us'],'true')
+        with patch.object(atlas_data,'query',return_value=[{**nation,'geo_id':'CA'}]):
+            with self.assertRaisesRegex(atlas_data.DatabaseUnavailable,'unsupported geography type or national ID'):
+                atlas_data.reader_v2_observations('fbi_homicide_2025','annual',2025,'state')
+        with patch.object(atlas_data,'query',return_value=[state]):
+            absent=atlas_data.reader_v2_observations('fbi_homicide_2025','annual',2025,'state')
+        self.assertNotIn('US',{row['id'] for row in absent['observations']})
 
     def test_refreshed_cancer_joins_versioned_catalog_and_only_accepts_two_reviewed_releases(self):
         target=atlas_data.REFRESH_TARGETS['cancer_2023']

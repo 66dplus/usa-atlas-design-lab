@@ -74,7 +74,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
         <dt>{'Unit'}</dt>
         <dd>{data.unit || '—'}</dd>
         <dt>{'Release'}</dt>
-        <dd>{data.sourceRelease || '—'}</dd>
+        <dd>{data.sourceReleaseLabel || data.sourceRelease || '—'}</dd>
         <dt>{'Coverage'}</dt>
         <dd>{coverage}</dd>
       </dl>
@@ -145,7 +145,7 @@ export function SourceContent({ atlas, side }: { atlas: Atlas; side: Side }) {
             {sourceAreaLabel(m.geographyType, f?.id)}
           </dd>
           <dt>{'Release'}</dt>
-          <dd>{data.sourceRelease || '—'}</dd>
+          <dd>{data.sourceReleaseLabel || data.sourceRelease || '—'}</dd>
         </dl>
         <p>{explanation}</p>
         {m.availability === 'local_candidate' ? <p>{m.coverageNote}</p> : ''}

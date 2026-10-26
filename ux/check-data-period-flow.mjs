@@ -124,6 +124,7 @@ const refreshedMetric = { id: 'adjusted-gross-income-agi--per-resident', catalog
 const refreshedPayload = { datasetId: refreshedMetric.consumerDataset, candidateStatus: 'local_candidate', localCandidatePreview: true, admissionStatus: 'candidate_nonreleased',
   fieldId: refreshedMetric.consumerFieldId, periodType: 'annual', year: 2023, geographyType: 'state_and_county',
   sourceRelease: 'irs-soi-2023-pep-vintage-2025', sourceReleases: ['irs-soi-2023-pep-vintage-2025'],
+  sourceReleaseLabel:'IRS SOI County 2023; Census PEP Vintage 2025',
   sourceUnit: 'USD/person', unit: 'USD per resident', observations: [
     { id: '06', value: 52341.82, qualityState: 'observed', sourceRelease: 'irs-soi-2023-pep-vintage-2025' },
   ] };
@@ -131,6 +132,8 @@ const refreshedStore = createDataStore(geo, () => {}, async () => response(refre
 const refreshedLayer = await refreshedStore.load(refreshedMetric);
 assert.equal(refreshedLayer.status, 'ready', 'finite USD per resident values can exceed 100');
 assert.equal(refreshedLayer.observations.get('06').value, 52341.82);
+assert.equal(refreshedLayer.sourceReleaseLabel,'IRS SOI County 2023; Census PEP Vintage 2025',
+  'human source labels remain separate from the formal reader release identity');
 const negativeIncome = createDataStore(geo, () => {}, async () => response({ ...refreshedPayload,
   observations: [{ ...refreshedPayload.observations[0], value: -1 }] }));
 assert.equal((await negativeIncome.load(refreshedMetric)).status, 'error', 'negative income is rejected');
@@ -141,8 +144,8 @@ const cancerMetric = { id: 'all-cancer-new-cases', catalogId: '11.01', consumerD
 const cancerPayload = { datasetId: 'cancer_2023', candidateStatus: 'local_candidate', localCandidatePreview: true, admissionStatus: 'candidate_nonreleased',
   fieldId: '11.01:derived', periodType: 'annual', year: 2023, geographyType: 'state_and_county', sourceRelease: null,
   sourceReleases: cancerMetric.candidateSourceReleases, unit: 'per 100,000', observations: [
-    { id: 'US', value: 576.543689, qualityState: 'observed', sourceRelease: 'cdc-uscs-2023-national' },
-    { id: '06', value: 501.645, qualityState: 'observed', sourceRelease: 'cdc-uscs-2023-state' },
+    { id: 'US', geoType:'nation', value: 576.543689, qualityState: 'observed', sourceRelease: 'cdc-uscs-2023-national' },
+    { id: '06', geoType:'state', value: 501.645, qualityState: 'observed', sourceRelease: 'cdc-uscs-2023-state' },
   ] };
 const cancerStore = createDataStore({ byId: new Map([['US', {}], ['06', {}]]) }, () => {}, async () => response(cancerPayload));
 const cancerLayer = await cancerStore.load(cancerMetric);
@@ -161,5 +164,36 @@ assert.equal((await admittedStore.load(admittedMetric)).status, 'ready', 'formal
 
 const healthMapLayer = prepareLayer(cancerPayload, { byId: new Map([['US', {}], ['06', {}]]) });
 assert.equal(healthMapLayer.observations.get('06').value, 501.645, 'the actual cancer rate survives map preparation');
+assert.equal(healthMapLayer.values.get('US'), null, 'native national summaries never paint a state polygon');
+
+const fbiMetric={id:'murders',catalogId:'04.01',consumerDataset:'fbi_homicide_2025',consumerFieldId:'04.01:derived',
+  candidateAvailable:true,candidateSourceRelease:'FBI SRS Estimated Crimes 1979-2025 (August 2026)',
+  candidateSourceReleases:['FBI SRS Estimated Crimes 1979-2025 (August 2026)'],candidateSourceUnit:'per 100,000',
+  periodType:'annual',periodYear:2025,geographyType:'state',unit:'per 100,000',hasObservations:true};
+const fbiPayload={datasetId:fbiMetric.consumerDataset,candidateStatus:'local_candidate',localCandidatePreview:true,admissionStatus:'candidate_nonreleased',
+  fieldId:fbiMetric.consumerFieldId,periodType:'annual',year:2025,geographyType:'state',sourceRelease:fbiMetric.candidateSourceRelease,
+  sourceReleases:fbiMetric.candidateSourceReleases,sourceUnit:'per 100,000',unit:'per 100,000',observations:[
+    {id:'US',geoType:'nation',value:20,qualityState:'observed',sourceRelease:fbiMetric.candidateSourceRelease},
+    {id:'06',geoType:'state',value:3.4811059417676025,qualityState:'observed',sourceRelease:fbiMetric.candidateSourceRelease},
+    {id:'36',geoType:'state',value:7.2,qualityState:'observed',sourceRelease:fbiMetric.candidateSourceRelease},
+  ]};
+const fbiGeo={byId:new Map([['US',{}],['06',{}],['36',{}]])};
+const fbiStore=createDataStore(fbiGeo,()=>{},async()=>response(fbiPayload));
+const fbiLayer=await fbiStore.load(fbiMetric);
+assert.equal(fbiLayer.status,'ready','the native FBI national summary is a valid card observation');
+assert.equal(fbiLayer.observations.get('US').value,20);
+const fbiMapLayer=prepareLayer(fbiPayload,fbiGeo);
+assert.equal(fbiMapLayer.values.get('US'),null,'the FBI nation summary is not rendered as a state polygon');
+assert.deepEqual(fbiMapLayer.domain,[3.4811059417676025,7.2],
+  'the national summary does not alter the state-map scale');
+const wrongNationStore=createDataStore(fbiGeo,()=>{},async()=>response({...fbiPayload,observations:[
+  {...fbiPayload.observations[0],id:'CA'},...fbiPayload.observations.slice(1),
+]}));
+assert.equal((await wrongNationStore.load(fbiMetric)).status,'error','national rows for any other ID fail closed');
+const absentNationalStore=createDataStore(fbiGeo,()=>{},async()=>response({...fbiPayload,observations:fbiPayload.observations.slice(1)}));
+const absentNational=await absentNationalStore.load(fbiMetric);
+assert.equal(absentNational.status,'ready');
+assert.equal(absentNational.observations.has('US'),false,'an absent national row stays absent and never becomes zero');
+assert.equal(absentNational.values.get('US'),null);
 
 console.log('period, candidate identity, race geography, election share, missing/zero, scale and stale-request checks passed');

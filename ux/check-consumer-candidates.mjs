@@ -38,6 +38,7 @@ const perResidentDefinition=definitions.variants['adjusted-gross-income-agi'][0]
 const refreshedApiMetrics=[...apiMetrics,{id:perResidentDefinition.id,name:perResidentDefinition.label,fieldId:perResidentDefinition.fieldId,catalogId:'07.01',shortCategory:'Income',source:'IRS SOI',unit:perResidentDefinition.unit,stateSupported:true,countySupported:true,hasObservations:true,selectionKind:'mode',definition:perResidentDefinition}];
 const refreshed = consumer.buildSelectionCatalog(refreshedApiMetrics, {
   contractStatus:'candidate_nonreleased',localCandidatePreview:true,admissionStatus:'candidate_nonreleased',metrics:[
+    {id:'adjusted-gross-income-agi',catalogFieldId:'07.01',datasetId:'irs_agi_total_2023',candidateStatus:'local_candidate',candidateAvailable:true,sourceRelease:'irs-soi-2023-pep-vintage-2025',sourceReleases:['irs-soi-2023-pep-vintage-2025'],sourceUnit:'USD',unit:'USD',fieldId:'07.01:derived:total',geographyType:'state_and_county',periodType:'annual',year:2023,source:'irs_soi'},
     {id:'adjusted-gross-income-agi--per-resident',catalogFieldId:'07.01',datasetId:'irs_agi_per_resident_2023',candidateStatus:'local_candidate',candidateAvailable:true,sourceRelease:'irs-soi-2023-pep-vintage-2025',sourceReleases:['irs-soi-2023-pep-vintage-2025'],sourceUnit:'USD/person',unit:'USD per resident',fieldId:'07.01:derived:per-resident',geographyType:'state_and_county',periodType:'annual',year:2023,source:'irs_soi'},
     {id:'all-cancer-new-cases',catalogFieldId:'11.01',datasetId:'cancer_2023',candidateStatus:'local_candidate',candidateAvailable:true,sourceReleases:['2025 NPCR/SEER','USCS 2026'],unit:'per 100,000',fieldId:'11.01:derived',geographyType:'state_and_county',periodType:'annual',year:2023,source:'cdc_uscs'},
     ...['murders','violent-crime','robbery','aggravated-assault','burglary','motor-vehicle-theft','rape'].map((id,index)=>({
@@ -50,6 +51,15 @@ const refreshed = consumer.buildSelectionCatalog(refreshedApiMetrics, {
 assert.equal(refreshed.metricById.get('adjusted-gross-income-agi--per-resident').consumerDataset,'irs_agi_per_resident_2023');
 assert.equal(refreshed.metricById.get('adjusted-gross-income-agi--per-resident').candidateSourceUnit,'USD/person');
 assert.equal(refreshed.metricById.get('adjusted-gross-income-agi--per-resident').periodYear,2023);
+for(const id of ['adjusted-gross-income-agi','adjusted-gross-income-agi--per-resident'])
+  assert.deepEqual(refreshed.metricById.get(id).candidateSourceReleases,['irs-soi-2023-pep-vintage-2025'],`${id}: formal reader source identity`);
+const oldIrsRelease=consumer.buildSelectionCatalog(refreshedApiMetrics,{
+  contractStatus:'candidate_nonreleased',localCandidatePreview:true,admissionStatus:'candidate_nonreleased',metrics:[
+    {id:'adjusted-gross-income-agi',catalogFieldId:'07.01',datasetId:'irs_agi_total_2023',candidateStatus:'local_candidate',candidateAvailable:true,sourceRelease:'IRS SOI County 2023',sourceReleases:['IRS SOI County 2023'],sourceUnit:'USD',unit:'USD',fieldId:'07.01:derived:total',geographyType:'state_and_county',periodType:'annual',year:2023},
+  ],
+});
+assert.equal(oldIrsRelease.metricById.get('adjusted-gross-income-agi').candidateAvailable,false,
+  'human display labels cannot substitute for the frozen IRS reader release identity');
 assert.deepEqual(refreshed.metricById.get('all-cancer-new-cases').candidateSourceReleases,['2025 NPCR/SEER','USCS 2026']);
 for (const id of ['murders','violent-crime','robbery','aggravated-assault','burglary','motor-vehicle-theft','rape']) {
   const metric=refreshed.metricById.get(id);

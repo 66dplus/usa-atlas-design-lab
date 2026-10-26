@@ -89,8 +89,9 @@ export function prepareLayer(data,geo) {
     return Math.min(1,Math.max(0,(value-low)/(high-low)));
   };
   const height=value=>value==null?null:domain[1]===domain[0]?.5:Math.min(1,Math.max(0,(value-domain[0])/(domain[1]-domain[0])));
-  const values=new Map([...geo.byId.keys()].map(id=>[id,normalize(observations.get(id)?.value)]));
-  const heightValues=new Map([...geo.byId.keys()].map(id=>[id,height(observations.get(id)?.value)]));
+  const mapValue=id=>observations.get(id)?.geoType==='nation'?null:observations.get(id)?.value;
+  const values=new Map([...geo.byId.keys()].map(id=>[id,normalize(mapValue(id))]));
+  const heightValues=new Map([...geo.byId.keys()].map(id=>[id,height(mapValue(id))]));
   return {...data,status:'ready',observations,values,heightValues,scale,domain,min,max,suppressed,excludedGeographies:excluded};
 }
 
@@ -171,12 +172,15 @@ export function createDataStore(geo,onChange,request=fetch) {
             const quality=row.qualityState||'observed';
             const percentValue=expectedUnit==='%'||metric.switchGroup==='elections'||metric.consumerDataset==='aian_broad_share';
             const rowRelease=row.sourceRelease||data.sourceRelease;
+            const fbiAnnual=String(metric.consumerDataset||'').startsWith('fbi_')&&expectedType==='annual'&&expectedYear===2025;
             if(!['observed','no_election','missing','suppressed','invalid','nonmapping_geography'].includes(quality)||
                (quality==='observed'&&(!Number.isFinite(row.value)||row.value<0||(percentValue&&row.value>100)))||
                (quality!=='observed'&&row.value!==null)||
                (row.sourceRelease&&!allowedReleases.has(row.sourceRelease))||
                (expectedReleases.length>1&&quality==='observed'&&!row.sourceRelease)||
-               (rowRelease&&!allowedReleases.has(rowRelease)))
+               (rowRelease&&!allowedReleases.has(rowRelease))||
+               (row.geoType==='nation'&&row.id!=='US')||
+               (fbiAnnual&&row.id==='US'&&row.geoType!=='nation'))
               throw new Error('The candidate response contains an invalid value, quality state, or source release.');
             if(metric.switchGroup==='elections'&&quality==='observed'&&
                (!Number.isFinite(row.votes)||!Number.isFinite(row.totalVotes)||row.votes<0||

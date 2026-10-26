@@ -1,8 +1,7 @@
 """Read-only smoke checks for the explicitly named disposable candidate DB."""
 import os
 import sys
-from unittest.mock import patch
-
+import json
 from scripts import atlas_data
 
 
@@ -48,8 +47,7 @@ def main():
     assert cd06['congressSession'] == '119' and cd06['resultMode'] == 'TOTAL'
     assert next(row for row in house['observations'] if row['id'] == '1198')['geoType'] == 'congressional_district'
 
-    with patch.dict(os.environ, {'ATLAS_CD119_GEOJSON':'','ATLAS_CD119_GEOJSON_SHA256':''}):
-        boundary=atlas_data.reader_v2_cd119_boundary(include_features=True)
+    boundary=atlas_data.reader_v2_cd119_boundary(include_features=True)
     assert boundary['available'] and boundary['featureCount']==435
     assert boundary['sourceSha256']=='2b4238aed7e865df75d0c9cfcd8dffa1b79007b24519ecc4b213e683078b031a'
     assert boundary['featureCollection']['features'][0]['properties']['GEOID']
@@ -82,7 +80,46 @@ def main():
     assert len(cancer['sourceReleases'])==2 and all(row['sourceRelease'] for row in cancer['observations'])
     assert catalog['contractStatus'] == 'candidate_nonreleased'
     assert atlas_data.reader_v2_cd119_boundary()['featureCount'] == 435
-    print('PASS: actual read-only candidate DB exact periods, NSA, gaps, AIAN, President, Senate no-election, CD119, source metadata')
+
+    expected_counts={
+        'irs_agi_total_2023':3195,'irs_agi_per_resident_2023':3195,'electricity_price_2025_all':51,
+        'cancer_2023':52,'hiv_2024':52,'child_deaths_under18_2024':52,
+        **{alias:52 for alias in atlas_data.REFRESH_TARGETS if alias.startswith('fbi_')},
+    }
+    expected_ca={
+        'irs_agi_total_2023':2050839816000.0,'irs_agi_per_resident_2023':52341.82139315308,
+        'electricity_price_2025_all':27.03,'cancer_2023':501.6453230537639,
+        'hiv_2024':13.43271133386734,'child_deaths_under18_2024':35.64507832515024,
+        'fbi_homicide_2025':3.4811059417676025,'fbi_violent_crime_2025':432.7243371408925,
+        'fbi_robbery_2025':94.92239026760024,'fbi_aggravated_assault_2025':300.95812486188333,
+        'fbi_burglary_2025':275.10900752932724,'fbi_motor_vehicle_theft_2025':316.676461617923,
+        'fbi_rape_revised_2025':33.36271606964133,
+    }
+    expected_us_fbi={
+        'fbi_homicide_2025':4.121013471348732,'fbi_violent_crime_2025':327.6236430802433,
+        'fbi_robbery_2025':49.424951556586954,'fbi_aggravated_assault_2025':237.9929898415599,
+        'fbi_burglary_2025':193.6305797187498,'fbi_motor_vehicle_theft_2025':197.04383801883884,
+        'fbi_rape_revised_2025':36.084688210747736,
+    }
+    formal=json.loads((atlas_data.ROOT/'contracts/reader/v2/contract.json').read_text())
+    for alias,target in atlas_data.REFRESH_TARGETS.items():
+        result=atlas_data.reader_v2_observations(alias,'annual',target['year'],target['geography'])
+        assert result['periodType']=='annual' and result['year']==target['year']
+        assert result['readerFieldId']==target['field'] and result['sourceUnit']==target['unit']
+        assert len(result['observations'])==expected_counts[alias],(alias,len(result['observations']))
+        assert set(result['sourceReleases'])==set(target['source_releases'])
+        ca=next(row for row in result['observations'] if row['id']=='06')
+        assert abs(ca['value']-expected_ca[alias])<1e-9,(alias,ca['value'])
+        assert ca['sourceRelease'] in target['source_releases'] and ca['sourceUnit']==target['unit']
+        if alias.startswith('irs_agi_'):
+            assert result['sourceReleases']==[formal['source_releases']['irs_agi']]
+            assert result['sourceReleaseLabel']==target['source_release_label']
+        if alias.startswith('fbi_'):
+            us=next(row for row in result['observations'] if row['id']=='US')
+            assert us['geoType']=='nation' and us['sourceGeoId']=='US'
+            assert abs(us['value']-expected_us_fbi[alias])<1e-9,(alias,us['value'])
+    assert len(atlas_data.REFRESH_TARGETS)==13
+    print('PASS: actual read-only DB full candidate periods, source identity, all 13 refreshed aliases, exact CA values, seven native FBI US rows, and existing AIAN/election/CD119 checks')
 
 
 if __name__ == '__main__':

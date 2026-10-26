@@ -92,9 +92,9 @@ const fbiRateDefinition=(label:string)=>({
     denominatorUnit:'persons',formula:`${label} count ÷ same-record FBI population × 100,000`},
 });
 
-const refreshedTargets: Record<string, Pick<Metric, 'consumerDataset' | 'consumerFieldId' | 'periodType' | 'periodYear' | 'geographyType' | 'definition'>> = {
-  'adjusted-gross-income-agi': {consumerDataset:'irs_agi_total_2023',consumerFieldId:'07.01:derived:total',periodType:'annual',periodYear:2023,geographyType:'state_and_county'},
-  'adjusted-gross-income-agi--per-resident': {consumerDataset:'irs_agi_per_resident_2023',consumerFieldId:'07.01:derived:per-resident',periodType:'annual',periodYear:2023,geographyType:'state_and_county'},
+const refreshedTargets: Record<string, Pick<Metric, 'consumerDataset' | 'consumerFieldId' | 'periodType' | 'periodYear' | 'geographyType' | 'definition' | 'candidateSourceReleases'>> = {
+  'adjusted-gross-income-agi': {consumerDataset:'irs_agi_total_2023',consumerFieldId:'07.01:derived:total',periodType:'annual',periodYear:2023,geographyType:'state_and_county',candidateSourceReleases:['irs-soi-2023-pep-vintage-2025']},
+  'adjusted-gross-income-agi--per-resident': {consumerDataset:'irs_agi_per_resident_2023',consumerFieldId:'07.01:derived:per-resident',periodType:'annual',periodYear:2023,geographyType:'state_and_county',candidateSourceReleases:['irs-soi-2023-pep-vintage-2025']},
   'electricity-price': {consumerDataset:'electricity_price_2025_all',consumerFieldId:'08.05:sector_ALL',periodType:'annual',periodYear:2025,geographyType:'state'},
   'all-cancer-new-cases': {consumerDataset:'cancer_2023',consumerFieldId:'11.01:derived',periodType:'annual',periodYear:2023,geographyType:'state_and_county'},
   'new-hiv-diagnoses': {consumerDataset:'hiv_2024',consumerFieldId:'11.02:derived',periodType:'annual',periodYear:2024,geographyType:'state_and_county'},
@@ -288,6 +288,8 @@ function admittedCandidate(candidate: Metric, entry: Record<string, unknown> | u
     contract?.admissionStatus==='candidate_nonreleased'&&entry?.candidateStatus==='local_candidate';
   const productionAdmitted=contract?.localCandidatePreview===false&&contract?.contractStatus==='admitted'&&
     contract?.admissionStatus==='admitted'&&entry?.candidateStatus==='admitted';
+  const releaseIdentityMatches=!candidate.candidateSourceReleases?.length||
+    JSON.stringify([...candidate.candidateSourceReleases].sort())===JSON.stringify([...releaseList].sort());
   const failClosed={...candidate,candidateRequired:true,candidateAvailable:false,availability:'not_admitted' as const,
     hasObservations:false,coverageNote:candidate.coverageNote||`${candidate.name}: the matching local refresh candidate is unavailable; no older denominator or period is substituted.`};
   const admitted =
@@ -295,6 +297,7 @@ function admittedCandidate(candidate: Metric, entry: Record<string, unknown> | u
     entry?.candidateAvailable === true &&
     entry?.datasetId === candidate.consumerDataset &&
     entry?.geographyType === candidate.geographyType &&
+    releaseIdentityMatches &&
     (typeof entry?.sourceRelease === 'string' && entry.sourceRelease.length > 0 || releaseList.length > 0) &&
     (candidate.id !== 'elections-house' || (entry?.boundaryVintage === 2024 &&
       entry?.congressSession === '119' && entry?.geometryAvailable === true));
@@ -306,7 +309,7 @@ function admittedCandidate(candidate: Metric, entry: Record<string, unknown> | u
         availability: productionAdmitted?'loaded':'local_candidate',
         hasObservations: true,
         ...(typeof entry?.sourceRelease==='string'?{candidateSourceRelease:entry.sourceRelease}:{}),
-        candidateSourceReleases: releaseList,
+        candidateSourceReleases: candidate.candidateSourceReleases?.length?candidate.candidateSourceReleases:releaseList,
         candidateSourceUnit: typeof entry?.sourceUnit==='string'?entry.sourceUnit:undefined,
         ...(entry?.periodType?{periodType:entry.periodType as Metric['periodType']}:{}),
         ...(Number.isInteger(entry?.year)?{periodYear:Number(entry.year)}:{}),

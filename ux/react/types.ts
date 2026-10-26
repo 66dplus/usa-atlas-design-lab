@@ -132,6 +132,7 @@ export interface Layer {
   sourcePeriod?: string;
   source?: string;
   sourceRelease?: string;
+  sourceReleaseLabel?: string;
   definition?: Definition;
   methodologyNote?: string;
   scale?: 'linear' | 'log' | 'diverging';
