@@ -376,11 +376,10 @@ def reconstruct_package(repo, commit, release, previous_release, previous_build_
             raise ReleaseError('source reconstruction checkout differs from requested commit')
         run(['npm', '--userconfig=/dev/null', '--cache', str(temp / 'npm-cache'),
              'ci', '--ignore-scripts'], capture=True, check=True, cwd=checkout)
-        run(['python3', 'scripts/release_workflow.py', 'prepare',
+        run(['python3', 'scripts/release_workflow.py', '--contracts-lock', str(reader_lock_path), 'prepare',
              '--destination', str(output), '--release', release,
              '--source-commit', commit, '--previous-release', previous_release,
-             '--previous-build-sha256', previous_build_sha256,
-             '--contracts-lock', str(reader_lock_path)], capture=True,
+             '--previous-build-sha256', previous_build_sha256], capture=True,
             check=True, cwd=checkout)
         return package_inventory(output), (output / 'ux/build.json').read_bytes(), (output / 'preview-assets.json').read_bytes()
     finally:
@@ -557,9 +556,42 @@ def contract_identity(lock_path, vendored_artifact=None):
             contract.get('version') != lock['contractVersion'] or
             contract.get('read_only', contract.get('readOnly')) is not True):
         raise ReleaseError('reader lock does not bind the current read-only admitted schema contract')
+    if lock['contractVersion'] == '2.0.0' and (
+            contract.get('admission_filter') != "usa_atlas.ingest_run.status = 'pass'" or
+            contract.get('additional_reader_filter') != "usa_atlas.reader_batch.candidate_status = 'admitted'"):
+        raise ReleaseError('reader-v2 contract must require passed ingests and admitted batches')
     if lock['contractVersion'] == '1.0.0' and contract.get('admission_filter', contract.get('admissionFilter')) != "usa_atlas.ingest_run.status = 'pass'":
         raise ReleaseError('reader-v1 lock does not preserve its passed-ingest filter')
     if lock['contractVersion'] == '2.0.0':
+        objects = contract.get('objects')
+        if not isinstance(objects, dict) or not objects:
+            raise ReleaseError('reader-v2 contract has no schema object map')
+        schema_basis = {}
+        for relation, declaration in objects.items():
+            name = relation.split('.', 1)[-1]
+            if name in schema_basis:
+                raise ReleaseError('reader-v2 contract repeats a schema relation')
+            if '.' in relation:
+                if (not isinstance(declaration, dict) or declaration.get('access') != 'SELECT' or
+                        set(declaration) != {'access', 'columns', 'reader_filter', 'version'}):
+                    raise ReleaseError('reader-v2 relation access declaration is malformed')
+                columns = declaration.get('columns')
+            else:
+                columns = declaration
+            if (not isinstance(columns, dict) or not columns or
+                    any(not isinstance(column, str) or not isinstance(pg_type, str) or not pg_type
+                        for column, pg_type in columns.items())):
+                raise ReleaseError('reader-v2 contract contains an incomplete column map')
+            schema_basis[name] = columns
+        required_objects = {'catalog_field','ingest_run','observation','reader_batch',
+            'reader_observation','reader_v2_catalog_field','reader_v2_admission_event',
+            'geography_boundary','election_contest','election_candidate',
+            'election_party_result','election_availability'}
+        if not required_objects <= set(schema_basis):
+            raise ReleaseError('reader-v2 contract omits required versioned reader objects')
+        fingerprint = digest(json.dumps(schema_basis, sort_keys=True, separators=(',', ':')).encode())
+        if fingerprint != lock['schemaFingerprint']:
+            raise ReleaseError('reader-v2 schema fingerprint does not bind its declared columns')
         for relative, expected in lock['artifacts'].items():
             artifact_path = _safe_rel(str(relative))
             pinned = artifact_root / artifact_path
@@ -951,15 +983,45 @@ class DockerBackend:
         """Read-only introspection through the staged runtime's mounted DB credentials."""
         lock, contract = read_json(lock_path), read_json(contract_path)
         expected = {}
-        for table, columns in contract.get('objects', {}).items():
+        version = lock.get('contractVersion')
+        for relation, declaration in contract.get('objects', {}).items():
+            if version == '1.0.0':
+                if not isinstance(declaration, dict):
+                    raise ReleaseError('reader-v1 schema declaration is malformed')
+                table_schema, table, columns = 'usa_atlas', relation, declaration
+            elif version == '2.0.0':
+                if '.' in relation:
+                    table_schema, table = relation.split('.', 1)
+                    if (not isinstance(declaration, dict) or declaration.get('access') != 'SELECT' or
+                            set(declaration) != {'access', 'columns', 'reader_filter', 'version'}):
+                        raise ReleaseError('reader-v2 schema declaration is malformed')
+                    columns = declaration.get('columns')
+                else:
+                    table_schema, table, columns = 'usa_atlas', relation, declaration
+                if table_schema != 'usa_atlas' or not isinstance(columns, dict) or not columns:
+                    raise ReleaseError('reader-v2 schema declaration has an unsupported object or empty column map')
+            else:
+                raise ReleaseError('unsupported reader schema proof version')
+            if not isinstance(columns, dict) or not columns:
+                raise ReleaseError('reader contract has an incomplete object/column map')
             for name, declared_type in columns.items():
-                expected[(table, name)] = declared_type
+                if not isinstance(declared_type, str) or not declared_type:
+                    raise ReleaseError('reader contract has an invalid PostgreSQL column type')
+                expected.setdefault((table_schema, table), {})[name] = declared_type
         if not expected:
             raise ReleaseError('reader contract has no pinned object/column types')
-        sql = ("BEGIN READ ONLY; SELECT table_name, column_name, data_type, "
-               "coalesce(character_maximum_length::text, '') "
-               "FROM information_schema.columns WHERE table_schema='usa_atlas' "
-               "ORDER BY table_name, ordinal_position; COMMIT;")
+        if version == '2.0.0':
+            sql = ("BEGIN READ ONLY; SELECT table_schema, table_name, column_name, "
+                   "format_type(a.atttypid,a.atttypmod) FROM pg_catalog.pg_attribute a "
+                   "JOIN pg_catalog.pg_class c ON c.oid=a.attrelid "
+                   "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+                   "WHERE n.nspname='usa_atlas' AND c.relkind IN ('r','p') "
+                   "AND a.attnum>0 AND NOT a.attisdropped ORDER BY table_name, ordinal_position; COMMIT;")
+        else:
+            sql = ("BEGIN READ ONLY; SELECT table_name, column_name, data_type, "
+                   "coalesce(character_maximum_length::text, '') "
+                   "FROM information_schema.columns WHERE table_schema='usa_atlas' "
+                   "ORDER BY table_name, ordinal_position; COMMIT;")
         probe = (
             "import os,pathlib,subprocess,sys; "
             "os.environ['PGPASSWORD']=pathlib.Path('/run/secrets/reader_password').read_text().strip(); "
@@ -974,19 +1036,39 @@ class DockerBackend:
             parts = line.split('\t')
             if len(parts) != 4:
                 raise ReleaseError('database schema probe returned malformed metadata')
-            table, column, data_type, length = parts
-            actual[(table, column)] = (data_type, length)
+            if version == '2.0.0':
+                schema, table, column, pg_type = parts
+                actual.setdefault((schema, table), {})[column] = pg_type
+            else:
+                table, column, data_type, length = parts
+                actual.setdefault(('usa_atlas', table), {})[column] = (data_type, length)
         aliases = {'character(64)': ('character', '64'), 'text': ('text', ''),
                    'jsonb': ('jsonb', ''), 'uuid': ('uuid', ''), 'bigint': ('bigint', ''),
                    'timestamptz': ('timestamp with time zone', ''),
                    'timestamp with time zone': ('timestamp with time zone', ''),
-                   'double precision': ('double precision', '')}
+                   'double precision': ('double precision', ''), 'int': ('integer', ''),
+                   'bool': ('boolean', ''), 'varchar': ('character varying', ''),
+                   'smallint': ('smallint', ''), 'integer': ('integer', ''),
+                   'numeric': ('numeric', ''), 'text[]': ('ARRAY', '_text')}
         mismatches = []
-        for key, declared in expected.items():
-            want = aliases.get(declared, (declared, ''))
-            got = actual.get(key)
-            if got != want:
-                mismatches.append(f'{key[0]}.{key[1]}')
+        if version == '2.0.0':
+            for table_key, columns in expected.items():
+                got = actual.get(table_key, {})
+                if set(got) != set(columns):
+                    mismatches.append(f'{table_key[0]}.{table_key[1]} columns')
+                    continue
+                for name, declared in columns.items():
+                    want = {'timestamptz': 'timestamp with time zone', 'bool': 'boolean',
+                            'int': 'integer', 'varchar': 'character varying'}.get(declared, declared)
+                    if got.get(name) != want:
+                        mismatches.append(f'{table_key[0]}.{table_key[1]}.{name}')
+        else:
+            for (schema, table), columns in expected.items():
+                for name, declared in columns.items():
+                    want = aliases.get(declared, (declared, ''))
+                    got = actual.get((schema, table), {}).get(name)
+                    if got != want:
+                        mismatches.append(f'{schema}.{table}.{name}')
         if mismatches:
             raise ReleaseError('current database reader schema is missing or mistypes required columns: ' + ', '.join(mismatches))
         obj = self.inspect(container_id)

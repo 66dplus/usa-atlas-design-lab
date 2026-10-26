@@ -23,14 +23,47 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
             with self.assertRaisesRegex(atlas_data.DatabaseUnavailable, 'not installed or does not match'):
                 atlas_data.reader_v2_mode()
 
+    def test_admitted_unemployment_uses_default_database_without_local_override(self):
+        previous=atlas_data._verified_reader_v2_lock
+        atlas_data._verified_reader_v2_lock={}
+        had_database='ATLAS_READER_V2_DATABASE' in os.environ
+        prior_database=os.environ.pop('ATLAS_READER_V2_DATABASE',None)
+        try:
+            with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted'}):
+                self.assertEqual(atlas_data._reader_v2_database(),'usa_atlas')
+                with patch.object(atlas_data,'reader_v2_unemployment_period',return_value={'period':'2025-M13'}) as read:
+                    self.assertEqual(atlas_data.unemployment_period_observations('annual',2025),{'period':'2025-M13'})
+                    read.assert_called_once_with('annual',2025,None)
+        finally:
+            atlas_data._verified_reader_v2_lock=previous
+            if had_database:
+                os.environ['ATLAS_READER_V2_DATABASE']=prior_database
+
+    def test_disabled_mode_does_not_enable_production_candidate_reads(self):
+        with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'disabled','ATLAS_READER_V2_DATABASE':''}):
+            with self.assertRaisesRegex(atlas_data.DatabaseUnavailable,'explicit reviewed mode'):
+                atlas_data.unemployment_period_observations('annual',2025)
+
     def test_candidate_sql_filters_every_batch_role_to_the_selected_mode(self):
-        for alias in ('rb', 'cb', 'pb', 'ab', 'eb'):
+        for alias in ('rb', 'cb', 'pb', 'ab', 'eb', 'cf', 'gb'):
             with self.subTest(alias=alias), patch('scripts.atlas_data.subprocess.run') as run:
                 run.return_value = SimpleNamespace(returncode=0, stdout='[]', stderr='')
                 atlas_data.query(f"SELECT 1 WHERE {alias}.candidate_status IN ('local_review','admitted')")
                 sql=run.call_args.kwargs['input']
                 self.assertIn(f"{alias}.candidate_status='local_review'",sql)
                 self.assertNotIn("IN ('local_review','admitted')",sql)
+
+    def test_v1_read_does_not_require_a_v2_lock_during_rollback(self):
+        previous=atlas_data._verified_reader_v2_lock
+        atlas_data._verified_reader_v2_lock=None
+        try:
+            with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted','ATLAS_READER_V2_DATABASE':''}), \
+                 patch('scripts.atlas_data.subprocess.run') as run:
+                run.return_value=SimpleNamespace(returncode=0,stdout='[]',stderr='')
+                atlas_data.query("SELECT 1 WHERE rb.candidate_status IN ('local_review','admitted')")
+            self.assertIn("rb.candidate_status='admitted'",run.call_args.kwargs['input'])
+        finally:
+            atlas_data._verified_reader_v2_lock=previous
 
     def test_fbi_annual_targets_bind_all_seven_official_fields_and_same_unit(self):
         targets=[(key,value) for key,value in atlas_data.REFRESH_TARGETS.items() if key.startswith('fbi_')]
@@ -87,7 +120,7 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
 
     def test_released_unemployment_without_nsa_contract_fails_closed(self):
         with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'disabled','ATLAS_READER_V2_DATABASE': ''}):
-            with self.assertRaisesRegex(atlas_data.DatabaseUnavailable, 'no explicit NSA'):
+            with self.assertRaisesRegex(atlas_data.DatabaseUnavailable, 'explicit reviewed mode'):
                 atlas_data.unemployment_period_observations('annual', 2025)
 
     def test_absent_month_is_a_missing_period_not_zero(self):
@@ -148,6 +181,8 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
         self.assertEqual(result['observations'][0]['qualityState'],'no_election')
         self.assertIsNone(result['observations'][0]['value'])
         self.assertIn("ci.status='pass'", query.call_args_list[0].args[0])
+        self.assertEqual(query.call_args_list[0].args[1]['dataset_id'],'senate_election')
+        self.assertEqual(query.call_args_list[1].args[1]['dataset_id'],'senate_election')
 
     def test_election_share_uses_candidate_party_result_and_normalizes_stage(self):
         contest={
@@ -170,8 +205,17 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
         self.assertEqual(row['stage'],'general')
         self.assertEqual(row['sourceStage'],'GEN')
         self.assertEqual(row['candidates'][0]['share'],60.0)
+        self.assertEqual(query.call_args_list[0].args[1]['dataset_id'],'senate_election')
         self.assertIn('election_party_result',query.call_args_list[0].args[0])
         self.assertIn("upper(btrim(c.stage)) IN ('GEN','GENERAL')",query.call_args_list[0].args[0])
+
+    def test_public_election_alias_routes_to_canonical_reader_dataset(self):
+        with patch.object(atlas_data,'_reader_v2_database',return_value='review_db'), \
+             patch.object(atlas_data,'_reader_v2_election_observations',return_value={'datasetId':'election_house_2024'}) as read:
+            result=atlas_data.reader_v2_observations('election_house_2024','cycle',2024,
+                'congressional_district','DEMOCRAT')
+        self.assertEqual(result,{'datasetId':'election_house_2024'})
+        read.assert_called_once_with('review_db','house','DEMOCRAT',2024,'congressional_district')
 
     def test_validated_contest_without_party_result_is_missing_not_zero(self):
         contest={

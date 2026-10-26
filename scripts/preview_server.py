@@ -260,9 +260,10 @@ class PreviewHandler(BaseHTTPRequestHandler):
             if path == '/api/atlas/reader/v2/catalog':
                 return self.reply(200, self.server.cache.get('reader-v2-catalog', atlas_data.reader_v2_catalog))
             if path == '/api/atlas/reader/v2/cd119-boundary':
-                boundary=atlas_data.reader_v2_cd119_boundary(include_features=True)
+                boundary=self.server.cache.get('reader-v2-cd119-boundary',
+                    lambda: atlas_data.reader_v2_cd119_boundary(include_features=True))
                 if not boundary['available']:
-                    return self.reply(503, {'error':'Local 2024 CD119 geometry is unavailable.'}, extra={'Retry-After':'2'})
+                    return self.reply(503, {'error':'The reviewed 2024 CD119 boundary is unavailable.'}, extra={'Retry-After':'2'})
                 return self.reply(200,boundary)
             if path == '/api/atlas/reader/v2/observations':
                 parameters = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=6)

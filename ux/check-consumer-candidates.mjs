@@ -4,6 +4,7 @@ import { transform } from 'esbuild';
 import { indicatorVisibility } from './indicator-visibility.js';
 
 const definitions = JSON.parse(await readFile(new URL('./metric-definitions.json', import.meta.url), 'utf8'));
+const packagedRegistry = JSON.parse(await readFile(new URL('./selection-registry.json', import.meta.url), 'utf8'));
 const source = await readFile(new URL('./react/consumer-candidates.ts', import.meta.url), 'utf8');
 const compiled = await transform(source, { loader: 'ts', format: 'esm' });
 const consumer = await import(`data:text/javascript;base64,${Buffer.from(compiled.code).toString('base64')}`);
@@ -26,6 +27,10 @@ const apiMetrics = definitions.metrics
 const registry = consumer.buildSelectionCatalog(apiMetrics, {
   contractStatus: 'candidate_nonreleased', localCandidatePreview: true, admissionStatus:'candidate_nonreleased', metrics: [],
 });
+const selectionIds = registry.catalog.map((metric) => metric.id).sort();
+assert.equal(packagedRegistry.sourceFields, apiMetrics.length);
+assert.deepEqual(packagedRegistry.selectionCounts, {...registry.counts, total:registry.catalog.length});
+assert.deepEqual(packagedRegistry.selectableIds, selectionIds);
 assert.deepEqual(registry.counts, { primary: 41, variants: 4 });
 assert.equal(registry.catalog.length, 45);
 const perResidentDefinition=definitions.variants['adjusted-gross-income-agi'][0];

@@ -1,6 +1,7 @@
 """Read-only smoke checks for the explicitly named disposable candidate DB."""
 import os
 import sys
+from unittest.mock import patch
 
 from scripts import atlas_data
 
@@ -46,6 +47,12 @@ def main():
     assert cd06['value'] == 57.618994537955636 and cd06['boundaryVintage'] == 2024
     assert cd06['congressSession'] == '119' and cd06['resultMode'] == 'TOTAL'
     assert next(row for row in house['observations'] if row['id'] == '1198')['geoType'] == 'congressional_district'
+
+    with patch.dict(os.environ, {'ATLAS_CD119_GEOJSON':'','ATLAS_CD119_GEOJSON_SHA256':''}):
+        boundary=atlas_data.reader_v2_cd119_boundary(include_features=True)
+    assert boundary['available'] and boundary['featureCount']==435
+    assert boundary['sourceSha256']=='2b4238aed7e865df75d0c9cfcd8dffa1b79007b24519ecc4b213e683078b031a'
+    assert boundary['featureCollection']['features'][0]['properties']['GEOID']
 
     catalog = atlas_data.reader_v2_catalog()
     by_id = {row['id']: row for row in catalog['metrics']}

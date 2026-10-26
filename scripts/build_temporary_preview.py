@@ -18,7 +18,7 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/studio.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg ux/assets/creator-portrait.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
-PRIVATE = 'ux/journal.js scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
+PRIVATE = 'ux/journal.js scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json ux/selection-registry.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
 STATES = '01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56'.split()
 ICONS = 'search back saved check compare house shuffle close plus minus chevron-down location forward share indicators explorer'.split()
 SOURCE_NAMES = '''robots.txt sitemap.xml ux/index.html ux/app.js ux/studio.js ux/ui-tokens.css ux/mobile-layout.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css scripts/preview_server.py scripts/bug_reports.py ux/style.css'''.split()
@@ -144,6 +144,8 @@ def build(destination, release, source_commit=None, previous_release=None,
                             (ROOT / 'ux/indicator-visibility.js').read_text()))
     selection_registry = json.loads(subprocess.check_output(
         ['node', str(ROOT / 'scripts/selection_registry.mjs')], cwd=ROOT, text=True))
+    if json.loads((ROOT / 'ux/selection-registry.json').read_text()) != selection_registry:
+        raise ValueError('The packaged API selection registry is stale relative to the shared UI registry')
     metadata = {
         'release': release,
         'previousRelease': previous_release,
@@ -156,7 +158,10 @@ def build(destination, release, source_commit=None, previous_release=None,
         'renderer2dDefault': 'webgl',
         'frontendFramework': 'react-typescript',
         'conformanceCapabilities': CAPABILITIES,
-        'visibleFieldCount': sum(value == 'true' for value in flags.values()),
+        'visibleFieldCount': selection_registry['selectionCounts']['primary'],
+        'additionalVariantCount': selection_registry['selectionCounts']['variants'],
+        'selectableSelectionCount': selection_registry['selectionCounts']['total'],
+        'retainedSourceFieldCount': sum(value == 'true' for value in flags.values()),
         'selectableSelectionCounts': selection_registry['selectionCounts'],
         'selectableMetricIds': selection_registry['selectableIds'],
         'selectionSourceFieldCount': selection_registry['sourceFields'],
@@ -171,6 +176,7 @@ def build(destination, release, source_commit=None, previous_release=None,
         'dataContractSha256': {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
                               for name in ('scripts/atlas_data.py', 'scripts/preview_server.py', 'scripts/bug_reports.py', 'scripts/seo_render.py',
                                            'ux/acs-series.json', 'ux/catalog-v2.json', 'ux/metric-definitions.json',
+                                           'ux/selection-registry.json',
                                            'contracts/reader-contract.lock.json', 'contracts/reader/v1/contract.json',
                                            'contracts/reader/v1/schema.sql', 'contracts/reader/v1/fixtures/reader-fixture.sql',
                                            'contracts/reader/v1/fixtures/reader-query.sql') +
@@ -188,8 +194,10 @@ def build(destination, release, source_commit=None, previous_release=None,
     metadata['readerLockSha256'] = metadata['dataReaderLock']['sha256']
     metadata['readerSchemaFingerprint'] = reader_lock['schemaFingerprint']
     metadata['readerContractVersion'] = reader_lock['contractVersion']
-    if (metadata['visibleFieldCount'] != metadata['selectionSourceFieldCount'] or
+    if (metadata['retainedSourceFieldCount'] != metadata['selectionSourceFieldCount'] or
             metadata['selectableSelectionCounts'] != {'primary': 41, 'variants': 4, 'total': 45} or
+            metadata['visibleFieldCount'] != 41 or metadata['additionalVariantCount'] != 4 or
+            metadata['selectableSelectionCount'] != 45 or
             len(metadata['medicalFields']) != 3):
         raise ValueError('The source-field and selectable-entry registries do not match the reviewed selection contract')
     (destination / 'ux/build.json').write_text(json.dumps(metadata, indent=2) + '\n')
@@ -226,6 +234,8 @@ if __name__ == '__main__':
     parser.add_argument('--source-commit')
     parser.add_argument('--previous-release', required=True)
     parser.add_argument('--previous-build-sha256', required=True)
+    parser.add_argument('--contracts-lock', type=Path, default=Path('contracts/reader-contract.lock.json'))
     arguments = parser.parse_args()
     build(arguments.destination, arguments.release, arguments.source_commit,
-          arguments.previous_release, arguments.previous_build_sha256)
+          arguments.previous_release, arguments.previous_build_sha256,
+          reader_lock_path=str(arguments.contracts_lock))
