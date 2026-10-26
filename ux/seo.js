@@ -2,16 +2,17 @@ export const SITE_ORIGIN = 'https://usa-xray.online';
 export const SITE_NAME = 'USA X-Ray';
 export const SITE_DESCRIPTION = 'Explore U.S. places through source-based maps, geographic comparisons and public data.';
 
-export function createPageMetadata({title, description, path, type = 'website', noindex = false, structuredData = null}) {
+export function createPageMetadata({title, description, path, type = 'website', noindex = false, structuredData = null, image = null}) {
   const canonicalPath = typeof path === 'string' && path.startsWith('/') ? path.split(/[?#]/, 1)[0] || '/' : '/';
   const canonical = new URL(canonicalPath, SITE_ORIGIN).href;
+  const imageUrl = image ? new URL(image, SITE_ORIGIN).href : null;
   return {
     title: title || `${SITE_NAME} — Explore the map`,
     description: description || SITE_DESCRIPTION,
     canonical,
     robots: noindex ? 'noindex,follow' : 'index,follow',
-    openGraph: {type, title: title || SITE_NAME, description: description || SITE_DESCRIPTION, url: canonical, siteName: SITE_NAME, locale: 'en_US'},
-    twitter: {card: 'summary', title: title || SITE_NAME, description: description || SITE_DESCRIPTION},
+    openGraph: {type, title: title || SITE_NAME, description: description || SITE_DESCRIPTION, url: canonical, siteName: SITE_NAME, locale: 'en_US', ...(imageUrl ? {image: imageUrl} : {})},
+    twitter: {card: imageUrl ? 'summary_large_image' : 'summary', title: title || SITE_NAME, description: description || SITE_DESCRIPTION, ...(imageUrl ? {image: imageUrl} : {})},
     structuredData: structuredData || {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
@@ -34,6 +35,10 @@ function upsertMeta(document, key, value, property = false) {
   node.content = value;
 }
 
+function removeMeta(document, key, property = false) {
+  document.head.querySelector(`meta[${property ? 'property' : 'name'}="${key}"]`)?.remove();
+}
+
 export function applyPageMetadata(metadata, document = globalThis.document) {
   if (!document?.head || !metadata) return;
   document.title = metadata.title;
@@ -45,9 +50,13 @@ export function applyPageMetadata(metadata, document = globalThis.document) {
   upsertMeta(document, 'og:url', metadata.openGraph.url, true);
   upsertMeta(document, 'og:site_name', metadata.openGraph.siteName, true);
   upsertMeta(document, 'og:locale', metadata.openGraph.locale, true);
+  if (metadata.openGraph.image) upsertMeta(document, 'og:image', metadata.openGraph.image, true);
+  else removeMeta(document, 'og:image', true);
   upsertMeta(document, 'twitter:card', metadata.twitter.card);
   upsertMeta(document, 'twitter:title', metadata.twitter.title);
   upsertMeta(document, 'twitter:description', metadata.twitter.description);
+  if (metadata.twitter.image) upsertMeta(document, 'twitter:image', metadata.twitter.image);
+  else removeMeta(document, 'twitter:image');
   let canonical = document.head.querySelector('link[rel="canonical"]');
   if (!canonical) {
     canonical = document.createElement('link');
@@ -87,17 +96,18 @@ export function mapPageMetadata({state, index, metricName, placeName, path, noin
 }
 
 /** @param {string} page @param {string} path
- * @param {{article?: {title:string,description:string}|null,noindex?:boolean}} options */
+ * @param {{article?: {title:string,seoTitle?:string,description:string,cover?:string}|null,noindex?:boolean}} options */
 export function screenPageMetadata(page, path, {article = null, noindex = false} = {}) {
   const pages = {
     stats: ['Atlas statistics | USA X-Ray', 'Explore how visitors use USA X-Ray. Visitor analytics are not connected yet.'],
     support: ['Support USA X-Ray | USA X-Ray', 'Learn how to support the maps, data and stories behind USA X-Ray. Contributions are not open yet.'],
     info: ['About USA X-Ray | USA X-Ray', 'Learn how USA X-Ray maps public data to places, preserves source units and periods, and handles gaps.'],
     blog: ['USA X-Ray journal | USA X-Ray', 'Explore stories about public data, places and the sources behind the map.'],
-    article: [article?.title ? `${article.title} | USA X-Ray` : 'Article | USA X-Ray', article?.description || 'A USA X-Ray journal article.'],
+    article: [(article?.seoTitle || article?.title) ? `${article.seoTitle || article.title} | USA X-Ray` : 'Article | USA X-Ray', article?.description || 'A USA X-Ray journal article.'],
   };
   const [title, description] = pages[page] || ['USA X-Ray — Explore the map', SITE_DESCRIPTION];
   const canonical = new URL(path, SITE_ORIGIN).href;
+  const image = page === 'article' && article?.cover ? new URL(article.cover, SITE_ORIGIN).href : null;
   const structuredData = page === 'article' ? {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -105,6 +115,7 @@ export function screenPageMetadata(page, path, {article = null, noindex = false}
     description,
     mainEntityOfPage: canonical,
     publisher: {'@type': 'Organization', name: SITE_NAME, url: SITE_ORIGIN},
+    ...(image ? {image: [image]} : {}),
   } : page === 'blog' ? {
     '@context': 'https://schema.org',
     '@type': 'Blog',
@@ -120,5 +131,5 @@ export function screenPageMetadata(page, path, {article = null, noindex = false}
     url: canonical,
     isPartOf: {'@type': 'WebSite', name: SITE_NAME, url: SITE_ORIGIN},
   };
-  return createPageMetadata({title, description, path, type: page === 'article' ? 'article' : 'website', noindex, structuredData});
+  return createPageMetadata({title, description, path, type: page === 'article' ? 'article' : 'website', noindex, structuredData, image});
 }
