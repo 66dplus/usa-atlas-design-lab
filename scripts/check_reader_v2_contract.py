@@ -34,7 +34,8 @@ CONSUMER_EXPORT = {
 }
 EXPECTED_PRODUCER_CONTRACT_SHA256 = '8916c8d0fda359c56ae66ce7a94b66c0a8cea5f6307c02a0cb95f2cc4dfefe5c'
 EXPECTED_SCHEMA_FINGERPRINT = '2a319fe39b1045bddb48bcdf688a20032875f4f0ea823784c07a0611f9428fa1'
-FROZEN_PRODUCER_COMMIT = 'cfe51d44364ead0addf800dd663096c7bc8867d8'
+FROZEN_PRODUCER_COMMIT = '5f21e6e0921cf9af50a675d7da4b690e28d43026'
+FROZEN_PRODUCER_TAG = 'reader-contract-v2.0.0'
 # This is present in the byte-pinned producer DDL but omitted from its frozen
 # consumer object map. It remains schema-checked, while the app never consumes it.
 PINNED_SCHEMA_ONLY_COLUMNS = {'election_contest': {'source_mode_raw': 'text'}}
@@ -52,6 +53,7 @@ def pinned_bundle() -> tuple[dict, dict, dict[str, str]]:
             lock.get('artifactPath') != 'database/reader/v2' or
             lock.get('localArtifactPath') != 'contracts/reader/v2' or
             lock.get('sourceCommit') != FROZEN_PRODUCER_COMMIT or
+            lock.get('producerTag') != FROZEN_PRODUCER_TAG or lock.get('sourcePinStatus') or
             not re.fullmatch(r'[0-9a-f]{40}', str(lock.get('sourceCommit', ''))) or
             not re.fullmatch(r'[0-9a-f]{64}', str(lock.get('contractSha256', ''))) or
             not re.fullmatch(r'[0-9a-f]{64}', str(lock.get('schemaFingerprint', ''))) or

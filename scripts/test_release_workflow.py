@@ -819,12 +819,36 @@ class WorkflowTests(unittest.TestCase):
             'consumerExport':export,'artifacts':artifact_hashes})
         identity = contract_identity(lock_path)
         self.assertEqual(identity['readerSchemaFingerprint'],contract['schema_fingerprint'])
+        pending_lock = json.loads(lock_path.read_text())
+        pending_lock['sourcePinStatus'] = 'awaiting-accepted-producer-tag'
+        write_json(lock_path, pending_lock)
+        with self.assertRaisesRegex(ReleaseError, 'not been finalized'):
+            contract_identity(lock_path)
+        pending_lock.pop('sourcePinStatus')
+        write_json(lock_path, pending_lock)
         contract['objects']['reader_observation']['value'] = 'numeric'
         write_json(contract_path, contract)
         lock = json.loads(lock_path.read_text()); lock['contractSha256'] = json_sha(contract_path)
         lock['artifacts']['contract.json'] = lock['contractSha256']; write_json(lock_path,lock)
         with self.assertRaisesRegex(ReleaseError,'schema fingerprint'):
             contract_identity(lock_path)
+
+    def test_accepted_canonical_v2_pin_is_release_eligible_and_v1_remains_eligible(self):
+        from scripts.release_workflow import contract_identity
+        root = Path(__file__).resolve().parents[1]
+        v2_path = root / 'contracts/reader-v2-contract.lock.json'
+        v2_lock = json.loads(v2_path.read_text())
+        self.assertEqual(v2_lock['sourceCommit'], '5f21e6e0921cf9af50a675d7da4b690e28d43026')
+        self.assertEqual(v2_lock['producerTag'], 'reader-contract-v2.0.0')
+        self.assertNotIn('sourcePinStatus', v2_lock)
+        v2 = contract_identity(v2_path)
+        self.assertEqual(v2['readerSchemaFingerprint'], v2_lock['schemaFingerprint'])
+        v1_path = root / 'contracts/reader-contract.lock.json'
+        v1_lock = json.loads(v1_path.read_text())
+        v1 = contract_identity(v1_path)
+        self.assertEqual(v1['readerSchemaFingerprint'], v1_lock['schemaFingerprint'])
+        self.assertEqual(v1_lock['sourceCommit'], 'b405bfdf473614beea49dd5126a843a916168f7d')
+        self.assertEqual(v1_lock['contractSha256'], '7b9910816ac5608cbb8c1c90d2bbef45cc464e80d3c13aed92b7a2d62dd7600b')
 
 
 if __name__=='__main__':

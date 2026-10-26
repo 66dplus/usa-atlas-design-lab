@@ -23,6 +23,6 @@
   "producerRepository": "usa-atlas-data-collection",
   "readOnly": true,
   "schemaFingerprint": "2a319fe39b1045bddb48bcdf688a20032875f4f0ea823784c07a0611f9428fa1",
-  "sourceCommit": "cfe51d44364ead0addf800dd663096c7bc8867d8",
-  "sourcePinStatus": "frozen-contract-cfe51d4-awaiting-accepted-producer-main-tag"
+  "producerTag": "reader-contract-v2.0.0",
+  "sourceCommit": "5f21e6e0921cf9af50a675d7da4b690e28d43026"
 }
