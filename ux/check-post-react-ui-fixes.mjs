@@ -322,7 +322,7 @@ try {
     const summaryDrags = [];
     for (const [gesture, target] of [['center', summary], ['name', name], ['magnifier', search]]) {
       await handle.focus(); await page.keyboard.press('End');
-      await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'min' && document.querySelector('#explore-panel')?.dataset.userPosition === 'false');
+      await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'min' && document.querySelector('#explore-panel')?.dataset.userPosition === 'false' && document.querySelector('#explore-panel')?.dataset.settling === 'false');
       const moved = await drag(page, -90, `summary-${gesture}-${viewport.width}-${theme}`, target);
       assert.equal(moved.mid.dragging, 'true', `${gesture} summary touch actively drags the sheet`);
       assert.ok(moved.start - moved.mid.offset > 20, `${gesture} summary touch moves the sheet with the finger`);
@@ -332,7 +332,7 @@ try {
         `${gesture} body classification follows actual free position`);
       summaryDrags.push({ gesture, ...moved.settled });
       await handle.focus(); await page.keyboard.press('End');
-      await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'min' && document.querySelector('#explore-panel')?.dataset.userPosition === 'false');
+      await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'min' && document.querySelector('#explore-panel')?.dataset.userPosition === 'false' && document.querySelector('#explore-panel')?.dataset.settling === 'false');
       if (gesture === 'name') {
         await name.tap();
         await page.waitForFunction(() => !document.querySelector('#metric-library')?.hidden);

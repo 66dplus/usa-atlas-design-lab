@@ -198,6 +198,13 @@ async function sheetBehavior(page,name){
   assert.equal(visible,true);void custom;
 }
 async function metricDefinition(page,name,contractVersion){
+  const currentValue=page.locator('#summary-a small');
+  await page.waitForFunction(()=>{
+    const caption=document.querySelector('#summary-a small');
+    return !!caption&&caption.textContent.trim()!==''&&caption.textContent.trim()!=='Loading…';
+  },null,{timeout:60000});
+  const currentCaption=(await currentValue.innerText()).trim();
+  assert.doesNotMatch(currentCaption,/^(?:Connection error|No data here)$/i,`${name}: current unemployment layer has a usable observation before source inspection`);
   if(name.startsWith('chrome-')&&viewportForName(name)<=760){
     const sheet=page.locator('#explore-panel');
     const handle=sheet.locator(':scope > .sheet-handle');
