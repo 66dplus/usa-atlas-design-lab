@@ -533,7 +533,11 @@ def contract_identity(lock_path, vendored_artifact=None):
     elif lock['contractVersion'] == '2.0.0':
         if not isinstance(lock.get('artifacts'), dict) or not lock['artifacts']:
             raise ReleaseError('reader-v2 lock must list its exact artifact hashes')
-        expected_filter = "usa_atlas.reader_batch.candidate_status = 'admitted' AND usa_atlas.ingest_run.status = 'pass'"
+        if lock.get('sourcePinStatus'):
+            raise ReleaseError('reader-v2 producer commit and accepted tag have not been finalized')
+        if not isinstance(lock.get('producerTag'), str) or not lock['producerTag'].strip():
+            raise ReleaseError('reader-v2 lock must name the accepted producer tag')
+        expected_filter = "usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'"
         if lock.get('admissionFilter') != expected_filter:
             raise ReleaseError('reader-v2 lock must require admitted batches and passed ingests')
     else:
@@ -552,11 +556,14 @@ def contract_identity(lock_path, vendored_artifact=None):
         raise ReleaseError('reader contract artifact is missing or differs from reader lock SHA256')
     contract = read_json(artifact_file)
     artifact_root = artifact_file.parent
+    contract_version = contract.get('contract_version') if lock['contractVersion'] == '2.0.0' else contract.get('version')
     if (contract.get('schema_fingerprint') != lock['schemaFingerprint'] or
-            contract.get('version') != lock['contractVersion'] or
+            contract_version != lock['contractVersion'] or
             contract.get('read_only', contract.get('readOnly')) is not True):
         raise ReleaseError('reader lock does not bind the current read-only admitted schema contract')
     if lock['contractVersion'] == '2.0.0' and (
+            contract.get('format') != 'usa_atlas_reader_contract' or
+            contract.get('contract_id') != 'usa_atlas.application_reader' or
             contract.get('admission_filter') != "usa_atlas.ingest_run.status = 'pass'" or
             contract.get('additional_reader_filter') != "usa_atlas.reader_batch.candidate_status = 'admitted'"):
         raise ReleaseError('reader-v2 contract must require passed ingests and admitted batches')
@@ -592,6 +599,22 @@ def contract_identity(lock_path, vendored_artifact=None):
         fingerprint = digest(json.dumps(schema_basis, sort_keys=True, separators=(',', ':')).encode())
         if fingerprint != lock['schemaFingerprint']:
             raise ReleaseError('reader-v2 schema fingerprint does not bind its declared columns')
+        expected_consumer_paths = {
+            'contract.json', 'schema.sql', 'consumer-protocol.md',
+            'fixtures/reader-fixture.sql', 'fixtures/reader-query.sql',
+        }
+        if set(lock['artifacts']) != expected_consumer_paths:
+            raise ReleaseError('reader-v2 lock must pin exactly the reviewed consumer export files')
+        producer_hashes = contract.get('artifact_sha256', {})
+        producer_sources = {
+            'schema.sql': 'database/reader/v2/schema.sql',
+            'consumer-protocol.md': 'database/reader/v2/consumer-protocol.md',
+            'fixtures/reader-fixture.sql': 'database/reader/v2/fixtures/reader-fixture.sql',
+            'fixtures/reader-query.sql': 'database/reader/v2/fixtures/reader-query.sql',
+        }
+        for relative, producer_path in producer_sources.items():
+            if lock['artifacts'].get(relative) != producer_hashes.get(producer_path):
+                raise ReleaseError(f'reader-v2 consumer export does not match pinned producer source: {relative}')
         for relative, expected in lock['artifacts'].items():
             artifact_path = _safe_rel(str(relative))
             pinned = artifact_root / artifact_path

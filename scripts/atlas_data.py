@@ -594,19 +594,35 @@ def _verify_reader_v2_lock():
                 not re.fullmatch(r'[0-9a-f]{64}', str(lock.get('contractSha256', ''))) or
                 not re.fullmatch(r'[0-9a-f]{64}', str(lock.get('schemaFingerprint', ''))) or
                 lock.get('readOnly') is not True or
-                lock.get('admissionFilter') != "usa_atlas.reader_batch.candidate_status = 'admitted' AND usa_atlas.ingest_run.status = 'pass'"):
+                lock.get('admissionFilter') != "usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'"):
             raise ValueError('reader lock fields are incomplete')
         contract_path = root / 'contract.json'
         contract_raw = contract_path.read_bytes()
         contract = json.loads(contract_raw)
+        export = {
+            'database/reader/v2/contract.json':'contract.json',
+            'database/reader/v2/schema.sql':'schema.sql',
+            'database/reader/v2/consumer-protocol.md':'consumer-protocol.md',
+            'database/reader/v2/fixtures/reader-fixture.sql':'fixtures/reader-fixture.sql',
+            'database/reader/v2/fixtures/reader-query.sql':'fixtures/reader-query.sql',
+        }
         if (hashlib.sha256(contract_raw).hexdigest() != lock['contractSha256'] or
-                contract.get('version') != '2.0.0' or contract.get('schema_fingerprint') != lock['schemaFingerprint'] or
+                contract.get('contract_version') != '2.0.0' or
+                contract.get('format') != 'usa_atlas_reader_contract' or
+                contract.get('contract_id') != 'usa_atlas.application_reader' or
+                contract.get('schema_fingerprint') != lock['schemaFingerprint'] or
                 contract.get('admission_filter') != "usa_atlas.ingest_run.status = 'pass'" or
                 contract.get('additional_reader_filter') != "usa_atlas.reader_batch.candidate_status = 'admitted'"):
             raise ValueError('reader contract identity differs from lock')
         artifacts = lock.get('artifacts')
-        if not isinstance(artifacts, dict) or not artifacts:
-            raise ValueError('reader lock has no pinned artifacts')
+        if (lock.get('consumerExport') != export or not isinstance(artifacts, dict) or
+                set(artifacts) != set(export.values()) or
+                not isinstance(contract.get('artifact_sha256'), dict)):
+            raise ValueError('reader lock does not pin the exact reviewed consumer export')
+        for producer_path, local_path in export.items():
+            if (producer_path != 'database/reader/v2/contract.json' and
+                    contract['artifact_sha256'].get(producer_path) != artifacts.get(local_path)):
+                raise ValueError('reader consumer copy is not bound to the frozen producer inventory')
         for relative, expected in artifacts.items():
             artifact = (root / relative).resolve()
             if (not artifact.is_relative_to(root) or not re.fullmatch(r'[0-9a-f]{64}', str(expected)) or
@@ -751,9 +767,9 @@ def _reader_v2_unemployment_contract(database):
       SELECT COALESCE(json_agg(t ORDER BY source_release),'[]'::json)
       FROM (
         SELECT cf.source_release,
-          COALESCE(contract->>'sourceRelease',contract->>'source_release') AS sourceRelease,
-          COALESCE(contract->>'seasonalAdjustment',contract->>'seasonal_adjustment') AS seasonalAdjustment,
-          COALESCE(contract->>'sourceCode',contract->>'source_code') AS sourceCode
+          COALESCE(contract->>'sourceRelease',contract->>'source_release') AS "sourceRelease",
+          COALESCE(contract->>'seasonalAdjustment',contract->>'seasonal_adjustment') AS "seasonalAdjustment",
+          COALESCE(contract->>'sourceCode',contract->>'source_code') AS "sourceCode"
         FROM usa_atlas.reader_v2_catalog_field cf
         WHERE cf.catalog_field_id='03.06' AND cf.dataset_id='unemployment'
           AND cf.candidate_status IN ('local_review','admitted')

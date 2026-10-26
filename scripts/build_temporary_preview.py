@@ -61,6 +61,15 @@ def selected_reader_artifacts(lock_relative):
     if not lock_path.is_relative_to(ROOT.resolve()) or not lock_path.is_file():
         raise ValueError('Selected reader contract lock must be an existing repository file')
     lock = json.loads(lock_path.read_bytes())
+    if lock.get('contractVersion') == '2.0.0':
+        expected_lock = (ROOT / 'contracts/reader-v2-contract.lock.json').resolve()
+        if lock_path != expected_lock:
+            raise ValueError('Reader-v2 packages must select the separately reviewed canonical v2 lock')
+        try:
+            from .check_reader_v2_contract import pinned_bundle
+        except ImportError:
+            from check_reader_v2_contract import pinned_bundle
+        pinned_bundle()
     artifact_root = (ROOT / lock.get('localArtifactPath', '')).resolve()
     if not artifact_root.is_relative_to(ROOT.resolve()):
         raise ValueError('Reader artifact path escapes the application repository')
@@ -81,15 +90,16 @@ def selected_reader_artifacts(lock_relative):
             raise ValueError(f'Reader artifact is missing or differs from selected lock: {relative}')
         paths.append(artifact.relative_to(ROOT.resolve()).as_posix())
     contract = json.loads((artifact_root / 'contract.json').read_bytes())
+    contract_version = contract.get('contract_version') if lock.get('contractVersion') == '2.0.0' else contract.get('version')
     if (hashlib.sha256((artifact_root / 'contract.json').read_bytes()).hexdigest() != lock.get('contractSha256') or
             contract.get('schema_fingerprint') != lock.get('schemaFingerprint') or
-            contract.get('version') != lock.get('contractVersion')):
+            contract_version != lock.get('contractVersion')):
         raise ValueError('Reader contract identity does not match selected lock')
     return lock_path.relative_to(ROOT.resolve()).as_posix(), lock, paths
 
 
 def build(destination, release, source_commit=None, previous_release=None,
-          previous_build_sha256=None, emit=True, reader_lock_path='contracts/reader-contract.lock.json'):
+          previous_build_sha256=None, emit=True, reader_lock_path='contracts/reader-v2-contract.lock.json'):
     if destination.exists():
         raise ValueError('Use a fresh temporary build directory')
     if not re.fullmatch(r'[a-zA-Z0-9._-]{1,80}', release):
@@ -120,7 +130,12 @@ def build(destination, release, source_commit=None, previous_release=None,
     public += [f'ux/boundaries/{state}.json' for state in STATES]
     public += [f'ux/assets/brand-icons/{icon}.png' for icon in ICONS]
     selected_lock_path, selected_lock, selected_artifacts = selected_reader_artifacts(reader_lock_path)
-    private = list(dict.fromkeys(PRIVATE + [selected_lock_path] + selected_artifacts))
+    # Ship the v1 rollback contract alongside whichever reader version this
+    # package selects; selection and admission remain bound to one exact lock.
+    rollback = ['contracts/reader-contract.lock.json', 'contracts/reader/v1/contract.json',
+                'contracts/reader/v1/schema.sql', 'contracts/reader/v1/fixtures/reader-fixture.sql',
+                'contracts/reader/v1/fixtures/reader-query.sql']
+    private = list(dict.fromkeys(PRIVATE + rollback + [selected_lock_path] + selected_artifacts))
     manifest = {}
     shipped = list(dict.fromkeys(public + private))
     for relative in shipped:
@@ -235,7 +250,7 @@ if __name__ == '__main__':
     parser.add_argument('--source-commit')
     parser.add_argument('--previous-release', required=True)
     parser.add_argument('--previous-build-sha256', required=True)
-    parser.add_argument('--contracts-lock', type=Path, default=Path('contracts/reader-contract.lock.json'))
+    parser.add_argument('--contracts-lock', type=Path, default=Path('contracts/reader-v2-contract.lock.json'))
     arguments = parser.parse_args()
     build(arguments.destination, arguments.release, arguments.source_commit,
           arguments.previous_release, arguments.previous_build_sha256,

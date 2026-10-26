@@ -18,6 +18,8 @@ The local candidate catalog reserves 12.01 President, 12.02 Senate, and 12.03 Ho
 
 Reader-v2 endpoints are read-only. An explicitly configured local-review mode requires loopback access and reports `candidate_nonreleased`; admitted mode requires the pinned v2 contract, passed ingests, and admitted reader batches. Candidate availability alone is not release admission. The app does not bundle source collection files, credentials, or the local congressional boundary.
 
+PostgreSQL CI applies the frozen v2 schema and consumer fixture, then promotes only that synthetic fixture batch through an app-owned CI SQL file. Its adapter checks run in admitted mode with the read-only role, alongside the unchanged v1 schema and contract checks. This verifies the production query/filter path; the fixture is not collected or release data.
+
 ## Rate and selection metadata
 
 Selection counts come from the current selectable registry. Income total and per-resident remain two modes of one selection. The recreation/fitness source remains retained but hidden from primary map choices. The current expected candidate-aware count is 41 primary selections and four additional race variants (45 total); a missing candidate stays visible with an accurate unavailable status rather than changing the count.

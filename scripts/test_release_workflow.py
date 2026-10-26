@@ -786,22 +786,37 @@ class WorkflowTests(unittest.TestCase):
             'reader_v2_catalog_field','reader_v2_admission_event','geography_boundary',
             'election_contest','election_candidate','election_party_result','election_availability')}
         basis = json.dumps(objects, sort_keys=True, separators=(',', ':')).encode()
-        contract = {'version':'2.0.0','read_only':True,
+        contract = {'format':'usa_atlas_reader_contract','contract_id':'usa_atlas.application_reader',
+            'contract_version':'2.0.0','read_only':True,
             'schema_fingerprint':hashlib.sha256(basis).hexdigest(),
             'admission_filter':"usa_atlas.ingest_run.status = 'pass'",
             'additional_reader_filter':"usa_atlas.reader_batch.candidate_status = 'admitted'",
-            'objects':objects}
+            'objects':objects,
+            'object_metadata':{name:{'access':'SELECT','reader_filter':"usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'",'version':'v2-additive'} for name in objects},
+            'artifact_sha256':{}}
+        artifact_hashes = {}
+        for rel, body in {'schema.sql':'CREATE SCHEMA usa_atlas;\n','consumer-protocol.md':'read-only\n',
+                          'fixtures/reader-fixture.sql':'SELECT 1;\n','fixtures/reader-query.sql':'SELECT 1;\n'}.items():
+            file=artifact_root/rel; file.parent.mkdir(parents=True,exist_ok=True); file.write_text(body)
+            producer_path='database/reader/v2/'+rel
+            contract['artifact_sha256'][producer_path]=json_sha(file)
+            artifact_hashes[rel]=json_sha(file)
         contract_path = artifact_root / 'contract.json'
         write_json(contract_path, contract)
-        schema_path = artifact_root / 'schema.sql'; schema_path.write_text('SELECT 1;\n')
-        artifact_hashes = {'contract.json':json_sha(contract_path),'schema.sql':json_sha(schema_path)}
+        artifact_hashes['contract.json']=json_sha(contract_path)
         lock_path = root / 'contracts/reader-v2-contract.lock.json'
+        export={
+            'database/reader/v2/contract.json':'contract.json','database/reader/v2/schema.sql':'schema.sql',
+            'database/reader/v2/consumer-protocol.md':'consumer-protocol.md',
+            'database/reader/v2/fixtures/reader-fixture.sql':'fixtures/reader-fixture.sql',
+            'database/reader/v2/fixtures/reader-query.sql':'fixtures/reader-query.sql'}
         write_json(lock_path, {'producerRepository':'usa-atlas-data-collection','sourceCommit':'a'*40,
+            'producerTag':'reader-v2-test-tag',
             'contractVersion':'2.0.0','artifactPath':'database/reader/v2',
             'localArtifactPath':'contracts/reader/v2','contractSha256':json_sha(contract_path),
             'schemaFingerprint':contract['schema_fingerprint'],
-            'admissionFilter':"usa_atlas.reader_batch.candidate_status = 'admitted' AND usa_atlas.ingest_run.status = 'pass'",
-            'artifacts':artifact_hashes})
+            'admissionFilter':"usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'",
+            'consumerExport':export,'artifacts':artifact_hashes})
         identity = contract_identity(lock_path)
         self.assertEqual(identity['readerSchemaFingerprint'],contract['schema_fingerprint'])
         contract['objects']['reader_observation']['value'] = 'numeric'

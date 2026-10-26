@@ -1,0 +1,28 @@
+{
+  "admissionFilter": "usa_atlas.ingest_run.status = 'pass' AND usa_atlas.reader_batch.candidate_status = 'admitted'",
+  "artifactPath": "database/reader/v2",
+  "artifacts": {
+    "consumer-protocol.md": "a42d56733b7a26b1750b8eb3fe2d5eaf896779e2da4abb230088e3dacec5cc7a",
+    "contract.json": "8916c8d0fda359c56ae66ce7a94b66c0a8cea5f6307c02a0cb95f2cc4dfefe5c",
+    "fixtures/reader-fixture.sql": "a30722c8497967e3db52fd16517587e17f1466b4d72945654a04767a4014db3a",
+    "fixtures/reader-query.sql": "5ba9e249acfbee6762635a593b18bb63390b67c4dba150687685583f8e8351c6",
+    "schema.sql": "75abdf88348b15ac8d584c47201bd8257b93477be90f11f92a3e0b00e8ce2d91"
+  },
+  "consumerExport": {
+    "database/reader/v2/consumer-protocol.md": "consumer-protocol.md",
+    "database/reader/v2/contract.json": "contract.json",
+    "database/reader/v2/fixtures/reader-fixture.sql": "fixtures/reader-fixture.sql",
+    "database/reader/v2/fixtures/reader-query.sql": "fixtures/reader-query.sql",
+    "database/reader/v2/schema.sql": "schema.sql"
+  },
+  "contractSha256": "8916c8d0fda359c56ae66ce7a94b66c0a8cea5f6307c02a0cb95f2cc4dfefe5c",
+  "contractVersion": "2.0.0",
+  "format": "usa_atlas_reader_lock",
+  "localArtifactPath": "contracts/reader/v2",
+  "producerArtifactMapSha256": "f33aec6aa70b65dc1977125e9cd229903d52aa06227a08204b28a1b9a066e09d",
+  "producerRepository": "usa-atlas-data-collection",
+  "readOnly": true,
+  "schemaFingerprint": "2a319fe39b1045bddb48bcdf688a20032875f4f0ea823784c07a0611f9428fa1",
+  "sourceCommit": "cfe51d44364ead0addf800dd663096c7bc8867d8",
+  "sourcePinStatus": "frozen-contract-cfe51d4-awaiting-accepted-producer-main-tag"
+}

@@ -101,13 +101,24 @@ def main():
                           "(geo_id,geo_type,period,field_id,catalog_field_id,value,unit,source,source_release,"
                           "source_url,methodology_note,retrieved_at,ingest_id) VALUES (" + values + ");")
 
+    # Add the exact frozen consumer schema and producer fixture, then promote
+    # only the test batch in a separate app-owned statement. That drives CI
+    # through admitted mode without pretending local_review rows are public.
+    statements.extend([
+        (ROOT / 'contracts/reader/v2/schema.sql').read_text(),
+        (ROOT / 'contracts/reader/v2/fixtures/reader-fixture.sql').read_text(),
+        (ROOT / 'contracts/reader/v2/fixtures/ci-admitted.sql').read_text(),
+        'GRANT USAGE ON SCHEMA usa_atlas TO atlas_reader;',
+        'GRANT SELECT ON ALL TABLES IN SCHEMA usa_atlas TO atlas_reader;',
+    ])
+
     result = subprocess.run([psql, "-X", "-w", "-q", "--dbname", "usa_atlas",
                              "--set", "ON_ERROR_STOP=1"], env=env, input="\n".join(statements),
                             text=True, capture_output=True, timeout=30)
     if result.returncode:
         print("Could not initialize isolated application CI database.", file=sys.stderr)
         raise SystemExit(1)
-    print("Initialized deterministic 81-field adapter fixture in isolated CI PostgreSQL.")
+    print("Initialized deterministic v1 fixture plus explicitly admitted synthetic v2 adapter fixture in isolated CI PostgreSQL.")
 
 
 if __name__ == "__main__":

@@ -19,7 +19,8 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
 
     def test_production_mode_fails_closed_without_separate_v2_lock(self):
         with patch.dict(os.environ, {'ATLAS_READER_V2_MODE':'admitted','ATLAS_READER_V2_DATABASE':''}), \
-             patch.object(atlas_data, '_verified_reader_v2_lock', None):
+             patch.object(atlas_data, '_verified_reader_v2_lock', None), \
+             patch.object(atlas_data, 'READER_V2_LOCK', atlas_data.ROOT / 'contracts/missing-v2-lock.json'):
             with self.assertRaisesRegex(atlas_data.DatabaseUnavailable, 'not installed or does not match'):
                 atlas_data.reader_v2_mode()
 
