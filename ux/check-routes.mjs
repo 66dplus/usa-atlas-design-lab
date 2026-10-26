@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {buildPlaceIndex,canonicalPath,countySlug,parsePath,resolveRoute,routeParams,slugify} from './routes.js';
+import {buildPlaceIndex,canonicalPath,countySlug,parsePath,resolveHouseQuery,resolveRoute,routeParams,slugify} from './routes.js';
 import {createPageMetadata,mapPageMetadata,screenPageMetadata} from './seo.js';
 
 const states=[
@@ -15,8 +15,9 @@ const counties=[
   {id:'06003',stateId:'06',name:'Alpha'},
 ];
 const index=buildPlaceIndex(states,counties);
-const districtIndex=buildPlaceIndex(states,counties,[{id:'0606',districtCode:'06',name:'California · Congressional District 6'}]);
-const metrics=new Set(['unemployment','adjusted-gross-income-agi','adjusted-gross-income-agi--per-resident','median-household-income','electricity-price','electricity-price--08-05-sector-res','access-to-a-grocery-store']);
+const districtIndex=buildPlaceIndex(states,counties,[{id:'0606',districtCode:'06',name:'California · Congressional District 6'},
+  {id:'0607',districtCode:'07',name:'California · Congressional District 7'}]);
+const metrics=new Set(['unemployment','elections-house','adjusted-gross-income-agi','adjusted-gross-income-agi--per-resident','median-household-income','electricity-price','electricity-price--08-05-sector-res','access-to-a-grocery-store']);
 const resolve=path=>resolveRoute(parsePath(path),index,metrics);
 
 assert.equal(slugify('District of Columbia'),'district-of-columbia');
@@ -75,12 +76,29 @@ assert.equal(new URLSearchParams(retained).has('renderer'),false);
 assert.equal(new URLSearchParams(retained).get('embed'),'1');
 assert.equal(new URLSearchParams(retained).has('place'),false);
 assert.equal(routeParams(new URLSearchParams('review=1&preview=1&embed=1&expanded=1&view=3d&rank=highest')),'embed=1&review=1&preview=1');
-const selections=new URLSearchParams(routeParams(new URLSearchParams('period=2025-M01&party=REPUBLICAN&district=invalid'),{selected:'0606',index:districtIndex}));
+const selections=new URLSearchParams(routeParams(new URLSearchParams('period=2025-M01&party=REPUBLICAN&district=invalid'),{state:{selected:'0606'},index:districtIndex}));
 assert.equal(selections.get('period'),'2025-M01');
 assert.equal(selections.get('party'),'REPUBLICAN');
 assert.equal(selections.get('district'),'0606');
 assert.equal(new URLSearchParams(routeParams(new URLSearchParams('period=2026-M01&party=OTHER'))).has('period'),false);
 assert.equal(new URLSearchParams(routeParams(new URLSearchParams('period=2026-M01&party=OTHER'))).has('party'),false);
+const houseState={page:'compare',concept:'compare',comparison:'places',metric:'elections-house',selected:'0606',second:'0607'};
+const houseQuery=new URLSearchParams(routeParams(new URLSearchParams('party=REPUBLICAN'),{state:houseState,index:districtIndex,metricIds:metrics}));
+assert.equal(canonicalPath(houseState,districtIndex),'/united-states/elections-house');
+assert.deepEqual(resolveHouseQuery(houseQuery,districtIndex,metrics,'/united-states/elections-house'),{
+  selected:'0606',page:'compare',concept:'compare',comparison:'places',second:'0607',
+});
+const houseMetrics={page:'compare',concept:'compare',comparison:'metrics',metric:'elections-house',secondMetric:'adjusted-gross-income-agi',selected:'0606'};
+const metricQuery=new URLSearchParams(routeParams(new URLSearchParams(),{state:houseMetrics,index:districtIndex,metricIds:metrics}));
+assert.deepEqual(resolveHouseQuery(metricQuery,districtIndex,metrics,'/united-states/elections-house'),{
+  selected:'0606',page:'compare',concept:'compare',comparison:'metrics',metric:'elections-house',secondMetric:'adjusted-gross-income-agi',
+});
+assert.equal(resolveHouseQuery(new URLSearchParams('district=0608&compare=places&secondDistrict=0607'),districtIndex,metrics,'/united-states/elections-house'),null,
+  'an unknown selected district is rejected');
+assert.equal(resolveHouseQuery(new URLSearchParams('district=0606&compare=places&secondDistrict=0608'),districtIndex,metrics,'/united-states/elections-house').comparison,undefined,
+  'unknown second districts are never interpreted as counties or accepted');
+assert.equal(resolveHouseQuery(new URLSearchParams('district=0606'),districtIndex,metrics,'/united-states/california/unemployment'),null,
+  'House query state never overrides an existing state or county route');
 
 const metadata=createPageMetadata({title:'Unemployment in California | USA X-Ray',description:'Explore unemployment in California.',path:'/united-states/california/unemployment?theme=dark'});
 assert.equal(metadata.canonical,'https://usa-xray.online/united-states/california/unemployment');

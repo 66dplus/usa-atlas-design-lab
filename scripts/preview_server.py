@@ -162,7 +162,8 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if len(self.path) > 2048 or self.headers.get('Host') != f'127.0.0.1:{self.server.server_port}':
             return self.reply(400, {'error': 'Invalid request'})
         path = urlsplit(self.path).path
-        if path.startswith('/api/atlas/reader/v2/'):
+        if (path.startswith('/api/atlas/reader/v2/') or
+                path in ('/api/atlas/period-observations', '/api/atlas/unemployment-months')):
             try:
                 mode = atlas_data.reader_v2_mode()
             except atlas_data.DatabaseUnavailable as error:

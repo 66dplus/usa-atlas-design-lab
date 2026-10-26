@@ -38,19 +38,20 @@ CD119_GEOJSON_SHA256 = 'd47e9f48159fc581fa5b1a06a98ade5d696f06983480cf1ba15aa9d8
 # field IDs stay as recorded by the reader; public metric aliases are mapped
 # only at this application boundary and remain candidate/nonreleased.
 REFRESH_TARGETS = {
-    'irs_agi_total_2023': {'metric_id':'adjusted-gross-income-agi','catalog':'07.01','dataset':'irs_agi','field':'07.01:agi_total','public_field':'07.01:derived:total','year':2023,'unit':'USD','display_unit':'USD','geography':'state_and_county'},
-    'irs_agi_per_resident_2023': {'metric_id':'adjusted-gross-income-agi--per-resident','catalog':'07.01','dataset':'irs_agi','field':'07.01:derived:per-resident','public_field':'07.01:derived:per-resident','year':2023,'unit':'USD/person','display_unit':'USD per resident','geography':'state_and_county'},
-    'electricity_price_2025_all': {'metric_id':'electricity-price','catalog':'08.05','dataset':'electricity_price','field':'08.05:sector_ALL','public_field':'08.05:sector_ALL','year':2025,'unit':'cents/kWh','display_unit':'cents/kWh','geography':'state'},
-    'cancer_2023': {'metric_id':'all-cancer-new-cases','catalog':'11.01','dataset':'cancer','field':'11.01','public_field':'11.01:derived','year':2023,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county'},
-    'hiv_2024': {'metric_id':'new-hiv-diagnoses','catalog':'11.02','dataset':'hiv','field':'11.02','public_field':'11.02:derived','year':2024,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county'},
-    'child_deaths_under18_2024': {'metric_id':'deaths-under-18','catalog':'11.03','dataset':'child_deaths_under18','field':'11.03','public_field':'11.03:derived','year':2024,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county'},
-    'fbi_homicide_2025': {'metric_id':'murders','catalog':'04.01','dataset':'fbi_crime_rate','field':'04.01:derived','public_field':'04.01:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
-    'fbi_violent_crime_2025': {'metric_id':'violent-crime','catalog':'04.02','dataset':'fbi_crime_rate','field':'04.02:derived','public_field':'04.02:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
-    'fbi_robbery_2025': {'metric_id':'robbery','catalog':'04.03','dataset':'fbi_crime_rate','field':'04.03:derived','public_field':'04.03:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
-    'fbi_aggravated_assault_2025': {'metric_id':'aggravated-assault','catalog':'04.04','dataset':'fbi_crime_rate','field':'04.04:derived','public_field':'04.04:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
-    'fbi_burglary_2025': {'metric_id':'burglary','catalog':'04.05','dataset':'fbi_crime_rate','field':'04.05:derived','public_field':'04.05:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
-    'fbi_motor_vehicle_theft_2025': {'metric_id':'motor-vehicle-theft','catalog':'04.06','dataset':'fbi_crime_rate','field':'04.06:derived','public_field':'04.06:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
-    'fbi_rape_revised_2025': {'metric_id':'rape','catalog':'04.07','dataset':'fbi_crime_rate','field':'04.07:derived','public_field':'04.07:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state'},
+    'irs_agi_total_2023': {'metric_id':'adjusted-gross-income-agi','catalog':'07.01','dataset':'irs_agi','field':'07.01:agi_total','public_field':'07.01:derived:total','year':2023,'unit':'USD','display_unit':'USD','geography':'state_and_county','source_releases':('IRS SOI County 2023',)},
+    'irs_agi_per_resident_2023': {'metric_id':'adjusted-gross-income-agi--per-resident','catalog':'07.01','dataset':'irs_agi','field':'07.01:derived:per-resident','public_field':'07.01:derived:per-resident','year':2023,'unit':'USD/person','display_unit':'USD per resident','geography':'state_and_county','source_releases':('IRS SOI County 2023; Census PEP Vintage 2025',)},
+    'electricity_price_2025_all': {'metric_id':'electricity-price','catalog':'08.05','dataset':'electricity_price','field':'08.05:sector_ALL','public_field':'08.05:sector_ALL','year':2025,'unit':'cents/kWh','display_unit':'cents/kWh','geography':'state','source_releases':('EIA Electric Power Annual 2025',)},
+    'cancer_2023': {'metric_id':'all-cancer-new-cases','catalog':'11.01','dataset':'cancer','field':'11.01','public_field':'11.01:derived','year':2023,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county',
+      'source_releases':('2025 NPCR/SEER submission released June 2026; diagnosis year 2023','USCS 2026 submission; 2023 incidence')},
+    'hiv_2024': {'metric_id':'new-hiv-diagnoses','catalog':'11.02','dataset':'hiv','field':'11.02','public_field':'11.02:derived','year':2024,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county','source_releases':('AtlasPlus observed 2026-10-11; 2024 diagnoses provisional, reported through December 2025 with 12-month reporting delay',)},
+    'child_deaths_under18_2024': {'metric_id':'deaths-under-18','catalog':'11.03','dataset':'child_deaths_under18','field':'11.03','public_field':'11.03:derived','year':2024,'unit':'per 100,000','display_unit':'per 100,000','geography':'state_and_county','source_releases':('NCHS NVSS Mortality 2018-2024, CDC WONDER release 2026',)},
+    'fbi_homicide_2025': {'metric_id':'murders','catalog':'04.01','dataset':'fbi_crime_rate','field':'04.01:derived','public_field':'04.01:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
+    'fbi_violent_crime_2025': {'metric_id':'violent-crime','catalog':'04.02','dataset':'fbi_crime_rate','field':'04.02:derived','public_field':'04.02:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
+    'fbi_robbery_2025': {'metric_id':'robbery','catalog':'04.03','dataset':'fbi_crime_rate','field':'04.03:derived','public_field':'04.03:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
+    'fbi_aggravated_assault_2025': {'metric_id':'aggravated-assault','catalog':'04.04','dataset':'fbi_crime_rate','field':'04.04:derived','public_field':'04.04:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
+    'fbi_burglary_2025': {'metric_id':'burglary','catalog':'04.05','dataset':'fbi_crime_rate','field':'04.05:derived','public_field':'04.05:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
+    'fbi_motor_vehicle_theft_2025': {'metric_id':'motor-vehicle-theft','catalog':'04.06','dataset':'fbi_crime_rate','field':'04.06:derived','public_field':'04.06:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
+    'fbi_rape_revised_2025': {'metric_id':'rape','catalog':'04.07','dataset':'fbi_crime_rate','field':'04.07:derived','public_field':'04.07:derived','year':2025,'unit':'per 100,000','display_unit':'per 100,000','geography':'state','source_releases':('FBI SRS Estimated Crimes 1979-2025 (August 2026)',)},
 }
 
 
@@ -734,9 +735,12 @@ def reader_v2_cd119_boundary(include_features=False):
           'name':row.get('label'),'isAtLarge':district=='00'}})
     if len(ids)!=435 or not any(geoid.endswith('00') for geoid in ids):
         return unavailable
+    # Keep the original archive and its normalized GeoJSON derivative distinct:
+    # database geometry_source_sha256 is the latter, never the ZIP checksum.
     result={'available':True,'boundaryVintage':2024,'congressSession':'119',
       'source':'U.S. Census Bureau TIGER/Line 2024 CD119','sourceUrl':CD119_SOURCE_URL,
-      'sourceSha256':CD119_SOURCE_SHA256,'sha256':CD119_GEOJSON_SHA256,'featureCount':len(ids)}
+      'sourceSha256':CD119_SOURCE_SHA256,'geometryCollectionSha256':CD119_GEOJSON_SHA256,
+      'sha256':CD119_GEOJSON_SHA256,'featureCount':len(ids)}
     if include_features:
         result['featureCollection']={'type':'FeatureCollection','features':features}
     return result
@@ -1054,18 +1058,22 @@ def reader_v2_observations(dataset_id, period_type, year, geography_type, party=
           FROM (
             SELECT o.geo_id,o.geo_type,o.value,o.unit,o.quality_status,o.source_value_status,
               o.source,o.source_release,o.source_version,o.source_url,o.methodology_note,
+              cf.candidate_status AS catalog_candidate_status,
               o.raw_estimate,o.raw_estimate_moe,o.raw_denominator,o.raw_denominator_moe,
               o.denominator_value,o.period_kind,o.period_year,o.period_month,
               o.period_start_year,o.period_end_year,o.source_period_code,o.retrieved_at
             FROM usa_atlas.reader_observation o
             JOIN usa_atlas.ingest_run i USING (ingest_id)
             JOIN usa_atlas.reader_batch rb USING (ingest_id)
+            JOIN usa_atlas.reader_v2_catalog_field cf ON cf.catalog_field_id=o.catalog_field_id
+              AND cf.dataset_id=o.dataset_id AND cf.source_release=o.source_release
             WHERE o.catalog_field_id=:'catalog' AND o.dataset_id=:'reader_dataset'
               AND o.field_id=:'reader_field' AND o.period_kind='annual'
               AND o.period_year=:'year'::smallint AND o.period_month IS NULL
               AND o.period_start_year=:'year'::smallint AND o.period_end_year=:'year'::smallint
               AND o.unit=:'unit' AND i.status='pass'
               AND rb.candidate_status IN ('local_review','admitted')
+              AND cf.candidate_status IN ('local_review','admitted')
               AND o.geo_type IN ('nation','state','county')
               AND (:'geography_type'='state_and_county' OR o.geo_type=:'geography_type')
           ) t
@@ -1077,6 +1085,9 @@ def reader_v2_observations(dataset_id, period_type, year, geography_type, party=
                 raise DatabaseUnavailable('Refreshed candidate returned a different annual period.')
             if row['unit']!=target['unit'] or row['quality_status'] not in ('observed','missing','suppressed','invalid','nonmapping_geography'):
                 raise DatabaseUnavailable('Refreshed candidate unit or quality status is invalid.')
+            expected_catalog_status='local_review' if reader_v2_mode()=='local_review' else 'admitted'
+            if row.get('catalog_candidate_status')!=expected_catalog_status:
+                raise DatabaseUnavailable('Refreshed candidate catalog field is not admitted in the selected reader mode.')
             if row['quality_status']=='observed' and (row['value'] is None or not math.isfinite(float(row['value']))):
                 raise DatabaseUnavailable('Observed refreshed candidate values must be finite.')
             releases.add(row['source_release']); versions.add(row['source_version']); sources.add(row['source']); urls.add(row['source_url'])
@@ -1090,6 +1101,10 @@ def reader_v2_observations(dataset_id, period_type, year, geography_type, party=
               'denominator':row['raw_denominator'],'denominatorMoe':row['raw_denominator_moe'],
               'denominatorValue':row['denominator_value'],'sourcePeriod':row['source_period_code'],
               'retrievedAt':row['retrieved_at']})
+        if any(release not in target.get('source_releases', ()) for release in releases):
+            raise DatabaseUnavailable('Refreshed candidate returned a source release outside the reviewed field allowlist.')
+        if releases != set(target['source_releases']):
+            raise DatabaseUnavailable('Refreshed candidate is missing one of the reviewed source releases.')
         if len(releases)>1 and dataset_id not in ('cancer_2023',):
             raise DatabaseUnavailable('Refreshed candidate mixed source releases for one field.')
         if len(versions)>1 and dataset_id not in ('cancer_2023',):

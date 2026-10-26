@@ -11,6 +11,16 @@ export const rampColor = scale => d3.interpolateRgbBasis(Array.isArray(scale)?sc
 const color = (value,scale) => value == null ? '#aaa49e' : rampColor(scale)(value);
 const RELIEF=.28;
 
+export function geographyForSelection(sourceGeo, currentGeo, requested) {
+  const type=requested==='congressional_district'?'congressional_district':'state';
+  const refreshed=type==='congressional_district' &&
+    (currentGeo.districts!==sourceGeo.districts || currentGeo.districtAreas!==sourceGeo.districtAreas);
+  if(currentGeo.geographyType===type&&!refreshed)return currentGeo;
+  return type==='congressional_district'
+    ?{...sourceGeo,states:sourceGeo.districts||[],counties:sourceGeo.districtAreas||[],geographyType:type,detailStates:new Set()}
+    :sourceGeo;
+}
+
 export async function loadGeography() {
   const responses=await Promise.all(['../node_modules/us-atlas/counties-10m.json','../node_modules/world-atlas/countries-110m.json','county-boundary-repair.json','cities.json'].map(url=>fetch(url)));
   if(responses.some(r=>!r.ok)) throw new Error('Geographic boundaries could not be loaded. Reload to retry.');
@@ -146,13 +156,14 @@ export class ExplorerMap {
   update(next) {
     const previous=this.state,oldSettings=this.settings;
     const requestedGeography=next.geographyType==='congressional_district'?'congressional_district':'state';
-    const changedGeography=this.geo.geographyType!==requestedGeography;
+    // A delayed boundary load replaces sourceGeo arrays after each map may have
+    // copied the empty arrays. Rebind when readiness changes, for both panes.
+    const nextGeo=geographyForSelection(this.sourceGeo,this.geo,requestedGeography);
+    const changedGeography=nextGeo!==this.geo;
     const oldTransform=changedGeography?d3.zoomTransform(this.svg.node()):null;
     if(changedGeography){
       this.flat?.dispose();this.flat=null;this.flatFailed=false;
-      this.geo=requestedGeography==='congressional_district'
-        ?{...this.sourceGeo,states:this.sourceGeo.districts||[],counties:this.sourceGeo.districtAreas||[],geographyType:'congressional_district',detailStates:new Set()}
-        :this.sourceGeo;
+      this.geo=nextGeo;
     }
     const changedLayout=previous.layoutKey!==next.layoutKey,changedMode=previous.mode!==next.mode;
     let cover=changedMode&&this.initialized?this.coverTransition():null;

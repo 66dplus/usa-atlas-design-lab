@@ -76,6 +76,38 @@ class ReaderV2AppAdapterTests(unittest.TestCase):
                 self.assertEqual(target['unit'],'per 100,000')
                 self.assertEqual(target['geography'],'state')
 
+    def test_refreshed_cancer_joins_versioned_catalog_and_only_accepts_two_reviewed_releases(self):
+        target=atlas_data.REFRESH_TARGETS['cancer_2023']
+        allowed=set(target['source_releases'])
+        self.assertEqual(allowed,{
+            '2025 NPCR/SEER submission released June 2026; diagnosis year 2023',
+            'USCS 2026 submission; 2023 incidence',
+        })
+        base={'geo_id':'06','geo_type':'state','value':501.645,'unit':'per 100,000',
+              'quality_status':'observed','period_kind':'annual','period_year':2023,'period_month':None,
+              'period_start_year':2023,'period_end_year':2023,'source_version':'2026','source':'cdc_uscs',
+              'source_url':'https://gis.cdc.gov/Cancer/USCS/','methodology_note':'2023 crude rate',
+              'raw_estimate':1,'raw_estimate_moe':None,'raw_denominator':1,'raw_denominator_moe':None,
+              'denominator_value':100000,'source_period_code':'2023','retrieved_at':'2026-10-26T00:00:00Z',
+              'catalog_candidate_status':'local_review'}
+        with patch.object(atlas_data,'query',return_value=[{**base,'source_release':release} for release in sorted(allowed)]) as read:
+            result=atlas_data.reader_v2_observations('cancer_2023','annual',2023,'state_and_county')
+        self.assertEqual(result['sourceReleases'],sorted(allowed))
+        self.assertEqual(result['observations'][0]['value'],501.645)
+        sql=read.call_args.args[0]
+        self.assertIn('JOIN usa_atlas.reader_v2_catalog_field cf',sql)
+        self.assertIn('cf.catalog_field_id=o.catalog_field_id',sql)
+        self.assertIn('cf.dataset_id=o.dataset_id',sql)
+        self.assertIn('cf.source_release=o.source_release',sql)
+        self.assertIn('cf.candidate_status IN (\'local_review\',\'admitted\')',sql)
+        with patch.object(atlas_data,'query',return_value=[{**base,'source_release':'unreviewed-extra-release'}]):
+            with self.assertRaisesRegex(atlas_data.DatabaseUnavailable,'outside the reviewed field allowlist'):
+                atlas_data.reader_v2_observations('cancer_2023','annual',2023,'state_and_county')
+        with patch.object(atlas_data,'query',return_value=[{**base,'source_release':sorted(allowed)[0],
+                                                           'catalog_candidate_status':'draft'}]):
+            with self.assertRaisesRegex(atlas_data.DatabaseUnavailable,'catalog field is not admitted'):
+                atlas_data.reader_v2_observations('cancer_2023','annual',2023,'state_and_county')
+
     @staticmethod
     def period_row(month=1, value=0):
         return {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { buildPlaceIndex, canonicalPath, parsePath, resolveRoute, routeParams } from '../routes.js';
+import { buildPlaceIndex, canonicalPath, parsePath, resolveRoute, resolveHouseQuery, routeParams } from '../routes.js';
 import { applyPageMetadata, mapPageMetadata, screenPageMetadata } from '../seo.js';
 import {
   createDataStore,
@@ -786,6 +786,7 @@ export function useAtlas() {
         resource.current = r;
         const route = parsePath(location.pathname),
           resolved = route && resolveRoute(route, index, new Set(metricById.keys()));
+        const houseQuery = resolveHouseQuery(new URLSearchParams(location.search), index, new Set(metricById.keys()), location.pathname);
         routeValid.current = !route || Boolean(resolved);
         const s = current.current,
           selection: Partial<AtlasState> = {
@@ -814,6 +815,9 @@ export function useAtlas() {
           selection.comparison = resolved.comparison === 'metrics' ? 'metrics' : 'places';
           secondExplicit.current = resolved.page === 'compare' && resolved.comparison === 'places';
         }
+        if (houseQuery) Object.assign(selection, houseQuery);
+        if (houseQuery && 'concept' in houseQuery && houseQuery.concept === 'compare' && 'comparison' in houseQuery && houseQuery.comparison === 'places')
+          secondExplicit.current = true;
         patch(selection);
         if (current.current.concept === 'compare') {
           prepareComparison();
@@ -980,7 +984,7 @@ export function useAtlas() {
   useEffect(() => {
     if (!resources) return;
     const path = canonicalPath({ ...state }, resources.index) || '/united-states/unemployment',
-      q = routeParams(new URLSearchParams(location.search), { selected: state.selected, index: resources.index });
+      q = routeParams(new URLSearchParams(location.search), { state, index: resources.index, metricIds: new Set(resources.metricById.keys()) });
     const next = path + (q ? '?' + q : '');
     if (next !== location.pathname + location.search) history.replaceState(history.state, '', next);
     const query = new URLSearchParams(location.search),
@@ -1040,6 +1044,7 @@ export function useAtlas() {
       if (!r) return;
       const route = parsePath(location.pathname),
         resolved = route && resolveRoute(route, r.index, new Set(r.metricById.keys()));
+      const houseQuery = resolveHouseQuery(new URLSearchParams(location.search), r.index, new Set(r.metricById.keys()), location.pathname);
       routeValid.current = Boolean(resolved);
       const query = new URLSearchParams(location.search);
       if (resolved?.concept) {
@@ -1062,6 +1067,11 @@ export function useAtlas() {
           unemploymentPeriod: parseUnemploymentPeriod(query.get('period')) as UnemploymentPeriod,
           selectedParty: ['DEMOCRAT', 'REPUBLICAN'].includes(query.get('party') || '') ? query.get('party')! : 'DEMOCRAT',
         });
+      if (houseQuery) {
+        patch(houseQuery);
+        if ('concept' in houseQuery && houseQuery.concept === 'compare' && 'comparison' in houseQuery && houseQuery.comparison === 'places') secondExplicit.current = true;
+        comparisonDefault.current = null;
+      }
       void navigate((resolved?.page || 'map') as Page, resolved?.article, {
         fromPopState: true,
         force: true,

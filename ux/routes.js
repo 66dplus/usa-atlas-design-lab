@@ -271,7 +271,7 @@ export function canonicalPath(state, index) {
   if (!index) return null;
   const metric = indicatorSegment(state.metric || DEFAULT_INDICATOR) || DEFAULT_INDICATOR;
   const placeId = state.place ?? state.selected ?? null;
-  if (placeId && index.byId?.get(placeId)?.districtCode) return `/${ROOT_SEGMENT}/${metric}`;
+  if (placeId && index.byId?.get(placeId)?.districtCode) return `/${ROOT_SEGMENT}/elections-house`;
   if (state.concept === 'compare') {
     if (state.comparison === 'metrics') {
       const a = indicatorSegment(state.metric), b = indicatorSegment(state.secondMetric);
@@ -301,7 +301,48 @@ export function routeParams(params, selection = {}) {
   if (/^2025(?:-M(?:0[1-9]|1[0-2]))?$/.test(period || '')) keep.set('period', period);
   const party = params?.get('party');
   if (['DEMOCRAT', 'REPUBLICAN'].includes(party || '')) keep.set('party', party);
-  if (selection.selected && selection.index?.byId?.get(selection.selected)?.districtCode)
-    keep.set('district', selection.selected);
+  const state = selection.state || {};
+  const district = value => typeof value === 'string' && /^\d{4}$/.test(value) &&
+    selection.index?.byId?.get(value)?.districtCode ? value : null;
+  const selectedDistrict = district(state.selected);
+  if (selectedDistrict) {
+    keep.set('district', selectedDistrict);
+    if (state.concept === 'compare' && state.comparison === 'places') {
+      const secondDistrict = district(state.second);
+      if (secondDistrict && secondDistrict !== selectedDistrict) {
+        keep.set('compare', 'places');
+        keep.set('secondDistrict', secondDistrict);
+      }
+    } else if (state.concept === 'compare' && state.comparison === 'metrics') {
+      const metricIds = selection.metricIds || new Set();
+      if (metricIds.has(state.metric) && metricIds.has(state.secondMetric) && state.metric !== state.secondMetric) {
+        keep.set('compare', 'metrics');
+        keep.set('metricA', state.metric);
+        keep.set('metricB', state.secondMetric);
+      }
+    }
+  }
   return keep.toString();
+}
+
+// House selections are operational state on the valid House map path. Never
+// interpret four digits as a county or accept an ID absent from CD119 data.
+export function resolveHouseQuery(params, index, metricIds = new Set(), pathname = '') {
+  if (pathname.replace(/\/+$/, '') !== `/${ROOT_SEGMENT}/elections-house`) return null;
+  const validDistrict = value => typeof value === 'string' && /^\d{4}$/.test(value) &&
+    Boolean(index?.byId?.get(value)?.districtCode) ? value : null;
+  const selected = validDistrict(params?.get('district'));
+  if (!selected) return null;
+  const result = { selected };
+  if (params.get('compare') === 'places') {
+    const second = validDistrict(params.get('secondDistrict'));
+    if (second && second !== selected) Object.assign(result, {
+      page: 'compare', concept: 'compare', comparison: 'places', second,
+    });
+  } else if (params.get('compare') === 'metrics') {
+    const metric = params.get('metricA'), secondMetric = params.get('metricB');
+    if (metricIds.has(metric) && metricIds.has(secondMetric) && metric !== secondMetric)
+      Object.assign(result, { page: 'compare', concept: 'compare', comparison: 'metrics', metric, secondMetric });
+  }
+  return result;
 }
