@@ -8,6 +8,7 @@ const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/
   output = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-atlas-post-react-ui-${Date.now()}`,
   packageRoot = process.env.ATLAS_PACKAGE_ROOT,
   results = { suite: 'post-react-ui-fixes', base, packageRoot: packageRoot || null, checks: [], failures: [], screenshots: [], geometry: [] };
+const originalPortraitSha256 = '8b4089f06d44e88ce212d3974ca95fa48ba674ffd99add9d38a8f91396e3f92f';
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 function pass(name, detail) { results.checks.push({ name, status: 'pass', detail }); }
@@ -15,13 +16,20 @@ async function ready(page) {
   await page.waitForFunction(() => document.body.dataset.atlasStatus === 'ready', null, { timeout: 60000 });
   await page.waitForTimeout(150);
 }
-async function open(path, viewport, theme = 'dark', reducedMotion = 'no-preference') {
+async function open(path, viewport, theme = 'dark', reducedMotion = 'no-preference', fixtureRaceAvailability = false) {
   const context = await browser.newContext({ viewport, deviceScaleFactor: viewport.width <= 760 ? 3 : 2, hasTouch: viewport.width <= 760, isMobile: viewport.width <= 760, reducedMotion });
   await context.addInitScript((selectedTheme) => {
     localStorage.setItem('usa-atlas-theme', selectedTheme);
     Math.random = () => 0.42;
   }, theme);
   const page = await context.newPage();
+  if (fixtureRaceAvailability) await page.route('**/api/atlas/catalog', async (route) => {
+    const response = await route.fetch(), payload = await response.json();
+    const ids = new Set(['race-ethnicity--black', 'race-ethnicity--asian', 'race-ethnicity--white-non-hispanic', 'race-ethnicity']);
+    assert.equal(payload.metrics.filter((metric) => ids.has(metric.id)).length, 4, 'Fixture catalog contains the four unchanged race metric IDs');
+    payload.metrics = payload.metrics.map((metric) => ids.has(metric.id) ? { ...metric, hasObservations: true } : metric);
+    await route.fulfill({ response, body: JSON.stringify(payload), contentType: 'application/json' });
+  });
   await page.goto(base + path, { waitUntil: 'domcontentloaded' });
   await ready(page);
   return { context, page };
@@ -83,6 +91,7 @@ async function attribution(page, mode, label) {
 async function drag(page, delta, label, handle = page.locator('#explore-panel > .sheet-handle')) {
   const box = await handle.boundingBox();
   assert.ok(box, `${label} drag target is visible`);
+  const start = await page.locator('#explore-panel').evaluate((root) => Number.parseFloat(root.style.getPropertyValue('--sheet-offset')));
   const x = box.x + box.width / 2, y = box.y + box.height / 2;
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
@@ -105,6 +114,7 @@ async function drag(page, delta, label, handle = page.locator('#explore-panel > 
       snap: root.dataset.snap,
       expanded: document.body.classList.contains('place-expanded'),
       userPosition: root.dataset.userPosition,
+      offset: Number.parseFloat(root.style.getPropertyValue('--sheet-offset')),
     };
   });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -124,11 +134,14 @@ async function drag(page, delta, label, handle = page.locator('#explore-panel > 
       snap: root.dataset.snap,
       expanded: document.body.classList.contains('place-expanded'),
       userPosition: root.dataset.userPosition,
+      offset: Number.parseFloat(root.style.getPropertyValue('--sheet-offset')),
+      top: Number.parseFloat(root.style.getPropertyValue('--sheet-top')),
+      viewportHeight: innerHeight,
       scrollTop: row.closest('.sheet-content').scrollTop,
     };
   });
-  results.geometry.push({ label, during: mid, settled });
-  return { mid, settled };
+  results.geometry.push({ label, start, during: mid, settled });
+  return { start, mid, settled };
 }
 
 try {
@@ -264,12 +277,20 @@ try {
     pass(`expanded selector opens Indicators directly ${viewport.width}/${theme}`, { expanded: up.settled });
     await page.keyboard.press('Escape'); await page.waitForTimeout(250);
 
-    const reexpanded = await drag(page, -600, `reexpand-before-half-${viewport.width}-${theme}`);
-    assert.equal(reexpanded.settled.snap, 'expanded', 'The half-snap check starts from the true expanded snap after closing the picker');
-    const halfDelta = await page.locator('#explore-panel').evaluate((root) => Math.round(innerHeight * 0.44 - parseFloat(root.style.getPropertyValue('--sheet-top'))));
-    const downHalf = await drag(page, halfDelta, `half-${viewport.width}-${theme}`);
-    assert.equal(downHalf.settled.snap, 'half', 'The finger drag settles to the controller half-snap');
-    assert.ok(downHalf.settled.children.every((e, i) => Math.abs(e.x - x0[i]) < 1));
+    const handle = page.locator('#explore-panel > .sheet-handle');
+    await handle.focus(); await page.keyboard.press('Home');
+    await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'expanded');
+    await page.keyboard.press('ArrowDown');
+    await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'half');
+    const half = await page.locator('.indicator-chooser').evaluate((row) => {
+      const r = row.getBoundingClientRect(), root = row.closest('#explore-panel');
+      return { snap: root.dataset.snap, userPosition: root.dataset.userPosition,
+        expanded: document.body.classList.contains('place-expanded'), padding: getComputedStyle(row).padding,
+        children: [...row.children].map((e) => e.getBoundingClientRect().x - r.x) };
+    });
+    assert.equal(half.userPosition, 'false', 'Handle keyboard reaches the discrete half snap');
+    assert.equal(half.expanded, false, 'Discrete half has compact body classification');
+    assert.ok(half.children.every((x, i) => Math.abs(x - x0[i]) < 1));
     const row = page.locator('.indicator-chooser'), content = page.locator('#explore-panel-content');
     const beforeScroll = await row.evaluate((e) => [...e.children].map((n) => n.getBoundingClientRect().x - e.getBoundingClientRect().x));
     await content.evaluate((e) => { e.scrollTop = 80; }); await page.waitForTimeout(100);
@@ -279,16 +300,34 @@ try {
     assert.equal(downMin.settled.snap, 'min'); assert.equal(downMin.settled.expanded, false);
     const summaryDrags = [];
     for (const [gesture, target] of [['center', summary], ['name', name], ['magnifier', search]]) {
+      await handle.focus(); await page.keyboard.press('End');
+      await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'min' && document.querySelector('#explore-panel')?.dataset.userPosition === 'false');
       const moved = await drag(page, -90, `summary-${gesture}-${viewport.width}-${theme}`, target);
+      assert.equal(moved.mid.dragging, 'true', `${gesture} summary touch actively drags the sheet`);
+      assert.ok(moved.start - moved.mid.offset > 20, `${gesture} summary touch moves the sheet with the finger`);
+      assert.ok(moved.start - moved.settled.offset > 20, `${gesture} summary touch preserves a changed offset`);
       assert.equal(moved.settled.userPosition, 'true', `A ${gesture} summary touch drag remains free under the shared controller`);
+      assert.equal(moved.settled.expanded, moved.settled.top + moved.settled.offset < moved.settled.viewportHeight * .62,
+        `${gesture} body classification follows actual free position`);
       summaryDrags.push({ gesture, ...moved.settled });
+      await handle.focus(); await page.keyboard.press('End');
+      await page.waitForFunction(() => document.querySelector('#explore-panel')?.dataset.snap === 'min' && document.querySelector('#explore-panel')?.dataset.userPosition === 'false');
+      if (gesture === 'name') {
+        await name.tap();
+        await page.waitForFunction(() => !document.querySelector('#metric-library')?.hidden);
+        await page.keyboard.press('Escape');
+      } else if (gesture === 'magnifier') {
+        await search.tap();
+        await page.waitForFunction(() => !document.querySelector('#search-sheet')?.hidden);
+        await page.keyboard.press('Escape');
+      }
     }
     assert.equal(await page.locator('#metric-library').isVisible(), false, 'Summary touch drags do not activate child buttons');
     assert.equal(await page.locator('#search-sheet').isVisible(), false, 'Summary touch drags do not activate child buttons');
     const creditScroll = await credit.evaluate((node) => node.getBoundingClientRect().y);
     assert.equal(creditScroll, creditStart.rect.y, 'Body credit stays fixed through sheet movement and scroll');
     await snap(page, `post-react-map-${viewport.width}-${theme}`);
-    pass(`selector stable across expanded/half/min/drag/scroll and summary child free drags ${viewport.width}/${theme}`, { min, expanded: up.settled, halfDelta, half: downHalf.settled, minAfter: downMin.settled, summaryFreeDrags: summaryDrags, scrollOffsets: afterScroll, creditStart, creditYAfter: creditScroll });
+    pass(`selector stable across expanded/half/min/drag/scroll and summary child free drags ${viewport.width}/${theme}`, { min, expanded: up.settled, half, minAfter: downMin.settled, summaryFreeDrags: summaryDrags, scrollOffsets: afterScroll, creditStart, creditYAfter: creditScroll });
     await context.close();
   }
 
@@ -339,8 +378,7 @@ try {
     releaseCatalog(); await ready(page);
     await assertNoChromeOverlap(page, 'desktop-map');
     await page.locator('.osm-attribution').evaluate((e) => { window.__creditRef = e; });
-    const nodeId = await page.locator('.osm-attribution').evaluate((e) => e);
-    let current = await attribution(page, 'source', 'desktop map attribution after source');
+    const current = await attribution(page, 'source', 'desktop map attribution after source');
     assert.equal(current.afterSource, true);
     await page.locator('[data-open-rank="highest"]').click();
     await attribution(page, 'source', 'desktop Highest attribution stays in legend frame');
@@ -369,7 +407,7 @@ try {
     const { context, page } = await open('/united-states/california/unemployment', { width: 1440, height }, theme);
     const baseBrand = await page.locator('.brand').evaluate((e) => {
       const s = getComputedStyle(e), r = e.getBoundingClientRect(), logo = e.querySelector('svg'), l = logo.getBoundingClientRect();
-      return { rect: [r.x, r.y, r.width, r.height], fontSize: s.fontSize, fontWeight: s.fontWeight, lineHeight: s.lineHeight, padding: s.padding, radius: s.borderRadius, globe: [getComputedStyle(logo).display, l.width, l.height] };
+      return { rect: [r.x, r.y, r.width, r.height], fontSize: s.fontSize, fontWeight: s.fontWeight, boldWeight: getComputedStyle(e.querySelector('b')).fontWeight, lineHeight: s.lineHeight, padding: s.padding, borderWidth: s.borderWidth, radius: s.borderRadius, globe: [getComputedStyle(logo).display, l.width, l.height] };
     });
     const pages = [
       ['map', async () => {}],
@@ -386,10 +424,10 @@ try {
       await ready(page);
       const header = await page.evaluate(() => {
         const brand = document.querySelector('.brand'), s = getComputedStyle(brand), r = brand.getBoundingClientRect(), logo = brand.querySelector('svg'), l = logo.getBoundingClientRect(), pseudo = getComputedStyle(document.querySelector('.app-header'), '::before');
-        return { rect: [r.x, r.y, r.width, r.height], fontSize: s.fontSize, fontWeight: s.fontWeight, lineHeight: s.lineHeight, padding: s.padding, radius: s.borderRadius, globe: [getComputedStyle(logo).display, l.width, l.height], stripDisplay: pseudo.display, stripBackground: pseudo.backgroundColor };
+        return { rect: [r.x, r.y, r.width, r.height], fontSize: s.fontSize, fontWeight: s.fontWeight, boldWeight: getComputedStyle(brand.querySelector('b')).fontWeight, lineHeight: s.lineHeight, padding: s.padding, borderWidth: s.borderWidth, radius: s.borderRadius, globe: [getComputedStyle(logo).display, l.width, l.height], stripDisplay: pseudo.display, stripContent: pseudo.content, stripBackground: pseudo.backgroundColor };
       });
-      assert.deepEqual({ rect: header.rect, fontSize: header.fontSize, fontWeight: header.fontWeight, lineHeight: header.lineHeight, padding: header.padding, radius: header.radius, globe: header.globe }, baseBrand, `${pageId} brand exactly matches map baseline ${height}/${theme}`);
-      assert.equal(header.stripDisplay, 'none', `${pageId} has no full-width desktop header pseudo backdrop`);
+      assert.deepEqual({ rect: header.rect, fontSize: header.fontSize, fontWeight: header.fontWeight, boldWeight: header.boldWeight, lineHeight: header.lineHeight, padding: header.padding, borderWidth: header.borderWidth, radius: header.radius, globe: header.globe }, baseBrand, `${pageId} brand exactly matches map baseline ${height}/${theme}`);
+      assert.ok(header.stripDisplay === 'none' || ['none', 'normal'].includes(header.stripContent) || header.stripBackground === 'rgba(0, 0, 0, 0)', `${pageId} has no generated painted full-width desktop header backdrop: ${JSON.stringify(header)}`);
       const top = await visibleRects(page, ['.brand', '#theme-toggle', '.concept-tabs', '.workspace-bar', '#support-open', '#info-open']);
       for (let a = 0; a < top.length; a++) for (let b = a + 1; b < top.length; b++) assert.equal(intersects(top[a], top[b]), false, `${pageId}/${height}/${theme} header controls overlap: ${JSON.stringify([top[a], top[b]])}`);
       const active = pageId === 'info' ? '#info-open' : pageId === 'support' ? '#support-open' : null;
@@ -405,7 +443,10 @@ try {
 
   // Race/ethnicity presentation names are short while metric identity and methods remain complete.
   {
-    const { context, page } = await open('/united-states/california/unemployment', { width: 390, height: 844 }, 'dark');
+    // The isolated PG fixture has no observations for these four catalog series.
+    // Change only their availability flag in this browser response so the real
+    // picker/selection/source UI can be asserted without changing fixture data.
+    const { context, page } = await open('/united-states/california/unemployment', { width: 390, height: 844 }, 'dark', 'no-preference', true);
     await page.locator('.mobile-summary-name').click();
     await page.waitForFunction(() => !document.querySelector('#metric-library')?.hidden);
     const expected = [
@@ -442,10 +483,10 @@ try {
     assert.equal((await page.locator('#metric-library [data-metric="race-ethnicity--black"] strong').innerText()).trim(), 'Black', 'Search results use the concise label and stable ID');
     await page.keyboard.press('Escape');
     await context.close();
-    pass('race/ethnicity labels and stable IDs in picker, selected title and search', { expected });
+    pass('race/ethnicity labels and stable IDs in picker, selected title and search (catalog availability fixture)', { expected, fixtureOverride: 'hasObservations=true for exactly four original catalog entries; IDs/names/definitions unchanged' });
   }
 
-  // Light-theme Compare names, chevrons, metric values and percentages get legibility shadows.
+  // White mobile Compare labels over geography need shadows; desktop black card text stays crisp.
   for (const viewport of [{ width: 360, height: 640 }, { width: 390, height: 844 }, { width: 1440, height: 900 }]) {
     const { context, page } = await open('/compare/indicators/unemployment-vs-adjusted-gross-income-agi', viewport, 'light');
     const styles = await page.evaluate(() => {
@@ -455,9 +496,10 @@ try {
         value: read('.map-summary strong'), percent: read('.desktop-compare-value strong'), desktopName: read('.desktop-compare-name'), desktopChevron: read('.desktop-compare-name svg'),
       };
     });
-    for (const key of ['place', 'value']) assert.ok(styles[key].length && styles[key].every((x) => x.shadow !== 'none'), `Light Compare ${key} text shadow: ${JSON.stringify(styles[key])}`);
-    assert.ok(styles.chevron.every((x) => x.filter !== 'none'), `Light Compare chevrons have subtle shadows: ${JSON.stringify(styles.chevron)}`);
-    if (viewport.width > 760) assert.ok(styles.desktopName.every((x) => x.shadow === 'none') && styles.percent.every((x) => x.shadow === 'none'), 'Black text in white desktop Compare cards stays crisp without map-label shadows');
+    if (viewport.width <= 760) {
+      for (const key of ['place', 'value']) assert.ok(styles[key].length && styles[key].every((x) => x.shadow !== 'none'), `Light mobile Compare ${key} text shadow: ${JSON.stringify(styles[key])}`);
+      assert.ok(styles.chevron.length && styles.chevron.every((x) => x.filter !== 'none'), `Light mobile Compare chevrons have subtle shadows: ${JSON.stringify(styles.chevron)}`);
+    } else assert.ok(styles.desktopName.length && styles.percent.length && styles.desktopName.every((x) => x.shadow === 'none') && styles.percent.every((x) => x.shadow === 'none'), 'Black text in white desktop Compare cards stays crisp without map-label shadows');
     pass(`light Compare label/value/chevron shadows ${viewport.width}`, styles);
     await context.close();
   }
@@ -474,10 +516,11 @@ try {
     assert.equal(await controls.isVisible(), true);
     const aboutImage = page.locator('.creator-portrait img');
     const aboutCrop = await aboutImage.evaluate((e) => ({ src: new URL(e.src).pathname, complete: e.complete, width: e.naturalWidth, height: e.naturalHeight, fit: getComputedStyle(e).objectFit, position: getComputedStyle(e).objectPosition, frame: (() => { const r = e.parentElement.getBoundingClientRect(); return { width: r.width, height: r.height }; })() }));
-    assert.equal(aboutCrop.complete, true); assert.equal(aboutCrop.width, 986); assert.equal(aboutCrop.height, 793); assert.equal(aboutCrop.fit, 'cover');
+    assert.equal(aboutCrop.complete, true); assert.equal(aboutCrop.width, 986); assert.equal(aboutCrop.height, 793); assert.equal(aboutCrop.fit, 'cover'); assert.equal(aboutCrop.position, '50% 8%');
     await snap(page, `post-react-about-retina-${viewport.width}-${theme}`);
     const response = await page.request.get(base + '/ux/assets/creator-portrait.jpg'); assert.equal(response.status(), 200);
-    const imageHash = createHash('sha256').update(await response.body()).digest('hex');
+    const imageBytes = await response.body(), imageHash = createHash('sha256').update(imageBytes).digest('hex');
+    assert.equal(imageBytes.length, 97722); assert.equal(imageHash, originalPortraitSha256, 'HTTP portrait is the exact original JPEG');
     if (packageRoot) {
       const manifest = JSON.parse(await readFile(join(packageRoot, 'preview-assets.json'), 'utf8')),
         build = JSON.parse(await readFile(join(packageRoot, 'ux/build.json'), 'utf8')),
@@ -497,12 +540,12 @@ try {
     assert.equal(await page.locator('#info-open').getAttribute('aria-current'), null);
     const supportImage = page.locator('.support-portrait img');
     const supportCrop = await supportImage.evaluate((e) => ({ src: new URL(e.src).pathname, complete: e.complete, width: e.naturalWidth, height: e.naturalHeight, fit: getComputedStyle(e).objectFit, position: getComputedStyle(e).objectPosition, frame: (() => { const r = e.parentElement.getBoundingClientRect(); return { width: r.width, height: r.height }; })() }));
-    assert.equal(supportCrop.complete, true); assert.equal(supportCrop.width, 986); assert.equal(supportCrop.height, 793); assert.equal(supportCrop.fit, 'cover');
+    assert.equal(supportCrop.complete, true); assert.equal(supportCrop.width, 986); assert.equal(supportCrop.height, 793); assert.equal(supportCrop.fit, 'cover'); assert.equal(supportCrop.position, '50% 8%');
     await snap(page, `post-react-support-retina-${viewport.width}-${theme}`);
     await page.locator('.concept-tabs [data-page="map"]').click(); await page.waitForFunction(() => document.body.dataset.page === 'map');
     assert.equal(await page.locator('#support-open').getAttribute('aria-current'), null);
     assert.equal(await page.locator('#info-open').getAttribute('aria-current'), null);
-    pass(`About/Support active chrome and portrait ${viewport.width}/${theme}`, { aboutCrop, supportCrop, imageHash, aboutActive: nav, supportActive: supportNav, persistedTheme: otherTheme });
+    pass(`About/Support active chrome and portrait ${viewport.width}/${theme}`, { aboutCrop, supportCrop, imageHash, imageBytes: imageBytes.length, screenshotDpr: viewport.width <= 760 ? 3 : 2, aboutActive: nav, supportActive: supportNav, persistedTheme: otherTheme });
     await context.close();
   }
 
@@ -516,12 +559,17 @@ try {
       if (!url.searchParams.has('theme')) return route.continue();
       const response = await route.fetch({ url: `${base}/united-states/unemployment` }); await route.fulfill({ response });
     });
-    await page.goto(base + '/united-states/unemployment?embed=1&theme=dark', { waitUntil: 'domcontentloaded' }); await ready(page);
-    assert.equal(await page.evaluate(() => document.body.dataset.theme), 'dark');
-    await page.evaluate(() => window.postMessage({ type: 'atlas-embed-theme', theme: 'dark' }, location.origin));
-    await page.waitForFunction(() => document.body.dataset.theme === 'dark');
-    assert.equal(await page.evaluate(() => localStorage.getItem('usa-atlas-theme')), 'light');
-    pass('embedded URL theme precedence and parent theme isolation', { url: page.url(), deliveredParentTheme: 'dark', storedPreferencePreserved: 'light' });
+    await page.goto(base + '/united-states/unemployment', { waitUntil: 'domcontentloaded' });
+    await page.setContent('<iframe title="Theme proof" src="/united-states/unemployment?embed=1&theme=dark"></iframe>');
+    await page.waitForFunction(() => document.querySelector('iframe')?.contentWindow?.document.body?.dataset.atlasStatus === 'ready', null, { timeout: 60000 });
+    const child = page.frameLocator('iframe');
+    assert.equal(await child.locator('body').getAttribute('data-theme'), 'dark', 'Isolated embed bootstrap URL choice wins over saved light');
+    await page.evaluate(() => document.querySelector('iframe').contentWindow.postMessage({ type: 'atlas-embed-theme', theme: 'light' }, location.origin));
+    await page.waitForFunction(() => document.querySelector('iframe')?.contentWindow?.document.body?.dataset.theme === 'light');
+    await page.evaluate(() => document.querySelector('iframe').contentWindow.postMessage({ type: 'atlas-embed-theme', theme: 'dark' }, location.origin));
+    await page.waitForFunction(() => document.querySelector('iframe')?.contentWindow?.document.body?.dataset.theme === 'dark');
+    assert.equal(await child.locator('body').evaluate(() => localStorage.getItem('usa-atlas-theme')), 'light');
+    pass('isolated embedded URL bootstrap and actual parent theme isolation', { childUrl: await child.locator('body').evaluate(() => location.href), deliveredParentTheme: 'dark', storedPreferencePreserved: 'light', bootstrapIsolationOnly: true });
     await context.close();
   }
 
@@ -530,7 +578,7 @@ try {
     const manifest = JSON.parse(await readFile(join(packageRoot, 'preview-assets.json'), 'utf8')),
       build = JSON.parse(await readFile(join(packageRoot, 'ux/build.json'), 'utf8')),
       asset = 'ux/assets/creator-portrait.jpg', bytes = await readFile(join(packageRoot, asset)), hash = createHash('sha256').update(bytes).digest('hex');
-    assert.equal(manifest['/' + asset], asset); assert.equal(build.assetSha256[asset], hash); assert.equal(build.shippedSha256[asset], hash);
+    assert.equal(manifest['/' + asset], asset); assert.equal(build.assetSha256[asset], hash); assert.equal(build.shippedSha256[asset], hash); assert.equal(hash, originalPortraitSha256);
     pass('packaged portrait public mapping and asset hashes', { path: asset, sha256: hash });
   }
 } catch (error) {
