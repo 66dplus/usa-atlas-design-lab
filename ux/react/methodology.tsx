@@ -1,5 +1,3 @@
-import './methodology.css';
-
 type Method = { id:string; name:string; source:string; url:string; additionalSources?:{label:string;url:string}[]; formula:string; unit:string; period:string; geography:string[]; universe:string; classification:'native'|'custom'; method:string; limitations:string[] };
 
 // Audited against selection-registry.json and the frozen 2026-10-26 period implementation result.
@@ -19,10 +17,7 @@ export const methodologyRecords: Method[] = [
     "universe": "The ACS estimate counts residents at this place during the 2020–2024 survey period. It is a population count, not a population density or growth rate.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. The ACS estimate counts residents at this place during the 2020–2024 survey period. It is a population count, not a population density or growth rate.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "age",
@@ -39,10 +34,7 @@ export const methodologyRecords: Method[] = [
     "universe": "The ACS estimates the age at the midpoint of the population at this place during 2020–2024. Half the population is younger than this age and half is older.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. The ACS estimates the age at the midpoint of the population at this place during 2020–2024. Half the population is younger than this age and half is older.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "sex",
@@ -59,10 +51,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Men divided by women, multiplied by 100. Values below 100 mean fewer men than women.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Men divided by women, multiplied by 100. Values below 100 mean fewer men than women.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "race-ethnicity",
@@ -80,9 +69,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Hispanic or Latino residents divided by all residents, multiplied by 100. This is the share of the total population that is Hispanic or Latino; Hispanic origin can be of any race.",
     "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count.",
-      "Race and Hispanic-origin views are alternatives, not additive shares; Hispanic or Latino origin can be of any race."
+      "Race and Hispanic-origin categories overlap; Hispanic origin can be of any race."
     ]
   },
   {
@@ -101,9 +88,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. People who are Asian alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.",
     "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count.",
-      "Race and Hispanic-origin views are alternatives, not additive shares; Hispanic or Latino origin can be of any race."
+      "Race and Hispanic-origin categories overlap; Hispanic origin can be of any race."
     ]
   },
   {
@@ -122,9 +107,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. People who are Black or African American alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.",
     "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count.",
-      "Race and Hispanic-origin views are alternatives, not additive shares; Hispanic or Latino origin can be of any race."
+      "Race and Hispanic-origin categories overlap; Hispanic origin can be of any race."
     ]
   },
   {
@@ -143,9 +126,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. People who are White alone and not Hispanic or Latino divided by all residents, multiplied by 100. This is the share of the total population in that category.",
     "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count.",
-      "Race and Hispanic-origin views are alternatives, not additive shares; Hispanic or Latino origin can be of any race."
+      "Race and Hispanic-origin categories overlap; Hispanic origin can be of any race."
     ]
   },
   {
@@ -163,10 +144,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Residents born outside the United States divided by all residents, multiplied by 100. This is the share of the population that is foreign-born.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Residents born outside the United States divided by all residents, multiplied by 100. This is the share of the population that is foreign-born.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "citizenship",
@@ -183,10 +161,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Non-citizen residents divided by total residents, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Non-citizen residents divided by total residents, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "median-household-income",
@@ -203,10 +178,7 @@ export const methodologyRecords: Method[] = [
     "universe": "The ACS estimates the midpoint of household incomes at this place over 2020–2024: half of households had a higher income and half had a lower income. This is a household measure, not income per person.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. The ACS estimates the midpoint of household incomes at this place over 2020–2024: half of households had a higher income and half had a lower income. This is a household measure, not income per person.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "per-capita-income",
@@ -223,10 +195,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Total income in the past 12 months divided by the total population. This is the average dollar income per person, not a household income figure.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. Total income in the past 12 months divided by the total population. This is the average dollar income per person, not a household income figure.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "median-rent",
@@ -243,10 +212,7 @@ export const methodologyRecords: Method[] = [
     "universe": "The ACS estimates the midpoint of monthly gross rents for renter-occupied homes paying cash rent. Half of these rents are higher and half are lower.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. The ACS estimates the midpoint of monthly gross rents for renter-occupied homes paying cash rent. Half of these rents are higher and half are lower.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "median-home-value",
@@ -263,10 +229,7 @@ export const methodologyRecords: Method[] = [
     "universe": "The ACS estimates the midpoint of reported home values for owner-occupied homes. Half of the estimated values are higher and half are lower.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. The ACS estimates the midpoint of reported home values for owner-occupied homes. Half of the estimated values are higher and half are lower.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "mortgage-selected-monthly-owner-costs",
@@ -283,10 +246,7 @@ export const methodologyRecords: Method[] = [
     "universe": "The ACS estimates selected monthly costs for owner-occupied homes, including housing expenses such as mortgage payments, taxes, insurance, utilities, and fuels. This is a housing-cost measure, not a home price.",
     "classification": "native",
     "method": "Methodology provided by Census ACS. The ACS estimates selected monthly costs for owner-occupied homes, including housing expenses such as mortgage payments, taxes, insurance, utilities, and fuels. This is a housing-cost measure, not a home price.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "rent-as-of-income-rent-burden",
@@ -303,10 +263,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Renters spending 30 percent or more of household income on rent divided by renter households with a computable ratio, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Renters spending 30 percent or more of household income on rent divided by renter households with a computable ratio, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "owner-renter-ratio",
@@ -323,10 +280,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Owner-occupied households divided by owner- and renter-occupied households, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Owner-occupied households divided by owner- and renter-occupied households, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "poverty",
@@ -343,10 +297,7 @@ export const methodologyRecords: Method[] = [
     "universe": "People whose income is below the Census poverty threshold divided by the population for whom poverty status is determined, multiplied by 100. It is the share of that population below the threshold; it is not a measure of how far below it their incomes are.",
     "classification": "custom",
     "method": "Calculated by USA Maps. People whose income is below the Census poverty threshold divided by the population for whom poverty status is determined, multiplied by 100. It is the share of that population below the threshold; it is not a measure of how far below it their incomes are.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "households-earning-200k",
@@ -363,10 +314,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Households with income of $200,000 or more divided by all households, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Households with income of $200,000 or more divided by all households, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "cost-of-living-regional-price-parities",
@@ -402,10 +350,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Adults 25+ with a bachelor's degree divided by adults 25+, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Adults 25+ with a bachelor's degree divided by adults 25+, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "masters-degree",
@@ -422,10 +367,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Adults 25+ with a master's degree divided by adults 25+, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Adults 25+ with a master's degree divided by adults 25+, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "doctorate",
@@ -442,10 +384,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Adults 25+ with a doctorate divided by adults 25+, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Adults 25+ with a doctorate divided by adults 25+, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "high-school-attainment",
@@ -462,10 +401,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Adults 25+ with a high school diploma or higher divided by adults 25+, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Adults 25+ with a high school diploma or higher divided by adults 25+, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "no-diploma",
@@ -482,16 +418,13 @@ export const methodologyRecords: Method[] = [
     "universe": "Adults 25+ without a high school diploma divided by adults 25+, multiplied by 100.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Adults 25+ without a high school diploma divided by adults 25+, multiplied by 100.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "unemployment",
     "name": "Unemployment rate",
     "source": "BLS LAUS",
-    "url": "https://www.bls.gov/opub/hom/lau/concepts.htm",
+    "url": "https://www.bls.gov/lau/lauov.htm",
     "formula": "Official BLS LAUS measure 03; monthly M01–M12 and published annual M13. M13 is not a recomputed monthly average.",
     "unit": "%",
     "period": "2025-M01 through 2025-M12 plus official annual M13 where published",
@@ -503,10 +436,7 @@ export const methodologyRecords: Method[] = [
     "classification": "native",
     "method": "Methodology provided by BLS LAUS. Official NSA BLS LAUS unemployment rate with published unemployed, employed, and labor-force count components.",
     "limitations": [
-      "Use NSA LAUST state and LAUCN county series; seasonally adjusted LASST state series are not interchangeable.",
-      "Preserve unemployed, employed, and labor-force component counts. Missing October 2025 stays missing, not zero.",
-      "M13 is annual and is never computed from monthly observations.",
-      "Monthly 2025 has no October observation; missing is not zero. Official annual M13 is used where published. No national rate is inferred by summing states."
+      "Monthly 2025 October is missing. Annual M13 is the separately published annual series, not a monthly average. NSA series are used; seasonal-adjusted state series are not interchangeable."
     ]
   },
   {
@@ -524,10 +454,7 @@ export const methodologyRecords: Method[] = [
     "universe": "Workers age 16 and older who worked from home divided by all workers age 16 and older, multiplied by 100. It is the share of workers whose commute mode was working from home.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Workers age 16 and older who worked from home divided by all workers age 16 and older, multiplied by 100. It is the share of workers whose commute mode was working from home.",
-    "limitations": [
-      "ACS estimates are subject to sampling error; source estimate margins of error are retained. No margin of error is invented for a derived ratio.",
-      "The survey period is 2020–2024; the estimate is not a point-in-time 2024 count."
-    ]
+    "limitations": []
   },
   {
     "id": "murders",
@@ -545,11 +472,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual homicide estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -568,11 +501,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual violent_crime estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -591,11 +530,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual robbery estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -614,11 +559,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual aggravated_assault estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -637,11 +588,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual burglary estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -660,11 +617,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual motor_vehicle_theft estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -683,12 +646,17 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Official FBI 2025 annual rape_revised estimate divided by the FBI population on the same state/national source row, multiplied by 100,000.",
     "limitations": [
-      "The publisher reports participation/estimation coverage caveats by geography; retain caveats.",
-      "This 2025 annual estimate is distinct from FBI CDE reported monthly observations.",
-      "2025 population is the FBI source population, not ACS or PEP.",
-      "Rape uses the revised definition field; legacy rape is not substituted.",
-      "FBI source footnote 3 marks limited 2025 data for both Florida and North Dakota; footnote markers and text are preserved on all offense rows.",
-      "2025 FBI SRS count and population are from the same workbook record. FBI participation and estimation caveats remain attached. Limited-data footnote 3 applies to Florida and North Dakota; rape uses the revised definition."
+      "The 2025 workbook is an annual SRS estimate; Florida and North Dakota have limited-data footnote 3. Rape uses the revised definition."
+    ],
+    "additionalSources": [
+      {
+        "label": "FBI Crime Data Explorer",
+        "url": "https://cde.ucr.cjis.gov/"
+      },
+      {
+        "label": "FBI 2025 reported-crime release",
+        "url": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics"
+      }
     ]
   },
   {
@@ -768,10 +736,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. IRS SOI tax-year 2023 A00100 adjusted gross income, summed over AGI stubs 1–8 and converted from thousand USD to USD. State and U.S. values aggregate county records while excluding state summary rows; they are calculated aggregates, not native IRS national observations.",
     "limitations": [
-      "A00100 is in thousands of dollars; multiply by 1,000 for USD.",
-      "Exclude county FIPS 000 state totals when summing county records.",
-      "A00100 source values are thousand USD; multiply by 1,000.",
-      "US total is the sum of county A00100 stub rows 1–8; it is not a native IRS US total. Exclude state summary rows to avoid double counting. Source A00100 is thousand USD. No unavailable geography is imputed."
+      "A00100 is in thousand USD and is multiplied by 1,000. State and U.S. totals sum county stubs 1–8; county FIPS 000 state summary rows are excluded. The U.S. result is not a native IRS total."
     ],
     "additionalSources": [
       {
@@ -784,7 +749,7 @@ export const methodologyRecords: Method[] = [
     "id": "electricity-price",
     "name": "Average electricity price",
     "source": "EIA Electricity",
-    "url": "https://www.eia.gov/electricity/data.php",
+    "url": "https://www.eia.gov/electricity/annual/table.php?t=epa_02_10.html",
     "formula": "EIA annual source price, ALL sectors",
     "unit": "cents/kWh",
     "period": "2025 calendar year; annual average, ALL sectors",
@@ -816,14 +781,16 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2023 incident cancer cases divided by matching-year 2023 Census PEP total population, multiplied by 100,000. This is a custom crude rate, not age-adjusted. A verified native U.S. case count supports the national value; no county rate is inferred.",
     "limitations": [
-      "Retained state/DC observations are numeric rows only as displayed under the USCS suppression selector; do not infer hidden or suppressed values. Numerator diagnosis year 2023 and denominator is matching-year 2023 PEP population.",
-      "USA Maps custom crude rate, not an age-adjusted rate. Never sum states to manufacture a US value; suppressed or absent observations remain missing.",
-      "US uses the 2023 national case numerator with 2023 PEP total population; state-only numerator gaps remain missing."
+      "State rates use state case counts; the U.S. rate uses the native U.S. case count. Suppressed or absent counts remain missing; state rates are not summed. This crude rate is not age-adjusted."
     ],
     "additionalSources": [
       {
         "label": "Census PEP Vintage 2025 population estimates",
         "url": "https://www.census.gov/data/tables/time-series/demo/popest/2020s-counties-total.html"
+      },
+      {
+        "label": "Census PEP Vintage 2025 county totals file",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
       }
     ]
   },
@@ -836,20 +803,26 @@ export const methodologyRecords: Method[] = [
     "unit": "per 100,000",
     "period": "2024 provisional diagnoses (reported through December 2025); age 13+",
     "geography": [
-      "state"
+      "state (U.S. value unavailable)"
     ],
     "universe": "2024 provisional diagnoses among people aged 13+ divided by matching-year 2024 Census PEP population aged 13+, multiplied by 100,000. This is a custom crude rate, not age-adjusted. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "classification": "custom",
     "method": "Calculated by USA Maps. 2024 provisional diagnoses among people aged 13+ divided by matching-year 2024 Census PEP population aged 13+, multiplied by 100,000. This is a custom crude rate, not age-adjusted. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "limitations": [
-      "Retained local prepared observations are provisional 2024 diagnoses among age 13+ reported through Dec 2025; 12-month reporting delay. Use age-13+ same-year PEP population for a crude rate.",
-      "USA Maps custom crude rate, not an age-adjusted rate. Never sum states to manufacture a US value; suppressed or absent observations remain missing.",
-      "State numerator only; US and county results are missing, never zero. Provisional diagnoses have a 12-month reporting delay."
+      "2024 provisional age-13+ diagnoses are reported through December 2025. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted."
     ],
     "additionalSources": [
       {
-        "label": "Census PEP Vintage 2025 age detail tables",
-        "url": "https://www.census.gov/data/tables/time-series/demo/popest/2020s-state-detail.html"
+        "label": "Census PEP county 2024 total population",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
+      },
+      {
+        "label": "Census PEP 2024 county age/sex estimates",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/asrh/cc-est2025-syasex.csv"
+      },
+      {
+        "label": "Census PEP 2024 national age/sex estimates",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/national/asrh/nc-est2025-agesex-res.csv"
       }
     ]
   },
@@ -862,23 +835,26 @@ export const methodologyRecords: Method[] = [
     "unit": "per 100,000",
     "period": "2024 final resident deaths; ages 0–17",
     "geography": [
-      "state"
+      "state (U.S. value unavailable)"
     ],
     "universe": "2024 resident deaths at ages 0–17 divided by matching-year 2024 Census PEP population aged 0–17, multiplied by 100,000. Suppressed counts remain missing. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "classification": "custom",
     "method": "Calculated by USA Maps. 2024 resident deaths at ages 0–17 divided by matching-year 2024 Census PEP population aged 0–17, multiplied by 100,000. Suppressed counts remain missing. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "limitations": [
-      "2025 and later are provisional; do not replace the 2024 final metric automatically.",
-      "Use age 0-17 deaths over July 1, 2024 population age 0-17.",
-      "Suppressed cells remain missing; no zeros are fabricated.",
-      "Use Census PEP single ages 0 through 17 for the denominator; suppressed mortality counts remain missing.",
-      "USA Maps custom crude rate, not an age-adjusted rate. Never sum states to manufacture a US value; suppressed or absent observations remain missing.",
-      "State numerator only; US and county results are missing, never zero. Suppressed counts remain missing."
+      "Suppressed mortality counts remain missing. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted."
     ],
     "additionalSources": [
       {
-        "label": "Census PEP Vintage 2025 age detail tables",
-        "url": "https://www.census.gov/data/tables/time-series/demo/popest/2020s-state-detail.html"
+        "label": "Census PEP county 2024 total population",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
+      },
+      {
+        "label": "Census PEP 2024 county age/sex estimates",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/asrh/cc-est2025-syasex.csv"
+      },
+      {
+        "label": "Census PEP 2024 national age/sex estimates",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/national/asrh/nc-est2025-agesex-res.csv"
       }
     ]
   },
@@ -899,9 +875,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. American Indian and Alaska Native alone or in combination; all Hispanic origins. This category can overlap other race categories.",
     "limitations": [
-      "Broad alone-or-in-combination race definition; categories do not sum to 100%.",
-      "Estimate MOEs retained; share MOE is not inferred.",
-      "AIAN alone or in combination includes all Hispanic origins and can overlap other race categories; shares do not sum to 100%. Source estimate MOE is retained; no share MOE is inferred."
+      "Alone-or-in-combination includes all Hispanic origins and overlaps other race categories; shares do not sum to 100%. Source estimate MOE is retained; no share MOE is inferred."
     ],
     "additionalSources": [
       {
@@ -913,8 +887,8 @@ export const methodologyRecords: Method[] = [
   {
     "id": "elections-president",
     "name": "President election",
-    "source": "MIT Election Data and Science Lab / Harvard Dataverse",
-    "url": "https://dataverse.harvard.edu/dataverse/medsl",
+    "source": "MIT Election Data and Science Lab, Harvard Dataverse",
+    "url": "https://doi.org/10.7910/DVN/VOQCHQ",
     "formula": "Selected party votes ÷ validated TOTAL contest votes × 100",
     "unit": "%",
     "period": "2024 election cycle; source history 2000–2024; interface starts at 2024",
@@ -925,18 +899,20 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Selected party vote share in the source-native 2024 contest.",
     "limitations": [
-      "History 2000–2024 retained; first interface selects 2024 only.",
-      "Missing, invalid or unmatched geography remains explicit No data.",
-      "Validated TOTAL mode only; no summing overlapping source voting modes.",
-      "Only the 2024 cycle is initially selected. Missing, invalid, unmatched, or no-election areas remain distinct from numeric zero. No state or county totals are inferred.",
-      "County geography; validated TOTAL voting mode only."
+      "2024 is initially selected; history spans 2000–2024. Missing, invalid, or unmatched geography remains missing."
+    ],
+    "additionalSources": [
+      {
+        "label": "Harvard Dataverse dataset version",
+        "url": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/VOQCHQ"
+      }
     ]
   },
   {
     "id": "elections-senate",
     "name": "Senate election",
-    "source": "MIT Election Data and Science Lab / Harvard Dataverse",
-    "url": "https://dataverse.harvard.edu/dataverse/medsl",
+    "source": "MIT Election Data and Science Lab, Harvard Dataverse",
+    "url": "https://doi.org/10.7910/DVN/PEJ5QU",
     "formula": "Selected party votes ÷ validated TOTAL contest votes × 100",
     "unit": "%",
     "period": "2024 regular-election cycle; source history 1976–2024; interface starts at 2024",
@@ -947,35 +923,41 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. Selected party vote share in the source-native 2024 contest.",
     "limitations": [
-      "History 1976–2024 retained; first interface selects 2024 only.",
-      "Missing, invalid or unmatched geography remains explicit No data.",
-      "Regular-election interface; no-election states remain distinct from zero votes.",
-      "Only the 2024 cycle is initially selected. Missing, invalid, unmatched, or no-election areas remain distinct from numeric zero. No state or county totals are inferred.",
-      "State geography; regular elections only. No-election states are not zero-vote contests."
+      "Regular elections only; no-election states are not zero-vote contests. History spans 1976–2024."
+    ],
+    "additionalSources": [
+      {
+        "label": "Harvard Dataverse dataset version",
+        "url": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/PEJ5QU"
+      }
     ]
   },
   {
     "id": "elections-house",
     "name": "House election",
-    "source": "MIT Election Data and Science Lab / Harvard Dataverse",
-    "url": "https://dataverse.harvard.edu/dataverse/medsl",
+    "source": "MIT Election Data and Science Lab, Harvard Dataverse",
+    "url": "https://doi.org/10.7910/DVN/IG0UN2",
     "formula": "Selected party votes ÷ validated TOTAL contest votes × 100",
     "unit": "%",
     "period": "2024 election cycle; source history 1976–2024; interface starts at 2024",
     "geography": [
-      "congressional district"
+      "2024 congressional district geometry (derived GeoJSON)"
     ],
     "universe": "Selected party vote share in the source-native 2024 contest.",
     "classification": "custom",
     "method": "Calculated by USA Maps. Selected party vote share in the source-native 2024 contest.",
     "limitations": [
-      "History 1976–2024 retained; first interface selects 2024 only.",
-      "Missing, invalid or unmatched geography remains explicit No data.",
-      "119th Congress boundaries matched to 2024; no allocation into modern counties.",
-      "Original House bytes verified against official Dataverse MD5 and UNF.",
-      "Only the 2024 cycle is initially selected. Missing, invalid, unmatched, or no-election areas remain distinct from numeric zero. No state or county totals are inferred.",
-      "119th Congress districts are matched to the 2024 contest; votes are not allocated to modern counties.",
-      "435 voting districts are matched to the 119th Congress boundary vintage."
+      "2024 contests are matched to 119th Congress district boundaries; votes are not allocated to modern counties. History spans 1976–2024."
+    ],
+    "additionalSources": [
+      {
+        "label": "Harvard Dataverse dataset version",
+        "url": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IG0UN2"
+      },
+      {
+        "label": "Census 2024 congressional district boundary ZIP (source geometry)",
+        "url": "https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_cd119_500k.zip"
+      }
     ]
   },
   {
@@ -1000,8 +982,8 @@ export const methodologyRecords: Method[] = [
     ],
     "additionalSources": [
       {
-        "label": "Census PEP Vintage 2025 population estimates",
-        "url": "https://www.census.gov/data/tables/time-series/demo/popest/2020s-counties-total.html"
+        "label": "Census PEP Vintage 2025 county totals file",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
       }
     ]
   },
@@ -1026,12 +1008,6 @@ export const methodologyRecords: Method[] = [
   }
 ];
 
-const groups: [string,string[]][] = [
- ['Demographics, housing, income, education and work',['population','age','sex','race-ethnicity','race-ethnicity--white-non-hispanic','race-ethnicity--black','race-ethnicity--asian','race-ethnicity--aian','foreign-born-population','citizenship','median-household-income','per-capita-income','median-rent','median-home-value','mortgage-selected-monthly-owner-costs','rent-as-of-income-rent-burden','owner-renter-ratio','poverty','households-earning-200k','bachelors-degree','masters-degree','doctorate','high-school-attainment','no-diploma','work-from-home-share','adjusted-gross-income-agi','adjusted-gross-income-agi--per-resident']],
- ['Economy',['cost-of-living-regional-price-parities','electricity-price']], ['Employment',['unemployment']],
- ['Public safety',['murders','violent-crime','robbery','aggravated-assault','burglary','motor-vehicle-theft','rape']],
- ['Health',['obesity-rate','diabetes-rate','physical-inactivity-rate','all-cancer-new-cases','new-hiv-diagnoses','deaths-under-18']],
- ['Elections',['elections-president','elections-senate','elections-house']],
-];
+export const methodologyGroups = [["Demographics, housing, income, education and work", ["population", "age", "sex", "race-ethnicity", "race-ethnicity--white-non-hispanic", "race-ethnicity--black", "race-ethnicity--asian", "race-ethnicity--aian", "foreign-born-population", "citizenship", "median-household-income", "per-capita-income", "median-rent", "median-home-value", "mortgage-selected-monthly-owner-costs", "rent-as-of-income-rent-burden", "owner-renter-ratio", "poverty", "households-earning-200k", "bachelors-degree", "masters-degree", "doctorate", "high-school-attainment", "no-diploma", "work-from-home-share", "adjusted-gross-income-agi", "adjusted-gross-income-agi--per-resident"]], ["Economy", ["cost-of-living-regional-price-parities", "electricity-price"]], ["Employment", ["unemployment"]], ["Public safety", ["murders", "violent-crime", "robbery", "aggravated-assault", "burglary", "motor-vehicle-theft", "rape"]], ["Health", ["obesity-rate", "diabetes-rate", "physical-inactivity-rate", "all-cancer-new-cases", "new-hiv-diagnoses", "deaths-under-18"]], ["Elections", ["elections-president", "elections-senate", "elections-house"]]] as const;
 function Record({item}:{item:Method}) { return <article className="methodology-record" id={'method-'+item.id}><h3>{item.name}</h3><dl><dt>Source</dt><dd><a href={item.url} target="_blank" rel="noreferrer">{item.source} ↗</a>{item.additionalSources?.map(source=><span key={source.url}> · <a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></span>)}</dd><dt>Method</dt><dd>{item.method}</dd><dt>Formula</dt><dd><code>{item.formula}</code></dd><dt>Unit</dt><dd>{item.unit}</dd><dt>Universe</dt><dd>{item.universe}</dd><dt>Period</dt><dd>{item.period}</dd><dt>Geography</dt><dd>{item.geography.join(', ')}</dd><dt>Limitations</dt><dd>{item.limitations.join(' ')}</dd></dl></article>; }
-export function Methodology() { const byId=new Map(methodologyRecords.map(item=>[item.id,item])); return <section className="about-story-row methodology" aria-labelledby="methodology-title"><h2 id="methodology-title">Data &amp; methodology</h2><div className="methodology-content"><p className="methodology-intro">Each indicator lists its source, calculation, unit, population or record universe, period, geography, and known gaps. A missing value means no usable observation was published; it is never changed to zero or filled by adding state values. Source estimates can have uncertainty or suppression; margins of error are not invented.</p><p className="methodology-intro">“Methodology provided by” identifies a measure and formula published by its source. “Calculated by USA Maps” identifies a rate or share derived here from source fields.</p>{groups.map(([title,ids])=><details className="methodology-group" key={title}><summary>{title}<span>{ids.length} indicators</span></summary><div className="methodology-list">{ids.map(id=>{const item=byId.get(id);return item?<Record key={id} item={item}/>:null})}</div></details>)}<details className="methodology-group methodology-retained"><summary>Retained but hidden data<span>1 indicator</span></summary><div className="methodology-list"><Record item={byId.get('fitness-recreation-centers-per-capita')!}/></div></details><p className="methodology-note"><strong>Unemployment:</strong> monthly 2025 observations and the separately published annual M13 value are distinct views; October 2025 is missing. Election office, cycle and geography limits appear with each election record.</p></div></section>; }
+export function Methodology() { const byId=new Map(methodologyRecords.map(item=>[item.id,item])); return <section className="about-story-row methodology" aria-labelledby="methodology-title"><h2 id="methodology-title">Data &amp; methodology</h2><div className="methodology-content"><p className="methodology-intro">Each indicator lists its source, calculation, unit, population or record universe, period, geography, and known gaps. A missing value means no usable observation was published; it is never changed to zero or filled by adding state values. ACS source estimates retain published margins of error; uncertainty for derived rates is not calculated. Suppressed or unavailable values remain missing.</p><p className="methodology-intro">“Methodology provided by” identifies a measure and formula published by its source. “Calculated by USA Maps” identifies a rate or share derived here from source fields.</p>{methodologyGroups.map(([title,ids])=><details className="methodology-group" key={title}><summary>{title}<span>{ids.length} indicators</span></summary><div className="methodology-list">{ids.map(id=>{const item=byId.get(id);return item?<Record key={id} item={item}/>:null})}</div></details>)}<details className="methodology-group methodology-retained"><summary>Retained but hidden data<span>1 indicator</span></summary><div className="methodology-list"><Record item={byId.get('fitness-recreation-centers-per-capita')!}/></div></details><p className="methodology-note"><strong>Unemployment:</strong> monthly 2025 observations and the separately published annual M13 value are distinct views; October 2025 is missing. Election cycle and geography limits appear with each election record. House geography is a derived GeoJSON converted from the linked Census TIGER/Line ZIP; Census publishes the source shapefile ZIP, not this GeoJSON.</p></div></section>; }
