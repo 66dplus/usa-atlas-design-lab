@@ -2,13 +2,19 @@ import assert from 'node:assert/strict';
 import { mkdir, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
+import { readUiExpectationProfile } from './ui-expectation-profile.mjs';
 const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/$/, ''),
-  before = process.env.ATLAS_BEFORE_URL;
+  before = process.env.ATLAS_BEFORE_URL,
+  uiProfile = await readUiExpectationProfile(base, process.env.ATLAS_CONFORMANCE_IMAGE_DIGEST),
+  baseline = uiProfile.baseline,
+  expectationProfile = uiProfile.profile;
 const out = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-xray-react-ui-${Date.now()}`;
 await mkdir(out, { recursive: true });
 const result = {
   suite: 'react-ui-lifecycle-and-support',
   base,
+  expectationProfile,
+  runtimeIdentity: uiProfile.identity,
   before: before || null,
   checks: [],
   additionalChecks: [],
@@ -290,9 +296,15 @@ try {
         await page.locator('#support-open').click();
         await page.locator('#support-main').waitFor();
         await shot(page, 'after-' + key + '-support');
-        assert.equal(await page.locator('.support-method--unavailable').count(), 0);
-        assert.equal(await page.locator('[data-open-crypto]').count(), 1);
-        assert.equal(await page.getByRole('button', {name: /Cryptocurrency/}).count(), 1);
+        if (baseline) {
+          assert.equal(await page.locator('.support-method--unavailable').count(), 3,
+            'Pinned rollback runtime retains its three unconfigured support methods');
+          assert.equal(await page.locator('[data-open-crypto]').count(), 0);
+        } else {
+          assert.equal(await page.locator('.support-method--unavailable').count(), 0);
+          assert.equal(await page.locator('[data-open-crypto]').count(), 1);
+          assert.equal(await page.getByRole('button', {name: /Cryptocurrency/}).count(), 1);
+        }
         await page.locator('#reading-page').evaluate((e) => (e.scrollTop = e.scrollHeight));
         await shot(page, 'after-' + key + '-support-footer');
         await page.locator('[data-open-milestone]').click();
@@ -331,11 +343,17 @@ try {
         await page.locator('#info-open').click();
         await page.locator('#about-main').waitFor();
         await page.locator('[data-open-info=methodology]').first().click();
-        await page.locator('#methodology-title').waitFor();
-        await page.waitForFunction(() => document.activeElement?.id === 'methodology-title');
-        assert.equal(await page.locator('#methodology-title').isVisible(), true);
-        assert.ok(await page.locator('#reading-page').evaluate((element) => element.scrollTop > 0));
-        assert.equal(await page.locator('#info-methodology').isVisible(), false, 'legacy methodology view stays closed for the About link');
+        if (baseline) {
+          await page.locator('#info-methodology').waitFor();
+          assert.equal(await page.locator('#info-methodology').isVisible(), true,
+            'Pinned rollback runtime retains its legacy methodology destination');
+        } else {
+          await page.locator('#methodology-title').waitFor();
+          await page.waitForFunction(() => document.activeElement?.id === 'methodology-title');
+          assert.equal(await page.locator('#methodology-title').isVisible(), true);
+          assert.ok(await page.locator('#reading-page').evaluate((element) => element.scrollTop > 0));
+          assert.equal(await page.locator('#info-methodology').isVisible(), false, 'legacy methodology view stays closed for the About link');
+        }
         await page.locator('#theme-toggle').click();
         await page.waitForFunction((current) => document.body.dataset.theme !== current, theme);
         await page.locator('#theme-toggle').click();

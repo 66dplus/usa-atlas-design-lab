@@ -27,6 +27,10 @@ assert.equal(visibleIds.length, 46, '45 selector IDs plus the extra income mode'
 assert.equal(records.length, 47, 'visible records plus one retained hidden record');
 assert.ok(!visibleIds.includes('fitness-recreation-centers-per-capita'), 'fitness data remains hidden');
 assert.ok(byId.has('fitness-recreation-centers-per-capita'), 'hidden fitness data is retained and documented');
+assert.match(source, /\{ids\.length\} \{ids\.length === 1 \? 'entry' : 'entries'\}/,
+  'methodology group counts use entry/entries grammar');
+assert.match(source, /Retained but hidden data<span>1 entry<\/span>/,
+  'single retained methodology record uses singular entry');
 
 for (const id of visibleIds) {
   const record = byId.get(id);

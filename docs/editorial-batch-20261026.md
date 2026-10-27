@@ -8,11 +8,11 @@ This source candidate contains 13 English articles, static cover images for the 
 - Source archive SHA-256: `39bbb5a113eef1eb42af9c24801110079b4794ba7e19ccbe8bdd1074580ae61d`.
 - The three previously accepted reader texts (Pitkin, Los Alamos, Nassau/Bronx) are preserved. The other ten reader bodies come from the completed editorial packet. Editor memos and internal research notes are excluded.
 - The state poverty CSV is included as a small public download. No research database or raw evidence package is shipped.
-- In the source candidate, the only reader copy edit is “2010 s” → “2010s” in the state-population story. Source periods remain explicit; no author or publication date is fabricated.
+- In the submitted source archive, the only copy edit was “2010 s” → “2010s” in the state-population story. Later application integration updated selected factual copy where the admitted reader periods changed the displayed values, including the Mississippi mortality and unemployment stories. Historical analysis remains labeled with its original year; final displayed values follow the admitted period. No author or publication date is fabricated.
 
 ## Maps and covers
 
-- Article maps reuse the existing `ExplorerMap`; fixed selections ignore selection changes while retaining native pan/zoom. The compact legend shows indicator/value, native ramp, and nationwide minimum/maximum.
+- Article maps reuse the existing `ExplorerMap`; fixed selections ignore selection changes while retaining native pan/zoom. The compact legend shows indicator/value and the native ramp. Fixed selections label fixed domain endpoints as a scale; observed minimum and maximum labels are reserved for actual observed extrema.
 - Two-digit selections use admitted state observations and a matching state scale. Five-digit selections retain the county scale. No state totals are inferred from county values by the component.
 - The card images are screenshots of those native map views, fitted without distortion to 1200×600 and 640×320 WebP. A card mounts no map. Lower cards use native lazy loading and asynchronous decoding.
 - Full-size covers: 9276–30550 bytes each; all below the 200,000-byte target. The official packager explicitly inventories both cover sizes and the CSV.
@@ -20,7 +20,7 @@ This source candidate contains 13 English articles, static cover images for the 
 
 ## Source review and build
 
-Independent editorial review found no material content blocker. Independent source review identified outdated unpublished-Journal SEO expectations; those existing expectations were updated to the approved published Journal and exact published route set. SPA links retain real hrefs and use the existing navigation handler. Source review and successful frontend compilation do not constitute release acceptance.
+Independent editorial review found no material content blocker. Independent source review identified outdated unpublished-Journal SEO expectations; the HTTP suite now checks all 13 published article routes, Article JSON-LD, canonical and cover responses, the indexable Journal route, and the exact 71-route sitemap. The existing Mississippi draft remains served with `noindex,follow` and is excluded from the sitemap. SPA links retain real hrefs and use the existing navigation handler. A test-only expectation profile recognizes the approved rollback runtime only when its raw build hash, source commit, release ID and coordinator image digest all match the pinned values; it keeps the full eight native UI cases and core checks running while asserting that runtime’s legacy Support/About and SEO behavior. Source review and successful frontend compilation do not constitute release acceptance.
 
 ## Application integration updates — 27 October 2026
 
