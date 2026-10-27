@@ -133,6 +133,12 @@ class PreviewCacheTests(unittest.TestCase):
         server.request_timeout = 0.2
         server.response_write_timeout = 0.4
         original_get_request = server.get_request
+        original_shutdown_request = server.shutdown_request
+        shutdown_complete = threading.Event()
+
+        def signal_shutdown_complete(request):
+            original_shutdown_request(request)
+            shutdown_complete.set()
 
         def small_send_buffer():
             connection, address = original_get_request()
@@ -140,6 +146,7 @@ class PreviewCacheTests(unittest.TestCase):
             return connection, address
 
         server.get_request = small_send_buffer
+        server.shutdown_request = signal_shutdown_complete
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         client = socket.create_connection(server.server_address, timeout=5)
@@ -152,10 +159,12 @@ class PreviewCacheTests(unittest.TestCase):
             self.assertEqual(int(response.getheader('Content-Length')), len(body))
             start = time.monotonic()
             time.sleep(server.response_write_timeout + 0.1)
-            with self.assertRaises(http.client.IncompleteRead) as truncated:
-                response.read()
+            self.assertTrue(shutdown_complete.wait(max(0, 2 - (time.monotonic() - start))))
+            # Measure server shutdown before draining any queued kernel bytes.
             elapsed = time.monotonic() - start
             self.assertLess(elapsed, 2)
+            with self.assertRaises(http.client.IncompleteRead) as truncated:
+                response.read()
             self.assertEqual(truncated.exception.partial, body[:len(truncated.exception.partial)])
             self.assertLess(len(truncated.exception.partial), len(body))
         finally:
