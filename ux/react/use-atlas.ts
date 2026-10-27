@@ -840,7 +840,6 @@ export function useAtlas() {
           patch({ startup: 'ready' });
           window.dispatchEvent(new Event('atlas:startup-ready'));
         }
-        if (seeded && startupMetric) void store.refresh(startupMetric);
       } catch (error) {
         if (alive) {
           patch({ startup: 'error' });

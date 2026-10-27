@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { ExplorerMap } from '../map.js';
 import { displayLayer, prepareLayer } from '../model.js';
 import type { Atlas, Resources } from './use-atlas';
-import type { Geography, Layer, MapAdapter, Metric, Side } from './types';
+import type { Geography, Layer, MapAdapter, Side } from './types';
 import { paletteFor, ramp } from './explorer';
 
 type MapCallbacks = {
@@ -112,6 +112,7 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
           mode: atlas.state.mode,
           selectedId,
           metricKey: mapMetric.id,
+          geographyType: mapMetric.geographyType === 'congressional_district' ? 'congressional_district' : 'state',
           values: data.values,
           heightValues: data.heightValues || new Map(),
           countySupported: stateScope ? false : mapMetric.countySupported,
@@ -147,6 +148,7 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
       mode: atlas.state.mode,
       selectedId,
       metricKey: mapMetric.id,
+      geographyType: mapMetric.geographyType === 'congressional_district' ? 'congressional_district' : 'state',
       values: data.values,
       heightValues: data.heightValues || new Map(),
       countySupported: stateScope ? false : mapMetric.countySupported,

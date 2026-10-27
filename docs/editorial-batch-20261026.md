@@ -8,7 +8,7 @@ This source candidate contains 13 English articles, static cover images for the 
 - Source archive SHA-256: `39bbb5a113eef1eb42af9c24801110079b4794ba7e19ccbe8bdd1074580ae61d`.
 - The three previously accepted reader texts (Pitkin, Los Alamos, Nassau/Bronx) are preserved. The other ten reader bodies come from the completed editorial packet. Editor memos and internal research notes are excluded.
 - The state poverty CSV is included as a small public download. No research database or raw evidence package is shipped.
-- The only reader copy edit is “2010 s” → “2010s” in the state-population story. Source periods remain explicit; no author or publication date is fabricated.
+- In the source candidate, the only reader copy edit is “2010 s” → “2010s” in the state-population story. Source periods remain explicit; no author or publication date is fabricated.
 
 ## Maps and covers
 
@@ -20,7 +20,13 @@ This source candidate contains 13 English articles, static cover images for the 
 
 ## Source review and build
 
-Independent editorial review found no material content blocker. Independent source review identified outdated unpublished-Journal SEO expectations; those existing expectations were updated to the approved published Journal and exact published route set. SPA links retain real hrefs and use the existing navigation handler. Source review and successful frontend compilation do not constitute release acceptance. No automated tests were run or added in this task.
+Independent editorial review found no material content blocker. Independent source review identified outdated unpublished-Journal SEO expectations; those existing expectations were updated to the approved published Journal and exact published route set. SPA links retain real hrefs and use the existing navigation handler. Source review and successful frontend compilation do not constitute release acceptance.
+
+## Application integration updates — 27 October 2026
+
+The article-map uses the current catalog-selected data store, preserving exact periods and source releases. Public API checks confirmed the article map values and labels for the current ACS maps, 2023 IRS California total, 2024 Mississippi under-18 mortality rate, 2025 unemployment, and the admitted 2025 FBI rate. The public API returned 503 for unemployment December 2024; no older value is substituted into the live map. Its live map caption now separates the selected admitted period from the story's historical December 2024 analysis. The Mississippi story, ranking table and native-map covers now use the current 2024 PEP under-18 denominator and matching map rates.
+
+Integration checks cover both compiled React entries, SSR/SEO routes and the 13 published article route, cover and map bindings. A headless Chrome review of the local build used read-only GETs to the current public API, blocked all browser POSTs and saved desktop/mobile screenshots under `/tmp/usa-maps-release-20261027/journal-evidence/`. This source review and its focused checks do not constitute release acceptance.
 
 Production integration and activation must follow [the unified release workflow](unified-release.md), with its required acceptance and public verification. This document does not claim that a release was activated.
 
