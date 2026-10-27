@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  checks:
+  checks_core:
     runs-on: ubuntu-latest
     env:
       PGHOST: 127.0.0.1
@@ -63,8 +63,96 @@ jobs:
       - name: Run the complete Python unit suite
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - run: python3 scripts/build_temporary_preview.py /tmp/usa-atlas-ci-package --release ci-${{ github.sha }} --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000 --contracts-lock contracts/reader-v2-contract.lock.json
-      - name: Run required Chrome regressions against the packaged runtime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: usa-atlas-ci-package
+          path: /tmp/usa-atlas-ci-package/
+          if-no-files-found: error
+          retention-days: 1
+
+  browser:
+    name: browser (${{ matrix.suite }})
+    needs: checks_core
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - release-regressions
+          - post-react-ui
+    runs-on: ubuntu-latest
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: atlas
+      PGPASSWORD: atlas
+      PGDATABASE: usa_atlas
+      REQUIRE_POSTGRES: '1'
+      ATLAS_CI_READER_PASSWORD: atlas-ci-only-reader
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas
+          POSTGRES_DB: usa_atlas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U atlas -d usa_atlas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --ignore-scripts
+      - name: Use runner Chrome or install Playwright Chrome
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --version
+          else
+            node node_modules/playwright/cli.js install --with-deps chrome
+            command -v google-chrome
+            google-chrome --version
+          fi
+      - run: sudo apt-get update
+      - name: Install PostgreSQL 16 binaries for the packaged runtime fixture
+        run: |
+          sudo apt-get install -y --no-install-recommends postgresql-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+      - run: python3 scripts/prepare_ci_database.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: usa-atlas-ci-package
+          path: /tmp/usa-atlas-ci-package
+      - name: Run browser checks against the packaged runtime
         env:
           PGUSER: atlas_reader
           PGPASSWORD: atlas-ci-only-reader
-        run: python3 scripts/run_ci_browser.py /tmp/usa-atlas-ci-package
+        run: python3 scripts/run_ci_browser.py --suite "${{ matrix.suite }}" /tmp/usa-atlas-ci-package
+
+  checks:
+    name: checks
+    if: always()
+    needs:
+      - checks_core
+      - browser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every CI prerequisite to succeed
+        env:
+          CHECKS_CORE_RESULT: ${{ needs.checks_core.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          echo "checks_core: $CHECKS_CORE_RESULT"
+          echo "browser: $BROWSER_RESULT"
+          if [[ "$CHECKS_CORE_RESULT" != success || "$BROWSER_RESULT" != success ]]; then
+            echo "::error::Every required CI prerequisite must finish successfully."
+            exit 1
+          fi
