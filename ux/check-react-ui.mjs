@@ -351,7 +351,15 @@ try {
         await page.locator('[data-open-milestone]').click();
         await page.getByRole('dialog').waitFor();
         await shot(page, 'after-' + key + '-milestone');
-        assert.match(await page.getByRole('dialog').innerText(), /10 new indicators/);
+        const milestoneText = await page.getByRole('dialog').innerText();
+        for (const title of [
+          'iOS and Android apps',
+          'An AI assistant for exploring the map',
+          'Composite categories for places',
+          'More detailed crime levels',
+        ]) {
+          assert.ok(milestoneText.includes(title), `Milestone dialog includes ${title}`);
+        }
         assert.equal(await page.locator('#atlas-root').evaluate((e) => e.inert), true);
         await page.keyboard.press('Escape');
         await page.waitForSelector('.app-dialog-backdrop', {
