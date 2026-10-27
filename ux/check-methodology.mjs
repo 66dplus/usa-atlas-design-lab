@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const registry = JSON.parse(await readFile(new URL('./selection-registry.json', import.meta.url), 'utf8'));
 const source = await readFile(new URL('./react/methodology.tsx', import.meta.url), 'utf8');
+const candidates = await readFile(new URL('./react/consumer-candidates.ts', import.meta.url), 'utf8');
 const startMarker = 'export const methodologyRecords: Method[] = ';
 const start = source.indexOf(startMarker) + startMarker.length;
 const end = source.indexOf(';\n\nexport const methodologyGroups', start);
@@ -68,6 +69,42 @@ assert.match(byId.get('unemployment').period, /2025-M01.*2025-M12.*M13/);
 assert.match(byId.get('unemployment').limitations.join(' '), /2025 October is missing/);
 assert.match(byId.get('adjusted-gross-income-agi').limitations.join(' '), /sum county stubs 1–8.*not a native IRS total/);
 assert.match(byId.get('race-ethnicity--aian').universe, /all Hispanic origins/);
+const placesExpected = {
+  'obesity-rate': ['OBESITY', 'BMI ≥30.0 kg/m²'],
+  'diabetes-rate': ['DIABETES', 'health professional told them they have diabetes'],
+  'physical-inactivity-rate': ['LPA', 'other than their regular job'],
+};
+for (const [id, [measureId, universeDetail]] of Object.entries(placesExpected)) {
+  const record = byId.get(id);
+  assert.match(record.formula, new RegExp(`measureid=${measureId}.*data_value_type=Age-adjusted prevalence`), `${id}: source estimate-type metadata`);
+  assert.match(record.universe, /Adults aged 18 years and older/);
+  assert.ok(record.universe.includes(universeDetail), `${id}: source definition remains specific`);
+  assert.ok(record.additionalSources.some(({ url }) => url === 'https://data.cdc.gov/resource/swc5-untb.json'), `${id}: links publisher API provenance`);
+  assert.ok(record.method.includes('multilevel regression and poststratification'), `${id}: retains PLACES model methodology`);
+}
+for (const id of ['all-cancer-new-cases','adjusted-gross-income-agi--per-resident']) {
+  const record = byId.get(id);
+  const nationalPep = record.additionalSources.find(({ url }) => url === 'https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/national/asrh/nc-est2025-agesex-res.csv');
+  assert.ok(nationalPep, `${id}: links native national PEP source file`);
+  assert.match(nationalPep.label, /2023.*SEX=0, AGE=999/);
+}
+assert.match(byId.get('obesity-rate').limitations.join(' '), /heights below 3 ft.*8 ft.*weights below 50 lb.*650 lb.*BMI below 12.*100 kg/);
+assert.equal(byId.get('new-hiv-diagnoses').url, 'https://www.cdc.gov/hiv-data/nhss/hiv-diagnoses-deaths-prevalence.html', 'HIV source opens a human-readable CDC release');
+assert.ok(byId.get('new-hiv-diagnoses').additionalSources.some(({ url }) => url === 'https://gis.cdc.gov/api/AtlasPlus/qtOutputData'), 'HIV keeps exact producer API provenance');
+const candidateBlock = candidates.slice(candidates.indexOf('const refreshedPlaceholders'), candidates.indexOf('];', candidates.indexOf('const refreshedPlaceholders')));
+for (const id of ['all-cancer-new-cases','new-hiv-diagnoses','deaths-under-18']) {
+  const line = candidateBlock.split('\n').find((entry) => entry.includes(`id:'${id}'`));
+  assert.ok(line, `${id}: current candidate entry exists`);
+  assert.match(line, /hasObservations:false/);
+  assert.match(line, /availability:'not_admitted'/);
+  assert.match(byId.get(id).limitations.join(' '), /unavailable in the current local reader candidate because no admitted refresh is present/);
+}
+const methodologyIntro = [...source.matchAll(/<p className="methodology-intro">([^<]+)<\/p>/g)].map((match) => match[1]).join(' ');
+assert.match(methodologyIntro, /AIAN numerator and denominator margins of error are retained/);
+assert.doesNotMatch(methodologyIntro, /ACS source estimates retain published margins of error/);
+for (const record of records.filter(({ id }) => id !== 'race-ethnicity--aian'))
+  assert.doesNotMatch(record.limitations.join(' '), /\bMOE|margin of error/i, `${record.id}: no unsupported MOE claim`);
+assert.ok(byId.get('elections-house').additionalSources.some(({ label }) => /Cartographic Boundary shapefile ZIP, 1:500,000, CD119/.test(label)), 'House cites precise Census boundary product');
 assert.match(source, /2025 October is missing/);
 assert.doesNotMatch(source, /import ['"].*methodology\.css/);
 for (const record of records.filter((entry) => entry.classification === 'custom')) {

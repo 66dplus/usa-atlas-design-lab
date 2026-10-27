@@ -661,62 +661,100 @@ export const methodologyRecords: Method[] = [
   },
   {
     "id": "obesity-rate",
-    "name": "Obesity rate",
+    "name": "Obesity among adults",
     "source": "CDC PLACES",
-    "url": "https://www.cdc.gov/places/tools/data-portal.html",
-    "formula": "05.14",
+    "url": "https://data.cdc.gov/500-Cities-Places/PLACES-Local-Data-for-Better-Health-County-Data-20/swc5-untb",
+    "formula": "Published 2025 PLACES estimate where measureid=OBESITY and data_value_type=Age-adjusted prevalence.",
     "unit": "%",
     "period": "2023 BRFSS estimates, PLACES December 2025 release",
     "geography": [
       "county"
     ],
-    "universe": "CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred.",
+    "universe": "Adults aged 18 years and older with BMI ≥30.0 kg/m², calculated from self-reported height and weight.",
     "classification": "native",
-    "method": "Methodology provided by CDC PLACES. CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred.",
+    "method": "Methodology provided by CDC PLACES. County prevalence is modeled from BRFSS and Census/ACS inputs using multilevel regression and poststratification.",
     "limitations": [
-      "For 2023-BRFSS measures, county estimates for Kentucky and Pennsylvania are unavailable.",
-      "The release uses ACS 2019-2023 geography/covariate data and Census 2023 county population estimates; the PLACES period is annual/model-based, not an ACS five-year period.",
-      "County estimates only; state and US values are not inferred. Kentucky and Pennsylvania county estimates are unavailable for the 2023 BRFSS measures. CDC PLACES estimates are modeled, not direct county surveys."
+      "Modeled county estimates, not direct county survey results. Estimates for Kentucky and Pennsylvania are unavailable for these 2023 BRFSS measures.",
+      "CDC excludes self-reported heights below 3 ft or at least 8 ft, weights below 50 lb or at least 650 lb, and BMI below 12 or at least 100 kg/m²."
+    ],
+    "additionalSources": [
+      {
+        "label": "CDC PLACES measure definition",
+        "url": "https://www.cdc.gov/places/measure-definitions/health-outcomes.html"
+      },
+      {
+        "label": "CDC PLACES methodology",
+        "url": "https://www.cdc.gov/places/methodology/index.html"
+      },
+      {
+        "label": "CDC county dataset API (source estimate type metadata)",
+        "url": "https://data.cdc.gov/resource/swc5-untb.json"
+      }
     ]
   },
   {
     "id": "diabetes-rate",
-    "name": "Diabetes rate",
+    "name": "Diagnosed diabetes among adults",
     "source": "CDC PLACES",
-    "url": "https://www.cdc.gov/places/tools/data-portal.html",
-    "formula": "05.15",
+    "url": "https://data.cdc.gov/500-Cities-Places/PLACES-Local-Data-for-Better-Health-County-Data-20/swc5-untb",
+    "formula": "Published 2025 PLACES estimate where measureid=DIABETES and data_value_type=Age-adjusted prevalence.",
     "unit": "%",
     "period": "2023 BRFSS estimates, PLACES December 2025 release",
     "geography": [
       "county"
     ],
-    "universe": "CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred.",
+    "universe": "Adults aged 18 years and older who report that a health professional told them they have diabetes; gestational diabetes alone is excluded.",
     "classification": "native",
-    "method": "Methodology provided by CDC PLACES. CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred.",
+    "method": "Methodology provided by CDC PLACES. County prevalence is modeled from BRFSS and Census/ACS inputs using multilevel regression and poststratification.",
     "limitations": [
-      "For 2023-BRFSS measures, county estimates for Kentucky and Pennsylvania are unavailable.",
-      "The release uses ACS 2019-2023 geography/covariate data and Census 2023 county population estimates; the PLACES period is annual/model-based, not an ACS five-year period.",
-      "County estimates only; state and US values are not inferred. Kentucky and Pennsylvania county estimates are unavailable for the 2023 BRFSS measures. CDC PLACES estimates are modeled, not direct county surveys."
+      "Modeled county estimates, not direct county survey results. Estimates for Kentucky and Pennsylvania are unavailable for these 2023 BRFSS measures.",
+      "This is diagnosed diabetes; undiagnosed diabetes is not counted."
+    ],
+    "additionalSources": [
+      {
+        "label": "CDC PLACES measure definition",
+        "url": "https://www.cdc.gov/places/measure-definitions/health-outcomes.html"
+      },
+      {
+        "label": "CDC PLACES methodology",
+        "url": "https://www.cdc.gov/places/methodology/index.html"
+      },
+      {
+        "label": "CDC county dataset API (source estimate type metadata)",
+        "url": "https://data.cdc.gov/resource/swc5-untb.json"
+      }
     ]
   },
   {
     "id": "physical-inactivity-rate",
-    "name": "Physical inactivity rate",
+    "name": "No leisure-time physical activity among adults",
     "source": "CDC PLACES",
-    "url": "https://www.cdc.gov/places/tools/data-portal.html",
-    "formula": "05.16",
+    "url": "https://data.cdc.gov/500-Cities-Places/PLACES-Local-Data-for-Better-Health-County-Data-20/swc5-untb",
+    "formula": "Published 2025 PLACES estimate where measureid=LPA and data_value_type=Age-adjusted prevalence.",
     "unit": "%",
     "period": "2023 BRFSS estimates, PLACES December 2025 release",
     "geography": [
       "county"
     ],
-    "universe": "CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred.",
+    "universe": "Adults aged 18 years and older who report no physical activity or exercise other than their regular job during the past month. Occupational activity is excluded.",
     "classification": "native",
-    "method": "Methodology provided by CDC PLACES. CDC PLACES county estimate for 2023. County observations only; state and national values are not inferred.",
+    "method": "Methodology provided by CDC PLACES. County prevalence is modeled from BRFSS and Census/ACS inputs using multilevel regression and poststratification.",
     "limitations": [
-      "For 2023-BRFSS measures, county estimates for Kentucky and Pennsylvania are unavailable.",
-      "The release uses ACS 2019-2023 geography/covariate data and Census 2023 county population estimates; the PLACES period is annual/model-based, not an ACS five-year period.",
-      "County estimates only; state and US values are not inferred. Kentucky and Pennsylvania county estimates are unavailable for the 2023 BRFSS measures. CDC PLACES estimates are modeled, not direct county surveys."
+      "Modeled county estimates, not direct county survey results. Estimates for Kentucky and Pennsylvania are unavailable for these 2023 BRFSS measures."
+    ],
+    "additionalSources": [
+      {
+        "label": "CDC PLACES measure definition",
+        "url": "https://www.cdc.gov/places/measure-definitions/health-risk-behaviors.html"
+      },
+      {
+        "label": "CDC PLACES methodology",
+        "url": "https://www.cdc.gov/places/methodology/index.html"
+      },
+      {
+        "label": "CDC county dataset API (source estimate type metadata)",
+        "url": "https://data.cdc.gov/resource/swc5-untb.json"
+      }
     ]
   },
   {
@@ -781,7 +819,8 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2023 incident cancer cases divided by matching-year 2023 Census PEP total population, multiplied by 100,000. This is a custom crude rate, not age-adjusted. A verified native U.S. case count supports the national value; no county rate is inferred.",
     "limitations": [
-      "State rates use state case counts; the U.S. rate uses the native U.S. case count. Suppressed or absent counts remain missing; state rates are not summed. This crude rate is not age-adjusted."
+      "State rates use state case counts; the U.S. rate uses the native U.S. case count. Suppressed or absent counts remain missing; state rates are not summed. This crude rate is not age-adjusted.",
+      "The rate is unavailable in the current local reader candidate because no admitted refresh is present."
     ],
     "additionalSources": [
       {
@@ -791,14 +830,18 @@ export const methodologyRecords: Method[] = [
       {
         "label": "Census PEP Vintage 2025 county totals file",
         "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
+      },
+      {
+        "label": "Census PEP Vintage 2025 national file; 2023 SEX=0, AGE=999 total-population row",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/national/asrh/nc-est2025-agesex-res.csv"
       }
     ]
   },
   {
     "id": "new-hiv-diagnoses",
     "name": "New HIV diagnoses per 100,000 residents",
-    "source": "CDC AtlasPlus/NHSS; Census PEP Vintage 2025 denominator",
-    "url": "https://gis.cdc.gov/api/AtlasPlus/qtOutputData",
+    "source": "CDC HIV surveillance / NHSS",
+    "url": "https://www.cdc.gov/hiv-data/nhss/hiv-diagnoses-deaths-prevalence.html",
     "formula": "2024 provisional diagnoses, age 13+ ÷ 2024 annual PEP age 13+ population × 100,000",
     "unit": "per 100,000",
     "period": "2024 provisional diagnoses (reported through December 2025); age 13+",
@@ -809,7 +852,8 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2024 provisional diagnoses among people aged 13+ divided by matching-year 2024 Census PEP population aged 13+, multiplied by 100,000. This is a custom crude rate, not age-adjusted. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "limitations": [
-      "2024 provisional age-13+ diagnoses are reported through December 2025. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted."
+      "2024 provisional age-13+ diagnoses are reported through December 2025. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted.",
+      "The rate is unavailable in the current local reader candidate because no admitted refresh is present."
     ],
     "additionalSources": [
       {
@@ -823,6 +867,10 @@ export const methodologyRecords: Method[] = [
       {
         "label": "Census PEP 2024 national age/sex estimates",
         "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/national/asrh/nc-est2025-agesex-res.csv"
+      },
+      {
+        "label": "CDC AtlasPlus publisher API endpoint (producer provenance)",
+        "url": "https://gis.cdc.gov/api/AtlasPlus/qtOutputData"
       }
     ]
   },
@@ -841,7 +889,8 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2024 resident deaths at ages 0–17 divided by matching-year 2024 Census PEP population aged 0–17, multiplied by 100,000. Suppressed counts remain missing. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "limitations": [
-      "Suppressed mortality counts remain missing. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted."
+      "Suppressed mortality counts remain missing. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted.",
+      "The rate is unavailable in the current local reader candidate because no admitted refresh is present."
     ],
     "additionalSources": [
       {
@@ -955,7 +1004,7 @@ export const methodologyRecords: Method[] = [
         "url": "https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/IG0UN2"
       },
       {
-        "label": "Census 2024 congressional district boundary ZIP (source geometry)",
+        "label": "Census 2024 Cartographic Boundary shapefile ZIP, 1:500,000, CD119",
         "url": "https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_cd119_500k.zip"
       }
     ]
@@ -984,6 +1033,10 @@ export const methodologyRecords: Method[] = [
       {
         "label": "Census PEP Vintage 2025 county totals file",
         "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
+      },
+      {
+        "label": "Census PEP Vintage 2025 national file; 2023 SEX=0, AGE=999 total-population row",
+        "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/national/asrh/nc-est2025-agesex-res.csv"
       }
     ]
   },
@@ -1010,4 +1063,4 @@ export const methodologyRecords: Method[] = [
 
 export const methodologyGroups = [["Demographics, housing, income, education and work", ["population", "age", "sex", "race-ethnicity", "race-ethnicity--white-non-hispanic", "race-ethnicity--black", "race-ethnicity--asian", "race-ethnicity--aian", "foreign-born-population", "citizenship", "median-household-income", "per-capita-income", "median-rent", "median-home-value", "mortgage-selected-monthly-owner-costs", "rent-as-of-income-rent-burden", "owner-renter-ratio", "poverty", "households-earning-200k", "bachelors-degree", "masters-degree", "doctorate", "high-school-attainment", "no-diploma", "work-from-home-share", "adjusted-gross-income-agi", "adjusted-gross-income-agi--per-resident"]], ["Economy", ["cost-of-living-regional-price-parities", "electricity-price"]], ["Employment", ["unemployment"]], ["Public safety", ["murders", "violent-crime", "robbery", "aggravated-assault", "burglary", "motor-vehicle-theft", "rape"]], ["Health", ["obesity-rate", "diabetes-rate", "physical-inactivity-rate", "all-cancer-new-cases", "new-hiv-diagnoses", "deaths-under-18"]], ["Elections", ["elections-president", "elections-senate", "elections-house"]]] as const;
 function Record({item}:{item:Method}) { return <article className="methodology-record" id={'method-'+item.id}><h3>{item.name}</h3><dl><dt>Source</dt><dd><a href={item.url} target="_blank" rel="noreferrer">{item.source} ↗</a>{item.additionalSources?.map(source=><span key={source.url}> · <a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></span>)}</dd><dt>Method</dt><dd>{item.method}</dd><dt>Formula</dt><dd><code>{item.formula}</code></dd><dt>Unit</dt><dd>{item.unit}</dd><dt>Universe</dt><dd>{item.universe}</dd><dt>Period</dt><dd>{item.period}</dd><dt>Geography</dt><dd>{item.geography.join(', ')}</dd><dt>Limitations</dt><dd>{item.limitations.join(' ')}</dd></dl></article>; }
-export function Methodology() { const byId=new Map(methodologyRecords.map(item=>[item.id,item])); return <section className="about-story-row methodology" aria-labelledby="methodology-title"><h2 id="methodology-title">Data &amp; methodology</h2><div className="methodology-content"><p className="methodology-intro">Each indicator lists its source, calculation, unit, population or record universe, period, geography, and known gaps. A missing value means no usable observation was published; it is never changed to zero or filled by adding state values. ACS source estimates retain published margins of error; uncertainty for derived rates is not calculated. Suppressed or unavailable values remain missing.</p><p className="methodology-intro">“Methodology provided by” identifies a measure and formula published by its source. “Calculated by USA Maps” identifies a rate or share derived here from source fields.</p>{methodologyGroups.map(([title,ids])=><details className="methodology-group" key={title}><summary>{title}<span>{ids.length} indicators</span></summary><div className="methodology-list">{ids.map(id=>{const item=byId.get(id);return item?<Record key={id} item={item}/>:null})}</div></details>)}<details className="methodology-group methodology-retained"><summary>Retained but hidden data<span>1 indicator</span></summary><div className="methodology-list"><Record item={byId.get('fitness-recreation-centers-per-capita')!}/></div></details><p className="methodology-note"><strong>Unemployment:</strong> monthly 2025 observations and the separately published annual M13 value are distinct views; October 2025 is missing. Election cycle and geography limits appear with each election record. House geography is a derived GeoJSON converted from the linked Census TIGER/Line ZIP; Census publishes the source shapefile ZIP, not this GeoJSON.</p></div></section>; }
+export function Methodology() { const byId=new Map(methodologyRecords.map(item=>[item.id,item])); return <section className="about-story-row methodology" aria-labelledby="methodology-title"><h2 id="methodology-title">Data &amp; methodology</h2><div className="methodology-content"><p className="methodology-intro">Each indicator lists its source, calculation, unit, population or record universe, period, geography, and known gaps. A missing value means no usable value is available in the admitted reader for that indicator, place, and period; it is never changed to zero or filled by adding state values. Published AIAN numerator and denominator margins of error are retained; no margin of error is calculated for the derived share. Suppressed or unavailable values remain missing.</p><p className="methodology-intro">“Methodology provided by” identifies a measure and formula published by its source. “Calculated by USA Maps” identifies a rate or share derived here from source fields.</p>{methodologyGroups.map(([title,ids])=><details className="methodology-group" key={title}><summary>{title}<span>{ids.length} indicators</span></summary><div className="methodology-list">{ids.map(id=>{const item=byId.get(id);return item?<Record key={id} item={item}/>:null})}</div></details>)}<details className="methodology-group methodology-retained"><summary>Retained but hidden data<span>1 indicator</span></summary><div className="methodology-list"><Record item={byId.get('fitness-recreation-centers-per-capita')!}/></div></details><p className="methodology-note"><strong>Unemployment:</strong> monthly 2025 observations and the separately published annual M13 value are distinct views; October 2025 is missing. Election cycle and geography limits appear with each election record. House geography is a derived GeoJSON converted from the linked Census Cartographic Boundary shapefile ZIP; Census publishes the ZIP, not this derived GeoJSON.</p></div></section>; }
