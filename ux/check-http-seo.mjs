@@ -6,7 +6,7 @@ import { readUiExpectationProfile } from './ui-expectation-profile.mjs';
 const base = process.env.ATLAS_TEST_URL;
 assert.ok(base, 'ATLAS_TEST_URL must identify the actual built runtime');
 const uiProfile = await readUiExpectationProfile(base, process.env.ATLAS_CONFORMANCE_IMAGE_DIGEST);
-const baseline = uiProfile.baseline;
+const legacyJournal = uiProfile.legacyJournal;
 const output = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-atlas-http-seo-${Date.now()}`;
 await mkdir(output, { recursive: true });
 const checks = [];
@@ -45,7 +45,7 @@ for (const [path, noindex] of [
   ['/about', false],
   ['/support', false],
   ['/stats', true],
-  ['/blog', baseline],
+  ['/blog', legacyJournal],
   ['/blog/mississippi', true],
   ['/united-states/unemployment?embed=1', true],
 ]) {
@@ -60,7 +60,7 @@ for (const [path, noindex] of [
   assert.match(body, /<script\b[^>]*type="application\/ld\+json"[^>]*>/);
   checks.push({ kind: 'server-metadata', path, noindex });
 }
-if (!baseline) {
+if (!legacyJournal) {
   const published = Object.entries(articles).filter(([, article]) => article.published === true);
   assert.equal(published.length, 13, 'Exactly 13 reviewed article routes are published');
   for (const [slug, article] of published) {
@@ -106,10 +106,10 @@ assert.match(await robots.text(), /Sitemap: https:\/\/usa-xray\.online\/sitemap.
 const sitemap = await get('/sitemap.xml');
 assert.equal(sitemap.status, 200);
 const xml = await sitemap.text();
-const sitemapRoutes = baseline ? 57 : 71;
+const sitemapRoutes = legacyJournal ? 57 : 71;
 assert.equal((xml.match(/<loc>/g) || []).length, sitemapRoutes);
 assert.ok(!xml.includes('/stats<'));
-if (baseline) {
+if (legacyJournal) {
   assert.ok(!xml.includes('/blog<') && !xml.includes('/blog/'));
 } else {
   assert.ok(xml.includes('<loc>https://usa-xray.online/blog</loc>'));
