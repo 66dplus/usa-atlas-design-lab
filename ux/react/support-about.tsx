@@ -338,7 +338,12 @@ export function CryptoDonationDialog() {
             aria-label={`${wallet.network} (${wallet.asset})`}
             onClick={() => choose(wallet.id)}
           >
-            <span className={`crypto-network-logo crypto-network-logo--${wallet.id}`} aria-hidden="true" />
+            <img
+              className={`crypto-network-logo crypto-network-logo--${wallet.id}`}
+              src={`/ux/assets/support/networks/${wallet.id === 'bnb-chain' ? 'bnbchain' : wallet.id}.svg`}
+              alt=""
+              aria-hidden="true"
+            />
             <span>{wallet.network}</span>
             <small>{wallet.asset}</small>
           </button>)}

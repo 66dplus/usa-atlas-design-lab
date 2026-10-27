@@ -41,7 +41,7 @@ assert.ok(crypto.includes('Choose a network to see its receiving address.'));
 assert.equal((crypto.match(/class="crypto-network-button crypto-network-button--/g)||[]).length,6);
 assert.ok(crypto.includes('aria-label="TRON (TRX / USDT)"'));
 assert.ok(crypto.includes('aria-label="Ethereum (ETH)"'));
-assert.ok(crypto.includes('class="crypto-network-logo crypto-network-logo--tron" aria-hidden="true"'));
+assert.ok(crypto.includes('class="crypto-network-logo crypto-network-logo--tron" src="/ux/assets/support/networks/tron.svg" alt="" aria-hidden="true"'), 'network logo is a directly rendered image');
 assert.ok(!crypto.includes('<select')&&!crypto.includes('class="crypto-address"')&&!crypto.includes('Copy address'));
 assert.match(cryptoSource,/lastSelectedId\.current = id/);
 assert.match(cryptoSource,/if \(selected\) backButton\.current\?\.focus\(\{ preventScroll: true \}\)/);
@@ -50,8 +50,10 @@ assert.match(cryptoSource,/if \(selectedIdRef\.current === id && copyAttempt\.cu
 const walletData=JSON.parse(await readFile(new URL('./project-content.json',import.meta.url),'utf8')).support.donationMethods.wallets;
 for(const wallet of walletData) {
   assert.ok(crypto.includes(`aria-label="${wallet.network} (${wallet.asset})"`),`${wallet.network} is labelled`);
-  assert.ok(crypto.includes(`crypto-network-logo--${wallet.id}`),`${wallet.network} has its recognizable logo`);
+  const logoName=wallet.id==='bnb-chain'?'bnbchain':wallet.id;
+  assert.ok(crypto.includes(`class="crypto-network-logo crypto-network-logo--${wallet.id}" src="/ux/assets/support/networks/${logoName}.svg"`),`${wallet.network} loads its recognizable logo`);
 }
+assert.match(await readFile(new URL('./support-about.css',import.meta.url),'utf8'),/body\[data-theme="dark"\] \.crypto-network-logo\s*\{\s*filter:invert\(1\);\s*\}/,'network logos remain visible in the dark theme');
 assert.match(support, /<div class="support-portrait" role="img" aria-label="Portrait of Dmitrii Rybkin">[^<]*<img src="assets\/creator-portrait\.jpg" alt=""\/>/);
 assert.doesNotMatch(about+support,/Portrait to be added/i);
 assert.ok(support.includes('• An AI assistant for exploring the map'));

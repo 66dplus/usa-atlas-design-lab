@@ -166,13 +166,8 @@ body[data-theme="dark"][data-page="info"],body[data-theme="dark"][data-page="sup
 .crypto-network-button { display:grid; min-width:0; min-height:104px; align-content:center; justify-items:center; gap:5px; padding:12px 8px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-app); color:var(--text-primary); font:inherit; font-size:14px; font-weight:600; line-height:19px; cursor:pointer; }
 .crypto-network-button:hover { border-color:var(--text-secondary); }
 .crypto-network-button:focus-visible,.crypto-back-button:focus-visible { outline:3px solid color-mix(in srgb,var(--action-primary) 38%,transparent); outline-offset:2px; }
-.crypto-network-logo { display:block; width:30px; height:30px; background:currentColor; mask:center/contain no-repeat; -webkit-mask:center/contain no-repeat; }
-.crypto-network-logo--tron { mask-image:url("assets/support/networks/tron.svg"); -webkit-mask-image:url("assets/support/networks/tron.svg"); }
-.crypto-network-logo--ethereum { mask-image:url("assets/support/networks/ethereum.svg"); -webkit-mask-image:url("assets/support/networks/ethereum.svg"); }
-.crypto-network-logo--bitcoin { mask-image:url("assets/support/networks/bitcoin.svg"); -webkit-mask-image:url("assets/support/networks/bitcoin.svg"); }
-.crypto-network-logo--solana { mask-image:url("assets/support/networks/solana.svg"); -webkit-mask-image:url("assets/support/networks/solana.svg"); }
-.crypto-network-logo--bnb-chain { mask-image:url("assets/support/networks/bnbchain.svg"); -webkit-mask-image:url("assets/support/networks/bnbchain.svg"); }
-.crypto-network-logo--polygon { mask-image:url("assets/support/networks/polygon.svg"); -webkit-mask-image:url("assets/support/networks/polygon.svg"); }
+.crypto-network-logo { display:block; width:30px; height:30px; object-fit:contain; }
+body[data-theme="dark"] .crypto-network-logo { filter:invert(1); }
 .crypto-network-button small { color:var(--text-secondary); font-size:12px; font-weight:500; line-height:16px; }
 .crypto-destination { display:flex; min-width:0; flex-direction:column; align-items:center; gap:12px; }
 .crypto-network-name { align-self:flex-start; font-size:15px; }
