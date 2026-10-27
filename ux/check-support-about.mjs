@@ -69,9 +69,10 @@ assert.ok(plan.includes('role="dialog" aria-modal="true"'));
 assert.ok(plan.includes('A $2,500 step forward.'));
 assert.ok(plan.includes('NEXT MILESTONE · $2,500'));
 assert.ok(plan.includes("What's planned"));
-assert.ok(plan.includes('10 new indicators'));
-assert.ok(plan.includes('An AI assistant for the map'));
-assert.ok(plan.includes('Clearer sources &amp; methodology'));
+assert.ok(plan.includes('iOS and Android apps'));
+assert.ok(plan.includes('An AI assistant for exploring the map'));
+assert.ok(plan.includes('Composite categories for places'));
+assert.ok(plan.includes('More detailed crime levels'));
 assert.ok(!plan.includes('type="checkbox"'));
 assert.ok(!plan.includes('<input'));
 

@@ -31,22 +31,28 @@
       "updatedAt": null,
       "improvements": [
         {
-          "id": "new-indicators",
-          "title": "10 new indicators",
+          "id": "mobile-apps",
+          "title": "iOS and Android apps",
           "status": "planned",
-          "description": "Add ten new indicators with source links, observation periods and coverage notes. The final selection will follow data availability and quality checks."
+          "description": "Build iOS and Android apps for exploring USA X-Ray on a phone."
         },
         {
           "id": "map-assistant",
-          "title": "An AI assistant for the map",
+          "title": "An AI assistant for exploring the map",
           "status": "planned",
-          "description": "Ask questions about a place or indicator, get help understanding measures, and explore comparisons on the map."
+          "description": "Ask questions about places and indicators, and get help exploring patterns and comparisons on the map."
         },
         {
-          "id": "clearer-sources",
-          "title": "Clearer sources & methodology",
+          "id": "composite-categories",
+          "title": "Composite categories for places",
           "status": "planned",
-          "description": "Make definitions, sources, updates and missing values easier to understand, with a clearer way to report data issues."
+          "description": "Combine relevant indicators to help compare places for relocation, studying, finding work, and identifying areas with higher crime levels."
+        },
+        {
+          "id": "crime-levels",
+          "title": "More detailed crime levels",
+          "status": "planned",
+          "description": "Present crime data in more detail so differences between places are easier to explore."
         }
       ]
     },
