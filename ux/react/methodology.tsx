@@ -819,8 +819,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2023 incident cancer cases divided by matching-year 2023 Census PEP total population, multiplied by 100,000. This is a custom crude rate, not age-adjusted. A verified native U.S. case count supports the national value; no county rate is inferred.",
     "limitations": [
-      "State rates use state case counts; the U.S. rate uses the native U.S. case count. Suppressed or absent counts remain missing; state rates are not summed. This crude rate is not age-adjusted.",
-      "The rate is unavailable in the current local reader candidate because no admitted refresh is present."
+      "State rates use state case counts; the U.S. rate uses the native U.S. case count. Suppressed or absent counts remain missing; state rates are not summed. This crude rate is not age-adjusted."
     ],
     "additionalSources": [
       {
@@ -852,8 +851,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2024 provisional diagnoses among people aged 13+ divided by matching-year 2024 Census PEP population aged 13+, multiplied by 100,000. This is a custom crude rate, not age-adjusted. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "limitations": [
-      "2024 provisional age-13+ diagnoses are reported through December 2025. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted.",
-      "The rate is unavailable in the current local reader candidate because no admitted refresh is present."
+      "2024 provisional age-13+ diagnoses are reported through December 2025. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted."
     ],
     "additionalSources": [
       {
@@ -889,8 +887,7 @@ export const methodologyRecords: Method[] = [
     "classification": "custom",
     "method": "Calculated by USA Maps. 2024 resident deaths at ages 0–17 divided by matching-year 2024 Census PEP population aged 0–17, multiplied by 100,000. Suppressed counts remain missing. Retained numerator inputs are state-only, so U.S. and county values remain missing.",
     "limitations": [
-      "Suppressed mortality counts remain missing. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted.",
-      "The rate is unavailable in the current local reader candidate because no admitted refresh is present."
+      "Suppressed mortality counts remain missing. Numerator observations are state-only; U.S. and county rates remain missing. Crude rate, not age-adjusted."
     ],
     "additionalSources": [
       {

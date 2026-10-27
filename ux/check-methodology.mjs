@@ -3,7 +3,6 @@ import { readFile } from 'node:fs/promises';
 
 const registry = JSON.parse(await readFile(new URL('./selection-registry.json', import.meta.url), 'utf8'));
 const source = await readFile(new URL('./react/methodology.tsx', import.meta.url), 'utf8');
-const candidates = await readFile(new URL('./react/consumer-candidates.ts', import.meta.url), 'utf8');
 const startMarker = 'export const methodologyRecords: Method[] = ';
 const start = source.indexOf(startMarker) + startMarker.length;
 const end = source.indexOf(';\n\nexport const methodologyGroups', start);
@@ -91,13 +90,17 @@ for (const id of ['all-cancer-new-cases','adjusted-gross-income-agi--per-residen
 assert.match(byId.get('obesity-rate').limitations.join(' '), /heights below 3 ft.*8 ft.*weights below 50 lb.*650 lb.*BMI below 12.*100 kg/);
 assert.equal(byId.get('new-hiv-diagnoses').url, 'https://www.cdc.gov/hiv-data/nhss/hiv-diagnoses-deaths-prevalence.html', 'HIV source opens a human-readable CDC release');
 assert.ok(byId.get('new-hiv-diagnoses').additionalSources.some(({ url }) => url === 'https://gis.cdc.gov/api/AtlasPlus/qtOutputData'), 'HIV keeps exact producer API provenance');
-const candidateBlock = candidates.slice(candidates.indexOf('const refreshedPlaceholders'), candidates.indexOf('];', candidates.indexOf('const refreshedPlaceholders')));
 for (const id of ['all-cancer-new-cases','new-hiv-diagnoses','deaths-under-18']) {
-  const line = candidateBlock.split('\n').find((entry) => entry.includes(`id:'${id}'`));
-  assert.ok(line, `${id}: current candidate entry exists`);
-  assert.match(line, /hasObservations:false/);
-  assert.match(line, /availability:'not_admitted'/);
-  assert.match(byId.get(id).limitations.join(' '), /unavailable in the current local reader candidate because no admitted refresh is present/);
+  const publicRecord = JSON.stringify(byId.get(id));
+  assert.doesNotMatch(publicRecord, /local (candidate )?reader|not admitted|no admitted refresh|entire rate unavailable/i, `${id}: do not claim the admitted metric is wholly unavailable`);
+}
+assert.ok(byId.get('all-cancer-new-cases').geography.includes('US'), 'cancer retains the native U.S. rate geography');
+assert.match(byId.get('all-cancer-new-cases').universe, /native U\.S\. case count/);
+for (const id of ['new-hiv-diagnoses','deaths-under-18']) {
+  const record = byId.get(id);
+  assert.match(record.geography.join(' '), /state.*U\.S\. value unavailable/);
+  assert.match(record.universe, /state-only, so U\.S\. and county values remain missing/);
+  assert.match(record.method, /state-only, so U\.S\. and county values remain missing/);
 }
 const methodologyIntro = [...source.matchAll(/<p className="methodology-intro">([^<]+)<\/p>/g)].map((match) => match[1]).join(' ');
 assert.match(methodologyIntro, /AIAN numerator and denominator margins of error are retained/);
