@@ -14,8 +14,19 @@ export const PINNED_ARCHIVED_A = Object.freeze({
   imageDigest: 'sha256:a19e40876e8cdc70ad94caad5ba25ca582a56da5388203fc3d0d12259d576df9',
 });
 
+export const PINNED_MILESTONE_ROLLBACK = Object.freeze({
+  buildSha256: '228d32c9fb865a6f50c8cff012e65fe7d4a9c10f321002a2b08a17f3273bf938',
+  sourceCommit: 'be407892a299e9801e11ba4e112e088dfba7aaf9',
+  releaseId: '20261027-compare-scroll-be40789-r1',
+  imageDigest: 'sha256:edb316f953ec2d4e941ca8ce85c02e0fe91ac00ecf8bbc40135a52a2fb96ca0c',
+});
+
 function matchesIdentity(identity, pinned) {
   return Object.keys(pinned).every((key) => identity?.[key] === pinned[key]);
+}
+
+export function isPinnedMilestoneRollback(identity) {
+  return matchesIdentity(identity, PINNED_MILESTONE_ROLLBACK);
 }
 
 export function isPinnedRollbackBaseline(identity) {

@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
-import { readUiExpectationProfile } from './ui-expectation-profile.mjs';
+import {
+  isPinnedMilestoneRollback,
+  readUiExpectationProfile,
+} from './ui-expectation-profile.mjs';
 const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/$/, ''),
   before = process.env.ATLAS_BEFORE_URL,
   uiProfile = await readUiExpectationProfile(base, process.env.ATLAS_CONFORMANCE_IMAGE_DIGEST),
@@ -352,12 +355,19 @@ try {
         await page.getByRole('dialog').waitFor();
         await shot(page, 'after-' + key + '-milestone');
         const milestoneText = await page.getByRole('dialog').innerText();
-        for (const title of [
-          'iOS and Android apps',
-          'An AI assistant for exploring the map',
-          'Composite categories for places',
-          'More detailed crime levels',
-        ]) {
+        const milestoneTitles = baseline || isPinnedMilestoneRollback(uiProfile.identity)
+          ? [
+              '10 new indicators',
+              'An AI assistant for the map',
+              'Clearer sources & methodology',
+            ]
+          : [
+              'iOS and Android apps',
+              'An AI assistant for exploring the map',
+              'Composite categories for places',
+              'More detailed crime levels',
+            ];
+        for (const title of milestoneTitles) {
           assert.ok(milestoneText.includes(title), `Milestone dialog includes ${title}`);
         }
         assert.equal(await page.locator('#atlas-root').evaluate((e) => e.inert), true);
