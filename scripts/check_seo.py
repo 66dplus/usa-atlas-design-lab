@@ -241,6 +241,7 @@ for path, expected_title in [
     ('/compare/indicators/unemployment-vs-adjusted-gross-income-agi', 'Unemployment rate vs Income before deductions | USA X-Ray'),
     ('/support', 'Support USA X-Ray | USA X-Ray'),
     ('/about', 'About USA X-Ray | USA X-Ray'),
+    ('/blog', 'USA X-Ray journal | USA X-Ray'),
 ]:
     status, body = html_for(path)
     check(status == 200, f'{path} should return a successful route response')
@@ -255,7 +256,7 @@ for path, expected_title in [
     jsonld = re.search(rb'<script id="atlas-jsonld" type="application/ld\+json">(.*?)</script>', body, re.S)
     check(jsonld is not None and json.loads(jsonld.group(1)), f'{path} should contain valid JSON-LD')
 
-for path in ['/stats', '/blog', '/blog/mississippi', '/blog/electricity']:
+for path in ['/stats', '/blog/mississippi', '/blog/electricity']:
     status, body = html_for(path)
     check(status == 200, f'{path} should resolve even while excluded from search')
     check(meta(body, 'name', 'robots') == 'noindex,follow', f'{path} should be excluded until analytics/content is ready')
@@ -296,8 +297,17 @@ for url in urls:
     check(html_for(parsed_path)[0] == 200, f'{url} must resolve successfully')
 check('/stats' not in [re.sub(r'^https://usa-xray\.online', '', url) for url in urls],
       'the disconnected analytics page must not be in the sitemap')
-check('/blog' not in [re.sub(r'^https://usa-xray\.online', '', url) for url in urls],
-      'the unpublished journal must not be in the sitemap')
+expected_blog_urls = {'https://usa-xray.online/blog'} | {
+    f'https://usa-xray.online/blog/{slug}'
+    for slug, article in ARTICLES.items()
+    if article.get('published') is True
+}
+actual_blog_urls = {
+    url for url in urls
+    if re.fullmatch(r'https://usa-xray\.online/blog(?:/[^/]+)?', url)
+}
+check(actual_blog_urls == expected_blog_urls,
+      'the journal sitemap must contain /blog and exactly the published article routes')
 check(any(url.endswith('/support') for url in urls) and any(url.endswith('/about') for url in urls),
       'public Support and About pages should remain in the sitemap')
 robots = (ROOT / 'robots.txt').read_text()

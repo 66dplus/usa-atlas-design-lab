@@ -1,7 +1,9 @@
 import { Segmented } from './components';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import projectContent from '../project-content.json';
 import { normalizeSupportData } from '../support-data.js';
+import { Methodology } from './methodology';
 const creator = projectContent.project.creator;
 const linkedin =
   creator.profileLinks.find((link) => link.id === 'linkedin')?.url ||
@@ -9,56 +11,7 @@ const linkedin =
 const supportData = normalizeSupportData(projectContent.support);
 const goal = supportData.goal.goal;
 const milestoneItems = goal?.improvements || [];
-const externalLinks = supportData.donationMethods.externalLinks;
 const wallets = supportData.donationMethods.wallets;
-const findLink = (...ids: string[]) =>
-  externalLinks.find(
-    (item) =>
-      ids.includes(item.id.toLowerCase()) ||
-      ids.some((id) => item.label.toLowerCase().includes(id)),
-  );
-const paymentLink = (
-  label: string,
-  destination:
-    | {
-        url: string;
-      }
-    | null
-    | undefined,
-) =>
-  destination ? (
-    <a className="support-method" href={destination.url} target="_blank" rel="noopener noreferrer">
-      <span>{label}</span>
-      <span className="support-method-action">{'↗'}</span>
-    </a>
-  ) : (
-    <div className="support-method support-method--unavailable">
-      <span>{label}</span>
-      <span className="support-method-status">{'Not configured'}</span>
-    </div>
-  );
-const cryptocurrency = wallets.length ? (
-  <details className="support-wallets">
-    <summary className="support-method">
-      <span>{'Cryptocurrency'}</span>
-      <span className="support-method-action">{'View details'}</span>
-    </summary>
-    <div className="support-wallet-list">
-      {wallets.map((wallet, jsxIndex) => (
-        <div key={jsxIndex}>
-          <strong>
-            {wallet.asset}
-            {' · '}
-            {wallet.network}
-          </strong>
-          <code>{wallet.address}</code>
-        </div>
-      ))}
-    </div>
-  </details>
-) : (
-  paymentLink('Cryptocurrency', null)
-);
 const target = goal?.targetUsd;
 const targetText = Number.isFinite(target)
   ? new Intl.NumberFormat('en-US', {
@@ -171,6 +124,8 @@ export function AboutPage() {
           </button>
         </div>
       </section>
+      {'\n    '}
+      <Methodology />
       {'\n    '}
       <section className="about-story-row about-connect">
         <h2>{'Let’s connect'}</h2>
@@ -325,6 +280,84 @@ export function DataMethodology({
     </section>
   );
 }
+export function CryptoDonationDialog() {
+  const [selectedId, setSelectedId] = useState(''),
+    [copyStatus, setCopyStatus] = useState(''),
+    selectedIdRef = useRef(selectedId),
+    copyAttempt = useRef(0),
+    lastSelectedId = useRef(wallets[0]?.id || ''),
+    networkButtons = useRef<Record<string, HTMLButtonElement | null>>({}),
+    backButton = useRef<HTMLButtonElement>(null),
+    selected = wallets.find((wallet) => wallet.id === selectedId);
+  selectedIdRef.current = selectedId;
+  useEffect(() => () => { copyAttempt.current++; }, []);
+  useLayoutEffect(() => {
+    if (selected) backButton.current?.focus({ preventScroll: true });
+    else networkButtons.current[lastSelectedId.current]?.focus({ preventScroll: true });
+  }, [selectedId, selected]);
+  const choose = (id: string) => {
+    lastSelectedId.current = id;
+    selectedIdRef.current = id;
+    copyAttempt.current++;
+    setSelectedId(id);
+    setCopyStatus('');
+  };
+  const backToNetworks = () => {
+    copyAttempt.current++;
+    setSelectedId('');
+    selectedIdRef.current = '';
+    setCopyStatus('');
+  };
+  async function copyAddress() {
+    if (!selected) return;
+    const id = selected.id, address = selected.address, attempt = ++copyAttempt.current;
+    try {
+      await navigator.clipboard.writeText(address);
+      if (selectedIdRef.current === id && copyAttempt.current === attempt)
+        setCopyStatus('Address copied.');
+    } catch {
+      if (selectedIdRef.current === id && copyAttempt.current === attempt)
+        setCopyStatus('Copy failed. Select and copy the address above.');
+    }
+  }
+  return (
+    <div className="app-dialog-panel app-dialog-panel--crypto" role="dialog" aria-modal="true" aria-labelledby="crypto-dialog-title" tabIndex={-1}>
+      <header className="app-dialog-heading">
+        <div><p className="page-eyebrow">SUPPORT USA X-RAY</p><h2 id="crypto-dialog-title">{selected ? selected.network : 'Choose a network'}</h2></div>
+        <button className="app-dialog-close" type="button" data-close-dialog="" aria-label="Close cryptocurrency details">×</button>
+      </header>
+      {!selected ? <>
+        <p className="crypto-dialog-instruction">Choose a network to see its receiving address.</p>
+        <div className="crypto-network-grid" role="group" aria-label="Cryptocurrency networks">
+          {wallets.map((wallet) => <button
+            key={wallet.id}
+            ref={(node) => { networkButtons.current[wallet.id] = node; }}
+            id={wallet.id === wallets[0]?.id ? 'crypto-network-first' : undefined}
+            className={`crypto-network-button crypto-network-button--${wallet.id}`}
+            type="button"
+            aria-label={`${wallet.network} (${wallet.asset})`}
+            onClick={() => choose(wallet.id)}
+          >
+            <span className={`crypto-network-logo crypto-network-logo--${wallet.id}`} aria-hidden="true" />
+            <span>{wallet.network}</span>
+            <small>{wallet.asset}</small>
+          </button>)}
+        </div>
+      </> : <>
+        <p className="crypto-dialog-instruction">Send only the selected coin or supported token on this network.</p>
+        <div className="crypto-destination">
+        <strong className="crypto-network-name">{selected.network} · {selected.asset}</strong>
+        <img className="crypto-qr" src={selected.qrUrl} alt={`QR code for the ${selected.network} receiving address`} />
+        <label className="crypto-address-label" htmlFor="crypto-address">Full receiving address</label>
+        <code id="crypto-address" className="crypto-address">{selected.address}</code>
+        <button className="secondary-button crypto-copy-button" type="button" onClick={() => void copyAddress()}>Copy address</button>
+        <p className="crypto-copy-status" role="status" aria-live="polite">{copyStatus}</p>
+        <button className="secondary-button crypto-back-button" type="button" ref={backButton} onClick={backToNetworks}>Back to networks</button>
+      </div></>}
+    </div>
+  );
+}
+
 export function SupportPage() {
   const summaryTitles: Record<string, string> = {
     'map-assistant': 'An AI assistant for exploring the map',
@@ -374,9 +407,6 @@ export function SupportPage() {
                     <br className="support-desktop-break" />
                     {' development and end-to-end product delivery'}
                   </p>
-                  <a href={linkedin} target="_blank" rel="noopener noreferrer">
-                    {'LinkedIn ↗'}
-                  </a>
                 </div>
               </div>
               {'\n            '}
@@ -430,11 +460,10 @@ export function SupportPage() {
                 <span className="support-method-action">{'↗'}</span>
               </a>
               {'\n            '}
-              {paymentLink('Patreon', findLink('patreon'))}
-              {'\n            '}
-              {cryptocurrency}
-              {'\n            '}
-              {paymentLink('Bank transfer', findLink('bank-transfer', 'banktransfer', 'bank'))}
+              <button className="support-method" type="button" data-open-crypto="">
+                <span>{'Cryptocurrency'}</span>
+                <span className="support-method-action" aria-hidden="true">{'→'}</span>
+              </button>
               {'\n          '}
             </div>
             {'\n        '}

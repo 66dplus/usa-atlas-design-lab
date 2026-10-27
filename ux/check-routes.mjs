@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {buildPlaceIndex,canonicalPath,countySlug,parsePath,resolveHouseQuery,resolvePopNavigation,resolveRoute,routeParams,slugify} from './routes.js';
 import {createPageMetadata,mapPageMetadata,screenPageMetadata} from './seo.js';
+import {articles} from './journal.js';
 
 const states=[
   {id:'06',name:'California'},{id:'17',name:'Illinois'},{id:'24',name:'Maryland'},
@@ -162,13 +163,25 @@ assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/united-states\/california
 assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/compare\/places\/unemployment\/california\/vs\/texas<\/loc>/);
 assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/compare\/indicators\/unemployment-vs-adjusted-gross-income-agi<\/loc>/);
 assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/compare\/places\/electricity-price-residential\/california\/vs\/texas<\/loc>/);
-assert.doesNotMatch(sitemap,/<loc>https:\/\/usa-xray\.online\/(?:stats|blog)<\/loc>/,'empty analytics and unpublished journal pages must not be discoverable in the sitemap');
+assert.doesNotMatch(sitemap,/<loc>https:\/\/usa-xray\.online\/stats<\/loc>/,'empty analytics must not be discoverable in the sitemap');
+assert.match(sitemap,/<loc>https:\/\/usa-xray\.online\/blog<\/loc>/,'the published Journal must be discoverable in the sitemap');
 assert.doesNotMatch(sitemap,/\/blog\/(?:mississippi|electricity)/,'editorial drafts must stay outside the sitemap');
 assert.match(fs.readFileSync(new URL('../robots.txt',import.meta.url),'utf8'),/Sitemap: https:\/\/usa-xray\.online\/sitemap\.xml/);
 
 const journal=fs.readFileSync(new URL('./react/journal.tsx',import.meta.url),'utf8');
 assert.doesNotMatch(journal,/href=["']\.\/\?/,'journal navigation should use readable paths rather than query URLs');
-assert.match(journal,/article-map-note/,'unavailable historical indicators should not link to a different live measure');
+const publishedArticles=Object.entries(articles).filter(([,article])=>article.published);
+assert.equal(publishedArticles.length,13,'all 13 reviewed Journal articles must remain published');
+for(const [slug,article] of publishedArticles){
+  assert.ok(article.cover&&article.coverSmall,`${slug} must include both published cover sizes`);
+  assert.ok(article.map?.metric&&article.map?.place,`${slug} must include its exact map selection`);
+  assert.match(sitemap,new RegExp(`<loc>https://usa-xray\\.online/blog/${slug}<\\/loc>`),`${slug} must have a sitemap route`);
+}
+const articleMap=fs.readFileSync(new URL('./react/article-map.tsx',import.meta.url),'utf8');
+assert.match(articleMap,/resources\.store\.load\(mapMetric, selection\)/,'article maps must load through the selected catalog metric data boundary');
+assert.match(articleMap,/ARTICLE_UNEMPLOYMENT_SELECTION[\s\S]*year: 2025/,'article unemployment maps must use the default 2025 annual observation');
+assert.match(articleMap,/endpoints are not observed minimum and maximum/,'fixed-domain legend endpoints must not claim to be observed extrema');
+assert.match(articleMap,/layer\?\.period/,'article maps must label the exact returned observation period');
 assert.match(fs.readFileSync(new URL('../scripts/seo_render.py',import.meta.url),'utf8'),/def render_route\(/,'the server must render route metadata before JavaScript');
 assert.match(fs.readFileSync(new URL('../scripts/preview_server.py',import.meta.url),'utf8'),/redirect_target\(/,'the read-only runtime must permanently normalize legacy URLs');
 

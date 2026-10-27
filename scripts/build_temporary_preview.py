@@ -17,10 +17,11 @@ except ImportError:
     from runtime_conformance import CAPABILITIES
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/studio.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg ux/assets/creator-portrait.jpg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
+PUBLIC = '''robots.txt sitemap.xml ux/index.html ux/advertise.html ux/ui-tokens.css ux/mobile-layout.css ux/studio.css ux/style.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css ux/view-settings.json ux/startup/unemployment-BLS-LAUS-2024-2024-M12.json ux/county-boundary-repair.json ux/cities.json ux/assets/fonts.css ux/assets/geist-400.ttf ux/assets/geist-500.ttf ux/assets/geist-600.ttf ux/assets/geist-700.ttf ux/assets/san-francisco-photo.jpg ux/assets/creator-portrait.jpg ux/assets/support/tron.png ux/assets/support/evm.png ux/assets/support/bitcoin.png ux/assets/support/solana.png ux/assets/support/networks/tron.svg ux/assets/support/networks/ethereum.svg ux/assets/support/networks/bitcoin.svg ux/assets/support/networks/solana.svg ux/assets/support/networks/bnbchain.svg ux/assets/support/networks/polygon.svg node_modules/d3/dist/d3.min.js node_modules/topojson-client/dist/topojson-client.min.js node_modules/us-atlas/counties-10m.json node_modules/world-atlas/countries-110m.json'''.split()
 PRIVATE = 'ux/journal.js scripts/atlas_data.py scripts/preview_server.py scripts/bug_reports.py scripts/seo_render.py ux/catalog.json ux/catalog-v2.json ux/catalog-proposals.json ux/acs-series.json ux/metric-definitions.json ux/selection-registry.json contracts/reader-contract.lock.json contracts/reader/v1/contract.json contracts/reader/v1/schema.sql contracts/reader/v1/fixtures/reader-fixture.sql contracts/reader/v1/fixtures/reader-query.sql'.split()
 STATES = '01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56'.split()
 ICONS = 'search back saved check compare house shuffle close plus minus chevron-down location forward share indicators explorer'.split()
+EDITORIAL_ARTICLES = '''imperial-county-unemployment pitkin-income-comparison los-alamos-doctorates-and-income nassau-bronx-household-income california-tax-return-income garfield-work-from-home oglala-lakota-international-income child-mortality-mississippi rent-price-vs-burden state-poverty-high-income population-largest-counties youngest-oldest-counties most-least-populous-states'''.split()
 SOURCE_NAMES = '''robots.txt sitemap.xml ux/index.html ux/app.js ux/studio.js ux/ui-tokens.css ux/mobile-layout.css ux/master.css ux/ui-overhaul.css ux/startup-guard.js ux/support-about.css scripts/preview_server.py scripts/bug_reports.py ux/style.css'''.split()
 
 
@@ -127,6 +128,10 @@ def build(destination, release, source_commit=None, previous_release=None,
     public = PUBLIC + compiled
     public += [f'ux/assets/articles/{name}.jpg' for name in
                ('ms-initial', 'ms-mobile', 'electricity-initial', 'electricity-mobile')]
+    editorial_dir = 'ux/assets/articles/editorial-20261026'
+    public += [f'{editorial_dir}/{slug}{size}.webp'
+               for slug in EDITORIAL_ARTICLES for size in ('', '-640')]
+    public += [f'{editorial_dir}/state-poverty-high-income-screen.csv']
     public += [f'ux/boundaries/{state}.json' for state in STATES]
     public += [f'ux/assets/brand-icons/{icon}.png' for icon in ICONS]
     selected_lock_path, selected_lock, selected_artifacts = selected_reader_artifacts(reader_lock_path)

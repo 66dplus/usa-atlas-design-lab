@@ -2,12 +2,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { FormEvent } from 'react';
 import type { Atlas } from './use-atlas';
-import { MilestonePlan } from './support-about';
+import { CryptoDonationDialog, MilestonePlan } from './support-about';
 import { emptyReport, reportPageUrl, reportResponse } from './report-state';
 import type { ReportDraft } from './report-state';
 export function useDialogs(atlas: Atlas) {
   type Dialog = {
-    kind: 'report' | 'milestone';
+    kind: 'report' | 'milestone' | 'crypto';
     token: string;
     trigger: HTMLElement | null;
   };
@@ -169,7 +169,7 @@ export function Dialog({ owner }: { owner: Dialogs }) {
     const panel = host.querySelector<HTMLElement>('[role=dialog]')!;
     (
       host.querySelector<HTMLElement>(
-        dialog.kind === 'report' ? '#bug-report-description' : '.app-dialog-close',
+        dialog.kind === 'report' ? '#bug-report-description' : dialog.kind === 'crypto' ? '#crypto-network-first' : '.app-dialog-close',
       ) || panel
     ).focus({ preventScroll: true });
     const keydown = (event: globalThis.KeyboardEvent) => {
@@ -245,7 +245,9 @@ export function Dialog({ owner }: { owner: Dialogs }) {
         }
       }}
     >
-      {dialog.kind === 'milestone' ? (
+      {dialog.kind === 'crypto' ? (
+        <CryptoDonationDialog />
+      ) : dialog.kind === 'milestone' ? (
         <MilestonePlan />
       ) : (
         <div

@@ -46,7 +46,7 @@ export function ReadingPages({ atlas }: { atlas: Atlas }) {
           key={cachedKey}
           style={{ display: cachedKey === displayKey ? 'contents' : 'none' }}
         >
-          <ReadingContent atlas={atlas} page={entry.page} article={entry.article} />
+          <ReadingContent atlas={atlas} page={entry.page} article={entry.article} active={reading && cachedKey === displayKey} />
         </div>
       ))}
     </section>
@@ -56,10 +56,12 @@ function ReadingContent({
   atlas,
   page,
   article,
+  active,
 }: {
   atlas: Atlas;
   page: Atlas['state']['page'];
   article: string;
+  active: boolean;
 }) {
   const { state } = atlas;
   return (
@@ -99,31 +101,10 @@ function ReadingContent({
       )}
       {page === 'support' && <SupportPage />}
       {page === 'stats' && <Stats atlas={atlas} />}
-      {page === 'blog' &&
-        (document.body.dataset.runtime === 'preview' ? (
-          <JournalPage theme={state.theme} index={state.featureIndex} />
-        ) : (
-          <>
-            <p className="page-eyebrow">THE JOURNAL</p>
-            <h1>Look closer. See the whole picture.</h1>
-            <p className="page-intro">
-              Thoughtful stories about the numbers and places behind the map.
-            </p>
-            <div className="empty-state">
-              <h3>The journal is taking shape</h3>
-              <p>
-                There are no published articles yet. Editorial drafts remain private until approved
-                for publication.
-              </p>
-            </div>
-            <button className="primary-button" data-page="map">
-              Explore the map →
-            </button>
-          </>
-        ))}
+      {page === 'blog' && <JournalPage />}
       {page === 'article' &&
-        (document.body.dataset.runtime === 'preview' && articleExists(article) ? (
-          <ArticlePage slug={article} />
+        (articleExists(article) ? (
+          <ArticlePage slug={article} atlas={atlas} active={active} />
         ) : (
           <>
             <button className="article-back" data-page="blog">

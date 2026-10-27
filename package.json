@@ -8,7 +8,7 @@
     "start": "npm run build && python3 scripts/serve.py",
     "assets": "node scripts/build-assets.mjs",
     "check": "node scripts/check.mjs",
-    "check:source": "npm run typecheck && npm run build && npm run check && node ux/check-flat-map.mjs && node ux/check-geometry.mjs && node ux/check-detail.mjs && node ux/check-motion.mjs && node ux/check-data.mjs && node ux/check-support-data.mjs && node ux/check-source-metadata.mjs && node ux/check-icons.mjs && node ux/check-runtime.mjs && node ux/check-label-cache.mjs && node ux/check-support-about.mjs && node ux/check-studio-request-contract.mjs && node ux/check-studio-network-observer.mjs",
+    "check:source": "npm run typecheck && npm run build && npm run check && node ux/check-flat-map.mjs && node ux/check-geometry.mjs && node ux/check-detail.mjs && node ux/check-motion.mjs && node ux/check-data.mjs && node ux/check-support-data.mjs && node ux/check-source-metadata.mjs && node ux/check-icons.mjs && node ux/check-runtime.mjs && node ux/check-label-cache.mjs && node ux/check-support-about.mjs && node ux/check-methodology.mjs && node ux/check-article-map.mjs && node ux/check-ui-expectation-profile.mjs && node ux/check-studio-request-contract.mjs && node ux/check-studio-network-observer.mjs",
     "start:analytics": "python3 scripts/run_analytics_atlas.py",
     "check:seo": "python3 scripts/check_seo.py && node ux/check-routes.mjs",
     "check:reader": "python3 scripts/check_reader_contract.py && python3 -m unittest discover -s scripts -p 'test_reader_contract.py' && python3 -m unittest discover -s scripts -p 'test_reader_v2_contract.py'",

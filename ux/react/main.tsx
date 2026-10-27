@@ -143,8 +143,17 @@ function App() {
     }
     if (d.openInfo) {
       const show = () => {
-        patch({ infoSurface: 'legacy', infoTab: d.openInfo as 'methodology' });
-        requestAnimationFrame(() => document.querySelector('#reading-page')?.scrollTo(0, 0));
+        patch({ infoSurface: 'about' });
+        requestAnimationFrame(() => {
+          const heading = document.querySelector<HTMLElement>('#methodology-title');
+          if (!heading) return;
+          heading.tabIndex = -1;
+          heading.focus({ preventScroll: true });
+          heading.scrollIntoView({
+            behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth',
+            block: 'start',
+          });
+        });
       };
       if (state.page === 'info') show();
       else void atlas.navigate('info').then(show);
@@ -156,6 +165,10 @@ function App() {
     }
     if (button.hasAttribute('data-open-milestone')) {
       dialogs.open('milestone', button);
+      return;
+    }
+    if (button.hasAttribute('data-open-crypto')) {
+      dialogs.open('crypto', button);
       return;
     }
     if (button.hasAttribute('data-support-methods')) {

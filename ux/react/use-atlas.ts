@@ -832,6 +832,14 @@ export function useAtlas() {
         const stateId = current.current.selected?.slice(0, 2);
         if (stateId) patch({ recentStates: [stateId] });
         setResources(r);
+        if (
+          current.current.startup === 'loading' &&
+          current.current.page !== 'map' &&
+          current.current.page !== 'compare'
+        ) {
+          patch({ startup: 'ready' });
+          window.dispatchEvent(new Event('atlas:startup-ready'));
+        }
       } catch (error) {
         if (alive) {
           patch({ startup: 'error' });
@@ -1010,10 +1018,10 @@ export function useAtlas() {
       );
     else {
       const article = (
-        articles as Record<string, { title: string; description: string; meta: string }>
+        articles as Record<string, { title: string; seoTitle?: string; description: string; meta?: string; published?: boolean; cover?: string }>
       )[state.article];
       const published = Object.values(articles).some(
-        (item) => !/owner review pending/i.test(item.meta || ''),
+        (item) => item.published,
       );
       applyPageMetadata(
         screenPageMetadata(state.page, path, {
@@ -1022,8 +1030,7 @@ export function useAtlas() {
             noindex ||
             state.page === 'stats' ||
             (state.page === 'blog' && !published) ||
-            (state.page === 'article' &&
-              (!article || /owner review pending/i.test(article.meta || ''))),
+            (state.page === 'article' && !article?.published),
         }),
       );
     }

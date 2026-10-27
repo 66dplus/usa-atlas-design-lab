@@ -160,6 +160,29 @@ body[data-theme="dark"][data-page="info"],body[data-theme="dark"][data-page="sup
 .app-dialog-backdrop { position:fixed; z-index:var(--z-modal); inset:0; display:grid; place-items:center; overflow:auto; padding:24px; background:#0009; }
 .app-dialog-panel {  width:min(760px,100%); max-height:min(840px,calc(100dvh - 48px));  gap:20px; overflow:auto; padding:32px; border:1px solid var(--border-subtle); border-radius:20px; background:var(--surface-panel); color:var(--text-primary); box-shadow:var(--shadow-sheet); overscroll-behavior:contain; }
 .app-dialog-panel--bug-report { width:min(560px,100%); }
+.app-dialog-panel--crypto { width:min(520px,100%); gap:16px; }
+.crypto-dialog-instruction { color:var(--text-secondary); font-size:15px; line-height:23px; }
+.crypto-network-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.crypto-network-button { display:grid; min-width:0; min-height:104px; align-content:center; justify-items:center; gap:5px; padding:12px 8px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-app); color:var(--text-primary); font:inherit; font-size:14px; font-weight:600; line-height:19px; cursor:pointer; }
+.crypto-network-button:hover { border-color:var(--text-secondary); }
+.crypto-network-button:focus-visible,.crypto-back-button:focus-visible { outline:3px solid color-mix(in srgb,var(--action-primary) 38%,transparent); outline-offset:2px; }
+.crypto-network-logo { display:block; width:30px; height:30px; background:currentColor; mask:center/contain no-repeat; -webkit-mask:center/contain no-repeat; }
+.crypto-network-logo--tron { mask-image:url("assets/support/networks/tron.svg"); -webkit-mask-image:url("assets/support/networks/tron.svg"); }
+.crypto-network-logo--ethereum { mask-image:url("assets/support/networks/ethereum.svg"); -webkit-mask-image:url("assets/support/networks/ethereum.svg"); }
+.crypto-network-logo--bitcoin { mask-image:url("assets/support/networks/bitcoin.svg"); -webkit-mask-image:url("assets/support/networks/bitcoin.svg"); }
+.crypto-network-logo--solana { mask-image:url("assets/support/networks/solana.svg"); -webkit-mask-image:url("assets/support/networks/solana.svg"); }
+.crypto-network-logo--bnb-chain { mask-image:url("assets/support/networks/bnbchain.svg"); -webkit-mask-image:url("assets/support/networks/bnbchain.svg"); }
+.crypto-network-logo--polygon { mask-image:url("assets/support/networks/polygon.svg"); -webkit-mask-image:url("assets/support/networks/polygon.svg"); }
+.crypto-network-button small { color:var(--text-secondary); font-size:12px; font-weight:500; line-height:16px; }
+.crypto-destination { display:flex; min-width:0; flex-direction:column; align-items:center; gap:12px; }
+.crypto-network-name { align-self:flex-start; font-size:15px; }
+.crypto-address-label { color:var(--text-secondary); font-size:13px; font-weight:500; }
+.crypto-qr { display:block; width:200px; height:200px; padding:8px; border-radius:8px; background:#fff; object-fit:contain; }
+.crypto-address-label { align-self:flex-start; }
+.crypto-address { display:block; width:100%; padding:12px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--surface-app); color:var(--text-primary); font:12px/19px ui-monospace,SFMono-Regular,Consolas,monospace; overflow-wrap:anywhere; user-select:all; }
+.crypto-copy-button { min-height:44px; padding:10px 18px; border-radius:9px; font-weight:600; }
+.crypto-copy-status { min-height:21px; color:var(--text-secondary); font-size:13px; line-height:21px; text-align:center; }
+.crypto-back-button { min-height:44px; padding:10px 16px; }
 .app-dialog-panel--milestone { font-family:system-ui,sans-serif; }
 .milestone-dialog-eyebrow--mobile,.milestone-dialog-title--mobile { display:none; }
 .app-dialog-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; }
@@ -343,3 +366,25 @@ body[data-page="after-support-fixture"] { min-height:100vh; overflow:auto; backg
   .support-method-status { font-size:11px; }
   .app-dialog-backdrop { padding-inline:12px; }
 }
+
+/* Scoped Data & methodology section. */
+#reading-page .methodology { border-top:1px solid var(--border-subtle); padding-top:40px; }
+#reading-page .methodology-content { min-width:0; }
+#reading-page .methodology-intro, #reading-page .methodology-note { max-width:760px; margin:0 0 16px; color:var(--muted); font-size:14px; line-height:1.65; }
+#reading-page .methodology-group { margin:18px 0 0; border-top:1px solid var(--border-subtle); }
+#reading-page .methodology-group > summary { display:flex; justify-content:space-between; gap:16px; align-items:center; padding:18px 0; cursor:pointer; font-size:16px; font-weight:600; list-style:none; }
+#reading-page .methodology-group > summary::-webkit-details-marker { display:none; }
+#reading-page .methodology-group > summary::after { content:'+'; color:var(--muted); }
+#reading-page .methodology-group[open] > summary::after { content:'−'; }
+#reading-page .methodology-group > summary span { margin-left:auto; color:var(--muted); font-size:12px; font-weight:400; }
+#reading-page .methodology-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding-bottom:16px; }
+#reading-page .methodology-record { min-width:0; padding:18px; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-panel); }
+#reading-page .methodology-record h3 { margin:0 0 14px; font-size:15px; line-height:1.4; }
+#reading-page .methodology-record dl { display:grid; grid-template-columns:92px minmax(0,1fr); gap:8px 12px; margin:0; font-size:12px; line-height:1.55; }
+#reading-page .methodology-record dt { color:var(--muted); }
+#reading-page .methodology-record dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+#reading-page .methodology-record a { color:var(--ink); }
+#reading-page .methodology-record code { white-space:normal; font:inherit; }
+#reading-page .methodology-retained { opacity:.82; }
+#reading-page .methodology-note { margin-top:20px; }
+@media(max-width:760px) { #reading-page .methodology { padding-top:28px; } #reading-page .methodology-list { grid-template-columns:1fr; } #reading-page .methodology-record { padding:16px; } #reading-page .methodology-record dl { grid-template-columns:76px minmax(0,1fr); gap:7px 10px; } #reading-page .methodology-group > summary { font-size:15px; } }

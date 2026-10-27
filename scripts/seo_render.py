@@ -398,7 +398,7 @@ def metadata_for(path, query, route, article_data):
     if route['kind'] == 'screen':
         pages = {
             'stats': ('Atlas statistics | USA X-Ray', 'Explore how visitors use USA X-Ray. Visitor analytics are not connected yet.'),
-            'support': ('Support USA X-Ray | USA X-Ray', 'Learn how to support the maps, data and stories behind USA X-Ray. Contributions are not open yet.'),
+            'support': ('Support USA X-Ray | USA X-Ray', 'Learn how to support USA X-Ray through confirmed cryptocurrency networks, share the map or suggest a dataset.'),
             'info': ('About USA X-Ray | USA X-Ray', 'Learn how USA X-Ray maps public data to places, preserves source units and periods, and handles gaps.'),
             'blog': ('USA X-Ray journal | USA X-Ray', 'Explore stories about public data, places and the sources behind the map.'),
         }
@@ -419,20 +419,24 @@ def metadata_for(path, query, route, article_data):
         return _metadata(title, description, canonical, page_noindex, schema,
                          'article' if route['page'] == 'article' else 'website')
     article = article_data.get(route.get('slug'), {})
-    title = f"{article.get('title', 'Article')} | {SITE_NAME}"
+    title = f"{article.get('seoTitle') or article.get('title', 'Article')} | {SITE_NAME}"
     description = article.get('description') or 'A USA X-Ray journal article.'
     draft = bool(re.search(r'owner review pending', article.get('meta', ''), re.I))
     canonical = SITE_ORIGIN + route['canonical']
     schema = {'@context': 'https://schema.org', '@type': 'Article', 'headline': title,
               'description': description, 'mainEntityOfPage': canonical,
               'publisher': {'@type': 'Organization', 'name': SITE_NAME, 'url': SITE_ORIGIN}}
-    return _metadata(title, description, canonical, noindex or draft, schema, 'article')
+    image = article.get('cover')
+    if image:
+        schema['image'] = [SITE_ORIGIN + image]
+    return _metadata(title, description, canonical, noindex or draft, schema, 'article',
+                     SITE_ORIGIN + image if image else None)
 
 
-def _metadata(title, description, canonical, noindex, schema, page_type='website'):
+def _metadata(title, description, canonical, noindex, schema, page_type='website', image=None):
     return {'title': title, 'description': description, 'canonical': canonical,
             'robots': 'noindex,follow' if noindex else 'index,follow',
-            'ogType': page_type, 'schema': schema}
+            'ogType': page_type, 'schema': schema, 'image': image}
 
 
 def _set_meta(document, attribute, name, value):
@@ -450,10 +454,14 @@ def render_html(document, metadata):
         document = document.decode('utf-8')
     document = re.sub(r'<title\b[^>]*>.*?</title>', '<title>' + escape(metadata['title']) + '</title>', document, count=1, flags=re.I | re.S)
     names = {'description': metadata['description'], 'robots': metadata['robots'],
-             'twitter:card': 'summary', 'twitter:title': metadata['title'], 'twitter:description': metadata['description']}
+             'twitter:card': 'summary_large_image' if metadata.get('image') else 'summary',
+             'twitter:title': metadata['title'], 'twitter:description': metadata['description']}
     properties = {'og:type': metadata['ogType'], 'og:title': metadata['title'],
                   'og:description': metadata['description'], 'og:url': metadata['canonical'],
                   'og:site_name': SITE_NAME, 'og:locale': 'en_US'}
+    if metadata.get('image'):
+        names['twitter:image'] = metadata['image']
+        properties['og:image'] = metadata['image']
     for key, value in names.items():
         document = _set_meta(document, 'name', key, value)
     for key, value in properties.items():
