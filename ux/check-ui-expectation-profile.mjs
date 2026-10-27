@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import {
   isPinnedArchivedA,
+  isPinnedMilestoneRollback,
   isPinnedRollbackBaseline,
   PINNED_ARCHIVED_A,
+  PINNED_MILESTONE_ROLLBACK,
   PINNED_ROLLBACK_BASELINE,
   selectUiExpectationProfile,
 } from './ui-expectation-profile.mjs';
 
+assert.equal(isPinnedMilestoneRollback(PINNED_MILESTONE_ROLLBACK), true,
+  'Only the complete reviewed milestone rollback identity selects its compatibility expectations');
 assert.equal(isPinnedRollbackBaseline(PINNED_ROLLBACK_BASELINE), true,
   'Only the complete reviewed rollback identity selects legacy UI expectations');
 assert.equal(isPinnedArchivedA(PINNED_ARCHIVED_A), true,
@@ -18,6 +22,7 @@ assert.deepEqual(selectUiExpectationProfile(PINNED_ARCHIVED_A), {
   baseline: false, archivedA: true, legacyJournal: true, profile: 'archived-versioning-A',
 });
 for (const [profile, identity, matches] of [
+  ['milestone rollback', PINNED_MILESTONE_ROLLBACK, isPinnedMilestoneRollback],
   ['31b1feeba baseline', PINNED_ROLLBACK_BASELINE, isPinnedRollbackBaseline],
   ['archived versioning A', PINNED_ARCHIVED_A, isPinnedArchivedA],
 ]) {
@@ -33,9 +38,15 @@ for (const [profile, identity, matches] of [
       `${profile}: missing ${field} keeps new Journal HTTP expectations`);
   }
 }
+assert.deepEqual(selectUiExpectationProfile(PINNED_MILESTONE_ROLLBACK), {
+  baseline: false, archivedA: false, legacyJournal: false, profile: 'compiled-react-v1',
+}, 'Milestone rollback compatibility does not change the existing conformance profile');
 assert.equal(isPinnedRollbackBaseline(PINNED_ARCHIVED_A), false);
 assert.equal(isPinnedArchivedA(PINNED_ROLLBACK_BASELINE), false);
+assert.equal(isPinnedMilestoneRollback(PINNED_ROLLBACK_BASELINE), false);
+assert.equal(isPinnedMilestoneRollback(PINNED_ARCHIVED_A), false);
 assert.equal(selectUiExpectationProfile(null).legacyJournal, false);
 assert.equal(isPinnedRollbackBaseline(null), false);
 assert.equal(isPinnedArchivedA(null), false);
+assert.equal(isPinnedMilestoneRollback(null), false);
 console.log('PASS: pinned legacy profiles require exact raw build, source, release and image identities');
