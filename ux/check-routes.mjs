@@ -178,7 +178,9 @@ for(const [slug,article] of publishedArticles){
   assert.match(sitemap,new RegExp(`<loc>https://usa-xray\\.online/blog/${slug}<\\/loc>`),`${slug} must have a sitemap route`);
 }
 const articleMap=fs.readFileSync(new URL('./react/article-map.tsx',import.meta.url),'utf8');
-assert.match(articleMap,/resources\.store\.load\(mapMetric\)/,'article maps must load through the selected catalog metric data boundary');
+assert.match(articleMap,/resources\.store\.load\(mapMetric, selection\)/,'article maps must load through the selected catalog metric data boundary');
+assert.match(articleMap,/ARTICLE_UNEMPLOYMENT_SELECTION[\s\S]*year: 2025/,'article unemployment maps must use the default 2025 annual observation');
+assert.match(articleMap,/endpoints are not observed minimum and maximum/,'fixed-domain legend endpoints must not claim to be observed extrema');
 assert.match(articleMap,/layer\?\.period/,'article maps must label the exact returned observation period');
 assert.match(fs.readFileSync(new URL('../scripts/seo_render.py',import.meta.url),'utf8'),/def render_route\(/,'the server must render route metadata before JavaScript');
 assert.match(fs.readFileSync(new URL('../scripts/preview_server.py',import.meta.url),'utf8'),/redirect_target\(/,'the read-only runtime must permanently normalize legacy URLs');

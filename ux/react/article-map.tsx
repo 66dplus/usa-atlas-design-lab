@@ -17,6 +17,7 @@ type MapConstructor = new (
 ) => MapAdapter;
 const Renderer = ExplorerMap as unknown as MapConstructor;
 const ignoreSelection = () => {};
+const ARTICLE_UNEMPLOYMENT_SELECTION = { period: { type: 'annual' as const, year: 2025 as const } };
 
 function articleDisplayLayer(source: Layer, geo: Geography, stateScope: boolean): Layer {
   if (!stateScope) return displayLayer(source) as Layer;
@@ -51,9 +52,14 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
   const [detailError, setDetailError] = useState('');
   const [renderErrors, setRenderErrors] = useState<Partial<Record<Side, string>>>({});
   const mapMetric = resources?.metricById.get(metricId);
-  const nativeLayer = mapMetric ? atlas.layer(mapMetric) : null;
+  const selection = mapMetric?.periodControl === 'unemployment-2025'
+    ? ARTICLE_UNEMPLOYMENT_SELECTION
+    : undefined;
+  const nativeLayer = mapMetric && resources
+    ? displayLayer(resources.store.get(mapMetric, selection)) as Layer
+    : null;
   const stateScope = place.length === 2 && (!second || second.length === 2);
-  const sourceLayer = mapMetric && resources ? resources.store.get(mapMetric) : null;
+  const sourceLayer = mapMetric && resources ? resources.store.get(mapMetric, selection) : null;
   const layer = nativeLayer && sourceLayer?.status === 'ready' && mapMetric && resources
     ? articleDisplayLayer(sourceLayer, resources.geo, stateScope)
     : nativeLayer;
@@ -94,7 +100,7 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
     const locations = [...new Set([place, ...(second ? [second] : [])])];
     void Promise.all([
       ...locations.map((location) => resources.geo.loadDetail(location)),
-      resources.store.load(mapMetric),
+      resources.store.load(mapMetric, selection),
     ]).then(() => {
       if (!alive || !firstHost.current) return;
       const create = (host: HTMLElement, selectedId: string, side: Side) => {
@@ -105,7 +111,7 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
           onError: (message) => alive &&
             setRenderErrors((previous) => ({ ...previous, [side]: message })),
         });
-        const data = articleDisplayLayer(resources.store.get(mapMetric), resources.geo, stateScope);
+        const data = articleDisplayLayer(resources.store.get(mapMetric, selection), resources.geo, stateScope);
         map.update({
           animateEntry: false,
           layoutKey: 'article-map',
@@ -137,11 +143,11 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
       for (const map of Object.values(maps.current)) map?.dispose();
       maps.current = {};
     };
-  }, [active, resources, mapMetric, metricId, place, second, loadAttempt]);
+  }, [active, resources, mapMetric, metricId, place, second, loadAttempt, selection]);
 
   useEffect(() => {
     if (!active || !resources || !mapMetric || !initialized) return;
-    const data = articleDisplayLayer(resources.store.get(mapMetric), resources.geo, stateScope);
+    const data = articleDisplayLayer(resources.store.get(mapMetric, selection), resources.geo, stateScope);
     const update = (side: Side, selectedId: string) => maps.current[side]?.update({
       animateEntry: false,
       layoutKey: 'article-map',
@@ -162,7 +168,7 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
     });
     update('a', place);
     if (second) update('b', second);
-  }, [active, atlas.revision, atlas.state.mode, atlas.state.theme, initialized, mapMetric, place, resources, second, stateScope]);
+  }, [active, atlas.revision, atlas.state.mode, atlas.state.theme, initialized, mapMetric, place, resources, second, stateScope, selection]);
 
   const startupError = active && atlas.state.startup === 'error';
   const loading = active && !startupError && (!resources || !mapMetric || !layer || ['idle', 'loading'].includes(layer.status));
@@ -202,10 +208,19 @@ export function ArticleMap({ atlas, active, title, place, second, metric: metric
                   {layer.domain && (
                     <div className="article-map-legend-ramp" aria-hidden="true" style={{ backgroundImage: ramp(layer) }} />
                   )}
-                  {layer.domain && <div className="article-map-legend-range" role="group" aria-label={stateScope || (mapMetric && !mapMetric.countySupported) ? 'Nationwide state minimum and maximum' : 'Nationwide county minimum and maximum'}>
-                    <span>{`Min ${compactValue(layer.domain[0], layer.unit)}`}</span>
-                    <span>{`Max ${compactValue(layer.domain[1], layer.unit)}`}</span>
-                  </div>}
+                  {layer.domain && (() => {
+                    const fixed = Array.isArray((layer as Layer & { fixedDomain?: unknown }).fixedDomain);
+                    const scope = stateScope || (mapMetric && !mapMetric.countySupported) ? 'state' : 'county';
+                    const low = compactValue(layer.domain[0], layer.unit), high = compactValue(layer.domain[1], layer.unit);
+                    return <div className="article-map-legend-range" role="group"
+                      data-domain={fixed ? 'fixed' : 'observed'}
+                      aria-label={fixed
+                        ? `Fixed ${scope} color scale from ${low} to ${high}; endpoints are not observed minimum and maximum`
+                        : `Nationwide ${scope} observed minimum and maximum`}>
+                      <span>{fixed ? `Scale ${low}` : `Min ${low}`}</span>
+                      <span>{fixed ? high : `Max ${high}`}</span>
+                    </div>;
+                  })()}
                 </section>
               )}
             </div>

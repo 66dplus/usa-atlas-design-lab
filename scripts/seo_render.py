@@ -398,7 +398,7 @@ def metadata_for(path, query, route, article_data):
     if route['kind'] == 'screen':
         pages = {
             'stats': ('Atlas statistics | USA X-Ray', 'Explore how visitors use USA X-Ray. Visitor analytics are not connected yet.'),
-            'support': ('Support USA X-Ray | USA X-Ray', 'Learn how to support the maps, data and stories behind USA X-Ray. Contributions are not open yet.'),
+            'support': ('Support USA X-Ray | USA X-Ray', 'Learn how to support USA X-Ray through confirmed cryptocurrency networks, share the map or suggest a dataset.'),
             'info': ('About USA X-Ray | USA X-Ray', 'Learn how USA X-Ray maps public data to places, preserves source units and periods, and handles gaps.'),
             'blog': ('USA X-Ray journal | USA X-Ray', 'Explore stories about public data, places and the sources behind the map.'),
         }

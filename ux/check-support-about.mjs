@@ -20,6 +20,8 @@ assert.ok(about.includes('I believe public statistics should be easier to unders
 assert.ok(about.includes(`href="${linkedin}"`));
 assert.ok(about.includes('data-open-report'));
 assert.ok(about.includes('data-open-info="methodology"'));
+assert.ok(about.includes('id="methodology-title"'), 'About mounts the full methodology block');
+assert.ok(about.includes('Population') && about.includes('Unemployment'), 'About includes indicator methodology records');
 assert.ok(!/Already supported/i.test(about+support));
 
 assert.ok(support.includes('<span>Support</span> <span class="support-title-product">USA X-Ray.</span>'));
@@ -72,7 +74,10 @@ assert.ok(!plan.includes('type="checkbox"'));
 assert.ok(!plan.includes('<input'));
 
 const legacy=legacyInfoView('<li>test</li>','<li>test data</li>');
-assert.ok(legacy.includes('id="info-methodology"'));
+assert.ok(legacy.includes('id="info-methodology"'), 'legacy methodology route remains available');
+const seo=await readFile(new URL('./seo.js',import.meta.url),'utf8');
+const ssrSeo=await readFile(new URL('../scripts/seo_render.py',import.meta.url),'utf8');
+assert.ok(!/Contributions are not open yet/.test(seo+ssrSeo), 'Support client and SSR metadata describe confirmed support options');
 assert.ok(legacy.includes('Census 2017 FIPS'));
 assert.ok(legacy.includes('Appearance'));
 assert.ok(fixture.includes('Your contact (optional)')&&fixture.includes('Your message (optional)'));
@@ -109,4 +114,5 @@ assert.match(style,/\.about-page button,\.support-page button \{ font-family:inh
 assert.match(style,/\.about-page a\.creator-link,\.support-page a\.support-method \{ text-decoration:none; \}/);
 assert.match(style,/\.support-footer \{ margin:0;/);
 assert.match(style,/\.crypto-qr \{[^}]*width:200px;[^}]*background:#fff/);
+assert.match(style,/methodology-record/);
 console.log('PASS: native React About/Support/milestone, private report URL/acknowledgement boundary, modal keyboard lifecycle, dormant fixture exclusion and preserved CSS.');

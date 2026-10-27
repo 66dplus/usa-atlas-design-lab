@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import projectContent from '../project-content.json';
 import { normalizeSupportData } from '../support-data.js';
+import { Methodology } from './methodology';
 const creator = projectContent.project.creator;
 const linkedin =
   creator.profileLinks.find((link) => link.id === 'linkedin')?.url ||
@@ -123,6 +124,8 @@ export function AboutPage() {
           </button>
         </div>
       </section>
+      {'\n    '}
+      <Methodology />
       {'\n    '}
       <section className="about-story-row about-connect">
         <h2>{'Let’s connect'}</h2>

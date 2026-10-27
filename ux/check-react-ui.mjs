@@ -331,9 +331,13 @@ try {
         await page.locator('#info-open').click();
         await page.locator('#about-main').waitFor();
         await page.locator('[data-open-info=methodology]').first().click();
-        await page.locator('#info-methodology').waitFor();
+        await page.locator('#methodology-title').waitFor();
+        await page.waitForFunction(() => document.activeElement?.id === 'methodology-title');
+        assert.equal(await page.locator('#methodology-title').isVisible(), true);
+        assert.ok(await page.locator('#reading-page').evaluate((element) => element.scrollTop > 0));
+        assert.equal(await page.locator('#info-methodology').isVisible(), false, 'legacy methodology view stays closed for the About link');
         await page.locator('#theme-toggle').click();
-        await page.waitForFunction((theme) => document.body.dataset.theme !== theme, theme);
+        await page.waitForFunction((current) => document.body.dataset.theme !== current, theme);
         await page.locator('#theme-toggle').click();
         await navigate(page, 'map');
         const identity = await page.evaluate(() =>
