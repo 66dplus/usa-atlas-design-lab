@@ -160,10 +160,11 @@ class PreviewCacheTests(unittest.TestCase):
             start = time.monotonic()
             time.sleep(server.response_write_timeout + 0.1)
             self.assertTrue(shutdown_complete.wait(max(0, 2 - (time.monotonic() - start))))
-            with self.assertRaises(http.client.IncompleteRead) as truncated:
-                response.read()
+            # Measure server shutdown before draining any queued kernel bytes.
             elapsed = time.monotonic() - start
             self.assertLess(elapsed, 2)
+            with self.assertRaises(http.client.IncompleteRead) as truncated:
+                response.read()
             self.assertEqual(truncated.exception.partial, body[:len(truncated.exception.partial)])
             self.assertLess(len(truncated.exception.partial), len(body))
         finally:
