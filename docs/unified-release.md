@@ -34,6 +34,8 @@ The exact target SHA must equal the **current public remote `main` SHA** from `g
 
 ### Acceptance receipt interface
 
+For sequencing and evidence reuse that do not alter these mandatory gates, see [verification efficiency](application/verification-efficiency.md).
+
 The application `ops/acceptance-policy.json` is pinned by exact SHA256, suite identity, and mandatory check IDs in `ops/release-policy.json`. The release CLI refuses a missing or changed policy. The application acceptance runner exercises the stage container at the configured stage IP and port. It writes a JSON receipt for activation, then a distinct receipt for rollback. The release gate requires the runner format, an empty failures list, and passing per-check execution evidence as well as the bound receipt fields. Each receipt must contain:
 
 - `status: "pass"`, `releaseId`, `operation` (`activate` or `rollback`), `testedAt` in ISO-8601 UTC, the exact current `suiteIdentity`, and every current `mandatoryCheckIDs` value in `mandatorySuccessfulCheckIDs`.

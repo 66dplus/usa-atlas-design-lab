@@ -28,3 +28,5 @@ This is the English-language application repository. The deployed Paper runtime 
 ## Validation
 
 The current Python acceptance policy is the release authority. Focused standalone checks are useful evidence but never authorize activation or rollback. The parent runs `node scripts/check.mjs`, relevant `ux/check-*.mjs` checks, and the compatible `ux/check-mobile-ui.mjs` entrypoint for UI changes during required validation. Preserve the canonical free-drag behavior; do not reinstate legacy UI or forced-snap behavior. Keep global configuration untouched. Follow viewport/theme gates and required PostgreSQL and Chrome CI gates. A required check must fail clearly when its service or browser is unavailable; do not turn an unavailable gate into a pass.
+
+For efficient evidence reuse and release QA sequencing, follow [verification efficiency](docs/application/verification-efficiency.md). It coordinates checks without waiving the pinned acceptance policy, protected CI, or fresh operation receipts.
