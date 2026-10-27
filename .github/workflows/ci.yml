@@ -6,6 +6,8 @@ on:
 
 jobs:
   checks_core:
+    outputs:
+      package_sha: ${{ steps.package_hash.outputs.package_sha }}
     runs-on: ubuntu-latest
     env:
       PGHOST: 127.0.0.1
@@ -63,22 +65,24 @@ jobs:
       - name: Run the complete Python unit suite
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - run: python3 scripts/build_temporary_preview.py /tmp/usa-atlas-ci-package --release ci-${{ github.sha }} --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000 --contracts-lock contracts/reader-v2-contract.lock.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: usa-atlas-ci-package
-          path: /tmp/usa-atlas-ci-package/
-          if-no-files-found: error
-          retention-days: 1
+      - name: Hash the complete release package
+        id: package_hash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          from pathlib import Path
+          from scripts.release_workflow import package_sha
+          print(f"package_sha={package_sha(Path('/tmp/usa-atlas-ci-package'))}")
+          PY
+      - name: Run release regression checks
+        env:
+          PGUSER: atlas_reader
+          PGPASSWORD: atlas-ci-only-reader
+        run: python3 scripts/run_ci_browser.py --suite release-regressions /tmp/usa-atlas-ci-package
 
-  browser:
-    name: browser (${{ matrix.suite }})
-    needs: checks_core
-    strategy:
-      fail-fast: false
-      matrix:
-        suite:
-          - release-regressions
-          - post-react-ui
+  post_react_ui:
+    name: post_react_ui
+    outputs:
+      package_sha: ${{ steps.package_hash.outputs.package_sha }}
     runs-on: ubuntu-latest
     env:
       PGHOST: 127.0.0.1
@@ -127,32 +131,41 @@ jobs:
           sudo apt-get install -y --no-install-recommends postgresql-16
           echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
       - run: python3 scripts/prepare_ci_database.py
-      - uses: actions/download-artifact@v4
-        with:
-          name: usa-atlas-ci-package
-          path: /tmp/usa-atlas-ci-package
-      - name: Run browser checks against the packaged runtime
+      - run: python3 scripts/build_temporary_preview.py /tmp/usa-atlas-ci-package --release ci-${{ github.sha }} --previous-release ci-fixture --previous-build-sha256 0000000000000000000000000000000000000000000000000000000000000000 --contracts-lock contracts/reader-v2-contract.lock.json
+      - name: Hash the complete release package
+        id: package_hash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          from pathlib import Path
+          from scripts.release_workflow import package_sha
+          print(f"package_sha={package_sha(Path('/tmp/usa-atlas-ci-package'))}")
+          PY
+      - name: Run post-React UI checks against the clean-source package
         env:
           PGUSER: atlas_reader
           PGPASSWORD: atlas-ci-only-reader
-        run: python3 scripts/run_ci_browser.py --suite "${{ matrix.suite }}" /tmp/usa-atlas-ci-package
+        run: python3 scripts/run_ci_browser.py --suite post-react-ui /tmp/usa-atlas-ci-package
 
   checks:
     name: checks
     if: always()
     needs:
       - checks_core
-      - browser
+      - post_react_ui
     runs-on: ubuntu-latest
     steps:
       - name: Require every CI prerequisite to succeed
         env:
           CHECKS_CORE_RESULT: ${{ needs.checks_core.result }}
-          BROWSER_RESULT: ${{ needs.browser.result }}
+          POST_REACT_UI_RESULT: ${{ needs.post_react_ui.result }}
+          CHECKS_CORE_PACKAGE_SHA: ${{ needs.checks_core.outputs.package_sha }}
+          POST_REACT_UI_PACKAGE_SHA: ${{ needs.post_react_ui.outputs.package_sha }}
         run: |
           echo "checks_core: $CHECKS_CORE_RESULT"
-          echo "browser: $BROWSER_RESULT"
-          if [[ "$CHECKS_CORE_RESULT" != success || "$BROWSER_RESULT" != success ]]; then
-            echo "::error::Every required CI prerequisite must finish successfully."
+          echo "post_react_ui: $POST_REACT_UI_RESULT"
+          echo "checks_core package SHA: ${CHECKS_CORE_PACKAGE_SHA:-<missing>}"
+          echo "post_react_ui package SHA: ${POST_REACT_UI_PACKAGE_SHA:-<missing>}"
+          if [[ "$CHECKS_CORE_RESULT" != success || "$POST_REACT_UI_RESULT" != success || -z "$CHECKS_CORE_PACKAGE_SHA" || -z "$POST_REACT_UI_PACKAGE_SHA" || "$CHECKS_CORE_PACKAGE_SHA" != "$POST_REACT_UI_PACKAGE_SHA" ]]; then
+            echo "::error::Both browser jobs must succeed and produce identical complete package hashes."
             exit 1
           fi
