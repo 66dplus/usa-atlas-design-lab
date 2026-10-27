@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { readUiExpectationProfile } from './ui-expectation-profile.mjs';
@@ -10,6 +10,9 @@ const base = (process.env.ATLAS_TEST_URL || 'http://127.0.0.1:4198').replace(/\/
   expectationProfile = uiProfile.profile;
 const out = process.env.ATLAS_TEST_OUTPUT || `/tmp/usa-xray-react-ui-${Date.now()}`;
 await mkdir(out, { recursive: true });
+const supportWallets = JSON.parse(
+  await readFile(new URL('./project-content.json', import.meta.url), 'utf8'),
+).support.donationMethods.wallets;
 const result = {
   suite: 'react-ui-lifecycle-and-support',
   base,
@@ -304,6 +307,44 @@ try {
           assert.equal(await page.locator('.support-method--unavailable').count(), 0);
           assert.equal(await page.locator('[data-open-crypto]').count(), 1);
           assert.equal(await page.getByRole('button', {name: /Cryptocurrency/}).count(), 1);
+          const cryptoTrigger = page.locator('[data-open-crypto]');
+          await cryptoTrigger.click();
+          const cryptoDialog = page.locator('.app-dialog-panel--crypto[role=dialog]');
+          await cryptoDialog.waitFor();
+          await page.waitForFunction(() => {
+            const logos = [...document.querySelectorAll('.crypto-network-logo')];
+            return logos.length === 6 && logos.every((image) => image.complete && image.naturalWidth > 0);
+          });
+          const cryptoLogos = await page.locator('.crypto-network-logo').evaluateAll((images) =>
+            images.map((image) => {
+              const rect = image.getBoundingClientRect(), style = getComputedStyle(image);
+              return {
+                src: new URL(image.src).pathname,
+                naturalWidth: image.naturalWidth,
+                naturalHeight: image.naturalHeight,
+                width: rect.width,
+                height: rect.height,
+                filter: style.filter,
+              };
+            }),
+          );
+          assert.equal(cryptoLogos.length, supportWallets.length);
+          for (const [index, wallet] of supportWallets.entries()) {
+            const file = wallet.id === 'bnb-chain' ? 'bnbchain' : wallet.id;
+            assert.equal(cryptoLogos[index].src, `/ux/assets/support/networks/${file}.svg`,
+              `${wallet.network} loads its configured logo`);
+            assert.ok(cryptoLogos[index].naturalWidth > 0 && cryptoLogos[index].naturalHeight > 0,
+              `${wallet.network} image decoded`);
+            assert.equal(cryptoLogos[index].width, 30, `${wallet.network} logo width`);
+            assert.equal(cryptoLogos[index].height, 30, `${wallet.network} logo height`);
+            assert.equal(cryptoLogos[index].filter, theme === 'dark' ? 'invert(1)' : 'none',
+              `${wallet.network} theme treatment`);
+          }
+          await shot(page, `after-${key}-crypto-chooser`);
+          await page.keyboard.press('Escape');
+          await page.waitForSelector('.app-dialog-backdrop', { state: 'detached' });
+          assert.equal(await cryptoTrigger.evaluate((element) => element === document.activeElement), true,
+            'Closing the crypto chooser restores trigger focus');
         }
         await page.locator('#reading-page').evaluate((e) => (e.scrollTop = e.scrollHeight));
         await shot(page, 'after-' + key + '-support-footer');
